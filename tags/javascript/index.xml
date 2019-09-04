@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Javascript on I&#39;m OWenT</title>
+    <link>//owent.net/tags/javascript.html</link>
+    <description>Recent content in Javascript on I&#39;m OWenT</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <managingEditor>admin@owent.net (OWenT)</managingEditor>
+    <webMaster>admin@owent.net (OWenT)</webMaster>
+    <lastBuildDate>Thu, 24 Oct 2013 20:59:44 +0000</lastBuildDate>
+    
+	<atom:link href="//owent.net/tags/javascript/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Lua 挺好用的样子</title>
+      <link>//owent.net/2013/918.html</link>
+      <pubDate>Thu, 24 Oct 2013 20:59:44 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2013/918.html</guid>
+      <description>项目里面引入了Lua，就特别学习了一下。 其实对于理解Javascipt的人来说，Lua也很容易理解，因为他们太多的地方相像了。 初步看来，Lu</description>
+    </item>
+    
+    <item>
+      <title>从Javascript到Typescript到Node.js</title>
+      <link>//owent.net/2013/851.html</link>
+      <pubDate>Wed, 10 Jul 2013 20:19:39 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2013/851.html</guid>
+      <description>最近看了点typescript的东西，加上以前看过的一点点Node.js，所以就想把他们系统地整理一下。 Javascript 这玩意搞过Web开发的应该都知道吧</description>
+    </item>
+    
+    <item>
+      <title>JSON显示库 -- showJson （Javascript）</title>
+      <link>//owent.net/2012/573.html</link>
+      <pubDate>Sun, 01 Apr 2012 06:17:48 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2012/573.html</guid>
+      <description>现在的web的js开发很方便啊，但是碰到iframe里的东西还是不方便看到变量的内容，所以就写了这么个看json内容的玩意，还可以当控制台输</description>
+    </item>
+    
+    <item>
+      <title>JQuery扩展插件--提示信息</title>
+      <link>//owent.net/2010/128.html</link>
+      <pubDate>Fri, 19 Nov 2010 15:20:12 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2010/128.html</guid>
+      <description>学校做项目顺便写的，还是有点用的。 /*** * JQuery扩展插件--提示信息 * * 本函数用于创建提示信息 * * Example * &amp;lt;code&amp;gt; * var t = $.noticeMessage(msg, a, b); * &amp;lt;/code&amp;gt; * * * function noticeMessage([msg, a,b]) * @Param</description>
+    </item>
+    
+    <item>
+      <title>解析网站字符串型参数 Javascript QueryString 操作 TQueryString类</title>
+      <link>//owent.net/2010/104.html</link>
+      <pubDate>Mon, 01 Nov 2010 02:15:09 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2010/104.html</guid>
+      <description>这是学校USRP项目需要而写的一个类，但是既然写出来了，以后也可能用到，就共享出来吧。 这个类用于解析网页URL的QueryString参数，</description>
+    </item>
+    
+  </channel>
+</rss>

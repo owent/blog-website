@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  
+  
+  <meta charset="utf-8" />
+  <title>小记最近踩得两个C&#43;&#43;坑|I&#39;m OWenT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link rel="canonical" href="//owent.net/2015/1189.html">
+  <link href="//owent.net/index.xml" rel="alternate" type="application/rss+xml" title="I&#39;m OWenT" />
+  
+  <link rel="icon" href='../favicon.ico' />
+  
+  
+  <link rel="stylesheet" href='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css' crossorigin="anonymous" />
+  
+  <link rel="stylesheet" href='//owent.net/css/style.css' />
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js' crossorigin="anonymous"></script>
+  
+  
+  
+  <link rel="stylesheet" href='//owent.net/css/syntax.css' />
+  
+</head>
+<body><div id="container"><div id="wrap">
+<header id="header">
+  <div id="banner"></div>
+  <div id="header-outer">
+    <div id="header-title">
+      <h1 id="site-title">
+        <a href="//owent.net" id="logo">I&#39;m OWenT</a>
+      </h1>
+      
+      <h2 id="site-description">Challenge Everything</h2>
+      
+    </div>
+    <div id="header-inner">
+      <nav id="main-nav" class="navbar navbar-expand-md navbar-dark">
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#main-nav-links" aria-controls="main-nav-links" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <a id="main-nav-brand" class="navbar-brand collapse" href="#">#</a>
+        <div class="collapse navbar-collapse" id="main-nav-links">
+          <ul class="navbar-nav mr-auto">
+            
+              
+                <li class="nav-item"><a class="nav-link" href="../" title='Home'>Home</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../archives.html" title='Archives'>Archives</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../about.html" title='About'>About</a></li>
+              
+            
+            <li class="nav-item"><a id="nav-rss-link" class="nav-link" href="//owent.net/index.xml" title='RSS订阅'>RSS订阅</a></li>
+          </ul>
+          
+          <form class="form-inline" method="get" accept-charset="UTF-8" action='//www.bing.com/search'>
+            <input type="hidden" name='q1' value='site:owent.net' />
+            <input class="form-control" type="text" placeholder='搜索' name='q' />
+            <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit">搜索</button>
+          </form>
+          
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+<div id="main"><section id="main-content">
+<div id="post-content"><article id="post-2b201a0524a003dbc558c55126e64f2a" class="article-panel article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-panel-inner article-inner">
+    <div class="article-inner">
+      <header class="article-header"><h1 itemprop="name"><a class='article-title' href="//owent.net/2015/1189.html" target="_blank" itemprop="url">小记最近踩得两个C&#43;&#43;坑</a></h1></header><hr />
+      <div id="toc" class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right"><nav id="TableOfContents">
+<ul>
+<li><a href="#小记最近踩得两个c-坑">小记最近踩得两个C++坑</a>
+<ul>
+<li><a href="#坑一-常量引用失效">坑一：常量引用失效</a></li>
+<li><a href="#坑二-linux环境下共享静态库的问题">坑二：Linux环境下共享静态库的问题</a></li>
+<li><a href="#结论">结论</a></li>
+</ul></li>
+</ul>
+</nav></div><br />
+      <div class="article-entry" itemprop="articleBody">
+
+<h1 id="小记最近踩得两个c-坑">小记最近踩得两个C++坑</h1>
+
+<!-- toc -->
+
+<p>记一下最近踩得两个C++独有的暗坑，其中一个和ABI相关。第二个坑其实之前研究过，但是没有实例，这次算是碰到了个典型的实例。</p>
+
+<h2 id="坑一-常量引用失效">坑一：常量引用失效</h2>
+
+<p>在项目中碰到的实例的大致流程是:</p>
+
+<ol>
+<li>获取某个容易的迭代器，迭代器内包含智能指针（std::shared_ptr）<br /></li>
+<li>把智能指针通过常量引用方式传入函数<br /></li>
+<li>执行过程中智能指针被释放<br /></li>
+<li>于是这时候，我们有了一个空悬的智能指针引用了<br />
+<br /></li>
+</ol>
+
+<p>用代码表示的话，流程如下:</p>
+
+<pre><code class="language-cpp">std::map&lt;int, std::shared_ptr&lt;T&gt; &gt; outter_map;
+
+void func1(int a) {
+    std::map&lt;int, std::shared_ptr&lt;T&gt; &gt;::const_iterator iter = outter_map.find(a);
+    if (iter != outter_map.end()) {
+        func2(iter-&gt;second);
+    }
+}
+
+void func2(const std::shared_ptr&lt;T&gt;&amp; obj_ptr) {
+    if (!obj_ptr) {
+        return;
+    }
+    // 从逻辑隔离的角度，按照正常的语义，这里之后obj_ptr应该一直有效了吧 
+    // ... ,执行了茫茫多操作以后,间接调用了outter_map.erase([上一层函数用到的a])
+    
+    obj_ptr-&gt;xxx; // 这里崩溃了，因为智能指针常量不再有效
+}
+</code></pre>
+
+<p>如果这两个函数分散在两个模块里，并且是不同人写得话，很难发现这个问题。因为对双方各自的使用来说，似乎都没什么问题（上层不关心下层的内部实现，下层不应该认为常量是不会变化的）。但是放一起的话问题就来了。所以算是C++ 使用上的一个坑。解决办法也很简单，强制造成一次引用计数即可。</p>
+
+<p>以下是对<strong>func1</strong>的改造</p>
+
+<pre><code class="language-cpp">void func1(int a) {
+    std::map&lt;int, std::shared_ptr&lt;T&gt; &gt;::const_iterator iter = outter_map.find(a);
+    if (iter != outter_map.end()) {
+        // 这意味着调用方要保证被调用方不会出现问题，而间接关心被调用方的实现
+        std::shared_ptr&lt;T&gt; cache = iter-&gt;second; 
+        func2(cache);
+    }
+}
+</code></pre>
+
+<p>并且这个问题在迭代器内容不是智能指针的时候也存在，不过会导致解决方法更加复杂（因为不应该有对象的拷贝复制）。这里不再列举。</p>
+
+<h2 id="坑二-linux环境下共享静态库的问题">坑二：Linux环境下共享静态库的问题</h2>
+
+<p>这个问题之前就提及过<a href="https://www.owent.net/2014/962.html" target="_blank">《C++又一坑:动态链接库中的全局变量》</a>现在则是碰到了更有代表性的实例。</p>
+
+<p>我们的程序框架和逻辑模块的关系是。逻辑服务器编译成一个动态链接库，由框架执行<strong>dlopen</strong>加载。框架之间通信是采用<a href="https://github.com/google/protobuf" target="_blank">protobuf</a>,逻辑服务器和哭护短通信也采用的是<a href="https://github.com/google/protobuf" target="_blank">protobuf</a>。那么问题就来了，两个模块都使用了<a href="https://github.com/google/protobuf" target="_blank">protobuf</a>并且都是<strong>静态链接</strong>，而<a href="https://github.com/google/protobuf" target="_blank">protobuf</a>里的协议描述信息又是全局的（我们这里体现在了<strong>google::protobuf::FileDescriptorTables</strong>这个类上，并且它在常量区），并且存在多种协议集合。</p>
+
+<p>按照Linux的ABI的实现逻辑，这个全局的对象在框架层面会进行一次初始化构造，在动态链接库里又会执行一次初始化构造。并且次执行构造函数的this指针地址一样，成员（特别是STL）的构造数据地址不一样。</p>
+
+<p>这些导致少量的内存泄露都还是其次，最重要的问题是，在析构的时候，dlclose会进行析构的内存回收，主框架也会。这就导致了回收了两遍，并且回收不完全。</p>
+
+<p>我们这里检测到是在<strong>google::protobuf::FileDescriptorTables</strong>析构时hash table的析构的时候内存错误。而且由于现在的内存分配器都有容错，意味着<strong>这个崩溃不是必现</strong>的。使用debug版本的jemalloc可以100%复现这个问题，而使用release版的jemalloc或者ptmalloc或者tcmalloc的时候都不能及时发现。valgrind的检测信息大致如下：</p>
+
+<pre><code>==29910== Invalid read of size 8
+==29910==    at 0x4F75F0: _M_deallocate_nodes (hashtable.h:467)
+==29910==    by 0x4F75F0: clear (hashtable.h:1121)
+==29910==    by 0x4F75F0: ~_Hashtable (hashtable.h:640)
+==29910==    by 0x4F75F0: ~__unordered_map (unordered_map.h:43)
+==29910==    by 0x4F75F0: ~unordered_map (unordered_map.h:180)
+==29910==    by 0x4F75F0: ~hash_map (hash.h:172)
+==29910==    by 0x4F75F0: google::protobuf::FileDescriptorTables::~FileDescriptorTables() (descriptor.cc:606)
+==29910==    by 0x6212E48: __run_exit_handlers (in /usr/lib64/libc-2.17.so)
+==29910==    by 0x6212E94: exit (in /usr/lib64/libc-2.17.so)
+==29910==    by 0x61FBAFB: (below main) (in /usr/lib64/libc-2.17.so)
+==29910==  Address 0x702f020 is 0 bytes inside a block of size 96 free'd
+==29910==    at 0x4C2B131: operator delete(void*) (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
+==29910==    by 0x4F7650: deallocate (new_allocator.h:110)
+==29910==    by 0x4F7650: _M_deallocate_buckets (hashtable.h:509)
+==29910==    by 0x4F7650: ~_Hashtable (hashtable.h:641)
+==29910==    by 0x4F7650: ~__unordered_map (unordered_map.h:43)
+==29910==    by 0x4F7650: ~unordered_map (unordered_map.h:180)
+==29910==    by 0x4F7650: ~hash_map (hash.h:172)
+==29910==    by 0x4F7650: google::protobuf::FileDescriptorTables::~FileDescriptorTables() (descriptor.cc:606)
+==29910==    by 0x62131B9: __cxa_finalize (in /usr/lib64/libc-2.17.so)
+==29910==    by 0xF4C44E2: ???
+==29910==    by 0x40146F0: _dl_close_worker (in /usr/lib64/ld-2.17.so)
+==29910==    by 0x401525B: _dl_close (in /usr/lib64/ld-2.17.so)
+==29910==    by 0x400F2F3: _dl_catch_error (in /usr/lib64/ld-2.17.so)
+==29910==    by 0x52AA62C: _dlerror_run (in /usr/lib64/libdl-2.17.so)
+==29910==    by 0x52AA10E: dlclose (in /usr/lib64/libdl-2.17.so)
+</code></pre>
+
+<h2 id="结论">结论</h2>
+
+<p>对于前一个问题，属于纯C++坑，对于第二个问题，虽然Windows环境下不会出现问题，但是要开发跨平台代码的话，势必要对开发过程做出规范。</p>
+
+<p>如果要编写一个可以供其他多个模块使用的库（即不保证一个应用程序及其所依赖的动态链接库里链接这个库的次数总和&lt;=1的情况下），应该符合下面的条件：</p>
+
+<ol>
+<li>编译成库的时候尽量使用动态链接库(带-fPIC)<br /></li>
+<li>如果一定要使用静态库，则库里不能使用全局变量或静态局部变量<br /></li>
+<li>如果实在不能避免使用全局或静态变量，这些变量必须是<strong>POD类型</strong>且一定不能有构造初始化<br /></li>
+<li>因为<strong>条件2</strong>的原因，所以也基本和<strong>单例模式</strong>说ByeBye了<br />
+<br /></li>
+</ol>
+
+<p><strong>条件1</strong>的目的是，每个程序载入动态链接库之后再程序中只有一份地址空间，并且不会被重复载入。所以不会有问题。而是用静态库时，数据只有一份，代码却有多份。</p>
+
+<p><strong>条件3</strong>的原因在于，很有可能程序在执行一段时间之后再加载动态链接库，如果存在构造初始化，那么在加载这个动态链接库的时候还是会把之前初始化正常的数据给冲刷掉。</p>
+
+<p>不过由于纯C没有构造初始化一说，所以语言层面就已经避免了<strong>条件2</strong>和<strong>条件3</strong>带来的问题。但是对<strong>条件2</strong>纯C仍然需要小心，特别是对于那些声明为启动main前执行的函数和退出后执行的函数。</p>
+
+<blockquote>
+<p>Written with <a href="https://stackedit.io/" target="_blank">StackEdit</a>.</p>
+</blockquote>
+</div>
+      <hr />
+      <footer class="article-footer">
+        <div class="article-panel-footer article-meta article-footer">
+          <span class="article-meta-left">
+  <ol>
+    
+    <li><a href='//owent.net/categories/article.html'>Article</a></li>
+    
+    <li><a href='//owent.net/categories/work.html'>Work</a></li>
+    
+  </ol>
+</span>
+          <span class="article-meta-right"><time datetime='2015-07-25T14:53:44.000&#43;00:00' itemprop="datePublished">2015-07-25</time></span>
+          <span class="clearfix"></span>
+        </div>
+        
+        
+<div class="article-tags">
+  <ul class="article-tag-list">
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/c.html'>c</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/c&#43;&#43;0x/11.html'>c++0x/11</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/c&#43;&#43;11.html'>c++11</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/cpp.html'>cpp</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/g&#43;&#43;.html'>g++</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/gcc.html'>gcc</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/linux.html'>linux</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/stl.html'>STL</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/%E5%86%85%E5%AD%98%E5%AE%9E%E7%8E%B0.html'>内存实现</a></li>
+    
+  </ul>
+</div>
+
+      </footer>
+    </div>
+    
+<hr />
+<nav id="article-nav">
+  <ul class="pagination">
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-newer" class="article-nav-link-wrap" href='//owent.net/2015/1194.html'>
+        上一篇<strong>libcopp更新 (merge boost 1.59 context)</strong>
+      </a>
+    </li>
+  
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-older" class="article-nav-link-wrap" href='//owent.net/2015/1182.html'>
+        下一篇<strong>Redis全异步(HA)Driver设计稿</strong>
+      </a>
+    </li>
+  
+  </ul>
+</nav>
+
+    
+<hr />
+<section id="comments">
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+var disqus_config = function () {
+
+this.page.identifier = '1189';
+
+};
+(function() { 
+var d = document, s = d.createElement('script');
+s.src = 'https://owent.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+
+  </div>
+</article></div>
+</section></div>
+<footer id="footer">
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      <strong id="footer-left">
+        &copy; 2019
+        OWenT
+        
+        
+      </strong>
+      <strong id="footer-right">
+        
+        
+        <a href="https://github.com/owent/blog-hugo" target="_blank">本站源码</a>,
+        
+        发布者 <a href="https://gohugo.io/" target="_blank">Hugo</a>,
+        主题 <a href="https://github.com/owt5008137/hugo-theme-distinctionpp" target="_blank">distinctionpp</a>
+      </strong>
+      <span class="clearfix"></span>
+    </div>
+  </div>
+</footer>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js' crossorigin="anonymous"></script>
+  
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js' crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js'></script>
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/bash.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cpp.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/capnproto.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cmake.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/d.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/diff.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/dos.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/erlang.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/less.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/lua.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/php.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/powershell.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/protobuf.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/profile.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/typescript.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/vim.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/rust.min.js'></script>
+<script type="text/javascript">
+jQuery(function (){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/highlight.js\/9.15.6\/styles\/vs2015.min.css" />');
+    if (window.JSON) {
+        hljs.configure(JSON.parse("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    } else {
+        hljs.configure(evel("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    }
+    jQuery('pre\x3ecode').each(function(i, block) {
+        try {
+            hljs.highlightBlock(block);
+        } catch (e) {
+            if (window.console) {
+                console.log(e.toString() + "\r\nMaybe can not detect the language");
+            }
+        }
+    });
+});
+</script>
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+        dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+    gtag('config', 'UA-19298704-1');
+</script>
+
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js'></script>
+<script type="text/javascript">
+jQuery(function(){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/KaTeX\/0.10.0\/katex.min.css" />');
+    renderMathInElement(document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "\\[", right: "\\]", display: true},
+            {left: "\\(", right: "\\)", display: false},
+            {left: "`$", right: "$`", display: false}
+        ],
+        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    });
+});
+</script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js'></script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/mermaid/8.0.0/mermaid.min.js'></script>
+
+</div>
+</body></html>

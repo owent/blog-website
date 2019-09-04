@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  
+  
+  <meta charset="utf-8" />
+  <title>ARM 交叉编译环境搭建|I&#39;m OWenT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link rel="canonical" href="//owent.net/2013/738.html">
+  <link href="//owent.net/index.xml" rel="alternate" type="application/rss+xml" title="I&#39;m OWenT" />
+  
+  <link rel="icon" href='../favicon.ico' />
+  
+  
+  <link rel="stylesheet" href='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css' crossorigin="anonymous" />
+  
+  <link rel="stylesheet" href='//owent.net/css/style.css' />
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js' crossorigin="anonymous"></script>
+  
+  
+  
+  <link rel="stylesheet" href='//owent.net/css/syntax.css' />
+  
+</head>
+<body><div id="container"><div id="wrap">
+<header id="header">
+  <div id="banner"></div>
+  <div id="header-outer">
+    <div id="header-title">
+      <h1 id="site-title">
+        <a href="//owent.net" id="logo">I&#39;m OWenT</a>
+      </h1>
+      
+      <h2 id="site-description">Challenge Everything</h2>
+      
+    </div>
+    <div id="header-inner">
+      <nav id="main-nav" class="navbar navbar-expand-md navbar-dark">
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#main-nav-links" aria-controls="main-nav-links" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <a id="main-nav-brand" class="navbar-brand collapse" href="#">#</a>
+        <div class="collapse navbar-collapse" id="main-nav-links">
+          <ul class="navbar-nav mr-auto">
+            
+              
+                <li class="nav-item"><a class="nav-link" href="../" title='Home'>Home</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../archives.html" title='Archives'>Archives</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../about.html" title='About'>About</a></li>
+              
+            
+            <li class="nav-item"><a id="nav-rss-link" class="nav-link" href="//owent.net/index.xml" title='RSS订阅'>RSS订阅</a></li>
+          </ul>
+          
+          <form class="form-inline" method="get" accept-charset="UTF-8" action='//www.bing.com/search'>
+            <input type="hidden" name='q1' value='site:owent.net' />
+            <input class="form-control" type="text" placeholder='搜索' name='q' />
+            <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit">搜索</button>
+          </form>
+          
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+<div id="main"><section id="main-content">
+<div id="post-content"><article id="post-3264b0008e0739041d02ed669b170b4d" class="article-panel article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-panel-inner article-inner">
+    <div class="article-inner">
+      <header class="article-header"><h1 itemprop="name"><a class='article-title' href="//owent.net/2013/738.html" target="_blank" itemprop="url">ARM 交叉编译环境搭建</a></h1></header><hr />
+      <div id="toc" class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right"><nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#方案一-利用android-ndk-jni">方案一：（利用Android ndk + jni）</a></li>
+<li><a href="#方案二-利用android-ndk建立独立的toolchains">方案二：（利用Android ndk建立独立的toolchains）</a></li>
+<li><a href="#方案三-自己搞个arm版gcc编译器">方案三：（自己搞个Arm版GCC编译器）</a></li>
+<li><a href="#方案四-别人有编译好直接给你用哇">方案四：（别人有编译好直接给你用哇）</a></li>
+<li><a href="#方案五-还是人家的工具脚本">方案五：（还是人家的工具脚本）</a></li>
+<li><a href="#方案六-arm官方推荐">方案六：（ARM官方推荐）</a></li>
+</ul></li>
+</ul>
+</nav></div><br />
+      <div class="article-entry" itemprop="articleBody">
+
+<p>最近研究了一下ARM的交叉编译环境搭建，太麻烦了必须作一下记录啊。<br />
+前两个方法比较简单一点，关键是淫家Google帮你弄好了大部分功能</p>
+
+<h2 id="方案一-利用android-ndk-jni">方案一：（利用Android ndk + jni）</h2>
+
+<p>使用Android NDK的第一步当然是下载Android NDK啦。<br />
+<a href="http://developer.android.com/tools/sdk/ndk/index.html" target="_blank">http://developer.android.com/tools/sdk/ndk/index.html</a><br />
+使用jni的话，还必须下载相应的Android SDK<br />
+<a href="http://developer.android.com/sdk/index.html" target="_blank">http://developer.android.com/sdk/index.html</a><br />
+下载完后可以使用 \$ANDROID_SDK_ROOT/sdk/tools/android update sdk –no-ui 来更新SDK包<br />
+附注：ANDROID_SDK_ROOT指代Android SDK根目录，NDK_ROOT指代Android NDK根目录。下同。</p>
+
+<pre><code> 为了方便可以把\$ANDROID_SDK_ROOT/sdk/tools:\$ANDROID_SDK_ROOT/sdk/platform-tools:\$NDK_ROOT 加到环境变量PATH里去
+</code></pre>
+
+<p>另外,Android 如果要命令行编译，需要ant和ant扩展，需要安装 Android 依赖的32位库<br />
+大致上是 glibc.i686 libzip.i686 libzip-devel.i686 libstdc++.i686 ant ant-* jdk<br />
+其中 libc.i686 libzip.i686 libzip-devel.i686 libstdc++.i686 ant ant-* 可以用 yum install或apt-get install 安装<br />
+jdk最好是官网下一个rpm包安装  rpm -ivh *.rpm</p>
+
+<pre><code>yum install glibc.i686 libzip.i686 libzip-devel.i686 libstdc++.i686 ant ant-*  #Debian or Ubuntu
+apt-get install glibc.i686 libzip.i686 libzip-devel.i686 libstdc++.i686 ant ant-*  #Redhat or Fedora or CentOS
+rpm -ivh [jdk地址,如jdk-7u17-linux-x64.rpm]
+</code></pre>
+
+<p>使用NDK+jni交叉编译的时候需要修改Android.mk文件<br />
+位于:<br />
+<strong>[工程目录]/jni/Android.mk</strong><br />
+编译时cd进工程目录然后调用 \$NDK_ROOT/ndk-build 即可，其他的和标准的Android开发流程一样<br />
+详见：<a href="http://developer.android.com/tools/sdk/ndk/index.html" target="_blank">http://developer.android.com/tools/sdk/ndk/index.html</a><br />
+如果要打包成apk，可以执行</p>
+
+<pre><code>​ant -f build.xml clean debug -Dsdk.dir=$ANDROID_SDK_ROOT
+</code></pre>
+
+<h2 id="方案二-利用android-ndk建立独立的toolchains">方案二：（利用Android ndk建立独立的toolchains）</h2>
+
+<p>使用Android NDK的第一步当然还是下载Android NDK啦。<br />
+<a href="http://developer.android.com/tools/sdk/ndk/index.html" target="_blank">http://developer.android.com/tools/sdk/ndk/index.html</a></p>
+
+<p>​这个Google提供了提取交叉编译环境的脚本，所谓不用白不用啦是吧。<br />
+还有这笔第一种方法好的地方在于，不用写Android.mk啦,大部分开源库，直接configure之后该一点点生成的不合理的地方就OK了，我拿tcpdump小试过牛刀，改了两处configure文件和三处源代码就搞定了，哈哈</p>
+
+<pre><code># 构建交叉编译Toolchain:
+$NDK_ROOT/build/tools/make-standalone-toolchain.sh --system=linux-x86_64 --toolchain=arm-linux-androideabi-4.7   # 具体的这两个参数的值要根据当前的环境搞哈
+cp /tmp/... ... # 复制包，在上一条执行的结尾可以看到他把包扔哪去了
+tar -zxvf ... # 解压toolchains
+# 或者直接生成到目标目录
+$NDK_ROOT/build/tools/make-standalone-toolchain.sh --system=linux-x86_64 --toolchain=arm-linux-androideabi-4.7 --install-dir=/tmp/my-android-toolchain  # 同样
+参数的值要根据当前的环境搞哈
+
+# 新增环境变量:
+export PATH=[新toolchains路径]/bin:$PATH
+export CC=arm-linux-androideabi-gcc  # 如果是其他的名字就设成其他的名字，建议实现ls一下那个目录
+export CXX=arm-linux-androideabi-g++ # 如果是其他的名字就设成其他的名字，建议实现ls一下那个目录
+export CXXFLAGS=&quot;-lstdc++&quot;           # 可选
+</code></pre>
+
+<p>然后就可以交叉编译了，其实感觉还是 <strong>env CC=arm-linux-androideabi-gcc CXX=arm-linux-androideabi-g++ CXXFLAGS=&ldquo;-lstdc++&rdquo;</strong> 执行的指令 这样比较好<br />
+另外，因为Android自带的库比较少，要用个什么东西还得一个一个编译依赖库，挺坑的</p>
+
+<h2 id="方案三-自己搞个arm版gcc编译器">方案三：（自己搞个Arm版GCC编译器）</h2>
+
+<p>本来打算参照 <a href="https://www.owent.net/2013/730.html" target="_blank">Linux 编译安装 GCC 4.8</a> 的脚本改进而来<br />
+后来发现太麻烦了, 大概是先编译arm架构用得binutils、newlib，再准备GCC的依赖库，和编译GCC 4.8的依赖库一样，然后编译初版的arm gcc<br />
+接下来要以ARM架构为目标重新编译Linux kernel、glibc、glibc-ports、glibc-linuxthreads、libc、libz等等，然后再编译完整的cross-compile的gcc<br />
+大致是这样，太麻烦了，一时半会搞不定</p>
+
+<h2 id="方案四-别人有编译好直接给你用哇">方案四：（别人有编译好直接给你用哇）</h2>
+
+<p>无意中找到的，真的是无意 <a href="https://launchpad.net/gcc-arm-embedded" target="_blank">https://launchpad.net/gcc-arm-embedded</a><br />
+这里有很多版本的编译好的GCC和源码，也有文档教你怎么用源码编译<br />
+写得比较清晰简单，我就不Cope-Paste了.<br />
+不过用起来不太爽，我写了个hello world链接选项就要手写–specs=nano.specs -lc -lc -lrdimon<br />
+总而言之，就是很难用啊很难用</p>
+
+<h2 id="方案五-还是人家的工具脚本">方案五：（还是人家的工具脚本）</h2>
+
+<p>还是无意中找到滴 <a href="http://crosstool-ng.org/" target="_blank">http://crosstool-ng.org/</a><br />
+这玩意依赖 bison gperf flex texinfo libtool ncurses-libs ncurses-devel gawk gcc gcc-c++ gcc-java glibc glibc-common libc-client-devel libc-client glibc-devel glibc-static glibc-utils (确切地说是编译GCC需要用)<br />
+使用方法依然照着文档，比较简单<br />
+还有，这个工具提供了一个<strong>可视化的图形界面</strong>，比较Nice</p>
+
+<pre><code>ct-ng menuconfig # 启动可视化界面
+# 其实可以类似这样搞
+ct-ng arm-unknown-linux-gnueabi
+ct-ng menuconfig
+# 然后Load Config，再改，比较Nice，最后再编译toolchains
+ct-ng build
+</code></pre>
+
+<p>可以用来设置要编译的库和环境，好Nice的工具啊。不过乱选可能会搭不起来，比较麻烦<br />
+<strong>另外，他的下载包的过程啥也看不见，如果下载包失败了，可以手动去下载来对应的版本，扔进源码目录里(默认是~/src)</strong><br />
+还是Google的用起来比较轻松愉快哈</p>
+
+<h2 id="方案六-arm官方推荐">方案六：（ARM官方推荐）</h2>
+
+<p>ARM官方介绍了很多工具 <a href="http://www.arm.com/zh/support/university/tools.php" target="_blank">http://www.arm.com/zh/support/university/tools.php</a><br />
+不过大多是收费的<br />
+我只试用了Windows下的DS-5 <a href="http://www.arm.com/zh/products/tools/software-tools/ds-5/ds-5-downloads.php" target="_blank">点击这里可以下载</a><br />
+安装完毕后，bin目录里有个脚本 console.bat 可以用来生成环境变量<br />
+之后重定义CC和CXX环境变量就可以使用新的ARM编译器了（这个我也是拿tcpdump测试滴，需要改一点configure，注释掉cross compile报错的部分，而且make install也有点异常，我手动install滴）</p>
+</div>
+      <hr />
+      <footer class="article-footer">
+        <div class="article-panel-footer article-meta article-footer">
+          <span class="article-meta-left">
+  <ol>
+    
+    <li><a href='//owent.net/categories/work.html'>Work</a></li>
+    
+  </ol>
+</span>
+          <span class="article-meta-right"><time datetime='2013-04-11T17:55:04.000&#43;00:00' itemprop="datePublished">2013-04-11</time></span>
+          <span class="clearfix"></span>
+        </div>
+        
+        
+<div class="article-tags">
+  <ul class="article-tag-list">
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/android.html'>android</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/arm.html'>arm</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/cross-compile.html'>cross-compile</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/crosstool.html'>crosstool</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/gcc.html'>gcc</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/jni.html'>jni</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/linux.html'>linux</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/ndk.html'>ndk</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/toolchains.html'>toolchains</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91.html'>交叉编译</a></li>
+    
+  </ul>
+</div>
+
+      </footer>
+    </div>
+    
+<hr />
+<nav id="article-nav">
+  <ul class="pagination">
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-newer" class="article-nav-link-wrap" href='//owent.net/2013/740.html'>
+        上一篇<strong>Lnmp yum 安装脚本 (for CentOS)</strong>
+      </a>
+    </li>
+  
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-older" class="article-nav-link-wrap" href='//owent.net/2013/730.html'>
+        下一篇<strong>Linux 编译安装 GCC 4.8</strong>
+      </a>
+    </li>
+  
+  </ul>
+</nav>
+
+    
+<hr />
+<section id="comments">
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+var disqus_config = function () {
+
+this.page.identifier = '738';
+
+};
+(function() { 
+var d = document, s = d.createElement('script');
+s.src = 'https://owent.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+
+  </div>
+</article></div>
+</section></div>
+<footer id="footer">
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      <strong id="footer-left">
+        &copy; 2019
+        OWenT
+        
+        
+      </strong>
+      <strong id="footer-right">
+        
+        
+        <a href="https://github.com/owent/blog-hugo" target="_blank">本站源码</a>,
+        
+        发布者 <a href="https://gohugo.io/" target="_blank">Hugo</a>,
+        主题 <a href="https://github.com/owt5008137/hugo-theme-distinctionpp" target="_blank">distinctionpp</a>
+      </strong>
+      <span class="clearfix"></span>
+    </div>
+  </div>
+</footer>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js' crossorigin="anonymous"></script>
+  
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js' crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js'></script>
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/bash.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cpp.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/capnproto.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cmake.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/d.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/diff.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/dos.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/erlang.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/less.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/lua.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/php.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/powershell.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/protobuf.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/profile.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/typescript.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/vim.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/rust.min.js'></script>
+<script type="text/javascript">
+jQuery(function (){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/highlight.js\/9.15.6\/styles\/vs2015.min.css" />');
+    if (window.JSON) {
+        hljs.configure(JSON.parse("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    } else {
+        hljs.configure(evel("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    }
+    jQuery('pre\x3ecode').each(function(i, block) {
+        try {
+            hljs.highlightBlock(block);
+        } catch (e) {
+            if (window.console) {
+                console.log(e.toString() + "\r\nMaybe can not detect the language");
+            }
+        }
+    });
+});
+</script>
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+        dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+    gtag('config', 'UA-19298704-1');
+</script>
+
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js'></script>
+<script type="text/javascript">
+jQuery(function(){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/KaTeX\/0.10.0\/katex.min.css" />');
+    renderMathInElement(document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "\\[", right: "\\]", display: true},
+            {left: "\\(", right: "\\)", display: false},
+            {left: "`$", right: "$`", display: false}
+        ],
+        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    });
+});
+</script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js'></script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/mermaid/8.0.0/mermaid.min.js'></script>
+
+</div>
+</body></html>

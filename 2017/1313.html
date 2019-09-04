@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  
+  
+  <meta charset="utf-8" />
+  <title>近期的一个协程流程BUG|I&#39;m OWenT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link rel="canonical" href="//owent.net/2017/1313.html">
+  <link href="//owent.net/index.xml" rel="alternate" type="application/rss+xml" title="I&#39;m OWenT" />
+  
+  <link rel="icon" href='../favicon.ico' />
+  
+  
+  <link rel="stylesheet" href='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css' crossorigin="anonymous" />
+  
+  <link rel="stylesheet" href='//owent.net/css/style.css' />
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js' crossorigin="anonymous"></script>
+  
+  
+  
+  <link rel="stylesheet" href='//owent.net/css/syntax.css' />
+  
+</head>
+<body><div id="container"><div id="wrap">
+<header id="header">
+  <div id="banner"></div>
+  <div id="header-outer">
+    <div id="header-title">
+      <h1 id="site-title">
+        <a href="//owent.net" id="logo">I&#39;m OWenT</a>
+      </h1>
+      
+      <h2 id="site-description">Challenge Everything</h2>
+      
+    </div>
+    <div id="header-inner">
+      <nav id="main-nav" class="navbar navbar-expand-md navbar-dark">
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#main-nav-links" aria-controls="main-nav-links" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <a id="main-nav-brand" class="navbar-brand collapse" href="#">#</a>
+        <div class="collapse navbar-collapse" id="main-nav-links">
+          <ul class="navbar-nav mr-auto">
+            
+              
+                <li class="nav-item"><a class="nav-link" href="../" title='Home'>Home</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../archives.html" title='Archives'>Archives</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../about.html" title='About'>About</a></li>
+              
+            
+            <li class="nav-item"><a id="nav-rss-link" class="nav-link" href="//owent.net/index.xml" title='RSS订阅'>RSS订阅</a></li>
+          </ul>
+          
+          <form class="form-inline" method="get" accept-charset="UTF-8" action='//www.bing.com/search'>
+            <input type="hidden" name='q1' value='site:owent.net' />
+            <input class="form-control" type="text" placeholder='搜索' name='q' />
+            <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit">搜索</button>
+          </form>
+          
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+<div id="main"><section id="main-content">
+<div id="post-content"><article id="post-907e86d40dd5197546b4aa33ced46170" class="article-panel article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-panel-inner article-inner">
+    <div class="article-inner">
+      <header class="article-header"><h1 itemprop="name"><a class='article-title' href="//owent.net/2017/1313.html" target="_blank" itemprop="url">近期的一个协程流程BUG</a></h1></header><hr />
+      <div id="toc" class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right"><nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#libcopp-1-的执行流程"><a href="https://github.com/owt5008137/libcopp" target="_blank">libcopp</a>的执行流程</a></li>
+<li><a href="#执行流程">执行流程</a></li>
+<li><a href="#问题流程">问题流程</a></li>
+<li><a href="#解决方案">解决方案</a></li>
+</ul></li>
+</ul>
+</nav></div><br />
+      <div class="article-entry" itemprop="articleBody">
+
+<p>最近一直没什么时间整理近期碰到的问题，今天思考了一下之前碰到的一个临时处理的BUG，顺便写点东西清理一下思路。</p>
+
+<p>其实严格来说这个BUG更应该是一个流程试用问题，不过这个问题应该是需要能在协程库里检测并抛出错误来。</p>
+
+<h2 id="libcopp-1-的执行流程"><a href="https://github.com/owt5008137/libcopp" target="_blank">libcopp</a>的执行流程</h2>
+
+<p>这个BUG涉及最底层context的执行流程，这个协程库切入有两个接口（start和resume），截止目前为止，这两个接口其实是对等的，然后有一个切出接口（yield）。切入的时候需要记录调用者的执行上下文，用于在切出时上下文切出到哪里。问题是各种情况下的这个上下文保存的执行状态。</p>
+
+<p>然后再来看上下文切换的代码，第一部分是首次切入的入口（调用start函数）。</p>
+
+<pre><code class="language-cpp">void coroutine_context_base::coroutine_context_callback(::copp::fcontext::transfer_t src_ctx) {
+    assert(src_ctx.data);
+    if (NULL == src_ctx.data) {
+        abort();
+        return;
+    }
+
+    // copy jump_src_data_t in case it's destroyed later
+    jump_src_data_t jump_src = *reinterpret_cast&lt;jump_src_data_t *&gt;(src_ctx.data);
+
+    // this must in a coroutine
+    coroutine_context_base *ins_ptr = jump_src.to_co;
+    assert(ins_ptr);
+    if (NULL == ins_ptr) {
+        abort();
+        return;
+    }
+
+    // update caller of to_co
+    ins_ptr-&gt;caller_ = src_ctx.fctx;
+
+    // save from_co's fcontext and switch status
+    if (UTIL_CONFIG_NULLPTR != jump_src.from_co) {
+        jump_src.from_co-&gt;callee_ = src_ctx.fctx;
+        int from_status = status_t::EN_CRS_RUNNING; // from coroutine change status from running to ready
+        jump_src.from_co-&gt;status_.compare_exchange_strong(from_status, status_t::EN_CRS_READY);
+    }
+
+    // this_coroutine
+    set_this_coroutine_context(ins_ptr);
+
+    // run logic code
+    ins_ptr-&gt;run_and_recv_retcode(jump_src.priv_data);
+
+    ins_ptr-&gt;status_.store(status_t::EN_CRS_FINISHED);
+    // jump back to caller
+    ins_ptr-&gt;yield();
+}
+</code></pre>
+
+<p>最重要的是*save from_co&rsquo;s fcontext and switch status*下面的这一段。这里的作用就是切入后要把跳入前的上下文保存到来源的协程中。</p>
+
+<p>然后是恢复的流程（调用resume/yield函数）：</p>
+
+<pre><code class="language-cpp">void coroutine_context_base::jump_to(fcontext::fcontext_t &amp;to_fctx, stack_context &amp;from_sctx, stack_context &amp;to_sctx,
+                                     jump_src_data_t &amp;jump_transfer) UTIL_CONFIG_NOEXCEPT {
+
+    copp::fcontext::transfer_t res;
+    jump_src_data_t *jump_src;
+    int from_status;
+    bool swap_success;
+// can not use any more stack now
+// can not initialize those vars here
+
+#ifdef COPP_MACRO_USE_SEGMENTED_STACKS
+    assert(&amp;from_sctx != &amp;to_sctx);
+    // ROOT-&gt;A: jump_transfer.from_co == NULL, jump_transfer.to_co == A, from_sctx == A.caller_stack_, skip backup segments
+    // A-&gt;B.start(): jump_transfer.from_co == A, jump_transfer.to_co == B, from_sctx == B.caller_stack_, backup segments
+    // B.yield()-&gt;A: jump_transfer.from_co == B, jump_transfer.to_co == NULL, from_sctx == B.callee_stack_, skip backup segments
+    if (UTIL_CONFIG_NULLPTR != jump_transfer.from_co) {
+        __splitstack_getcontext(jump_transfer.from_co-&gt;callee_stack_.segments_ctx);
+        if (&amp;from_sctx != &amp;jump_transfer.from_co-&gt;callee_stack_) {
+            memcpy(&amp;from_sctx.segments_ctx, &amp;jump_transfer.from_co-&gt;callee_stack_.segments_ctx, sizeof(from_sctx.segments_ctx));
+        }
+    } else {
+        __splitstack_getcontext(from_sctx.segments_ctx);
+    }
+    __splitstack_setcontext(to_sctx.segments_ctx);
+#endif
+    res = copp::fcontext::copp_jump_fcontext(to_fctx, &amp;jump_transfer);
+    if (NULL == res.data) {
+        abort();
+        return;
+    }
+    jump_src = reinterpret_cast&lt;jump_src_data_t *&gt;(res.data);
+    assert(jump_src);
+
+    /**
+     * save from_co's fcontext and switch status
+     * we should use from_co in transfer_t, because it may not jump from jump_transfer.to_co
+     *
+     * if we jump sequence is A-&gt;B-&gt;C-&gt;A.resume(), and if this call is A-&gt;B, then
+     * jump_src-&gt;from_co = C, jump_src-&gt;to_co = A, jump_transfer.from_co = A, jump_transfer.to_co = B
+     * and now we should save the callee of C and set the caller of A = C
+     *
+     * if we jump sequence is A-&gt;B.yield()-&gt;A, and if this call is A-&gt;B, then
+     * jump_src-&gt;from_co = B, jump_src-&gt;to_co = NULL, jump_transfer.from_co = A, jump_transfer.to_co = B
+     * and now we should save the callee of B and should change the caller of A
+     *
+     */
+
+    // update caller of to_co if not jump from yield mode
+    if (UTIL_CONFIG_NULLPTR != jump_src-&gt;to_co) {
+        jump_src-&gt;to_co-&gt;caller_ = res.fctx;
+    }
+
+    if (UTIL_CONFIG_NULLPTR != jump_src-&gt;from_co) {
+        jump_src-&gt;from_co-&gt;callee_ = res.fctx;
+        from_status = jump_src-&gt;from_co-&gt;status_.load();
+        if (status_t::EN_CRS_RUNNING == from_status) {
+            jump_src-&gt;from_co-&gt;status_.compare_exchange_strong(from_status, status_t::EN_CRS_READY);
+        } else if (status_t::EN_CRS_FINISHED == from_status) {
+            // if in finished status, change it to exited
+            jump_src-&gt;from_co-&gt;status_.store(status_t::EN_CRS_EXITED);
+        }
+    }
+
+    // private data
+    jump_transfer.priv_data = jump_src-&gt;priv_data;
+
+    // this_coroutine
+    set_this_coroutine_context(jump_transfer.from_co);
+    // resume running status of from_co
+    if (NULL != jump_transfer.from_co) {
+        from_status = jump_transfer.from_co-&gt;status_.load();
+        swap_success = false;
+        while (!swap_success &amp;&amp; status_t::EN_CRS_READY == from_status) {
+            swap_success = jump_transfer.from_co-&gt;status_.compare_exchange_strong(from_status, status_t::EN_CRS_RUNNING);
+        }
+    }
+}
+</code></pre>
+
+<p>同样，需要关注的部分是*update caller of to_co if not jump from yield mode*后面的保存上下下文的部分。</p>
+
+<p>所以到这里可以看到第一个麻烦的地方，流程上的两种（start/resume和yield）和上下文切换的两种（首次和后续）并不匹配；第二个麻烦的地方在于只有在切入完成以后才能拿到切入时切入方的上下文。所以导致执行流程比较复杂。</p>
+
+<h2 id="执行流程">执行流程</h2>
+
+<p>首先是正常的执行流程。</p>
+
+<p><strong>外部-&gt;协程A（yield）[-&gt;外部(resume)-&gt;协程A(yield)]&hellip;-&gt;外部</strong></p>
+
+<p>这时候，首次切入的时候，由首次的回调函数保存上下文。yield时，相当于切入的<strong>copp_jump_fcontext</strong>完成return，而后由后面的代码完成把上下文保存进协程的工作。resume的时候，相当于yield的<strong>copp_jump_fcontext</strong>完成return，然后用同样的方式保存上下文。</p>
+
+<p>其次是一个协程启动另一个协程，然后yield回前一个，走类似链式的流程，也是类似栈的流程。</p>
+
+<p><strong>外部-&gt;协程A（start）-&gt;协程B（yield）-&gt;协程A（yield）-&gt;外部</strong></p>
+
+<p>这种流程在携程B会记录caller为A的切出点，那么切回时流程也是走上面第一种情况一样的流程。</p>
+
+<h2 id="问题流程">问题流程</h2>
+
+<p>这两种流程最常用，并且已经使用很久了并不会有什么问题。然后第三种情况是最近一个特殊流程导致的。</p>
+
+<p><strong>外部-&gt;协程A（start）-&gt;协程B（resume）-&gt;协程A（yield）-&gt;&hellip;</strong></p>
+
+<p>按最早的设计，协程A通过resume或者start接口第二次切入后，会更新协程A的caller为协程B（注释里写得状态信息更完整一些，但是考虑的调用链更长）。但是现在精简下调用链和这个执行流程，就不容易发现，这也是不正确的。因为这时候再也切不回最外部的调用者了。</p>
+
+<p>然后我的第一反应是，这样的话可以尝试后续的切入流程不再更新caller，只在第一次切入时更新caller。但是这样也不正确，因为假设协程B第二次通过resume切入协程A的时候，如果没有更新调用信息，那么其实协程A已经运行了一段代码了，而协程B里记录的还是老的值，这样协程B如果使用yield那么也是不对的。</p>
+
+<p>其实我还考虑过，协程的caller保存协程指针而不只是上下文。但是这样也是有问题的，一个是数据保存的流程和生命周期很难管理，其次是碰到复杂的调用流程的话，还是没法通知某些协程通知caller。</p>
+
+<h2 id="解决方案">解决方案</h2>
+
+<p>所以最终最安全的解决方案还是加个flag禁止掉这种调用。即一旦一个协程被切入了，只能通过yield切出。而同理，没有被切入的协程，必须通过start/resume切入。</p>
+
+<p>不过其实会触发这个BUG还有另一个原因，<a href="https://github.com/atframework/libatbus" target="_blank">libatbus</a>有一处优化是，如果发送的消息目标是自己，那么会通过递归的方式直接回调接收事件（这也能够使发送给自己的消息少一次copy）。然后这个事件能导致协程调用resume。</p>
+
+<p>但是根据实际的使用情况，自己发给自己的消息是非常少见的，并且对外发豆油一次copy，发给自己减少掉这次copy意义不是很大。另外解包的CPU消耗应该本身比copy要高得多，所以我打算果断时间对<a href="https://github.com/atframework/libatbus" target="_blank">libatbus</a>给自己发消息的时序也做一次优化，模拟成异步消息。这样也能解决一些隐性的前期以来问题。</p>
+
+<p>当然有限还是先加<a href="https://github.com/owt5008137/libcopp" target="_blank">libcopp</a>的这个patch和单元测试。也是之前的单元测试没有覆盖到这种情况才导致现在才发现这种流程BUG。</p>
+
+<blockquote>
+<p>Written with <a href="https://stackedit.io/" target="_blank">StackEdit</a>.</p>
+</blockquote>
+</div>
+      <hr />
+      <footer class="article-footer">
+        <div class="article-panel-footer article-meta article-footer">
+          <span class="article-meta-left">
+  <ol>
+    
+    <li><a href='//owent.net/categories/article.html'>Article</a></li>
+    
+    <li><a href='//owent.net/categories/work.html'>Work</a></li>
+    
+  </ol>
+</span>
+          <span class="article-meta-right"><time datetime='2017-01-02T23:13:25.000&#43;00:00' itemprop="datePublished">2017-01-02</time></span>
+          <span class="clearfix"></span>
+        </div>
+        
+        
+<div class="article-tags">
+  <ul class="article-tag-list">
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/coroutine.html'>coroutine</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/%E5%8D%8F%E7%A8%8B.html'>协程</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B.html'>多线程</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97.html'>消息队列</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/%E8%BF%9B%E7%A8%8B%E9%97%B4%E9%80%9A%E4%BF%A1.html'>进程间通信</a></li>
+    
+  </ul>
+</div>
+
+      </footer>
+    </div>
+    
+<hr />
+<nav id="article-nav">
+  <ul class="pagination">
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-newer" class="article-nav-link-wrap" href='//owent.net/2017/1334.html'>
+        上一篇<strong>2016年总结</strong>
+      </a>
+    </li>
+  
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-older" class="article-nav-link-wrap" href='//owent.net/2016/1309.html'>
+        下一篇<strong>重写了llvm&#43;clang&#43;libc&#43;&#43;和libc&#43;&#43;abi的构建脚本</strong>
+      </a>
+    </li>
+  
+  </ul>
+</nav>
+
+    
+<hr />
+<section id="comments">
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+var disqus_config = function () {
+
+this.page.identifier = '1313';
+
+};
+(function() { 
+var d = document, s = d.createElement('script');
+s.src = 'https://owent.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+
+  </div>
+</article></div>
+</section></div>
+<footer id="footer">
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      <strong id="footer-left">
+        &copy; 2019
+        OWenT
+        
+        
+      </strong>
+      <strong id="footer-right">
+        
+        
+        <a href="https://github.com/owent/blog-hugo" target="_blank">本站源码</a>,
+        
+        发布者 <a href="https://gohugo.io/" target="_blank">Hugo</a>,
+        主题 <a href="https://github.com/owt5008137/hugo-theme-distinctionpp" target="_blank">distinctionpp</a>
+      </strong>
+      <span class="clearfix"></span>
+    </div>
+  </div>
+</footer>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js' crossorigin="anonymous"></script>
+  
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js' crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js'></script>
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/bash.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cpp.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/capnproto.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cmake.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/d.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/diff.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/dos.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/erlang.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/less.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/lua.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/php.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/powershell.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/protobuf.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/profile.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/typescript.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/vim.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/rust.min.js'></script>
+<script type="text/javascript">
+jQuery(function (){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/highlight.js\/9.15.6\/styles\/vs2015.min.css" />');
+    if (window.JSON) {
+        hljs.configure(JSON.parse("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    } else {
+        hljs.configure(evel("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    }
+    jQuery('pre\x3ecode').each(function(i, block) {
+        try {
+            hljs.highlightBlock(block);
+        } catch (e) {
+            if (window.console) {
+                console.log(e.toString() + "\r\nMaybe can not detect the language");
+            }
+        }
+    });
+});
+</script>
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+        dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+    gtag('config', 'UA-19298704-1');
+</script>
+
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js'></script>
+<script type="text/javascript">
+jQuery(function(){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/KaTeX\/0.10.0\/katex.min.css" />');
+    renderMathInElement(document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "\\[", right: "\\]", display: true},
+            {left: "\\(", right: "\\)", display: false},
+            {left: "`$", right: "$`", display: false}
+        ],
+        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    });
+});
+</script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js'></script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/mermaid/8.0.0/mermaid.min.js'></script>
+
+</div>
+</body></html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  
+  
+  <meta charset="utf-8" />
+  <title>理解和适配AEAD加密套件|I&#39;m OWenT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link rel="canonical" href="//owent.net/2018/1808.html">
+  <link href="//owent.net/index.xml" rel="alternate" type="application/rss+xml" title="I&#39;m OWenT" />
+  
+  <link rel="icon" href='../favicon.ico' />
+  
+  
+  <link rel="stylesheet" href='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css' crossorigin="anonymous" />
+  
+  <link rel="stylesheet" href='//owent.net/css/style.css' />
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js' crossorigin="anonymous"></script>
+  
+  
+  
+  <link rel="stylesheet" href='//owent.net/css/syntax.css' />
+  
+</head>
+<body><div id="container"><div id="wrap">
+<header id="header">
+  <div id="banner"></div>
+  <div id="header-outer">
+    <div id="header-title">
+      <h1 id="site-title">
+        <a href="//owent.net" id="logo">I&#39;m OWenT</a>
+      </h1>
+      
+      <h2 id="site-description">Challenge Everything</h2>
+      
+    </div>
+    <div id="header-inner">
+      <nav id="main-nav" class="navbar navbar-expand-md navbar-dark">
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#main-nav-links" aria-controls="main-nav-links" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <a id="main-nav-brand" class="navbar-brand collapse" href="#">#</a>
+        <div class="collapse navbar-collapse" id="main-nav-links">
+          <ul class="navbar-nav mr-auto">
+            
+              
+                <li class="nav-item"><a class="nav-link" href="../" title='Home'>Home</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../archives.html" title='Archives'>Archives</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../about.html" title='About'>About</a></li>
+              
+            
+            <li class="nav-item"><a id="nav-rss-link" class="nav-link" href="//owent.net/index.xml" title='RSS订阅'>RSS订阅</a></li>
+          </ul>
+          
+          <form class="form-inline" method="get" accept-charset="UTF-8" action='//www.bing.com/search'>
+            <input type="hidden" name='q1' value='site:owent.net' />
+            <input class="form-control" type="text" placeholder='搜索' name='q' />
+            <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit">搜索</button>
+          </form>
+          
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+<div id="main"><section id="main-content">
+<div id="post-content"><article id="post-127c0134eb0fe10c1739e55ccf5250d0" class="article-panel article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-panel-inner article-inner">
+    <div class="article-inner">
+      <header class="article-header"><h1 itemprop="name"><a class='article-title' href="//owent.net/2018/1808.html" target="_blank" itemprop="url">理解和适配AEAD加密套件</a></h1></header><hr />
+      <div id="toc" class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right"><nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#什么是aead">什么是AEAD</a></li>
+<li><a href="#扩充crypto-cipher的加密套件">扩充crypto_cipher的加密套件</a></li>
+<li><a href="#openssl的单元测试套件">openssl的单元测试套件</a></li>
+<li><a href="#libsodium和openssl的chacha20">libsodium和openssl的chacha20</a></li>
+<li><a href="#最后">最后</a></li>
+</ul></li>
+</ul>
+</nav></div><br />
+      <div class="article-entry" itemprop="articleBody">
+
+<h2 id="什么是aead">什么是AEAD</h2>
+
+<p>按照维基百科的说法。AEAD的全称是Authenticated encryption (AE) and authenticated encryption with associated data (AEAD, variant of AE)。也就是带附加数据的加密和验证算法。</p>
+
+<p>我们很多涉及IO的系统收发数据的时候一般会加上一些校验码，以便检测IO错误。而对外的socket里，这个校验码还有一个功能是挡掉一些不正常的数据。如果这时候如果我们的数据需要带上加密的话，那就是AE了。然后AEAD就是在AE的基础上，增加一些自定义数据，用于防止猜解。</p>
+
+<p>按维基百科的说法，<a href="https://en.wikipedia.org/wiki/Authenticated_encryption" target="_blank">AEAD</a>也分为 Encrypt-then-MAC (EtM，先加密，再对密文做hash) 、Encrypt-and-MAC (E&amp;M，先对原文做hash，然后分别加密原文和hash值) 和 MAC-then-Encrypt (MtE，先对原文hash，再把hash值附加到原文后，最后一起加密) 三种。</p>
+
+<p>所以，其实我们有些服务可以直接用AEAD，而不是自己去加密然后算hash值，这样反而安全性更高一些。并且像openssl这类加密算法库还能使用一些硬件加速。</p>
+
+<h2 id="扩充crypto-cipher的加密套件">扩充crypto_cipher的加密套件</h2>
+
+<p>原来我为了写 <a href="https://github.com/atframework" target="_blank">atframework</a> 的网络接入层，实现了对<a href="http://openssl.org/" target="_blank">openssl</a>和<a href="https://tls.mbed.org/" target="_blank">mbedtls</a>的适配和对接。也是为了同时满足服务器上高性能和客户端设备上易集成。既然已经有了，那么我就往这里面加入了AEAD的支持。区分加密套件是否是AEAD的类型，并且统一成一个易用的接口。<a href="http://openssl.org/" target="_blank">openssl</a>的接口实在太晦涩，而<a href="https://tls.mbed.org/" target="_blank">mbedtls</a>的接口设计比<a href="http://openssl.org/" target="_blank">openssl</a>好太多，所以接口使用了<a href="https://tls.mbed.org/" target="_blank">mbedtls</a>的形式。实际测下来，<a href="http://openssl.org/" target="_blank">openssl</a>的性能比<a href="https://tls.mbed.org/" target="_blank">mbedtls</a>高一个数量级，所以服务器还是用<a href="http://openssl.org/" target="_blank">openssl</a>比较好。</p>
+
+<p>原来的版本里，<a href="https://github.com/atframework/atframe_utils/blob/master/include/algorithm/crypto_cipher.h" target="_blank">crypto_cipher</a> 就已经支持常用的<a href="https://en.wikipedia.org/wiki/XXTEA" target="_blank">XXTEA</a>、RC4、AES-128/192/256-CFB了。并且使用<a href="http://openssl.org/" target="_blank">openssl</a> 1.1以上的花，还支持<a href="https://en.wikipedia.org/wiki/Salsa20#ChaCha_variant" target="_blank">chacha20</a>。其中<a href="https://en.wikipedia.org/wiki/XXTEA" target="_blank">XXTEA</a>是内置提供的加密算法代码，而其他的来自于加密库的cipher模块。既然扩充了，就顺便增加一下<a href="http://openssl.org/" target="_blank">openssl</a>和<a href="https://tls.mbed.org/" target="_blank">mbedtls</a>都支持的其他cipher。像是aes-128/192/256-ecb/cbc、des-ecb/cbc/ede/ede3、BLOWFISH、camellia等等。</p>
+
+<p><a href="https://en.wikipedia.org/wiki/Authenticated_encryption" target="_blank">AEAD</a>算法比原来的接口多一个associated data的参数和一个tag的参数。所以我另外加了两个接口（ <code>encrypt_aead</code> 和 <code>decrypt_aead</code> ）专门用于<a href="https://en.wikipedia.org/wiki/Authenticated_encryption" target="_blank">AEAD</a>的加解密。同时这两个API在调用的时候也会检查用户是否使用了正确的接口，防止误用。</p>
+
+<p>这里最重要的是保证数据和流程上标准化，也就是无论是用<a href="http://openssl.org/" target="_blank">openssl</a>还是<a href="https://tls.mbed.org/" target="_blank">mbedtls</a>又或是其他库加密和解密的结果要一致。那怎么实现这个呢？当然最好的方法是单元测试和CI。</p>
+
+<h2 id="openssl的单元测试套件">openssl的单元测试套件</h2>
+
+<p>之前<a href="https://github.com/atframework/atframe_utils/blob/master/include/algorithm/crypto_cipher.h" target="_blank">crypto_cipher</a>里的单元测试数据是<a href="https://tls.mbed.org/" target="_blank">mbedtls</a>里爬出来的。但是我看到<a href="http://openssl.org/" target="_blank">openssl</a>里的单元测试数据集（<a href="https://github.com/atframework/atframe_utils/blob/master/test/case/evptests.txt" target="_blank">evptests.txt</a>）更完整，覆盖也更全面。所以就直接写了代码读它的测试数据集了。配合上原来的测试数据，然后CI里的构建矩阵同时开<a href="http://openssl.org/" target="_blank">openssl</a>和<a href="https://tls.mbed.org/" target="_blank">mbedtls</a>两种模式。这样所有支持的算法就都在测试集中了。</p>
+
+<h2 id="libsodium和openssl的chacha20">libsodium和openssl的chacha20</h2>
+
+<p>现在Google的<a href="https://en.wikipedia.org/wiki/Salsa20#ChaCha_variant" target="_blank">chacha20</a>算法比较火热，所以我们支持了<a href="https://en.wikipedia.org/wiki/Salsa20#ChaCha_variant" target="_blank">chacha20</a>和<a href="https://en.wikipedia.org/wiki/Salsa20#ChaCha_variant" target="_blank">chacha20-poly1305</a>，一个仅仅是加密，另一个是<a href="https://en.wikipedia.org/wiki/Authenticated_encryption" target="_blank">AEAD</a>。我没有实测过，但是看到一些文章说，在支持硬件加速的设备上，AES-128-GCM性能是ChaCha20-Poly1305的好几倍。而现代化的设备里已经越来越多的设备支持硬件加速AES算法了。</p>
+
+<p>现在有一些开源框架支持使用<a href="https://doc.libsodium.org/" target="_blank">libsodium</a>来补充更完整的<a href="https://en.wikipedia.org/wiki/Salsa20#ChaCha_variant" target="_blank">chacha20</a>支持。<a href="https://doc.libsodium.org/" target="_blank">libsodium</a> 提供了更多的<a href="https://en.wikipedia.org/wiki/Salsa20" target="_blank">salsa20</a>系列的算法，包括chacha20-ietf、xchacha20、chacha20-poly1305、chacha20-poly1305-ietf、xchacha20-poly1305-ietf。这样如果嵌入式设备和移动终端使用<a href="https://tls.mbed.org/" target="_blank">mbedtls</a>的话，即便cipher里没有，也可以用这个库来提供 <a href="https://en.wikipedia.org/wiki/Salsa20#ChaCha_variant" target="_blank">chacha20</a> 的支持。</p>
+
+<p>在单元测试的过程中我发现，在<a href="http://openssl.org/" target="_blank">openssl</a>里的名字为chacha20-poly1305的cipher，实际上对应的是 <a href="https://doc.libsodium.org/" target="_blank">libsodium</a> 里的chacha20-poly1305-ietf。所以导致这里不得不对<a href="http://openssl.org/" target="_blank">openssl</a>的名字也做一次名字转换。另外在 <a href="http://openssl.org/" target="_blank">openssl</a> 的代码和单元测试中，所有的 <a href="https://en.wikipedia.org/wiki/Authenticated_encryption" target="_blank">AEAD</a>算法 都是支持动态iv长度、并且可以一定程度上设置associated data和tag的长度的。但是 <a href="https://doc.libsodium.org/" target="_blank">libsodium</a> 里这些长度都是固定的。这也是这两个库最大的不一致的地方。</p>
+
+<h2 id="最后">最后</h2>
+
+<p>这次也是学习了解一下这个密码学的知识吧。之前确实是不了解<a href="https://en.wikipedia.org/wiki/Authenticated_encryption" target="_blank">AEAD</a>，使用这个API和单元测试走了一遍坑之后也算是大致了解了这些加密的基本流程。像是<a href="http://openssl.org/" target="_blank">openssl</a>并没有 all in one的接口。如果想当然的用的话还是比较容易误用的，误用的结果就是可能和其他环境交互的时候出现各种不匹配的问题，也很难去查。现在封装好更易用的API并且先把坑淌一遍的话，以后在使用的时候就可以手到擒来了。</p>
+</div>
+      <hr />
+      <footer class="article-footer">
+        <div class="article-panel-footer article-meta article-footer">
+          <span class="article-meta-left">
+  <ol>
+    
+    <li><a href='//owent.net/categories/article.html'>Article</a></li>
+    
+    <li><a href='//owent.net/categories/blablabla.html'>Blablabla</a></li>
+    
+  </ol>
+</span>
+          <span class="article-meta-right"><time datetime='2018-07-01T20:49:50.000&#43;00:00' itemprop="datePublished">2018-07-01</time></span>
+          <span class="clearfix"></span>
+        </div>
+        
+        
+<div class="article-tags">
+  <ul class="article-tag-list">
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/aead.html'>aead</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/%E5%8A%A0%E5%AF%86.html'>加密</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/openssl.html'>openssl</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/mbedtls.html'>mbedtls</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/libsodium.html'>libsodium</a></li>
+    
+  </ul>
+</div>
+
+      </footer>
+    </div>
+    
+<hr />
+<nav id="article-nav">
+  <ul class="pagination">
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-newer" class="article-nav-link-wrap" href='//owent.net/2018/1809.html'>
+        上一篇<strong>Rust的第二次接触-写个小服务器程序</strong>
+      </a>
+    </li>
+  
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-older" class="article-nav-link-wrap" href='//owent.net/2018/1807.html'>
+        下一篇<strong>atsf4g-co的进化：协程框架v2、对象路由系统和一些其他细节优化</strong>
+      </a>
+    </li>
+  
+  </ul>
+</nav>
+
+    
+<hr />
+<section id="comments">
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+var disqus_config = function () {
+
+this.page.identifier = '1808';
+
+};
+(function() { 
+var d = document, s = d.createElement('script');
+s.src = 'https://owent.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+
+  </div>
+</article></div>
+</section></div>
+<footer id="footer">
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      <strong id="footer-left">
+        &copy; 2019
+        OWenT
+        
+        
+      </strong>
+      <strong id="footer-right">
+        
+        
+        <a href="https://github.com/owent/blog-hugo" target="_blank">本站源码</a>,
+        
+        发布者 <a href="https://gohugo.io/" target="_blank">Hugo</a>,
+        主题 <a href="https://github.com/owt5008137/hugo-theme-distinctionpp" target="_blank">distinctionpp</a>
+      </strong>
+      <span class="clearfix"></span>
+    </div>
+  </div>
+</footer>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js' crossorigin="anonymous"></script>
+  
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js' crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js'></script>
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/bash.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cpp.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/capnproto.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cmake.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/d.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/diff.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/dos.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/erlang.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/less.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/lua.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/php.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/powershell.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/protobuf.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/profile.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/typescript.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/vim.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/rust.min.js'></script>
+<script type="text/javascript">
+jQuery(function (){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/highlight.js\/9.15.6\/styles\/vs2015.min.css" />');
+    if (window.JSON) {
+        hljs.configure(JSON.parse("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    } else {
+        hljs.configure(evel("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    }
+    jQuery('pre\x3ecode').each(function(i, block) {
+        try {
+            hljs.highlightBlock(block);
+        } catch (e) {
+            if (window.console) {
+                console.log(e.toString() + "\r\nMaybe can not detect the language");
+            }
+        }
+    });
+});
+</script>
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+        dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+    gtag('config', 'UA-19298704-1');
+</script>
+
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js'></script>
+<script type="text/javascript">
+jQuery(function(){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/KaTeX\/0.10.0\/katex.min.css" />');
+    renderMathInElement(document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "\\[", right: "\\]", display: true},
+            {left: "\\(", right: "\\)", display: false},
+            {left: "`$", right: "$`", display: false}
+        ],
+        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    });
+});
+</script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js'></script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/mermaid/8.0.0/mermaid.min.js'></script>
+
+</div>
+</body></html>

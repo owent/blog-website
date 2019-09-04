@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  
+  
+  <meta charset="utf-8" />
+  <title>不知道是哪一年的腾讯马拉松题目 照片评级 解题报告|I&#39;m OWenT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link rel="canonical" href="//owent.net/2013/930.html">
+  <link href="//owent.net/index.xml" rel="alternate" type="application/rss+xml" title="I&#39;m OWenT" />
+  
+  <link rel="icon" href='../favicon.ico' />
+  
+  
+  <link rel="stylesheet" href='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css' crossorigin="anonymous" />
+  
+  <link rel="stylesheet" href='//owent.net/css/style.css' />
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js' crossorigin="anonymous"></script>
+  
+  
+  
+  <link rel="stylesheet" href='//owent.net/css/syntax.css' />
+  
+</head>
+<body><div id="container"><div id="wrap">
+<header id="header">
+  <div id="banner"></div>
+  <div id="header-outer">
+    <div id="header-title">
+      <h1 id="site-title">
+        <a href="//owent.net" id="logo">I&#39;m OWenT</a>
+      </h1>
+      
+      <h2 id="site-description">Challenge Everything</h2>
+      
+    </div>
+    <div id="header-inner">
+      <nav id="main-nav" class="navbar navbar-expand-md navbar-dark">
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#main-nav-links" aria-controls="main-nav-links" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <a id="main-nav-brand" class="navbar-brand collapse" href="#">#</a>
+        <div class="collapse navbar-collapse" id="main-nav-links">
+          <ul class="navbar-nav mr-auto">
+            
+              
+                <li class="nav-item"><a class="nav-link" href="../" title='Home'>Home</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../archives.html" title='Archives'>Archives</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../about.html" title='About'>About</a></li>
+              
+            
+            <li class="nav-item"><a id="nav-rss-link" class="nav-link" href="//owent.net/index.xml" title='RSS订阅'>RSS订阅</a></li>
+          </ul>
+          
+          <form class="form-inline" method="get" accept-charset="UTF-8" action='//www.bing.com/search'>
+            <input type="hidden" name='q1' value='site:owent.net' />
+            <input class="form-control" type="text" placeholder='搜索' name='q' />
+            <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit">搜索</button>
+          </form>
+          
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+<div id="main"><section id="main-content">
+<div id="post-content"><article id="post-146e1296cb8a24a92428c5d2962f7298" class="article-panel article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-panel-inner article-inner">
+    <div class="article-inner">
+      <header class="article-header"><h1 itemprop="name"><a class='article-title' href="//owent.net/2013/930.html" target="_blank" itemprop="url">不知道是哪一年的腾讯马拉松题目 照片评级 解题报告</a></h1></header><hr />
+      <div id="toc" class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right"><nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#第一题大水-懒得写">第一题大水，懒得写。</a></li>
+<li><a href="#第二题伤了很久的脑筋-想出了一个算法结果ultramanhu基于此想出了个更容易理解更容易实现的方法">第二题伤了很久的脑筋，想出了一个算法结果ultramanhu基于此想出了个更容易理解更容易实现的方法。</a></li>
+</ul></li>
+</ul>
+</nav></div><br />
+      <div class="article-entry" itemprop="articleBody">
+
+<p>在某个神奇的下午，收到一个垃圾邮件（至少被邮件系统当成了垃圾邮件）。</p>
+
+<p>结果就一不小心看到了这个充满回忆的ACM模式竞赛，还有咱腾讯的，就忍不住看了一下。</p>
+
+<p>果然好久没碰算法，脑子是会生锈的。</p>
+
+<h2 id="第一题大水-懒得写">第一题大水，懒得写。</h2>
+
+<h2 id="第二题伤了很久的脑筋-想出了一个算法结果ultramanhu基于此想出了个更容易理解更容易实现的方法">第二题伤了很久的脑筋，想出了一个算法结果ultramanhu基于此想出了个更容易理解更容易实现的方法。</h2>
+
+<p>以我这种懒人的本性，必须是也懒得写得。</p>
+
+<p>于是意思意思就干上了第三题。题目见这里 <a href="http://wenda60.com/programs/view/id-550.html" target="_blank">http://wenda60.com/programs/view/id-550.html</a></p>
+
+<p>不得不说，现在不如从前，想出这题的解法还是费了一点时间的。不过这个题目太厚道了，能有的trick在sample里都有了。</p>
+
+<p>这个题是问最少改多少个数字能让输入的数字递增，并且第一个数字不小于1。</p>
+
+<p>很显然一个增子序列嘛。但是又有一点点地不同，应为最终是修改数字，而且数字不能重的，所以增子序列里两个相邻的值还和这两个数之间的数字个数有关。</p>
+
+<p>就是这两个值的相差必须大于之间的数字个数。这里很容易就想到给最长增子序列变种，判断因素加上距离权值；</p>
+
+<p>第二个条件是第一个值必须大于等于1。我想到的简单地做法是，在序列前面加一个0。轻松加愉快啊。</p>
+
+<p>但是最长增子序列的算法是会重定向最佳值的，所以在执行检测的时候注意子序列一定要选0就OK了。</p>
+
+<p>上代码：</p>
+
+<pre><code class="language-cpp">#include &lt;cstdio&gt;
+#include &lt;iostream&gt;
+
+typedef int LISTYPE;
+
+#define LISMAXN 100005
+
+LISTYPE lR[LISMAXN];
+
+int LIScmp(int a, int b, LISTYPE list[])
+{
+    return list[a] + b - a &lt;= list[b];
+}
+
+int LISLength(LISTYPE list[], int n)
+{
+    int length = 1;
+    
+    lR[0] = 0;
+
+    for (int i = 1; i &lt; n; i++)
+    {
+        //二分查找,复杂度 log(n)
+        int b, e, m;
+        b = 0;
+        e = length - 1;
+        while (b &lt;= e &amp;&amp; e &gt;= 0)
+        {
+            m = (b + e) / 2;
+            if (LIScmp(lR[m], i, list))
+                b = m + 1;
+            else
+                e = m - 1;
+        }
+
+        if (0 == b) 
+            continue;
+
+        lR[b] = i;
+        if (b &gt;= length)
+            length++;
+    }
+    return length;
+}
+
+LISTYPE LOri[LISMAXN];
+
+int main() {
+    int n;
+    scanf(&quot;%d&quot;, &amp;n);
+
+    while (n-- &gt; 0){
+        int size;
+        scanf(&quot;%d&quot;, &amp;size);
+        LOri[0] = 0;
+        for (int i = 1; i &lt;= size; ++i){
+            scanf(&quot;%d&quot;, &amp;LOri[i]);
+        }
+
+        printf(&quot;%d\n&quot;, size + 1 - LISLength(LOri, size + 1));
+    }
+    return 0;
+}
+</code></pre>
+
+<p>不知道为什么，这个代码上去以后显示PE，我也不知道PE在哪了。（我试了各种乱加减空格和换行，都木有用，全PE。故意写错一个数，就变WA了，所以应该真的是PE）<br />
+不过反正结果对了后面就懒得再研究了，反正现在又不参赛</p>
+
+<p>PS: 最长增子序列用得是以前写得模板：<a href="https://www.owent.net/2009/74.html" target="_blank">https://www.owent.net/2009/74.html</a></p>
+</div>
+      <hr />
+      <footer class="article-footer">
+        <div class="article-panel-footer article-meta article-footer">
+          <span class="article-meta-left">
+  <ol>
+    
+    <li><a href='//owent.net/categories/article.html'>Article</a></li>
+    
+    <li><a href='//owent.net/categories/my-acm-icpc-career.html'>My ACM-ICPC Career</a></li>
+    
+  </ol>
+</span>
+          <span class="article-meta-right"><time datetime='2013-10-25T15:45:05.000&#43;00:00' itemprop="datePublished">2013-10-25</time></span>
+          <span class="clearfix"></span>
+        </div>
+        
+        
+<div class="article-tags">
+  <ul class="article-tag-list">
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/acm.html'>acm</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/c.html'>c</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/g&#43;&#43;.html'>g++</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/tencent.html'>Tencent</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/%E7%85%A7%E7%89%87%E8%AF%84%E7%BA%A7.html'>照片评级</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/%E7%BC%96%E7%A8%8B%E9%A9%AC%E6%8B%89%E6%9D%BE.html'>编程马拉松</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/%E8%85%BE%E8%AE%AF.html'>腾讯</a></li>
+    
+  </ul>
+</div>
+
+      </footer>
+    </div>
+    
+<hr />
+<nav id="article-nav">
+  <ul class="pagination">
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-newer" class="article-nav-link-wrap" href='//owent.net/2013/938.html'>
+        上一篇<strong>std和boost的function与bind实现剖析</strong>
+      </a>
+    </li>
+  
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-older" class="article-nav-link-wrap" href='//owent.net/2013/918.html'>
+        下一篇<strong>Lua 挺好用的样子</strong>
+      </a>
+    </li>
+  
+  </ul>
+</nav>
+
+    
+<hr />
+<section id="comments">
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+var disqus_config = function () {
+
+this.page.identifier = '930';
+
+};
+(function() { 
+var d = document, s = d.createElement('script');
+s.src = 'https://owent.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+
+  </div>
+</article></div>
+</section></div>
+<footer id="footer">
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      <strong id="footer-left">
+        &copy; 2019
+        OWenT
+        
+        
+      </strong>
+      <strong id="footer-right">
+        
+        
+        <a href="https://github.com/owent/blog-hugo" target="_blank">本站源码</a>,
+        
+        发布者 <a href="https://gohugo.io/" target="_blank">Hugo</a>,
+        主题 <a href="https://github.com/owt5008137/hugo-theme-distinctionpp" target="_blank">distinctionpp</a>
+      </strong>
+      <span class="clearfix"></span>
+    </div>
+  </div>
+</footer>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js' crossorigin="anonymous"></script>
+  
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js' crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js'></script>
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/bash.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cpp.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/capnproto.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cmake.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/d.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/diff.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/dos.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/erlang.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/less.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/lua.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/php.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/powershell.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/protobuf.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/profile.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/typescript.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/vim.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/rust.min.js'></script>
+<script type="text/javascript">
+jQuery(function (){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/highlight.js\/9.15.6\/styles\/vs2015.min.css" />');
+    if (window.JSON) {
+        hljs.configure(JSON.parse("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    } else {
+        hljs.configure(evel("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    }
+    jQuery('pre\x3ecode').each(function(i, block) {
+        try {
+            hljs.highlightBlock(block);
+        } catch (e) {
+            if (window.console) {
+                console.log(e.toString() + "\r\nMaybe can not detect the language");
+            }
+        }
+    });
+});
+</script>
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+        dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+    gtag('config', 'UA-19298704-1');
+</script>
+
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js'></script>
+<script type="text/javascript">
+jQuery(function(){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/KaTeX\/0.10.0\/katex.min.css" />');
+    renderMathInElement(document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "\\[", right: "\\]", display: true},
+            {left: "\\(", right: "\\)", display: false},
+            {left: "`$", right: "$`", display: false}
+        ],
+        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    });
+});
+</script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js'></script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/mermaid/8.0.0/mermaid.min.js'></script>
+
+</div>
+</body></html>

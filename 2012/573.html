@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  
+  
+  <meta charset="utf-8" />
+  <title>JSON显示库 -- showJson （Javascript）|I&#39;m OWenT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link rel="canonical" href="//owent.net/2012/573.html">
+  <link href="//owent.net/index.xml" rel="alternate" type="application/rss+xml" title="I&#39;m OWenT" />
+  
+  <link rel="icon" href='../favicon.ico' />
+  
+  
+  <link rel="stylesheet" href='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css' crossorigin="anonymous" />
+  
+  <link rel="stylesheet" href='//owent.net/css/style.css' />
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js' crossorigin="anonymous"></script>
+  
+  
+  
+  <link rel="stylesheet" href='//owent.net/css/syntax.css' />
+  
+</head>
+<body><div id="container"><div id="wrap">
+<header id="header">
+  <div id="banner"></div>
+  <div id="header-outer">
+    <div id="header-title">
+      <h1 id="site-title">
+        <a href="//owent.net" id="logo">I&#39;m OWenT</a>
+      </h1>
+      
+      <h2 id="site-description">Challenge Everything</h2>
+      
+    </div>
+    <div id="header-inner">
+      <nav id="main-nav" class="navbar navbar-expand-md navbar-dark">
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#main-nav-links" aria-controls="main-nav-links" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <a id="main-nav-brand" class="navbar-brand collapse" href="#">#</a>
+        <div class="collapse navbar-collapse" id="main-nav-links">
+          <ul class="navbar-nav mr-auto">
+            
+              
+                <li class="nav-item"><a class="nav-link" href="../" title='Home'>Home</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../archives.html" title='Archives'>Archives</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../about.html" title='About'>About</a></li>
+              
+            
+            <li class="nav-item"><a id="nav-rss-link" class="nav-link" href="//owent.net/index.xml" title='RSS订阅'>RSS订阅</a></li>
+          </ul>
+          
+          <form class="form-inline" method="get" accept-charset="UTF-8" action='//www.bing.com/search'>
+            <input type="hidden" name='q1' value='site:owent.net' />
+            <input class="form-control" type="text" placeholder='搜索' name='q' />
+            <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit">搜索</button>
+          </form>
+          
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+<div id="main"><section id="main-content">
+<div id="post-content"><article id="post-f0ec0cc47bb140626b3a46afda3fb8fb" class="article-panel article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-panel-inner article-inner">
+    <div class="article-inner">
+      <header class="article-header"><h1 itemprop="name"><a class='article-title' href="//owent.net/2012/573.html" target="_blank" itemprop="url">JSON显示库 -- showJson （Javascript）</a></h1></header><hr />
+      
+      <div class="article-entry" itemprop="articleBody"><p>现在的web的js开发很方便啊，但是碰到iframe里的东西还是不方便看到变量的内容，所以就写了这么个看json内容的玩意，还可以当控制台输出用。</p>
+
+<p>很简单,有需要以后开发新功能</p>
+
+<pre><code class="language-js">/** 
+ * Show json in a new page.(For debug)
+ *
+ * Licensed under the MIT or GPL Version 3 licenses.
+ * @version 1.3
+ * @author OWenT
+ * @link http://www.owent.net
+ * @history 
+ * 		2012.12.27 
+ * 			1. 改进JSON内对象循环引用时的导致的栈溢出问题
+ * 			2. 引入层级路径
+ * 			3. 引入锚点
+ */
+ 
+ /**
+  * Object转为字符串
+  * @param {Object} json Object对象 
+  * @param {Number} tab 缩进数量
+  * @param {Object} rules 应用规则
+  * @param {String} path 当前路径
+  * @return 生成的HTML
+  */
+function json2String(json, tab, rules, path) {
+    var tabStr = &quot;&quot;, singleTab = &quot;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&quot;, isClear = false;
+    var txt = &quot;&quot;;
+    
+    if (!rules) {
+        rules = {
+            id: &quot;__json2string_process&quot; + (new Date).getTime().toString() + (json2String.baseIndex ++),
+            objs: []
+        };
+        isClear = true;
+    }
+    
+    tab = tab || 1;
+    if (!path) {
+        path = &quot;{ROOT}&quot;;
+        txt += &quot;&lt;a name=\&quot;&quot; + rules.id + &quot;.&quot; + path + &quot;\&quot;&gt; &lt;/a&gt;&quot;;
+    }
+    
+    for (var i = 0; i &lt; tab; i ++) {
+        tabStr += singleTab;
+    }
+    
+    if (!json &amp;&amp; json !== 0) {
+        txt += '&lt;span style=&quot;color: Red;&quot;&gt;null&lt;/span&gt;';
+    } else if (typeof(json) == &quot;object&quot;) {
+        var prefix = '&lt;span style=&quot;color: DarkGray; font-weight: bolder;&quot;&gt;{&lt;/span&gt;', suffix = '&lt;span style=&quot;color: DarkGray; font-weight: bolder;&quot;&gt;}&lt;/span&gt;';
+        try {		
+            if (toString.call(json).match(/array/i)) {
+                prefix = '&lt;span style=&quot;color: Orange;&quot;&gt;[&lt;/span&gt;';
+                suffix = '&lt;span style=&quot;color: Orange;&quot;&gt;]&lt;/span&gt;';
+            }
+        } catch(e) {
+            // hoho ...
+        }
+        
+        if (json[rules.id]) {
+            txt += prefix + &quot;此处引用 &lt;a style=\&quot;text-decoration: underline; color: Blue;\&quot; href=\&quot;#&quot; + rules.id + &quot;.&quot; + json[rules.id] + &quot;\&quot; target=\&quot;_self\&quot; title=\&quot;跳转到引用 &quot; + json[rules.id] + &quot;\&quot; &gt;&quot; + 
+                json[rules.id] + &quot;&lt;/a&gt;&quot; + suffix;
+            return txt;
+        }
+        json[rules.id] = path;
+        rules.objs.push(json);
+        
+        txt += prefix + &quot;&lt;br /&gt;\r\n&quot;;
+        var first = true;
+        for (var key in json) {
+            if (key == rules.id)
+                continue;
+                
+            if (first)
+                first = false;
+            else
+                txt += &quot;,&lt;br /&gt;\r\n&quot;;
+            txt += tabStr + &quot;&lt;a name=\&quot;&quot; + rules.id + &quot;.&quot; + path + &quot;.&quot; + key + &quot;\&quot;&gt; &lt;/a&gt;&quot; + &quot;&lt;strong&gt;&quot; + 
+                key + &quot;&lt;/strong&gt; : &quot; +	json2String(json[key], tab + 1, rules, path + &quot;.&quot; + key);
+        }
+        txt += &quot;&lt;br /&gt;\r\n&quot; + tabStr.substr(0, tabStr.length - singleTab.length) + suffix;
+    } else if (typeof(json) == &quot;string&quot;) {
+        txt += '&lt;span style=&quot;color: Green;&quot;&gt;&quot;' + json + '&quot;&lt;/span&gt;';
+    } else if (typeof(json) == &quot;number&quot;) {
+        txt += '&lt;span style=&quot;color: Blue;&quot;&gt;' + json + '&lt;/span&gt;';
+    } else if (typeof(json) == &quot;function&quot;) {
+        txt += '&lt;span style=&quot;color: Purple;&quot;&gt;' + json + '&lt;/span&gt;';
+    } else {
+        txt += json.toString();
+    }
+    
+    if (isClear) {
+        for (var i = 0; i &lt; rules.objs.length; ++ i) {
+            delete rules.objs[i][rules.id];
+        }
+        rules.objs = [];
+    }
+    
+    return txt;
+}
+ 
+function showJson(json, title, windowName, dlg_opt) {
+    json2String.baseIndex = json2String.baseIndex || 0;
+    
+    title = title || &quot;Json viewer&quot;;
+    windowName = windowName || &quot;result&quot; + (new Date()).toGMTString();
+    if (window.jQuery &amp;&amp; jQuery.fn &amp;&amp; jQuery.fn.dialog) {
+        $(&quot;&lt;div&gt;&lt;/div&gt;&quot;).append(json2String(json)).css({
+            &quot;text-align&quot;: &quot;left&quot;
+        }).dialog($.extend({
+            &quot;modal&quot;: false,
+            &quot;title&quot;: title,
+            &quot;width&quot;: 640,
+            &quot;height&quot;: 480,
+            &quot;buttons&quot;: {
+                &quot;关闭&quot;: function() {
+                    $( this ).dialog( &quot;close&quot; );
+                }
+            }
+        }, dlg_opt));
+    } else {
+        var wnd = window.open(&quot;about:blank&quot;, &quot;_blank&quot;, &quot;height=600, width=800, toolbar=no, menubar=no, resizable=yes, location=no, status=no&quot;, true);
+        if (!wnd)
+            alert(&quot;窗口被拦截！&quot;);
+        wnd.document.write(&quot;&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;title&gt;&quot; + title + &quot;&lt;/title&gt;&lt;/head&gt;&lt;body&gt;&quot; + json2String(json) + &quot;&lt;/body&gt;&lt;/html&gt;&quot;);
+    }
+    return wnd;
+}
+</code></pre>
+
+<ol>
+<li>更新对不同类型着色<br /></li>
+<li>如果载入了jQuery UI 则使用jQuery UI的Dialog打开，用于解决嵌套iframe时浏览器拦截问题<br /></li>
+<li>解决Object循环引用时栈溢出问题，同时增加引用的指向锚点<br />
+<br /></li>
+</ol>
+
+<p>Licensed under the MIT or GPL Version 3 licenses.</p>
+</div>
+      <hr />
+      <footer class="article-footer">
+        <div class="article-panel-footer article-meta article-footer">
+          <span class="article-meta-left">
+  <ol>
+    
+    <li><a href='//owent.net/categories/article.html'>Article</a></li>
+    
+    <li><a href='//owent.net/categories/web.html'>Web</a></li>
+    
+    <li><a href='//owent.net/categories/work.html'>Work</a></li>
+    
+  </ol>
+</span>
+          <span class="article-meta-right"><time datetime='2012-04-01T06:17:48.000&#43;00:00' itemprop="datePublished">2012-04-01</time></span>
+          <span class="clearfix"></span>
+        </div>
+        
+        
+<div class="article-tags">
+  <ul class="article-tag-list">
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/javascript.html'>Javascript</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/json.html'>JSON</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/showjson.html'>showjson</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/web.html'>Web</a></li>
+    
+  </ul>
+</div>
+
+      </footer>
+    </div>
+    
+<hr />
+<nav id="article-nav">
+  <ul class="pagination">
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-newer" class="article-nav-link-wrap" href='//owent.net/2012/584.html'>
+        上一篇<strong>Linux编译安装GCC 4.7</strong>
+      </a>
+    </li>
+  
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-older" class="article-nav-link-wrap" href='//owent.net/2012/560.html'>
+        下一篇<strong>C&#43;&#43; 新特性学习（六） — 新的字符串编码和伪随机数</strong>
+      </a>
+    </li>
+  
+  </ul>
+</nav>
+
+    
+<hr />
+<section id="comments">
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+var disqus_config = function () {
+
+this.page.identifier = '573';
+
+};
+(function() { 
+var d = document, s = d.createElement('script');
+s.src = 'https://owent.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+
+  </div>
+</article></div>
+</section></div>
+<footer id="footer">
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      <strong id="footer-left">
+        &copy; 2019
+        OWenT
+        
+        
+      </strong>
+      <strong id="footer-right">
+        
+        
+        <a href="https://github.com/owent/blog-hugo" target="_blank">本站源码</a>,
+        
+        发布者 <a href="https://gohugo.io/" target="_blank">Hugo</a>,
+        主题 <a href="https://github.com/owt5008137/hugo-theme-distinctionpp" target="_blank">distinctionpp</a>
+      </strong>
+      <span class="clearfix"></span>
+    </div>
+  </div>
+</footer>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js' crossorigin="anonymous"></script>
+  
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js' crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js'></script>
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/bash.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cpp.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/capnproto.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cmake.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/d.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/diff.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/dos.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/erlang.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/less.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/lua.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/php.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/powershell.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/protobuf.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/profile.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/typescript.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/vim.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/rust.min.js'></script>
+<script type="text/javascript">
+jQuery(function (){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/highlight.js\/9.15.6\/styles\/vs2015.min.css" />');
+    if (window.JSON) {
+        hljs.configure(JSON.parse("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    } else {
+        hljs.configure(evel("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    }
+    jQuery('pre\x3ecode').each(function(i, block) {
+        try {
+            hljs.highlightBlock(block);
+        } catch (e) {
+            if (window.console) {
+                console.log(e.toString() + "\r\nMaybe can not detect the language");
+            }
+        }
+    });
+});
+</script>
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+        dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+    gtag('config', 'UA-19298704-1');
+</script>
+
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js'></script>
+<script type="text/javascript">
+jQuery(function(){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/KaTeX\/0.10.0\/katex.min.css" />');
+    renderMathInElement(document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "\\[", right: "\\]", display: true},
+            {left: "\\(", right: "\\)", display: false},
+            {left: "`$", right: "$`", display: false}
+        ],
+        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    });
+});
+</script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js'></script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/mermaid/8.0.0/mermaid.min.js'></script>
+
+</div>
+</body></html>

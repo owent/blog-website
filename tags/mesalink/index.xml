@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>mesalink on I&#39;m OWenT</title>
+    <link>//owent.net/tags/mesalink.html</link>
+    <description>Recent content in mesalink on I&#39;m OWenT</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <managingEditor>admin@owent.net (OWenT)</managingEditor>
+    <webMaster>admin@owent.net (OWenT)</webMaster>
+    <lastBuildDate>Wed, 12 Sep 2018 12:29:50 +0000</lastBuildDate>
+    
+	<atom:link href="//owent.net/tags/mesalink/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Rust的第二次接触-写个小服务器程序</title>
+      <link>//owent.net/2018/1809.html</link>
+      <pubDate>Wed, 12 Sep 2018 12:29:50 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2018/1809.html</guid>
+      <description>JUST PRACTICE 蛮久前入门了一下 Rust 语言。它的设计模型非常地吸引C/C++的开发者。但是学习语言嘛还是要练习一下，之前也用它给我们项目写了个命令行小工具。</description>
+    </item>
+    
+  </channel>
+</rss>

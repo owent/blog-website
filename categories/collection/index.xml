@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Collection on I&#39;m OWenT</title>
+    <link>//owent.net/categories/collection.html</link>
+    <description>Recent content in Collection on I&#39;m OWenT</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <managingEditor>admin@owent.net (OWenT)</managingEditor>
+    <webMaster>admin@owent.net (OWenT)</webMaster>
+    <lastBuildDate>Fri, 23 Jan 2015 12:02:44 +0000</lastBuildDate>
+    
+	<atom:link href="//owent.net/categories/collection/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>gitlab腾讯企业邮箱配置</title>
+      <link>//owent.net/2015/1138.html</link>
+      <pubDate>Fri, 23 Jan 2015 12:02:44 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2015/1138.html</guid>
+      <description>介于配置gitlab邮箱测试起来补交麻烦而且看日志还不明朗，这里记录一下成功配置好的企业邮箱方案。 模板如下： # mail config gitlab_rails[&#39;smtp_enable&#39;] = true gitlab_rails[&#39;smtp_address&#39;] = &amp;quot;smtp.exmail.qq.com&amp;quot; gitlab_rails[&#39;smtp_port&#39;] = 465 gitlab_rails[&#39;smtp_user_name&#39;] = &amp;q</description>
+    </item>
+    
+    <item>
+      <title>[转]类似github的框架</title>
+      <link>//owent.net/2014/1132.html</link>
+      <pubDate>Tue, 23 Dec 2014 10:52:51 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2014/1132.html</guid>
+      <description>[原文地址]: http://www.cnblogs.com/kingzzm/p/3413357.html](http://www.cnblogs.com/kingzzm/p/3413357.html) github是程序员经常上的网站，但如果是在一家苦逼不能访问外网的公司，那不能把自己的代码托管在github上绝对是一件非常</description>
+    </item>
+    
+    <item>
+      <title>记录一些在线编辑器</title>
+      <link>//owent.net/2014/1076.html</link>
+      <pubDate>Tue, 01 Jul 2014 14:24:25 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2014/1076.html</guid>
+      <description>Markdown Markdown-plus http://mdp.tylingsoft.com/ stackedit http://stackedit.io&amp;nbsp; GitHub(http://github.com/benweet/stackedit) stackedit beta http://stackedit-beta.herokuapp.com/ UML/Chart flowchart.js http://adrai.github.io/flowchart.js/ js-sequence-diagrams http://bramp.github.io/js-sequence-diagrams/ CodeUml http://www.codeuml.com/ YUml http://yuml.me draw.io (可视化编辑) http://draw.io Gliffy (可视化编辑) http://www.gliffy.com LucidChart http://www.lucidchart.com IDE CodeBox http://www.codebox.io ACE http://ace.c9.io Cloud9 http://c9.io</description>
+    </item>
+    
+    <item>
+      <title>又碰到了这个解谜游戏，顺带记下地址</title>
+      <link>//owent.net/2014/1036.html</link>
+      <pubDate>Tue, 15 Apr 2014 19:52:40 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2014/1036.html</guid>
+      <description>虽然以前玩过一部分，后来没耐心就停止了。但是记下来给大家瞧瞧还是挺有意思的 http://www.pythonchallenge.com http://www.notpron.com/ http://www.gamemastertips.com/cipher/cipher.htm http://riddle.arthurluk.net/index.php http://www.csie.ntu.edu.tw/~b94102/game/game.htm 最近稍微学习了下Tex，就顺带再记一下Tex的一些资源 公</description>
+    </item>
+    
+    <item>
+      <title>Lnmp yum 安装脚本 (for CentOS)</title>
+      <link>//owent.net/2013/740.html</link>
+      <pubDate>Mon, 15 Apr 2013 09:50:29 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2013/740.html</guid>
+      <description>心情大好，给VPS升级了一下系统，然后自己配了LNMP安装脚本，用yum源安装的话更新比较方便点哈 ​​这个过程挺麻烦啊，所以果断要记下来，以</description>
+    </item>
+    
+    <item>
+      <title>[记录]虚拟硬盘的压缩|磁盘写零</title>
+      <link>//owent.net/2013/722.html</link>
+      <pubDate>Tue, 26 Feb 2013 15:19:20 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2013/722.html</guid>
+      <description>用虚拟机软件虚拟出来的硬盘文件会随着使用而变大，因为磁盘碎片的产生，这个文件里也有很多的没用的空闲空间，为了节省空间，可以对虚拟硬盘文件进行</description>
+    </item>
+    
+    <item>
+      <title>[转载]狼与哈士奇</title>
+      <link>//owent.net/2012/633.html</link>
+      <pubDate>Sat, 04 Aug 2012 15:57:36 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2012/633.html</guid>
+      <description>原文地址：http://www.cnblogs.com/MeteorSeed/archive/2012/08/04/2621993.html</description>
+    </item>
+    
+    <item>
+      <title>Linux 和 Windows PowerShell 常用工具/命令 记录</title>
+      <link>//owent.net/2011/482.html</link>
+      <pubDate>Fri, 19 Aug 2011 11:16:55 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2011/482.html</guid>
+      <description>Linux 常用工具： enca: http://dl.cihar.com/enca/ 文件名编码转换 iconv: 文件编码转换 convmv: 文件名编码转换 ldd: 查看可执行文件或动态链接库的依赖库 getconf: 查看配置信息（如getconf LONG_B</description>
+    </item>
+    
+    <item>
+      <title>常用官方文档整理</title>
+      <link>//owent.net/2011/264.html</link>
+      <pubDate>Tue, 08 Feb 2011 14:04:26 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2011/264.html</guid>
+      <description>网站及网页： 基本知识中文学习站（中）：http://www.w3school.com.cn W3C官网（英）：http://www.w3.or</description>
+    </item>
+    
+    <item>
+      <title>《神奇古今秘方集锦》&amp;《民间秘术大全》</title>
+      <link>//owent.net/2010/5.html</link>
+      <pubDate>Wed, 20 Oct 2010 09:06:00 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2010/5.html</guid>
+      <description>以前整理这个是心血来潮，现在仍然是心血来潮,把原文转移到这个博客里来 此文章由本人辛苦整理，转载请注明出处&amp;nbsp;http://www.o</description>
+    </item>
+    
+    <item>
+      <title>关于差分约束（转载）</title>
+      <link>//owent.net/2010/20.html</link>
+      <pubDate>Mon, 02 Aug 2010 06:49:13 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2010/20.html</guid>
+      <description>关于差分约束（转载） （本文假设读者已经有以下知识：最短路径的基本性质、Bellman-Ford算法。） 比如有这样一组不等式： $$ \begin{cases} X1 - X2 &amp;lt;= 0 \\</description>
+    </item>
+    
+    <item>
+      <title>计算几何算法概览[转载]</title>
+      <link>//owent.net/2010/21.html</link>
+      <pubDate>Sat, 24 Jul 2010 16:40:14 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2010/21.html</guid>
+      <description>一、引言 计算机的出现使得很多原本十分繁琐的工作得以大幅度简化，但是也有一些在人们直观看来很容易的问题却需要拿出一套并不简单的通用解决方案，比</description>
+    </item>
+    
+    <item>
+      <title>注册表常用键值意义</title>
+      <link>//owent.net/2010/51.html</link>
+      <pubDate>Fri, 02 Apr 2010 05:50:53 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2010/51.html</guid>
+      <description>注册表常用键值意义 [HKEY_CURRENT_USER\Software\Policies\Microsoft\Internet Explorer\Control Panel] ;〖Internet Explorer选项类〗 &amp;ldquo;HomePage&amp;rdquo;=dword:00000001 ;禁止更改主页设置〖0=可修改〗 &amp;ldquo;Cache&amp;rdquo;=dword:00000001 ;禁止更改Internet临时文件设</description>
+    </item>
+    
+    <item>
+      <title>打造最快的Hash表(转) [以暴雪的游戏的Hash为例]</title>
+      <link>//owent.net/2009/87.html</link>
+      <pubDate>Wed, 22 Jul 2009 12:41:44 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2009/87.html</guid>
+      <description>先提一个简单的问题，如果有一个庞大的字符串数组，然后给你一个单独的字符串，让你从这个数组中查找是否有这个字符串并找到它，你会怎么做？ 有一个方</description>
+    </item>
+    
+    <item>
+      <title>C/C&#43;&#43;语言常用排序算法</title>
+      <link>//owent.net/2009/89.html</link>
+      <pubDate>Mon, 20 Jul 2009 12:31:10 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2009/89.html</guid>
+      <description>资料由互联网收集整理，供新手参考学习 这里又生动点的演示：http://www.cnblogs.com/wangfupeng1988/arch</description>
+    </item>
+    
+  </channel>
+</rss>

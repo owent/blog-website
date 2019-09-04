@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>sphinx on I&#39;m OWenT</title>
+    <link>//owent.net/tags/sphinx.html</link>
+    <description>Recent content in sphinx on I&#39;m OWenT</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <managingEditor>admin@owent.net (OWenT)</managingEditor>
+    <webMaster>admin@owent.net (OWenT)</webMaster>
+    <lastBuildDate>Tue, 03 Apr 2018 17:22:42 +0000</lastBuildDate>
+    
+	<atom:link href="//owent.net/tags/sphinx/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>使用restructedtext编写xresloader文档</title>
+      <link>//owent.net/2018/1803.html</link>
+      <pubDate>Tue, 03 Apr 2018 17:22:42 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2018/1803.html</guid>
+      <description>离上一次写Blog过了好久啦。这次拖这么长时间主要是因为最近学习了一个新的文本标记语言 &amp;ndash; ReStructuredText 。并且重新整理了Excel导表工具-xresloa</description>
+    </item>
+    
+  </channel>
+</rss>

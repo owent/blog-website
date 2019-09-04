@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>服务器 on I&#39;m OWenT</title>
+    <link>//owent.net/tags/%E6%9C%8D%E5%8A%A1%E5%99%A8.html</link>
+    <description>Recent content in 服务器 on I&#39;m OWenT</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <managingEditor>admin@owent.net (OWenT)</managingEditor>
+    <webMaster>admin@owent.net (OWenT)</webMaster>
+    <lastBuildDate>Fri, 22 Jun 2018 23:22:15 +0000</lastBuildDate>
+    
+	<atom:link href="//owent.net/tags/%E6%9C%8D%E5%8A%A1%E5%99%A8/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>atsf4g-co的进化：协程框架v2、对象路由系统和一些其他细节优化</title>
+      <link>//owent.net/2018/1807.html</link>
+      <pubDate>Fri, 22 Jun 2018 23:22:15 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2018/1807.html</guid>
+      <description>前言 年前就计划把以前项目的一些理念和设计方案融合到sample里来。但是内容比较多，一直也没太多时间去完成它。所幸虽然断断续续但终归是完成了</description>
+    </item>
+    
+    <item>
+      <title>atapp的c binding和c#适配</title>
+      <link>//owent.net/2017/1367.html</link>
+      <pubDate>Wed, 15 Feb 2017 23:27:51 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2017/1367.html</guid>
+      <description>这两天在做服务器框架的C的接口导出和C#的接入。之所以要做这么个东西是因为之前的服务器框架（atsf4g-co）已经完成了通信层面和基本设计</description>
+    </item>
+    
+    <item>
+      <title>atsf4g完整游戏工程示例</title>
+      <link>//owent.net/2016/1306.html</link>
+      <pubDate>Sun, 23 Oct 2016 12:31:14 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2016/1306.html</guid>
+      <description>近期仍然在搭建完整的游戏服务器架构。基于atsf4g（asynchronously-tree server framework fo game）的完整解决方案终于接近完成。基本</description>
+    </item>
+    
+  </channel>
+</rss>

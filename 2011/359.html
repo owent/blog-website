@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  
+  
+  <meta charset="utf-8" />
+  <title>C&#43;&#43;总是很神奇|I&#39;m OWenT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link rel="canonical" href="//owent.net/2011/359.html">
+  <link href="//owent.net/index.xml" rel="alternate" type="application/rss+xml" title="I&#39;m OWenT" />
+  
+  <link rel="icon" href='../favicon.ico' />
+  
+  
+  <link rel="stylesheet" href='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css' crossorigin="anonymous" />
+  
+  <link rel="stylesheet" href='//owent.net/css/style.css' />
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js' crossorigin="anonymous"></script>
+  
+  
+  
+  <link rel="stylesheet" href='//owent.net/css/syntax.css' />
+  
+</head>
+<body><div id="container"><div id="wrap">
+<header id="header">
+  <div id="banner"></div>
+  <div id="header-outer">
+    <div id="header-title">
+      <h1 id="site-title">
+        <a href="//owent.net" id="logo">I&#39;m OWenT</a>
+      </h1>
+      
+      <h2 id="site-description">Challenge Everything</h2>
+      
+    </div>
+    <div id="header-inner">
+      <nav id="main-nav" class="navbar navbar-expand-md navbar-dark">
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#main-nav-links" aria-controls="main-nav-links" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <a id="main-nav-brand" class="navbar-brand collapse" href="#">#</a>
+        <div class="collapse navbar-collapse" id="main-nav-links">
+          <ul class="navbar-nav mr-auto">
+            
+              
+                <li class="nav-item"><a class="nav-link" href="../" title='Home'>Home</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../archives.html" title='Archives'>Archives</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../about.html" title='About'>About</a></li>
+              
+            
+            <li class="nav-item"><a id="nav-rss-link" class="nav-link" href="//owent.net/index.xml" title='RSS订阅'>RSS订阅</a></li>
+          </ul>
+          
+          <form class="form-inline" method="get" accept-charset="UTF-8" action='//www.bing.com/search'>
+            <input type="hidden" name='q1' value='site:owent.net' />
+            <input class="form-control" type="text" placeholder='搜索' name='q' />
+            <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit">搜索</button>
+          </form>
+          
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+<div id="main"><section id="main-content">
+<div id="post-content"><article id="post-223856d928f3a6211cd3002e675644d8" class="article-panel article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-panel-inner article-inner">
+    <div class="article-inner">
+      <header class="article-header"><h1 itemprop="name"><a class='article-title' href="//owent.net/2011/359.html" target="_blank" itemprop="url">C&#43;&#43;总是很神奇</a></h1></header><hr />
+      <div id="toc" class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right"><nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#2010-04"><sup>2010</sup>&frasl;<sub>04</sub></a></li>
+<li><a href="#2011-04"><sup>2011</sup>&frasl;<sub>04</sub></a></li>
+<li><a href="#2011-04-1"><sup>2011</sup>&frasl;<sub>04</sub></a></li>
+<li><a href="#2011-04-2"><sup>2011</sup>&frasl;<sub>04</sub></a></li>
+<li><a href="#2010-05"><sup>2010</sup>&frasl;<sub>05</sub></a></li>
+</ul></li>
+</ul>
+</nav></div><br />
+      <div class="article-entry" itemprop="articleBody">
+
+<p>很多时候看到C/C++的一些奇妙的应用，每次都是惊奇一点时间就随风飘过了<br />
+现在我还是决定记录一下这些有意思的东西。</p>
+
+<h2 id="2010-04"><sup>2010</sup>&frasl;<sub>04</sub></h2>
+
+<p>a ^= b ^= a ^=b;<br />
+这是一个交换值得有意思的方式</p>
+
+<pre><code class="language-cpp">// 统计1的个数的有意思的方式
+int count_bin_one(int x) {
+    return x? 1 +  count_bin_one(x &amp; (x - 1)): 0;
+}
+</code></pre>
+
+<h2 id="2011-04"><sup>2011</sup>&frasl;<sub>04</sub></h2>
+
+<p>同学去爱立信参加笔试+面试碰到的问题 – 1</p>
+
+<pre><code class="language-cpp">#include &lt;cstdio&gt;
+
+int main () {
+
+    int i = 0;
+    int k = 100;
+
+    int a[2] = {1, 2};
+
+    int j = 3;
+
+    a[2] = 4;
+
+    a[3] = 5;
+
+    a[4] = 6;
+
+    printf(&quot;i = &gt; %d\nj =&gt; %d\nk =&gt; %d\n&quot;, i, j, k);
+
+    printf(&quot;a[0] = &gt; %d\na[1] =&gt; %d\n&quot;, a[0], a[1]);
+
+    printf(&quot;i:%u\nj:%u\nk:%u\na:%u\na[1]:%u\n\n&quot;, &amp;i, &amp;j, &amp;k, a, &amp;a[1]);
+
+    printf(&quot;a[2]:%u\na[3]:%u\na[4]:%u\n&quot;, &amp;a[2], &amp;a[3], &amp;a[4]);
+
+    return 0;
+
+}
+</code></pre>
+
+<p>这段看起来错误的代码，事实上在VC++运行下是报错的，然而在G++之下正确，而不同系统和编译器下结果可能不一样，这和内存分配有关，以下为我在Fedora 15下G++ 4.6.0的结果</p>
+
+<pre><code>i = &gt; 5
+j =&gt; 3
+k =&gt; 4
+a[0] = &gt; 1
+a[1] =&gt; 2
+i:3219340844
+j:3219340828
+k:3219340840
+a:3219340832
+a[1]:3219340836
+
+a[2]:3219340840
+a[3]:3219340844
+a[4]:3219340848
+</code></pre>
+
+<p><del>这就很明显了，至少在Fedora + G++4.6.0下内存分配是地址递减的，顺便这段代码在Win7 下 G++ 4.5.2结果是一样的。</del></p>
+
+<blockquote>
+<p>整理的时候又看到这个，忍不住鄙视一下这种拿UB当面试题的。他想考内存布局？然而不排除有的栈是向上增长的，并且不同编译器或者不同版本甚至不同编译选项对局部变量都有不同的优化。像是内存对齐啊，加入调试信息什么的。比如VC的Debug编译就会插调试信息，你能知道越界后的内容是啥？</p>
+</blockquote>
+
+<h2 id="2011-04-1"><sup>2011</sup>&frasl;<sub>04</sub></h2>
+
+<p>同学去爱立信参加笔试+面试碰到的问题 – 2</p>
+
+<pre><code class="language-cpp">#include &lt;cstdio&gt;
+#include &lt;cstdlib&gt;
+
+class a {
+public:
+    void foo() {
+        puts(&quot;Hello world!&quot;);
+    }
+};
+
+int main () {
+    a *p = new a();
+    p-&gt;foo();
+    p = NULL;
+    p-&gt;foo();
+
+    return 0;
+}
+</code></pre>
+
+<p>没错，这段代码输出了两次Hello world!看来我之前记错了或者那个教科书是错的，普通成员函数的也是直接查类的函数表的，而不是用变量记函数指针。</p>
+
+<h2 id="2011-04-2"><sup>2011</sup>&frasl;<sub>04</sub></h2>
+
+<p>同学去爱立信参加笔试+面试碰到的问题 – 3</p>
+
+<pre><code class="language-cpp">#include &lt;cstdio&gt;
+#include &lt;cstring&gt;
+
+int main () {
+
+    const char* p1 = &quot;abcdefg&quot;;
+    char* const p2 = &quot;abcdefg&quot;;
+
+    // p1[2] = '2'; // 编译错误
+    p1 = &quot;zxmn&quot;;
+    // p2 = &quot;zxmn&quot;; // 编译错误
+    p2[2] = '2';    // 运行错误
+
+    char* p3 = const_cast&lt;char&gt;(p1);
+    char*&amp; p4 = const_cast&lt;char&gt;(p2);  //G++ 编译错误
+
+    p3[2] = '2';   // 运行错误
+    p4 = &quot;test&quot;;   // G++编译错误，VC正常
+
+    puts(p1);
+    puts(p2);
+
+    return 0;
+}
+</code></pre>
+
+<p>这个不用解释了。</p>
+
+<h2 id="2010-05"><sup>2010</sup>&frasl;<sub>05</sub></h2>
+
+<p>这个是写OSG的时候想到的一个忘记的关于C++类继承的自动调用构造和析构函数问题<br />
+测试代码如下：</p>
+
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+#include &lt;cmath&gt;
+#include &lt;algorithm&gt;
+
+namespace test {
+    using namespace std;
+
+    class a {
+    public:
+        int d;
+        a(){
+            d = 0;
+            puts(&quot;a&quot;);
+        }
+        a(int s){
+            puts(&quot;sa&quot;);
+            d = s;
+        }
+        ~a(){
+            printf(&quot;%d~a\n&quot;, d);
+        }
+    };
+
+    class b : public a{
+    public:
+        b(){
+            puts(&quot;b&quot;);
+        }
+        b(int s){
+            puts(&quot;sb&quot;);
+            d = s;
+        }
+        ~b(){
+            printf(&quot;%d~b\n&quot;, d);
+        }
+    };
+
+    void solve() {
+        b bb1 = b(1), bb2 = b();
+    }
+}
+
+int main () {
+
+    test::solve();
+    return 0;
+}
+</code></pre>
+
+<p>输出结果是：</p>
+
+<pre><code>a
+sb
+a
+b
+0~b
+0~a
+1~b
+1~a
+</code></pre>
+
+<p>纯属娱乐</p>
+</div>
+      <hr />
+      <footer class="article-footer">
+        <div class="article-panel-footer article-meta article-footer">
+          <span class="article-meta-left">
+  <ol>
+    
+    <li><a href='//owent.net/categories/article.html'>Article</a></li>
+    
+    <li><a href='//owent.net/categories/blablabla.html'>Blablabla</a></li>
+    
+  </ol>
+</span>
+          <span class="article-meta-right"><time datetime='2011-04-26T07:08:13.000&#43;00:00' itemprop="datePublished">2011-04-26</time></span>
+          <span class="clearfix"></span>
+        </div>
+        
+        
+<div class="article-tags">
+  <ul class="article-tag-list">
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/c.html'>c</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/%E5%BA%94%E7%94%A8.html'>应用</a></li>
+    
+  </ul>
+</div>
+
+      </footer>
+    </div>
+    
+<hr />
+<nav id="article-nav">
+  <ul class="pagination">
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-newer" class="article-nav-link-wrap" href='//owent.net/2011/416.html'>
+        上一篇<strong>2011 Google Code Jam 小记</strong>
+      </a>
+    </li>
+  
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-older" class="article-nav-link-wrap" href='//owent.net/2011/294.html'>
+        下一篇<strong>大学生创新项目[国家级]经费使用记录</strong>
+      </a>
+    </li>
+  
+  </ul>
+</nav>
+
+    
+<hr />
+<section id="comments">
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+var disqus_config = function () {
+
+this.page.identifier = '359';
+
+};
+(function() { 
+var d = document, s = d.createElement('script');
+s.src = 'https://owent.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+
+  </div>
+</article></div>
+</section></div>
+<footer id="footer">
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      <strong id="footer-left">
+        &copy; 2019
+        OWenT
+        
+        
+      </strong>
+      <strong id="footer-right">
+        
+        
+        <a href="https://github.com/owent/blog-hugo" target="_blank">本站源码</a>,
+        
+        发布者 <a href="https://gohugo.io/" target="_blank">Hugo</a>,
+        主题 <a href="https://github.com/owt5008137/hugo-theme-distinctionpp" target="_blank">distinctionpp</a>
+      </strong>
+      <span class="clearfix"></span>
+    </div>
+  </div>
+</footer>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js' crossorigin="anonymous"></script>
+  
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js' crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js'></script>
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/bash.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cpp.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/capnproto.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cmake.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/d.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/diff.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/dos.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/erlang.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/less.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/lua.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/php.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/powershell.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/protobuf.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/profile.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/typescript.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/vim.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/rust.min.js'></script>
+<script type="text/javascript">
+jQuery(function (){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/highlight.js\/9.15.6\/styles\/vs2015.min.css" />');
+    if (window.JSON) {
+        hljs.configure(JSON.parse("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    } else {
+        hljs.configure(evel("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    }
+    jQuery('pre\x3ecode').each(function(i, block) {
+        try {
+            hljs.highlightBlock(block);
+        } catch (e) {
+            if (window.console) {
+                console.log(e.toString() + "\r\nMaybe can not detect the language");
+            }
+        }
+    });
+});
+</script>
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+        dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+    gtag('config', 'UA-19298704-1');
+</script>
+
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js'></script>
+<script type="text/javascript">
+jQuery(function(){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/KaTeX\/0.10.0\/katex.min.css" />');
+    renderMathInElement(document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "\\[", right: "\\]", display: true},
+            {left: "\\(", right: "\\)", display: false},
+            {left: "`$", right: "$`", display: false}
+        ],
+        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    });
+});
+</script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js'></script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/mermaid/8.0.0/mermaid.min.js'></script>
+
+</div>
+</body></html>

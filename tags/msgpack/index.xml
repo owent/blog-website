@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>msgpack on I&#39;m OWenT</title>
+    <link>//owent.net/tags/msgpack.html</link>
+    <description>Recent content in msgpack on I&#39;m OWenT</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <managingEditor>admin@owent.net (OWenT)</managingEditor>
+    <webMaster>admin@owent.net (OWenT)</webMaster>
+    <lastBuildDate>Sat, 03 Aug 2019 10:59:58 +0000</lastBuildDate>
+    
+	<atom:link href="//owent.net/tags/msgpack/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>protobuf、flatbuffer、msgpack 针对小数据包的简单对比</title>
+      <link>//owent.net/2019/1908.html</link>
+      <pubDate>Sat, 03 Aug 2019 10:59:58 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2019/1908.html</guid>
+      <description>前言 前段时间我尝试给 atframework 的 libatapp 整合进UnrealEngine做Dedicated Server和逻辑server通信的时候碰到了一些问题。主要在于</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>网络 on I&#39;m OWenT</title>
+    <link>//owent.net/tags/%E7%BD%91%E7%BB%9C.html</link>
+    <description>Recent content in 网络 on I&#39;m OWenT</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <managingEditor>admin@owent.net (OWenT)</managingEditor>
+    <webMaster>admin@owent.net (OWenT)</webMaster>
+    <lastBuildDate>Thu, 30 May 2013 14:31:09 +0000</lastBuildDate>
+    
+	<atom:link href="//owent.net/tags/%E7%BD%91%E7%BB%9C/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>网络编程小结</title>
+      <link>//owent.net/2013/818.html</link>
+      <pubDate>Thu, 30 May 2013 14:31:09 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2013/818.html</guid>
+      <description>写这个小结主要是因为之前研究Boost.Asio的时候，其内部使用了很多不同的方法来实现异步网络编程 然后就顺便把一些高级的玩意看了一下，也顺</description>
+    </item>
+    
+    <item>
+      <title>试试Boost.Asio</title>
+      <link>//owent.net/2013/811.html</link>
+      <pubDate>Thu, 23 May 2013 18:13:58 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2013/811.html</guid>
+      <description>慢慢一点一点看看Boost，这段时间就Asio库吧。 据说这货和libevent的效率差不多，但是Boost的平台兼容性，你懂得。还有它帮忙干</description>
+    </item>
+    
+  </channel>
+</rss>

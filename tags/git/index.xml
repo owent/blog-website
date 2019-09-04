@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>git on I&#39;m OWenT</title>
+    <link>//owent.net/tags/git.html</link>
+    <description>Recent content in git on I&#39;m OWenT</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <managingEditor>admin@owent.net (OWenT)</managingEditor>
+    <webMaster>admin@owent.net (OWenT)</webMaster>
+    <lastBuildDate>Sun, 23 Oct 2016 12:31:14 +0000</lastBuildDate>
+    
+	<atom:link href="//owent.net/tags/git/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>atsf4g完整游戏工程示例</title>
+      <link>//owent.net/2016/1306.html</link>
+      <pubDate>Sun, 23 Oct 2016 12:31:14 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2016/1306.html</guid>
+      <description>近期仍然在搭建完整的游戏服务器架构。基于atsf4g（asynchronously-tree server framework fo game）的完整解决方案终于接近完成。基本</description>
+    </item>
+    
+    <item>
+      <title>博客文章和文档迁移到gitbook</title>
+      <link>//owent.net/2016/1209.html</link>
+      <pubDate>Fri, 15 Jan 2016 21:42:11 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2016/1209.html</guid>
+      <description>使用_Markdown_写blog已经很久了，近期接触并且看了下流传已久的gitbook平台，感觉做得确实不错。、 之前写blog的时候一直用</description>
+    </item>
+    
+    <item>
+      <title>gitlab腾讯企业邮箱配置</title>
+      <link>//owent.net/2015/1138.html</link>
+      <pubDate>Fri, 23 Jan 2015 12:02:44 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2015/1138.html</guid>
+      <description>介于配置gitlab邮箱测试起来补交麻烦而且看日志还不明朗，这里记录一下成功配置好的企业邮箱方案。 模板如下： # mail config gitlab_rails[&#39;smtp_enable&#39;] = true gitlab_rails[&#39;smtp_address&#39;] = &amp;quot;smtp.exmail.qq.com&amp;quot; gitlab_rails[&#39;smtp_port&#39;] = 465 gitlab_rails[&#39;smtp_user_name&#39;] = &amp;q</description>
+    </item>
+    
+    <item>
+      <title>[转]类似github的框架</title>
+      <link>//owent.net/2014/1132.html</link>
+      <pubDate>Tue, 23 Dec 2014 10:52:51 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2014/1132.html</guid>
+      <description>[原文地址]: http://www.cnblogs.com/kingzzm/p/3413357.html](http://www.cnblogs.com/kingzzm/p/3413357.html) github是程序员经常上的网站，但如果是在一家苦逼不能访问外网的公司，那不能把自己的代码托管在github上绝对是一件非常</description>
+    </item>
+    
+    <item>
+      <title>Gitlab环境搭建小计</title>
+      <link>//owent.net/2014/1110.html</link>
+      <pubDate>Mon, 20 Oct 2014 11:13:43 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2014/1110.html</guid>
+      <description>最近给公司搭建Gitlab作源代码管理工具 满满都是坑呐。 Gitlab 开源仓库软件包官方地址: https://about.gitlab.com/ https://about.gitlab.com/downloads/ 这里有各个Linux分支的安装包，下面的说明笔记齐全，</description>
+    </item>
+    
+  </channel>
+</rss>

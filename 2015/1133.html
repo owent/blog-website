@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  
+  
+  <meta charset="utf-8" />
+  <title>tolua&#43;&#43;内存释放坑|I&#39;m OWenT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link rel="canonical" href="//owent.net/2015/1133.html">
+  <link href="//owent.net/index.xml" rel="alternate" type="application/rss+xml" title="I&#39;m OWenT" />
+  
+  <link rel="icon" href='../favicon.ico' />
+  
+  
+  <link rel="stylesheet" href='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css' crossorigin="anonymous" />
+  
+  <link rel="stylesheet" href='//owent.net/css/style.css' />
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js' crossorigin="anonymous"></script>
+  
+  
+  
+  <link rel="stylesheet" href='//owent.net/css/syntax.css' />
+  
+</head>
+<body><div id="container"><div id="wrap">
+<header id="header">
+  <div id="banner"></div>
+  <div id="header-outer">
+    <div id="header-title">
+      <h1 id="site-title">
+        <a href="//owent.net" id="logo">I&#39;m OWenT</a>
+      </h1>
+      
+      <h2 id="site-description">Challenge Everything</h2>
+      
+    </div>
+    <div id="header-inner">
+      <nav id="main-nav" class="navbar navbar-expand-md navbar-dark">
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#main-nav-links" aria-controls="main-nav-links" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <a id="main-nav-brand" class="navbar-brand collapse" href="#">#</a>
+        <div class="collapse navbar-collapse" id="main-nav-links">
+          <ul class="navbar-nav mr-auto">
+            
+              
+                <li class="nav-item"><a class="nav-link" href="../" title='Home'>Home</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../archives.html" title='Archives'>Archives</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../about.html" title='About'>About</a></li>
+              
+            
+            <li class="nav-item"><a id="nav-rss-link" class="nav-link" href="//owent.net/index.xml" title='RSS订阅'>RSS订阅</a></li>
+          </ul>
+          
+          <form class="form-inline" method="get" accept-charset="UTF-8" action='//www.bing.com/search'>
+            <input type="hidden" name='q1' value='site:owent.net' />
+            <input class="form-control" type="text" placeholder='搜索' name='q' />
+            <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit">搜索</button>
+          </form>
+          
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+<div id="main"><section id="main-content">
+<div id="post-content"><article id="post-4dde4933bdec561b518baf907e56cc13" class="article-panel article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-panel-inner article-inner">
+    <div class="article-inner">
+      <header class="article-header"><h1 itemprop="name"><a class='article-title' href="//owent.net/2015/1133.html" target="_blank" itemprop="url">tolua&#43;&#43;内存释放坑</a></h1></header><hr />
+      <div id="toc" class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right"><nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#前言">前言</a></li>
+<li><a href="#代码追踪">代码追踪</a></li>
+<li><a href="#这个很2b的坑">这个很2B的坑</a></li>
+</ul></li>
+</ul>
+</nav></div><br />
+      <div class="article-entry" itemprop="articleBody">
+
+<!-- toc -->
+
+<h2 id="前言">前言</h2>
+
+<p>本来想参考下tolua++的对象生命周期维护方式。一不小心发现了一个坑。</p>
+
+<h2 id="代码追踪">代码追踪</h2>
+
+<p>我这里用得是tolua++ 1.0.93版本。</p>
+
+<p>tolua++在new一个类的时候，会把类指针作为userdata传入lua，建立metatable并通过<strong>tolua_classevents</strong>函数给metatable注册魔术方法。</p>
+
+<p>这里面可以看到gc方法被设成了 _G.tolua_gc_event</p>
+
+<pre><code class="language-cpp">    lua_pushstring(L,&quot;__gc&quot;);
+    lua_pushstring(L, &quot;tolua_gc_event&quot;);
+    lua_rawget(L, LUA_REGISTRYINDEX);
+    /*lua_pushcfunction(L,class_gc_event);*/
+    lua_rawset(L,-3);
+</code></pre>
+
+<p>那么关键是这个<strong>_G.tolua_gc_event</strong>被设成了什么，在<strong>tolua_open</strong>函数里可以找到</p>
+
+<pre><code class="language-cpp">        /* create gc_event closure */
+        lua_pushstring(L, &quot;tolua_gc_event&quot;);
+        lua_pushstring(L, &quot;tolua_gc&quot;);
+        lua_rawget(L, LUA_REGISTRYINDEX);
+        lua_pushstring(L, &quot;tolua_super&quot;);
+        lua_rawget(L, LUA_REGISTRYINDEX);
+        lua_pushcclosure(L, class_gc_event, 2);
+        lua_rawset(L, LUA_REGISTRYINDEX);
+</code></pre>
+
+<p>垃圾回收函数使用的是<strong>class_gc_event</strong>并且添加了两个闭包参数<strong>_G.tolua_gc,_G.tolua_super</strong>。其中前一个用于设置全局metatable缓存。后一个貌似是基类。</p>
+
+<p>比如新建一个Class, 指针是p，lua对象是t。那么相当于在lua里会设置</p>
+
+<pre><code class="language-lua">_G.tolua_gc[p] = getmetatable(t)
+</code></pre>
+
+<p>具体见<strong>tolua_register_gc</strong>函数</p>
+
+<pre><code class="language-cpp">TOLUA_API int class_gc_event (lua_State* L)
+{
+    void* u = *((void**)lua_touserdata(L,1));
+    int top;
+    /*fprintf(stderr, &quot;collecting: looking at %p\n&quot;, u);*/
+    /*
+    lua_pushstring(L,&quot;tolua_gc&quot;);
+    lua_rawget(L,LUA_REGISTRYINDEX); 
+    */
+    lua_pushvalue(L, lua_upvalueindex(1)); // 这里是拿到 _G.tolua_gc
+    lua_pushlightuserdata(L,u);
+    lua_rawget(L,-2);            /* stack: gc umt    */ // 这里是拿到上文中提到的 _G.tolua_gc[p]
+    lua_getmetatable(L,1);       /* stack: gc umt mt */ 
+    /*fprintf(stderr, &quot;checking type\n&quot;);*/
+    top = lua_gettop(L);
+    if (tolua_fast_isa(L,top,top-1, lua_upvalueindex(2))) /* make sure we collect correct type */ // 这个是类型检查
+    {
+        /*fprintf(stderr, &quot;Found type!\n&quot;);*/
+        /* get gc function */
+        lua_pushliteral(L,&quot;.collector&quot;);
+        lua_rawget(L,-2);           /* stack: gc umt mt collector */
+        if (lua_isfunction(L,-1)) { // .collector有数据时调用.collector函数
+            /*fprintf(stderr, &quot;Found .collector!\n&quot;);*/
+        }
+        else { // .collector没有数据时调用tolua_default_collect函数
+            lua_pop(L,1);
+            /*fprintf(stderr, &quot;Using default cleanup\n&quot;);*/
+            lua_pushcfunction(L,tolua_default_collect);
+        }
+
+        lua_pushvalue(L,1);         /* stack: gc umt mt collector u */
+        lua_call(L,1,0); // 这里开始调用tolua_default_collect函数
+
+        lua_pushlightuserdata(L,u); /* stack: gc umt mt u */
+        lua_pushnil(L);             /* stack: gc umt mt u nil */
+        lua_rawset(L,-5);           /* stack: gc umt mt */
+    }
+    lua_pop(L,3);
+    return 0;
+}
+</code></pre>
+
+<p>然后坑爹的就来了<strong>tolua_default_collect</strong>这么实现的</p>
+
+<pre><code class="language-cpp">/* Default collect function
+*/
+TOLUA_API int tolua_default_collect (lua_State* tolua_S)
+{
+    void* self = tolua_tousertype(tolua_S,1,0);
+    free(self);
+    return 0;
+}
+</code></pre>
+
+<h2 id="这个很2b的坑">这个很2B的坑</h2>
+
+<p>这么搞问题就来了，默认tolua++是没有设置<strong>.collector</strong>函数的（new一个自定义class之后调用<strong>push_collector</strong>的传入了空指针），然后释放的时候就华丽丽free掉了，且不说标准C++并不保证new的分配内存和malloc一样（虽然现在大部分编译器的实现确实一样），它竟然<strong>没调用析构函数</strong>。这意味着如果类里面有使用stl或者其他依赖析构来释放资源的成员类对象的话，就华丽丽地内存泄露了。</p>
+
+<p>另外，网上随便搜了一下，也找到其他人也有发现这个问题。<a href="http://www.cnblogs.com/egmkang/archive/2012/07/01/2572064.html" target="_blank">http://www.cnblogs.com/egmkang/archive/2012/07/01/2572064.html</a></p>
+
+<p>无力吐槽了，让我晕一会&hellip;</p>
+
+<blockquote>
+<p>Written with <a href="https://stackedit.io/" target="_blank">StackEdit</a>.</p>
+</blockquote>
+</div>
+      <hr />
+      <footer class="article-footer">
+        <div class="article-panel-footer article-meta article-footer">
+          <span class="article-meta-left">
+  <ol>
+    
+    <li><a href='//owent.net/categories/article.html'>Article</a></li>
+    
+    <li><a href='//owent.net/categories/work.html'>Work</a></li>
+    
+  </ol>
+</span>
+          <span class="article-meta-right"><time datetime='2015-01-08T22:03:42.000&#43;00:00' itemprop="datePublished">2015-01-08</time></span>
+          <span class="clearfix"></span>
+        </div>
+        
+        
+<div class="article-tags">
+  <ul class="article-tag-list">
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/c.html'>c</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/cpp.html'>cpp</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/lua.html'>lua</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/tolua&#43;&#43;.html'>tolua++</a></li>
+    
+  </ul>
+</div>
+
+      </footer>
+    </div>
+    
+<hr />
+<nav id="article-nav">
+  <ul class="pagination">
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-newer" class="article-nav-link-wrap" href='//owent.net/2015/1138.html'>
+        上一篇<strong>gitlab腾讯企业邮箱配置</strong>
+      </a>
+    </li>
+  
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-older" class="article-nav-link-wrap" href='//owent.net/2014/1132.html'>
+        下一篇<strong>[转]类似github的框架</strong>
+      </a>
+    </li>
+  
+  </ul>
+</nav>
+
+    
+<hr />
+<section id="comments">
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+var disqus_config = function () {
+
+this.page.identifier = '1133';
+
+};
+(function() { 
+var d = document, s = d.createElement('script');
+s.src = 'https://owent.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+
+  </div>
+</article></div>
+</section></div>
+<footer id="footer">
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      <strong id="footer-left">
+        &copy; 2019
+        OWenT
+        
+        
+      </strong>
+      <strong id="footer-right">
+        
+        
+        <a href="https://github.com/owent/blog-hugo" target="_blank">本站源码</a>,
+        
+        发布者 <a href="https://gohugo.io/" target="_blank">Hugo</a>,
+        主题 <a href="https://github.com/owt5008137/hugo-theme-distinctionpp" target="_blank">distinctionpp</a>
+      </strong>
+      <span class="clearfix"></span>
+    </div>
+  </div>
+</footer>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js' crossorigin="anonymous"></script>
+  
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js' crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js'></script>
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/bash.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cpp.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/capnproto.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cmake.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/d.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/diff.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/dos.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/erlang.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/less.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/lua.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/php.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/powershell.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/protobuf.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/profile.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/typescript.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/vim.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/rust.min.js'></script>
+<script type="text/javascript">
+jQuery(function (){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/highlight.js\/9.15.6\/styles\/vs2015.min.css" />');
+    if (window.JSON) {
+        hljs.configure(JSON.parse("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    } else {
+        hljs.configure(evel("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    }
+    jQuery('pre\x3ecode').each(function(i, block) {
+        try {
+            hljs.highlightBlock(block);
+        } catch (e) {
+            if (window.console) {
+                console.log(e.toString() + "\r\nMaybe can not detect the language");
+            }
+        }
+    });
+});
+</script>
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+        dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+    gtag('config', 'UA-19298704-1');
+</script>
+
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js'></script>
+<script type="text/javascript">
+jQuery(function(){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/KaTeX\/0.10.0\/katex.min.css" />');
+    renderMathInElement(document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "\\[", right: "\\]", display: true},
+            {left: "\\(", right: "\\)", display: false},
+            {left: "`$", right: "$`", display: false}
+        ],
+        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    });
+});
+</script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js'></script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/mermaid/8.0.0/mermaid.min.js'></script>
+
+</div>
+</body></html>

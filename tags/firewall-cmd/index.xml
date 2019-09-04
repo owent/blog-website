@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>firewall-cmd on I&#39;m OWenT</title>
+    <link>//owent.net/tags/firewall-cmd.html</link>
+    <description>Recent content in firewall-cmd on I&#39;m OWenT</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <managingEditor>admin@owent.net (OWenT)</managingEditor>
+    <webMaster>admin@owent.net (OWenT)</webMaster>
+    <lastBuildDate>Thu, 23 Apr 2015 15:55:44 +0000</lastBuildDate>
+    
+	<atom:link href="//owent.net/tags/firewall-cmd/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>关于firewalld和systemd的一些命令速记</title>
+      <link>//owent.net/2015/1160.html</link>
+      <pubDate>Thu, 23 Apr 2015 15:55:44 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2015/1160.html</guid>
+      <description>前言 CentOS 7 已经用firewalld替换掉了iptables并用systemd来管理启动服务（之前是chkconfig）。而且下一个Ubuntu</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>atomic on I&#39;m OWenT</title>
+    <link>//owent.net/tags/atomic.html</link>
+    <description>Recent content in atomic on I&#39;m OWenT</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <managingEditor>admin@owent.net (OWenT)</managingEditor>
+    <webMaster>admin@owent.net (OWenT)</webMaster>
+    <lastBuildDate>Tue, 12 Jun 2012 08:58:09 +0000</lastBuildDate>
+    
+	<atom:link href="//owent.net/tags/atomic/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>C&#43;&#43; 新特性学习（八） — 原子操作和多线程库[多工内存模型]</title>
+      <link>//owent.net/2012/611.html</link>
+      <pubDate>Tue, 12 Jun 2012 08:58:09 +0000</pubDate>
+      <author>admin@owent.net (OWenT)</author>
+      <guid>//owent.net/2012/611.html</guid>
+      <description>这是我对C++新特性系统学习的最后一部分，之后就靠实践中再来看新标准的新特性啦。 在之前，我对这部分没太在意，直到看到了一篇文章 [http://blog.csdn.net/pongba/article/details/1659952](http://blog.csdn.net/pongba/article/details/1659952) 才意识到，C</description>
+    </item>
+    
+  </channel>
+</rss>

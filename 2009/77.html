@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  
+  
+  <meta charset="utf-8" />
+  <title>09年8月14日 ECUST ACM 练习赛总结|I&#39;m OWenT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link rel="canonical" href="//owent.net/2009/77.html">
+  <link href="//owent.net/index.xml" rel="alternate" type="application/rss+xml" title="I&#39;m OWenT" />
+  
+  <link rel="icon" href='../favicon.ico' />
+  
+  
+  <link rel="stylesheet" href='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css' crossorigin="anonymous" />
+  
+  <link rel="stylesheet" href='//owent.net/css/style.css' />
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js' crossorigin="anonymous"></script>
+  
+  
+  
+  <link rel="stylesheet" href='//owent.net/css/syntax.css' />
+  
+</head>
+<body><div id="container"><div id="wrap">
+<header id="header">
+  <div id="banner"></div>
+  <div id="header-outer">
+    <div id="header-title">
+      <h1 id="site-title">
+        <a href="//owent.net" id="logo">I&#39;m OWenT</a>
+      </h1>
+      
+      <h2 id="site-description">Challenge Everything</h2>
+      
+    </div>
+    <div id="header-inner">
+      <nav id="main-nav" class="navbar navbar-expand-md navbar-dark">
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#main-nav-links" aria-controls="main-nav-links" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <a id="main-nav-brand" class="navbar-brand collapse" href="#">#</a>
+        <div class="collapse navbar-collapse" id="main-nav-links">
+          <ul class="navbar-nav mr-auto">
+            
+              
+                <li class="nav-item"><a class="nav-link" href="../" title='Home'>Home</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../archives.html" title='Archives'>Archives</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../about.html" title='About'>About</a></li>
+              
+            
+            <li class="nav-item"><a id="nav-rss-link" class="nav-link" href="//owent.net/index.xml" title='RSS订阅'>RSS订阅</a></li>
+          </ul>
+          
+          <form class="form-inline" method="get" accept-charset="UTF-8" action='//www.bing.com/search'>
+            <input type="hidden" name='q1' value='site:owent.net' />
+            <input class="form-control" type="text" placeholder='搜索' name='q' />
+            <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit">搜索</button>
+          </form>
+          
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+<div id="main"><section id="main-content">
+<div id="post-content"><article id="post-47b0e3481ad767855e1ad3de61a38a1d" class="article-panel article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-panel-inner article-inner">
+    <div class="article-inner">
+      <header class="article-header"><h1 itemprop="name"><a class='article-title' href="//owent.net/2009/77.html" target="_blank" itemprop="url">09年8月14日 ECUST ACM 练习赛总结</a></h1></header><hr />
+      
+      <div class="article-entry" itemprop="articleBody"><p>今天在湖南的OJ上做题,发现不到两小时,他服务器就挂了,但是发现他和POJ上的一些题一样而且是连号的,就到POJ上继续了，我们队出了6题。</p>
+
+<p>A题是<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3507" target="_blank">POJ的3507 Judging Olympia</a>这题是队友干掉的,我没看</p>
+
+<p>B题是<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3508" target="_blank">POJ的3508 </a><a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3508" target="_blank">Hide That Number</a>同样是队友AC掉,我没看</p>
+
+<p>C题是<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3509" target="_blank">POJ的3509&nbsp;Rotating Rings</a></p>
+
+<p>这题是我做的,题目大致意思是输入一个n*n的矩阵,就有(n+1)/2层问能不能通过旋转某几层把矩阵调整到递增矩阵(即第r行c列的值为(r-1)&times;(n) + c + 1)<br />
+这题我的思路很简单,从外层到里层一层一层判断,先做出标准递增矩阵<br />
+对于没一层先算出已有矩阵的起点,再枚举每个点,看能不能和标准矩阵的那一层匹配,如果有一层布匹配就输出NO否则输出YES<br />
+这题我犯了几个错误,其一是层数为奇数时对于最里面一层我推出来的计算公式没用<br />
+第二就是层数为奇数时对于最里面一层的特殊情况我忘记判断是否与标准矩阵相同.这点是Ultramanhu找出来的,很重要的BUG<br />
+公式如下:<br />
+n*n的矩阵,从外向里第k层,第l个的坐标用x,y表示则</p>
+
+<p>$$ l = l \mod 4 \times (n - 1 - 2k ) $$</p>
+
+<pre><code>x=k,y=k//设初值,就是l为0时的值
+if(l&lt;n-2k)
+  x+=l
+else if(l&lt;2n-4k-1)
+  x+=n-2k-1,y+=l-n+2k+1
+else if(l&lt;3n-6k-2)
+  y+=n-2k-1,x+=3n-6k-l-3
+else
+  y += 4n-8k – 4 – l
+</code></pre>
+
+<p>具体代码如下:</p>
+
+<pre><code class="language-cpp">#include&lt;iostream&gt;
+using namespace std;
+
+#define MAXN 2000
+struct Position
+{
+    int x,y;
+};
+
+Position GetPosition(long n,long k,long l);
+
+bool check(int n,int k);
+
+long mat[MAXN][MAXN];
+long matMol[MAXN][MAXN];
+
+int main()
+{
+    int n,t = 0;
+    while(scanf(&quot;%d&quot;,&amp;n), n)
+    {
+        for(int i = 0 ; i &lt; n ; i ++)
+            for(int j = 0 ; j &lt; n ; j ++)
+                scanf(&quot;%ld&quot;,&amp;mat[i][j]) , matMol[i][j] = i * n + j + 1;
+
+        int k;
+        for( k = 0 ; k &lt;= (n - 1) / 2 ; k ++)
+            if(!check(n,k))
+                break;
+
+        if(k &lt;= (n - 1) / 2)
+            printf(&quot;%d. NO\n&quot;, ++ t);
+        else
+            printf(&quot;%d. YES\n&quot;, ++ t);
+    }
+    return 0;
+}
+
+
+
+Position GetPosition(long n,long k,long l)
+{
+    Position tmpPos;
+    tmpPos.x = tmpPos.y = k;
+    if(n - 1 - 2 * k)
+        l = l % (4 * (n - 1 - 2 * k));
+    else
+        return tmpPos;
+
+    if(l &lt; n - 2 * k)
+        tmpPos.x += l;
+    else if(l &lt; 2 * n - 4 * k - 1)
+        tmpPos.x += n - 2 * k - 1 , tmpPos.y += l - (n - 2 * k) + 1;
+    else if(l &lt; 3 * n - 6 * k - 2)
+        tmpPos.y += n - 2 * k - 1,tmpPos.x += 3 * n - 6 * k - l - 3;
+    else
+        tmpPos.y += 4 * n - 8 * k - 4 - l;
+
+    return tmpPos;
+}
+
+bool check(int n,int k)
+{
+    long pos2 , i;
+    long numSum = 4 * (n - 1 - 2 * k);
+
+    Position tmpSource = GetPosition(n,k,0);
+
+    for(pos2 = 0 ; pos2 &lt; numSum ; pos2 ++)
+    {
+        Position tmpPos = GetPosition(n,k,pos2);
+        if(mat[tmpPos.y][tmpPos.x] == matMol[tmpSource.y][tmpSource.x])
+            break;
+    }
+    if(pos2 &gt;= 4 * numSum)
+        if(numSum)
+            return false;
+        else
+            return mat[tmpSource.y][tmpSource.x] == matMol[tmpSource.y][tmpSource.x];
+
+    for(i = 1 ; i &lt; 4 * numSum ; i ++)
+    {
+        tmpSource = GetPosition(n,k,i);
+
+        Position tmpPos = GetPosition(n,k,pos2 + i);
+        if(mat[tmpPos.y][tmpPos.x] != matMol[tmpSource.y][tmpSource.x])
+            return false;
+    }
+
+    return true;
+}
+</code></pre>
+
+<p>D题是<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3510" target="_blank">POJ的3510&nbsp;A Tale from the Dark Side of the Moon</a><br />
+字符串处理,我直接交给Ultramanhu解决了,这题有个奇妙的陷阱就是字符串中间出现一个EOF就终止了,这让我们WA了几次</p>
+
+<p>E题是<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3511" target="_blank">POJ的3511&nbsp;Fermat&rsquo;s Christmas Theorem</a><br />
+这题大意是算出[l,u]区间内的素数个数及能表示为a<sup>2</sup>+b<sup>2</sup>的素数个数<br />
+这题只要简单的DP记录一下个数就行,主要是筛质数,这个很简单就不多说了<br />
+代码如下:</p>
+
+<pre><code class="language-cpp">//Problem E
+#include&lt;iostream&gt;
+#include&lt;cstring&gt;
+using namespace std;
+
+const long MAXP = 1000003;
+long prime[MAXP] = {0},num_prime = 0;
+int isNotPrime[MAXP] = {1, 1};
+
+int isTrue[MAXP]={0};
+
+long numPrimeLess[MAXP] = {0};
+long numPrimeNoMat[MAXP] = {0};
+
+int main()
+{
+    for(long i = 2 ; i &lt;  MAXP ; i ++){
+        if(! isNotPrime[i])
+            prime[num_prime ++]=i;
+        for(long j = 0 ; j &lt; num_prime &amp;&amp; i * prime[j] &lt;  MAXP ; j ++)
+        {
+            isNotPrime[i * prime[j]] = 1;
+            if( !(i % prime[j]))
+                break;
+        }
+    }
+
+    for(long i = 0 ; i &lt; 1000 ; i ++)
+        for(long j = 0 ; j &lt; 1000 &amp;&amp; i * i + j * j &lt;= MAXP; j ++)
+            isTrue[i * i + j * j] = 1;
+
+    for(long i = 2 ; i &lt; MAXP ; i ++)
+    {
+        numPrimeNoMat[i] = numPrimeNoMat[i - 1] + (!isNotPrime[i]);
+        numPrimeLess[i] = numPrimeLess[i - 1] + (!isNotPrime[i] &amp;&amp; isTrue[i]);
+    }
+
+    long l,u;
+    while(scanf(&quot;%ld %ld&quot;,&amp;l,&amp;u),l != -1 || u != -1)
+    {
+        long b = l&gt;0?l:0;
+        long e = u&gt;0?u:0;
+        printf(&quot;%ld %ld %ld %ld\n&quot;,l,u,numPrimeNoMat[e] - numPrimeNoMat[b] + !isNotPrime[b]
+        ,numPrimeLess[e] - numPrimeLess[b] + (!isNotPrime[b] &amp;&amp; isTrue[b]));
+    }
+    return 0;
+}
+</code></pre>
+
+<p>F题是<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3511" target="_blank">POJ的3512&nbsp;Incidental Points.</a><br />
+题意是让你输入一些点的平面坐标,有一条线段能穿过最大数量的点,求最大点的数量<br />
+因为这类型的题以前写过而且留了代码就直接改完贴了<br />
+代码:</p>
+
+<pre><code class="language-cpp">#include&lt;iostream&gt;
+#include&lt;cmath&gt;
+using namespace std;
+char str[1000];
+#define EPS 1e-10
+struct point
+{
+    double x,y;
+};
+struct node
+{
+    double k;
+};
+int cmp(const void * a, const void * b)
+{
+    return((*(double*)a-*(double*)b&gt;0)?1:-1);
+}
+
+node numK[1005 * 1005 / 2];
+point pt[1005];
+int main()
+{
+    int n = 0 , maxNum = 1 , tmpNum = 0,t = 0;
+    int end = 0;
+    while(gets(str))
+    {
+        if((str[0] == '-' &amp;&amp; str[1] == '-') &amp;&amp; end)
+            break;
+        else if(str[0] == '-' &amp;&amp; str[1] == '-')
+        {
+            end = 1;
+
+            for(int i = 0 ; i &lt;  n ; i ++)
+            {
+                int pos = 0;
+                for(int j = i + 1 ; j &lt; n ; j ++)
+                    if(fabs(pt[i].x - pt[j].x) &gt; EPS)
+                        numK[pos ++].k = (pt[j].y - pt[i].y) / (pt[j].x - pt[i].x);
+                    else
+                        numK[pos ++].k = 2000000;
+
+                qsort(numK,pos,sizeof(numK[0]),cmp);
+                int tmpNum = 2;
+                for(int j = 1 ; j &lt; pos ; j ++)
+                {
+                    if(numK[j].k == numK[j - 1].k)
+                        tmpNum ++;
+                    else
+                    {
+                        if(tmpNum &gt; maxNum)
+                            maxNum = tmpNum;
+                        tmpNum = 2;
+                    }
+                }
+                if(tmpNum &gt; maxNum)
+                    maxNum = tmpNum;
+            }
+
+
+            printf(&quot;%d. %d\n&quot;,++ t,maxNum);
+            maxNum = 1;
+            n = 0;
+        }
+        else
+            sscanf(str,&quot;%lf %lf&quot;,&amp;pt[n].x,&amp;pt[n].y) , n ++,end = 0;
+    }
+    return 0;
+}
+</code></pre>
+
+<p>G题是一道需要Hash的题,Hash我不熟,而且到时间结束我都没能研究出来STL库的map类.没能出<br />
+后面的题我基本都没看,貌似后面的题难度都比较高</p>
+
+<p>今天感觉的状态就是出错率高了,犯了好几个低级错误导致罚时增加.像C的两次RE都是因为不小心出现了模0的情况<br />
+其他的题目基本都是以前写过,要么就是大水.<br />
+几天总体感觉配合得比以前好了一点,但是中期开始OJ挂了之后激情就逐渐流失了.<br />
+关键是出错率还需提高,希望明天的状态好一点吧,再就是OJ不要再挂一次</p>
+</div>
+      <hr />
+      <footer class="article-footer">
+        <div class="article-panel-footer article-meta article-footer">
+          <span class="article-meta-left">
+  <ol>
+    
+    <li><a href='//owent.net/categories/article.html'>Article</a></li>
+    
+    <li><a href='//owent.net/categories/my-acm-icpc-career.html'>My ACM-ICPC Career</a></li>
+    
+  </ol>
+</span>
+          <span class="article-meta-right"><time datetime='2009-08-16T16:57:22.000&#43;00:00' itemprop="datePublished">2009-08-16</time></span>
+          <span class="clearfix"></span>
+        </div>
+        
+        
+<div class="article-tags">
+  <ul class="article-tag-list">
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/acm.html'>acm</a></li>
+    
+  </ul>
+</div>
+
+      </footer>
+    </div>
+    
+<hr />
+<nav id="article-nav">
+  <ul class="pagination">
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-newer" class="article-nav-link-wrap" href='//owent.net/2009/76.html'>
+        上一篇<strong>矩阵相关 (增强中)</strong>
+      </a>
+    </li>
+  
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-older" class="article-nav-link-wrap" href='//owent.net/2009/78.html'>
+        下一篇<strong>ECUST 09年 校赛个人赛第八场（最后一场）总结</strong>
+      </a>
+    </li>
+  
+  </ul>
+</nav>
+
+    
+<hr />
+<section id="comments">
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+var disqus_config = function () {
+
+this.page.identifier = '77';
+
+};
+(function() { 
+var d = document, s = d.createElement('script');
+s.src = 'https://owent.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+
+  </div>
+</article></div>
+</section></div>
+<footer id="footer">
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      <strong id="footer-left">
+        &copy; 2019
+        OWenT
+        
+        
+      </strong>
+      <strong id="footer-right">
+        
+        
+        <a href="https://github.com/owent/blog-hugo" target="_blank">本站源码</a>,
+        
+        发布者 <a href="https://gohugo.io/" target="_blank">Hugo</a>,
+        主题 <a href="https://github.com/owt5008137/hugo-theme-distinctionpp" target="_blank">distinctionpp</a>
+      </strong>
+      <span class="clearfix"></span>
+    </div>
+  </div>
+</footer>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js' crossorigin="anonymous"></script>
+  
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js' crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js'></script>
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/bash.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cpp.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/capnproto.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cmake.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/d.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/diff.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/dos.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/erlang.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/less.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/lua.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/php.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/powershell.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/protobuf.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/profile.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/typescript.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/vim.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/rust.min.js'></script>
+<script type="text/javascript">
+jQuery(function (){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/highlight.js\/9.15.6\/styles\/vs2015.min.css" />');
+    if (window.JSON) {
+        hljs.configure(JSON.parse("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    } else {
+        hljs.configure(evel("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    }
+    jQuery('pre\x3ecode').each(function(i, block) {
+        try {
+            hljs.highlightBlock(block);
+        } catch (e) {
+            if (window.console) {
+                console.log(e.toString() + "\r\nMaybe can not detect the language");
+            }
+        }
+    });
+});
+</script>
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+        dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+    gtag('config', 'UA-19298704-1');
+</script>
+
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js'></script>
+<script type="text/javascript">
+jQuery(function(){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/KaTeX\/0.10.0\/katex.min.css" />');
+    renderMathInElement(document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "\\[", right: "\\]", display: true},
+            {left: "\\(", right: "\\)", display: false},
+            {left: "`$", right: "$`", display: false}
+        ],
+        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    });
+});
+</script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js'></script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/mermaid/8.0.0/mermaid.min.js'></script>
+
+</div>
+</body></html>

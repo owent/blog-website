@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  
+  
+  <meta charset="utf-8" />
+  <title>Linux 编译安装 GCC 4.8|I&#39;m OWenT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link rel="canonical" href="//owent.net/2013/730.html">
+  <link href="//owent.net/index.xml" rel="alternate" type="application/rss+xml" title="I&#39;m OWenT" />
+  
+  <link rel="icon" href='../favicon.ico' />
+  
+  
+  <link rel="stylesheet" href='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css' crossorigin="anonymous" />
+  
+  <link rel="stylesheet" href='//owent.net/css/style.css' />
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js' crossorigin="anonymous"></script>
+  
+  
+  
+  <link rel="stylesheet" href='//owent.net/css/syntax.css' />
+  
+</head>
+<body><div id="container"><div id="wrap">
+<header id="header">
+  <div id="banner"></div>
+  <div id="header-outer">
+    <div id="header-title">
+      <h1 id="site-title">
+        <a href="//owent.net" id="logo">I&#39;m OWenT</a>
+      </h1>
+      
+      <h2 id="site-description">Challenge Everything</h2>
+      
+    </div>
+    <div id="header-inner">
+      <nav id="main-nav" class="navbar navbar-expand-md navbar-dark">
+        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#main-nav-links" aria-controls="main-nav-links" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <a id="main-nav-brand" class="navbar-brand collapse" href="#">#</a>
+        <div class="collapse navbar-collapse" id="main-nav-links">
+          <ul class="navbar-nav mr-auto">
+            
+              
+                <li class="nav-item"><a class="nav-link" href="../" title='Home'>Home</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../archives.html" title='Archives'>Archives</a></li>
+              
+                <li class="nav-item"><a class="nav-link" href="../about.html" title='About'>About</a></li>
+              
+            
+            <li class="nav-item"><a id="nav-rss-link" class="nav-link" href="//owent.net/index.xml" title='RSS订阅'>RSS订阅</a></li>
+          </ul>
+          
+          <form class="form-inline" method="get" accept-charset="UTF-8" action='//www.bing.com/search'>
+            <input type="hidden" name='q1' value='site:owent.net' />
+            <input class="form-control" type="text" placeholder='搜索' name='q' />
+            <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit">搜索</button>
+          </form>
+          
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+<div id="main"><section id="main-content">
+<div id="post-content"><article id="post-3a99969a5b20e74299220de0e8b33470" class="article-panel article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-panel-inner article-inner">
+    <div class="article-inner">
+      <header class="article-header"><h1 itemprop="name"><a class='article-title' href="//owent.net/2013/730.html" target="_blank" itemprop="url">Linux 编译安装 GCC 4.8</a></h1></header><hr />
+      <div id="toc" class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right"><nav id="TableOfContents">
+<ul>
+<li><a href="#linux-编译安装-gcc-4-8">Linux 编译安装 GCC 4.8</a>
+<ul>
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#history">History:</a></li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav></div><br />
+      <div class="article-entry" itemprop="articleBody">
+
+<h1 id="linux-编译安装-gcc-4-8">Linux 编译安装 GCC 4.8</h1>
+
+<p>详见: <a href="https://www.owent.net/2013/730.html" target="_blank">Linux 编译安装 GCC 4.8</a></p>
+
+<p>GCC4.8发布啦，这个脚本在之前4.7的基础上做了点改进，移除一些过时的组件,增加了检测不到时自动下载源码包</p>
+
+<p>PS：4.8.1开始全面支持C++11特性，并且脱离了ppl库，gdb也开始脱离ppl库了</p>
+
+<p>编译安装 GCC 4.8.X</p>
+
+<h4><span style="color:#4B0082;">准备环境及依赖项</span></h4>
+
+<ol>
+<li>支持 ISO C++ 98 的编译器（GCC 4.7.2 的中期一个patch导致的整个项目开始转为由C++编译）<br /></li>
+<li>用于创建Ada编译器的GNAT<br /></li>
+<li>支持POSIX的shell或GNU bash<br /></li>
+<li>POSIX或SVR4的 awk工具<br /></li>
+<li>GNU binutils<br /></li>
+<li>gzip 版本1.2.4及以上     （可由GNU镜像列表 <a href="http://www.gnu.org/prep/ftp.html" target="_blank">http://www.gnu.org/prep/ftp.html</a> 或自动选择最佳镜像 <a href="http://ftpmirror.gnu.org" target="_blank">http://ftpmirror.gnu.org</a> 下载 ）<br /></li>
+<li>bzip2 版本 1.0.2及以上    （此处可下载 <a href="http://www.bzip.org/）" target="_blank">http://www.bzip.org/）</a><br /></li>
+<li>GNU make 工具 版本3.80及以上 （可由GNU镜像列表 <a href="http://www.gnu.org/prep/ftp.html" target="_blank">http://www.gnu.org/prep/ftp.html</a> 或自动选择最佳镜像 <a href="http://ftpmirror.gnu.org" target="_blank">http://ftpmirror.gnu.org</a> 下载 ）<br /></li>
+<li>GNU tar工具 版本1.14及以上   （可由GNU镜像列表 <a href="http://www.gnu.org/prep/ftp.html" target="_blank">http://www.gnu.org/prep/ftp.html</a> 或自动选择最佳镜像 <a href="http://ftpmirror.gnu.org" target="_blank">http://ftpmirror.gnu.org</a> 下载 ）<br /></li>
+<li>perl 版本5.6.1及以上      （此处可下载 <a href="http://www.perl.org/）" target="_blank">http://www.perl.org/）</a><br /></li>
+<li>jar或zip和unzip工具 （此处可下载 <a href="http://www.info-zip.org)" target="_blank">http://www.info-zip.org)</a><br /></li>
+<li>gmp库 版本5.0.2及以上 （可由GNU镜像列表 <a href="http://www.gnu.org/prep/ftp.html" target="_blank">http://www.gnu.org/prep/ftp.html</a> 或自动选择最佳镜像 <a href="http://ftpmirror.gnu.org" target="_blank">http://ftpmirror.gnu.org</a> 下载 ）<br /></li>
+<li>mpfr库 版本2.4.2及以上 （可由GNU镜像列表 <a href="http://www.gnu.org/prep/ftp.html" target="_blank">http://www.gnu.org/prep/ftp.html</a> 或自动选择最佳镜像 <a href="http://ftpmirror.gnu.org" target="_blank">http://ftpmirror.gnu.org</a> 下载 ）<br /></li>
+<li>mpc库 版本0.8.1及以上 （可由GNU镜像列表 <a href="http://www.gnu.org/prep/ftp.html" target="_blank">http://www.gnu.org/prep/ftp.html</a> 或自动选择最佳镜像 <a href="http://ftpmirror.gnu.org" target="_blank">http://ftpmirror.gnu.org</a> 下载 ）<br /></li>
+<li>isl 版本 0.11.1 （可由GNU镜像列表 <a href="http://www.gnu.org/prep/ftp.html" target="_blank">http://www.gnu.org/prep/ftp.html</a> 或自动选择最佳镜像 <a href="http://ftpmirror.gnu.org" target="_blank">http://ftpmirror.gnu.org</a>  中gcc目录中的infrastructure目录下载 ）<br /></li>
+<li>cloog 版本0.18.1（此处可下载 <a href="ftp://gcc.gnu.org/pub/gcc/infrastructure/" target="_blank">ftp://gcc.gnu.org/pub/gcc/infrastructure/</a> ）<br />
+<br /></li>
+</ol>
+
+<h3><span style="color:#008080;">我编译的环境</span></h3>
+
+<h4><span style="color:#4B0082;">系统：</span></h4>
+
+<p>CentOS 6.2 &amp; CentOS 6.5 &amp; Suse 的不知道哪个很老的版本</p>
+
+<h4><span style="color:#4B0082;">系统库：</span></h4>
+
+<ul>
+<li>gzip 1.3.12<br /></li>
+<li>zip/unzip 3.0<br /></li>
+<li>GNU make 3.81<br /></li>
+<li>tar 1.23<br /></li>
+<li>perl 5.10.1<br /></li>
+<li>bzip2 1.0.5<br /></li>
+<li>gcc 4.4.7 or gcc 4.1.2 or gcc 4.4.5<br />
+<br /></li>
+</ul>
+
+<h4><span style="color:#4B0082;">编译的依赖库：</span></h4>
+
+<ul>
+<li>gmp 6.0.0a<br /></li>
+<li>mpfr 3.1.2<br /></li>
+<li>mpc 1.0.2<br /></li>
+<li>isl 0.11.1<br /></li>
+<li>cloog 0.18.1<br />
+<br /></li>
+</ul>
+
+<h4><span style="color:#4B0082;">编译目标：</span></h4>
+
+<ul>
+<li>gcc 4.8.X<br /></li>
+<li>binutils 2.24<br /></li>
+<li>gdb 7.7.1<br />
+<br /></li>
+</ul>
+
+<h4><span style="color:#4B0082;">注：</span></h4>
+
+<ul>
+<li>(所有的库都会被安装在<strong>$PREFEX_DIR</strong>里)<br />
+<br /></li>
+</ul>
+
+<h4><span style="color:#4B0082;">额外建议：</span></h4>
+
+<p>给特定用户安装 gdb的pretty-printer 用以友好打印stdc++的stl容器</p>
+
+<ol>
+<li>在执行 install.sh 脚本前安装 ncurses-devel 和 python-devel， 用于编译gdb和开启python功能<br /></li>
+<li>安装完成后，把[GCC源码目录]/libstdc++-v3/python 复制到[用户目录]/.gdb<br /></li>
+<li>编辑[用户目录]/.gdbinit,添加<br />
+<pre><br />
+python<br />
+import sys<br />
+import os<br />
+p = os.path.expanduser(&rsquo;~/.gdb/python&rsquo;)<br />
+print p<br />
+if os.path.exists(p):<br />
+sys.path.insert(0, p)<br />
+from libstdcxx.v6.printers import register_libstdcxx_printers<br />
+register_libstdcxx_printers(None)<br />
+end<br />
+</pre><br /></li>
+<li>编译安装gdb<br />
+<br /></li>
+</ol>
+
+<h4 id="history">History:</h4>
+
+<ul>
+<li>2013-03-26     Created<br /></li>
+<li>2013-04-11     改进脚本，增加统一编译选项，增加对binutils和gdb可选包的编译，增加自动把PREFIX_DIR变为绝对路径的问题，统一目录组织，修复环境变量的一些小问题<br /></li>
+<li>2013-05-24     增加安装pretty-printer的方法<br /></li>
+<li>2013-06-03     更新gcc到4.8.1，更新基础库，更新gdb到7.6，添加clean功能，gdb添加python支持(用于pretty-printer)<br /></li>
+<li>2013-10-29     更新gcc到4.8.2，更新gdb到7.6.1，更新GMP到5.1.3<br /></li>
+<li>2013-12-13     更新binutils到2.24，更新gdb到7.6.2，移除对ppl的依赖，显式开启gold等一些选项，显式开启链接时优化选项<br /></li>
+<li>2014-05-23     更新gcc到4.8.3，更新gdb到7.7.1，完全移除对ppl的依赖，同步gcc4.9编译脚本中修复的一些问题，增加编译选项等<br /></li>
+<li>2015-02-09     更新gcc到4.8.4（未测试，貌似这个版本加入了<a href="https://gcc.gnu.org/wiki/JIT" target="_blank">jit</a>）<br /></li>
+</ul>
+</div>
+      <hr />
+      <footer class="article-footer">
+        <div class="article-panel-footer article-meta article-footer">
+          <span class="article-meta-left">
+  <ol>
+    
+    <li><a href='//owent.net/categories/article.html'>Article</a></li>
+    
+    <li><a href='//owent.net/categories/blablabla.html'>Blablabla</a></li>
+    
+  </ol>
+</span>
+          <span class="article-meta-right"><time datetime='2013-03-26T10:01:33.000&#43;00:00' itemprop="datePublished">2013-03-26</time></span>
+          <span class="clearfix"></span>
+        </div>
+        
+        
+<div class="article-tags">
+  <ul class="article-tag-list">
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/4.8.html'>4.8</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/centos.html'>centos</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/gcc.html'>gcc</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/gcc-4.8.html'>gcc 4.8</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/linux.html'>linux</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/%E5%AE%89%E8%A3%85.html'>安装</a></li>
+    
+    <li class="article-tag-list-item"><a href='//owent.net/tags/%E7%BC%96%E8%AF%91.html'>编译</a></li>
+    
+  </ul>
+</div>
+
+      </footer>
+    </div>
+    
+<hr />
+<nav id="article-nav">
+  <ul class="pagination">
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-newer" class="article-nav-link-wrap" href='//owent.net/2013/738.html'>
+        上一篇<strong>ARM 交叉编译环境搭建</strong>
+      </a>
+    </li>
+  
+  
+    <li class="page-item">
+      <a class="page-link" id="article-nav-older" class="article-nav-link-wrap" href='//owent.net/2013/722.html'>
+        下一篇<strong>[记录]虚拟硬盘的压缩|磁盘写零</strong>
+      </a>
+    </li>
+  
+  </ul>
+</nav>
+
+    
+<hr />
+<section id="comments">
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+var disqus_config = function () {
+
+this.page.identifier = '730';
+
+};
+(function() { 
+var d = document, s = d.createElement('script');
+s.src = 'https://owent.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+
+  </div>
+</article></div>
+</section></div>
+<footer id="footer">
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      <strong id="footer-left">
+        &copy; 2019
+        OWenT
+        
+        
+      </strong>
+      <strong id="footer-right">
+        
+        
+        <a href="https://github.com/owent/blog-hugo" target="_blank">本站源码</a>,
+        
+        发布者 <a href="https://gohugo.io/" target="_blank">Hugo</a>,
+        主题 <a href="https://github.com/owt5008137/hugo-theme-distinctionpp" target="_blank">distinctionpp</a>
+      </strong>
+      <span class="clearfix"></span>
+    </div>
+  </div>
+</footer>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js' crossorigin="anonymous"></script>
+  
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js' crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js'></script>
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/bash.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cpp.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/capnproto.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cmake.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/d.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/diff.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/dos.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/erlang.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/less.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/lua.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/php.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/powershell.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/protobuf.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/profile.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/typescript.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/vim.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/rust.min.js'></script>
+<script type="text/javascript">
+jQuery(function (){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/highlight.js\/9.15.6\/styles\/vs2015.min.css" />');
+    if (window.JSON) {
+        hljs.configure(JSON.parse("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    } else {
+        hljs.configure(evel("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
+    }
+    jQuery('pre\x3ecode').each(function(i, block) {
+        try {
+            hljs.highlightBlock(block);
+        } catch (e) {
+            if (window.console) {
+                console.log(e.toString() + "\r\nMaybe can not detect the language");
+            }
+        }
+    });
+});
+</script>
+
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+        dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+    gtag('config', 'UA-19298704-1');
+</script>
+
+
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js'></script>
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js'></script>
+<script type="text/javascript">
+jQuery(function(){
+    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/KaTeX\/0.10.0\/katex.min.css" />');
+    renderMathInElement(document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "\\[", right: "\\]", display: true},
+            {left: "\\(", right: "\\)", display: false},
+            {left: "`$", right: "$`", display: false}
+        ],
+        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    });
+});
+</script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js'></script>
+
+
+<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/mermaid/8.0.0/mermaid.min.js'></script>
+
+</div>
+</body></html>
