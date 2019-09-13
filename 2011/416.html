@@ -1,89 +1,8 @@
-<!DOCTYPE html>
-<html lang="zh-cn">
-
-<head>
-  
-  
-  <meta charset="utf-8" />
-  <title>2011 Google Code Jam 小记|I&#39;m OWenT</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <link rel="canonical" href="//owent.net/2011/416.html">
-  <link href="//owent.net/index.xml" rel="alternate" type="application/rss+xml" title="I&#39;m OWenT" />
-  
-  <link rel="icon" href='../favicon.ico' />
-  
-  
-  <link rel="stylesheet" href='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css' crossorigin="anonymous" />
-  
-  <link rel="stylesheet" href='//owent.net/css/style.css' />
-
-  
-  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js' crossorigin="anonymous"></script>
-  
-  
-  
-  <link rel="stylesheet" href='//owent.net/css/syntax.css' />
-  
-</head>
-<body><div id="container"><div id="wrap">
-<header id="header">
-  <div id="banner"></div>
-  <div id="header-outer">
-    <div id="header-title">
-      <h1 id="site-title">
-        <a href="//owent.net" id="logo">I&#39;m OWenT</a>
-      </h1>
-      
-      <h2 id="site-description">Challenge Everything</h2>
-      
-    </div>
-    <div id="header-inner">
-      <nav id="main-nav" class="navbar navbar-expand-md navbar-dark">
-        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#main-nav-links" aria-controls="main-nav-links" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <a id="main-nav-brand" class="navbar-brand collapse" href="#">#</a>
-        <div class="collapse navbar-collapse" id="main-nav-links">
-          <ul class="navbar-nav mr-auto">
-            
-              
-                <li class="nav-item"><a class="nav-link" href="../" title='Home'>Home</a></li>
-              
-                <li class="nav-item"><a class="nav-link" href="../archives.html" title='Archives'>Archives</a></li>
-              
-                <li class="nav-item"><a class="nav-link" href="../about.html" title='About'>About</a></li>
-              
-            
-            <li class="nav-item"><a id="nav-rss-link" class="nav-link" href="//owent.net/index.xml" title='RSS订阅'>RSS订阅</a></li>
-          </ul>
-          
-          <form class="form-inline" method="get" accept-charset="UTF-8" action='//www.bing.com/search'>
-            <input type="hidden" name='q1' value='site:owent.net' />
-            <input class="form-control" type="text" placeholder='搜索' name='q' />
-            <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit">搜索</button>
-          </form>
-          
-        </div>
-      </nav>
-    </div>
-  </div>
-</header>
-<div id="main"><section id="main-content">
-<div id="post-content"><article id="post-920a091023d1704a6da98aecf213553d" class="article-panel article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-panel-inner article-inner">
-    <div class="article-inner">
-      <header class="article-header"><h1 itemprop="name"><a class='article-title' href="//owent.net/2011/416.html" target="_blank" itemprop="url">2011 Google Code Jam 小记</a></h1></header><hr />
-      
-      <div class="article-entry" itemprop="articleBody"><p>好久没写这种类型的代码，感觉真是退步了很多。<br />
-这是我第一次参加Google Code Jam，以前有过报名可是没有做过。<br />
-我发现Google Code Jam的题目使用经典算法的几乎没有，都是模拟或者数学题（起码我目前做过的几题是这样）</p>
-
-<p>首先是<strong>Qualification Round</strong><br />
-四道水题，前两道模拟，后两道数学推公式。<br />
-第三道是位运算的，第四道由于那天没空了就没做，反正分数够了，听人说也是推公式的水题。<br />
-题目链接：<a href="http://code.google.com/codejam/contest/dashboard?c=975485" target="_blank">http://code.google.com/codejam/contest/dashboard?c=975485</a></p>
-
-<pre><code class="language-cpp">// Qualification Round -- A
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>2011 Google Code Jam 小记|I&#39;m OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2011/416.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js crossorigin=anonymous></script><link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I&#39;m OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><form class=form-inline method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-920a091023d1704a6da98aecf213553d class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2011/416.html target=_blank itemprop=url>2011 Google Code Jam 小记</a></h1></header><hr><div class=article-entry itemprop=articleBody><p>好久没写这种类型的代码，感觉真是退步了很多。<br>这是我第一次参加Google Code Jam，以前有过报名可是没有做过。<br>我发现Google Code Jam的题目使用经典算法的几乎没有，都是模拟或者数学题（起码我目前做过的几题是这样）</p><p>首先是<strong>Qualification Round</strong><br>四道水题，前两道模拟，后两道数学推公式。<br>第三道是位运算的，第四道由于那天没空了就没做，反正分数够了，听人说也是推公式的水题。<br>题目链接：<a href="http://code.google.com/codejam/contest/dashboard?c=975485" target=_blank>http://code.google.com/codejam/contest/dashboard?c=975485</a></p><pre><code class=language-cpp>// Qualification Round -- A
 #include &lt;iostream&gt;
 #include &lt;cstdio&gt;
 #include &lt;queue&gt;
@@ -161,9 +80,7 @@ int main () {
     gcj::solve();
     return 0;
 }
-</code></pre>
-
-<pre><code class="language-cpp">// Qualification Round -- B
+</code></pre><pre><code class=language-cpp>// Qualification Round -- B
 #include &lt;iostream&gt;
 #include &lt;cstdio&gt;
 #include &lt;map&gt;
@@ -277,9 +194,7 @@ int main () {
     gcj::solve();
     return 0;
 }
-</code></pre>
-
-<pre><code class="language-cpp">// Qualification Round -- C
+</code></pre><pre><code class=language-cpp>// Qualification Round -- C
 #include &lt;iostream&gt;
 #include &lt;cstdio&gt;
 #include &lt;cmath&gt;
@@ -320,17 +235,7 @@ int main () {
     gcj::solve();
     return 0;
 }
-</code></pre>
-
-<p>然后是<strong>Round 1A 2011</strong><br />
-状态不好，能力有限，我只看了第一和第二题<br />
-题目链接：<a href="http://code.google.com/codejam/contest/dashboard?c=1145485" target="_blank">http://code.google.com/codejam/contest/dashboard?c=1145485</a><br />
-第一题是告诉你一个今天最大比赛数量、今天胜率、总胜率，问数据是否可能达到.<br />
-我的想法是正确的，只有在计算符合今日胜率的最小局数和考虑总胜率为100和为0的情况即可，其他经过我简单的证明都是可行的，但是在获取最小的满足“今天胜率”的今日比赛数量的时候少打了一组括号，并且每注意到大数据范围到10^15，直接导致小数据PASS，大数据挂掉.<br />
-后来看了大牛的代码发现他用了最大公约数来解这个值，非常好。<br />
-贴小数据代码，大数据只要换到64位整数即可</p>
-
-<pre><code class="language-cpp">#include &lt;cstdio&gt;
+</code></pre><p>然后是<strong>Round 1A 2011</strong><br>状态不好，能力有限，我只看了第一和第二题<br>题目链接：<a href="http://code.google.com/codejam/contest/dashboard?c=1145485" target=_blank>http://code.google.com/codejam/contest/dashboard?c=1145485</a><br>第一题是告诉你一个今天最大比赛数量、今天胜率、总胜率，问数据是否可能达到.<br>我的想法是正确的，只有在计算符合今日胜率的最小局数和考虑总胜率为100和为0的情况即可，其他经过我简单的证明都是可行的，但是在获取最小的满足“今天胜率”的今日比赛数量的时候少打了一组括号，并且每注意到大数据范围到10^15，直接导致小数据PASS，大数据挂掉.<br>后来看了大牛的代码发现他用了最大公约数来解这个值，非常好。<br>贴小数据代码，大数据只要换到64位整数即可</p><pre><code class=language-cpp>#include &lt;cstdio&gt;
 #include &lt;algorithm&gt;
 
 namespace gcj {
@@ -366,18 +271,7 @@ int main () {
     gcj::solve();
     return 0;
 }
-</code></pre>
-
-<p>第二题是猜字游戏<br />
-看了大牛的代码，用了DFS，两次精妙的索引排序解决了。太强大了，我还有差距呵。</p>
-
-<p>然后是<strong>Round 1B 2011</strong><br />
-题目链接：<a href="http://code.google.com/codejam/contest/dashboard?c=1150485" target="_blank">http://code.google.com/codejam/contest/dashboard?c=1150485</a><br />
-这个发挥得比较好，拿到了晋级名额。<br />
-我也只写了两道题，但是方法都对，而且都是1A，最后一道题我发现只剩下25分钟了，而且很晚了，反正写不完就懒得写了<br />
-第一题是模拟，按题目说的做就好了，这题在大数据的时候freopen的路径写错了，结果我一直在想为什么会TLE，还好在提交限时的两分钟前看到了，马上改掉就ok了。</p>
-
-<pre><code class="language-cpp">#include &lt;cstdio&gt;
+</code></pre><p>第二题是猜字游戏<br>看了大牛的代码，用了DFS，两次精妙的索引排序解决了。太强大了，我还有差距呵。</p><p>然后是<strong>Round 1B 2011</strong><br>题目链接：<a href="http://code.google.com/codejam/contest/dashboard?c=1150485" target=_blank>http://code.google.com/codejam/contest/dashboard?c=1150485</a><br>这个发挥得比较好，拿到了晋级名额。<br>我也只写了两道题，但是方法都对，而且都是1A，最后一道题我发现只剩下25分钟了，而且很晚了，反正写不完就懒得写了<br>第一题是模拟，按题目说的做就好了，这题在大数据的时候freopen的路径写错了，结果我一直在想为什么会TLE，还好在提交限时的两分钟前看到了，马上改掉就ok了。</p><pre><code class=language-cpp>#include &lt;cstdio&gt;
 #include &lt;cstring&gt;
 
 namespace gcj {
@@ -458,11 +352,7 @@ int main() {
     gcj::solve();
     return 0;
 }
-</code></pre>
-
-<p>第二题是一个数学题，又是数学题，问最少多久能让任意两个热狗店距离不小于d，计算的时候只要考虑往一个方向走，然后最后答案除以2即可，因为运动是对称的。中途需要考虑的是两个相邻组的距离问题，然后对分散时间进行合并取大值，并考虑交叉的情况加上分开交叉情况的时间即可。又是64位整形，不过这次我注意到了。不过那个maxn貌似我忘记改成大数据的数字了，为什么过了，神奇的。</p>
-
-<pre><code class="language-cpp">#include &lt;cstdio&gt;
+</code></pre><p>第二题是一个数学题，又是数学题，问最少多久能让任意两个热狗店距离不小于d，计算的时候只要考虑往一个方向走，然后最后答案除以2即可，因为运动是对称的。中途需要考虑的是两个相邻组的距离问题，然后对分散时间进行合并取大值，并考虑交叉的情况加上分开交叉情况的时间即可。又是64位整形，不过这次我注意到了。不过那个maxn貌似我忘记改成大数据的数字了，为什么过了，神奇的。</p><pre><code class=language-cpp>#include &lt;cstdio&gt;
 #include &lt;cstring&gt;
 #include &lt;algorithm&gt;
 
@@ -528,13 +418,7 @@ int main() {
     gcj::solve();
     return 0;
 }
-</code></pre>
-
-<p>Round2期间正碰上期末考试，但是我还是来做了一下，很失望的没拿到衣服。感觉我的编码能力还差得远呐，因为AC两题应该就能拿到衣服了，可是遗憾在第二题。<br />
-A很简单，大意是一个人在一条路上走，可以跑t秒，告诉走路和跑步的速度，再有的是路上有n个不重叠的walkway，在walkway上的速度等于walkway的速度+当前速度，问最少几秒钟到终点。思路非常简单，就是要在walkway上加速尽量多的时间。有两种情况，一种是在没有walkway的路上跑步跑完了t秒，这种情况时间很好算。另一种是walkway之外的路上t秒没用完，这时后要尽量在速度快的walkway上加速，所以对walkway的速度排序就可以了。需要注意的情况就是从头跑到尾的情况。<br />
-A题代码：</p>
-
-<pre><code class="language-cpp">#include &lt;cstdio&gt;
+</code></pre><p>Round2期间正碰上期末考试，但是我还是来做了一下，很失望的没拿到衣服。感觉我的编码能力还差得远呐，因为AC两题应该就能拿到衣服了，可是遗憾在第二题。<br>A很简单，大意是一个人在一条路上走，可以跑t秒，告诉走路和跑步的速度，再有的是路上有n个不重叠的walkway，在walkway上的速度等于walkway的速度+当前速度，问最少几秒钟到终点。思路非常简单，就是要在walkway上加速尽量多的时间。有两种情况，一种是在没有walkway的路上跑步跑完了t秒，这种情况时间很好算。另一种是walkway之外的路上t秒没用完，这时后要尽量在速度快的walkway上加速，所以对walkway的速度排序就可以了。需要注意的情况就是从头跑到尾的情况。<br>A题代码：</p><pre><code class=language-cpp>#include &lt;cstdio&gt;
 #include &lt;algorithm&gt;
 #include &lt;cstring&gt;
 
@@ -600,15 +484,7 @@ int main() {
     gcj::solve();
     return 0;
 }
-</code></pre>
-
-<p>B题是我的痛啊，如果是难题，我不会，那我无话可说，关键是简单的计算几何+简单的DP，方法对，思路对，写代码的时候犯了N个白痴错误，各种变量名写错，各种复制代码忘了改。以后要注意写代码宁愿慢一点结构严谨，也不要贪图方便Copy代码。<br />
-比赛的时候这题我首先理解题目花了40多分钟，花了10分钟推导，50多分钟编码竟然都没写出来，Sample都没过，赛后我完全重写了一下，写出来到过小数据和大数据花了大概40分钟不到。真是不甘心。</p>
-
-<p>B题大意是给一个矩形钢板，要求先裁出一块正方形，边长大于等于3，再去掉四个角，要求最终的东西重心在形状上的中心。问是否存在如果存在给出最大的第一次裁出的正方形边长。题目难理解的地方在于开始输入的有r c d，而给的每个grid的重量是d+wij，这个地方我一直没理解然后用sample测理解。方法就是DP，对R和C进行DP，对K枚举就好。需要注意的地方是k可以为偶数。<br />
-B题代码：</p>
-
-<pre><code class="language-cpp">#include &lt;cstdio&gt;
+</code></pre><p>B题是我的痛啊，如果是难题，我不会，那我无话可说，关键是简单的计算几何+简单的DP，方法对，思路对，写代码的时候犯了N个白痴错误，各种变量名写错，各种复制代码忘了改。以后要注意写代码宁愿慢一点结构严谨，也不要贪图方便Copy代码。<br>比赛的时候这题我首先理解题目花了40多分钟，花了10分钟推导，50多分钟编码竟然都没写出来，Sample都没过，赛后我完全重写了一下，写出来到过小数据和大数据花了大概40分钟不到。真是不甘心。</p><p>B题大意是给一个矩形钢板，要求先裁出一块正方形，边长大于等于3，再去掉四个角，要求最终的东西重心在形状上的中心。问是否存在如果存在给出最大的第一次裁出的正方形边长。题目难理解的地方在于开始输入的有r c d，而给的每个grid的重量是d+wij，这个地方我一直没理解然后用sample测理解。方法就是DP，对R和C进行DP，对K枚举就好。需要注意的地方是k可以为偶数。<br>B题代码：</p><pre><code class=language-cpp>#include &lt;cstdio&gt;
 #include &lt;cstring&gt;
 #include &lt;algorithm&gt;
 #include &lt;cmath&gt;
@@ -687,209 +563,12 @@ int main() {
 
     gcj::solve();
 }
-</code></pre>
-
-<p>唉，真心还需要学习提高水平啊。</p>
-</div>
-      <hr />
-      <footer class="article-footer">
-        <div class="article-panel-footer article-meta article-footer">
-          <span class="article-meta-left">
-  <ol>
-    
-    <li><a href='//owent.net/categories/article.html'>Article</a></li>
-    
-    <li><a href='//owent.net/categories/blablabla.html'>Blablabla</a></li>
-    
-    <li><a href='//owent.net/categories/my-acm-icpc-career.html'>My ACM-ICPC Career</a></li>
-    
-  </ol>
-</span>
-          <span class="article-meta-right"><time datetime='2011-05-22T07:46:12.000&#43;00:00' itemprop="datePublished">2011-05-22</time></span>
-          <span class="clearfix"></span>
-        </div>
-        
-        
-<div class="article-tags">
-  <ul class="article-tag-list">
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/c.html'>c</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/gcj.html'>GCJ</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/google-code-jam.html'>Google Code Jam</a></li>
-    
-  </ul>
-</div>
-
-      </footer>
-    </div>
-    
-<hr />
-<nav id="article-nav">
-  <ul class="pagination">
-  
-    <li class="page-item">
-      <a class="page-link" id="article-nav-newer" class="article-nav-link-wrap" href='//owent.net/2011/447.html'>
-        上一篇<strong>非常帅气的Linq to sql</strong>
-      </a>
-    </li>
-  
-  
-    <li class="page-item">
-      <a class="page-link" id="article-nav-older" class="article-nav-link-wrap" href='//owent.net/2011/359.html'>
-        下一篇<strong>C&#43;&#43;总是很神奇</strong>
-      </a>
-    </li>
-  
-  </ul>
-</nav>
-
-    
-<hr />
-<section id="comments">
-<div id="disqus_thread"></div>
-<script type="text/javascript">
-var disqus_config = function () {
-
-this.page.identifier = '416';
-
-};
-(function() { 
-var d = document, s = d.createElement('script');
-s.src = 'https://owent.disqus.com/embed.js';
-s.setAttribute('data-timestamp', +new Date());
-(d.head || d.body).appendChild(s);
-})();
-</script>
-<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-</section>
-
-
-  </div>
-</article></div>
-</section></div>
-<footer id="footer">
-  <div class="outer">
-    <div id="footer-info" class="inner">
-      <strong id="footer-left">
-        &copy; 2019
-        OWenT
-        
-        
-      </strong>
-      <strong id="footer-right">
-        
-        
-        <a href="https://github.com/owent/blog-hugo" target="_blank">本站源码</a>,
-        
-        发布者 <a href="https://gohugo.io/" target="_blank">Hugo</a>,
-        主题 <a href="https://github.com/owt5008137/hugo-theme-distinctionpp" target="_blank">distinctionpp</a>
-      </strong>
-      <span class="clearfix"></span>
-    </div>
-  </div>
-</footer>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js' crossorigin="anonymous"></script>
-  
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js' crossorigin="anonymous"></script>
-
-
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js'></script>
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/bash.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cpp.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/capnproto.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cmake.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/d.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/diff.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/dos.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/erlang.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/less.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/lua.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/php.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/powershell.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/protobuf.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/profile.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/typescript.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/vim.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/rust.min.js'></script>
-<script type="text/javascript">
-jQuery(function (){
-    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/highlight.js\/9.15.6\/styles\/vs2015.min.css" />');
-    if (window.JSON) {
-        hljs.configure(JSON.parse("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
-    } else {
-        hljs.configure(evel("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
-    }
-    jQuery('pre\x3ecode').each(function(i, block) {
-        try {
-            hljs.highlightBlock(block);
-        } catch (e) {
-            if (window.console) {
-                console.log(e.toString() + "\r\nMaybe can not detect the language");
-            }
-        }
-    });
-});
-</script>
-
-
-
-
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-
-    function gtag() {
-        dataLayer.push(arguments);
-    }
-    gtag('js', new Date());
-    gtag('config', 'UA-19298704-1');
-</script>
-
-
-
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js'></script>
-<script type="text/javascript">
-jQuery(function(){
-    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/KaTeX\/0.10.0\/katex.min.css" />');
-    renderMathInElement(document.body, {
-        delimiters: [
-            {left: "$$", right: "$$", display: true},
-            {left: "\\[", right: "\\]", display: true},
-            {left: "\\(", right: "\\)", display: false},
-            {left: "`$", right: "$`", display: false}
-        ],
-        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
-    });
-});
-</script>
-
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js'></script>
-
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/mermaid/8.0.0/mermaid.min.js'></script>
-
-</div>
-</body></html>
+</code></pre><p>唉，真心还需要学习提高水平啊。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2011-05-22T07:46:12.000&#43;00:00 itemprop=datePublished>2011-05-22</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/c.html>c</a></li><li class=article-tag-list-item><a href=//owent.net/tags/gcj.html>GCJ</a></li><li class=article-tag-list-item><a href=//owent.net/tags/google-code-jam.html>Google Code Jam</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2011/447.html>上一篇<strong>非常帅气的Linq to sql</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2011/359.html>下一篇<strong>C&#43;&#43;总是很神奇</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier='416';};(function(){var d=document,s=d.createElement('script');s.src='https://owent.disqus.com/embed.js';s.setAttribute('data-timestamp',+new Date());(d.head||d.body).appendChild(s);})();</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class=inner><strong id=footer-left>&copy; 2019
+OWenT</strong>
+<strong id=footer-right><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owt5008137/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/bash.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cpp.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/capnproto.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cmake.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/d.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/diff.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/dos.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/erlang.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/less.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/lua.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/php.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/powershell.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/protobuf.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/profile.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/typescript.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/vim.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/rust.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/highlight.js\/9.15.6\/styles\/vs2015.min.css" />');if(window.JSON){hljs.configure(JSON.parse("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));}else{hljs.configure(evel("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));}
+jQuery('pre\x3ecode').each(function(i,block){try{hljs.highlightBlock(block);}catch(e){if(window.console){console.log(e.toString()+"\r\nMaybe can not detect the language");}}});});</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+gtag('js',new Date());gtag('config','UA-19298704-1');</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/KaTeX\/0.10.0\/katex.min.css" />');renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:true},{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false},{left:"`$",right:"$`",display:false}],ignoredTags:['script','noscript','style','textarea','pre','code']});});</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/mermaid/8.0.0/mermaid.min.js></script></div></body></html>

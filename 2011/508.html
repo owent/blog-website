@@ -1,159 +1,9 @@
-<!DOCTYPE html>
-<html lang="zh-cn">
-
-<head>
-  
-  
-  <meta charset="utf-8" />
-  <title>C&#43;&#43; 新特性学习（一） -- 概述&#43;智能指针（smart_ptr）|I&#39;m OWenT</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <link rel="canonical" href="//owent.net/2011/508.html">
-  <link href="//owent.net/index.xml" rel="alternate" type="application/rss+xml" title="I&#39;m OWenT" />
-  
-  <link rel="icon" href='../favicon.ico' />
-  
-  
-  <link rel="stylesheet" href='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css' crossorigin="anonymous" />
-  
-  <link rel="stylesheet" href='//owent.net/css/style.css' />
-
-  
-  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js' crossorigin="anonymous"></script>
-  
-  
-  
-  <link rel="stylesheet" href='//owent.net/css/syntax.css' />
-  
-</head>
-<body><div id="container"><div id="wrap">
-<header id="header">
-  <div id="banner"></div>
-  <div id="header-outer">
-    <div id="header-title">
-      <h1 id="site-title">
-        <a href="//owent.net" id="logo">I&#39;m OWenT</a>
-      </h1>
-      
-      <h2 id="site-description">Challenge Everything</h2>
-      
-    </div>
-    <div id="header-inner">
-      <nav id="main-nav" class="navbar navbar-expand-md navbar-dark">
-        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#main-nav-links" aria-controls="main-nav-links" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <a id="main-nav-brand" class="navbar-brand collapse" href="#">#</a>
-        <div class="collapse navbar-collapse" id="main-nav-links">
-          <ul class="navbar-nav mr-auto">
-            
-              
-                <li class="nav-item"><a class="nav-link" href="../" title='Home'>Home</a></li>
-              
-                <li class="nav-item"><a class="nav-link" href="../archives.html" title='Archives'>Archives</a></li>
-              
-                <li class="nav-item"><a class="nav-link" href="../about.html" title='About'>About</a></li>
-              
-            
-            <li class="nav-item"><a id="nav-rss-link" class="nav-link" href="//owent.net/index.xml" title='RSS订阅'>RSS订阅</a></li>
-          </ul>
-          
-          <form class="form-inline" method="get" accept-charset="UTF-8" action='//www.bing.com/search'>
-            <input type="hidden" name='q1' value='site:owent.net' />
-            <input class="form-control" type="text" placeholder='搜索' name='q' />
-            <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit">搜索</button>
-          </form>
-          
-        </div>
-      </nav>
-    </div>
-  </div>
-</header>
-<div id="main"><section id="main-content">
-<div id="post-content"><article id="post-04052c0891f26a2aeb4e9e5371c41431" class="article-panel article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-panel-inner article-inner">
-    <div class="article-inner">
-      <header class="article-header"><h1 itemprop="name"><a class='article-title' href="//owent.net/2011/508.html" target="_blank" itemprop="url">C&#43;&#43; 新特性学习（一） -- 概述&#43;智能指针（smart_ptr）</a></h1></header><hr />
-      
-      <div class="article-entry" itemprop="articleBody"><p><strong>C++ 0x/11 终于通过了,真是个很爽的消息。于是乎我决定对新的东西系统学习一下。</strong></p>
-
-<p>首先当然要从tr1开始，智能指针实际上我已经用过很多次了，但是为了完整起见，还是写出来记录一下。</p>
-
-<p>当然，从简单到复杂，现在接触的部分不是很复杂，不过暂时够用了。</p>
-
-<p>首先是C++0x/11的新东东：auto关键字，decltype关键字和lambda表达式</p>
-
-<p><strong>auto</strong>关键字和decltype关键字都是类型推导，不同的是auto是在申明时推导类似C#里的var，而decltype只是对值，表达式等的类型推导。</p>
-
-<p>auto a = 0; //这是正确的</p>
-
-<p>auto a; // 这是错误的，因为在申明时无法推导类型</p>
-
-<pre><code>a = 0;
-</code></pre>
-
-<p>对于<strong>decltype</strong>有如下规则</p>
-
-<ol>
-<li>如果表达式e是一个变量，那么就是这个变量的类型。<br /></li>
-<li>如果表达式e是一个函数，那么就是这个函数返回值的类型。<br /></li>
-<li>如果不符合1和2，如果e是左值，类型为T，那么decltype(e)是T&amp;；如果是右值，则是T。<br />
-<br /></li>
-</ol>
-
-<p>下一项，<strong>lambda表达式</strong></p>
-
-<p>lambda表达式主要用于简化匿名函数的写法，方便堆代码用的。（C++终于支持匿名函数了）</p>
-
-<p>标准形式是 <a href="参数" target="_blank">外部变量</a>-&gt;返回值 {函数体}</p>
-
-<p>当然“-&gt;返回值”可以省去，这时候会有返回值类型推导</p>
-
-<p>对于引用的外部变量的形式，见下表（参考维基百科的）</p>
-
-<table>
-<thead>
-<tr>
-<th>capture</th>
-<th>description</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>[]</td>
-<td>无任何外部变量</td>
-</tr>
-
-<tr>
-<td>[x, &amp;y]</td>
-<td>x以传值方式导入，y以引用方式导入</td>
-</tr>
-
-<tr>
-<td>[&amp;]</td>
-<td>所有变量都以引用方式导入</td>
-</tr>
-
-<tr>
-<td>[=]</td>
-<td>所有变量都以传值方式导入</td>
-</tr>
-
-<tr>
-<td>[&amp;, x]</td>
-<td>除x以传值方式导入外，其他变量以引用方式导入</td>
-</tr>
-
-<tr>
-<td>[=, &amp;z]</td>
-<td>除z以引用方式导入外，其他变量以传值方式导入</td>
-</tr>
-</tbody>
-</table>
-
-<p>继续继续，贴这三个部分的测试代码：</p>
-
-<pre><code class="language-cpp">#include &lt;string&gt;
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>C&#43;&#43; 新特性学习（一） -- 概述&#43;智能指针（smart_ptr）|I&#39;m OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2011/508.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js crossorigin=anonymous></script><link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I&#39;m OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><form class=form-inline method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-04052c0891f26a2aeb4e9e5371c41431 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2011/508.html target=_blank itemprop=url>C&#43;&#43; 新特性学习（一） -- 概述&#43;智能指针（smart_ptr）</a></h1></header><hr><div class=article-entry itemprop=articleBody><p><strong>C++ 0x/11 终于通过了,真是个很爽的消息。于是乎我决定对新的东西系统学习一下。</strong></p><p>首先当然要从tr1开始，智能指针实际上我已经用过很多次了，但是为了完整起见，还是写出来记录一下。</p><p>当然，从简单到复杂，现在接触的部分不是很复杂，不过暂时够用了。</p><p>首先是C++0x/11的新东东：auto关键字，decltype关键字和lambda表达式</p><p><strong>auto</strong>关键字和decltype关键字都是类型推导，不同的是auto是在申明时推导类似C#里的var，而decltype只是对值，表达式等的类型推导。</p><p>auto a = 0; //这是正确的</p><p>auto a; // 这是错误的，因为在申明时无法推导类型</p><pre><code>a = 0;
+</code></pre><p>对于<strong>decltype</strong>有如下规则</p><ol><li>如果表达式e是一个变量，那么就是这个变量的类型。<br></li><li>如果表达式e是一个函数，那么就是这个函数返回值的类型。<br></li><li>如果不符合1和2，如果e是左值，类型为T，那么decltype(e)是T&amp;；如果是右值，则是T。<br><br></li></ol><p>下一项，<strong>lambda表达式</strong></p><p>lambda表达式主要用于简化匿名函数的写法，方便堆代码用的。（C++终于支持匿名函数了）</p><p>标准形式是 <a href=参数 target=_blank>外部变量</a>-&gt;返回值 {函数体}</p><p>当然“-&gt;返回值”可以省去，这时候会有返回值类型推导</p><p>对于引用的外部变量的形式，见下表（参考维基百科的）</p><table><thead><tr><th>capture</th><th>description</th></tr></thead><tbody><tr><td>[]</td><td>无任何外部变量</td></tr><tr><td>[x, &amp;y]</td><td>x以传值方式导入，y以引用方式导入</td></tr><tr><td>[&amp;]</td><td>所有变量都以引用方式导入</td></tr><tr><td>[=]</td><td>所有变量都以传值方式导入</td></tr><tr><td>[&amp;, x]</td><td>除x以传值方式导入外，其他变量以引用方式导入</td></tr><tr><td>[=, &amp;z]</td><td>除z以引用方式导入外，其他变量以传值方式导入</td></tr></tbody></table><p>继续继续，贴这三个部分的测试代码：</p><pre><code class=language-cpp>#include &lt;string&gt;
 #include &lt;iostream&gt;
 #include &lt;algorithm&gt;
 
@@ -199,11 +49,7 @@ int main() {
 // 这一段来自维基百科，就懒得自己试了
 template&lt; typename LHS, typename RHS&gt;
    auto AddingFunc(const LHS &amp;lhs, const RHS &amp;rhs) -&gt; decltype(lhs+rhs) {return lhs + rhs;}
-</code></pre>
-
-<p>然后接下来是<strong>智能指针</strong>，先贴一段东东：</p>
-
-<pre><code class="language-cpp">#if defined(_MSC_VER) &amp;&amp; (_MSC_VER &gt;= 1020)
+</code></pre><p>然后接下来是<strong>智能指针</strong>，先贴一段东东：</p><pre><code class=language-cpp>#if defined(_MSC_VER) &amp;&amp; (_MSC_VER &gt;= 1020)
 # pragma once
 #endif
 
@@ -260,37 +106,11 @@ template&lt; typename LHS, typename RHS&gt;
         using tr1::weak_ptr;
     }
 #endif
-</code></pre>
-
-<p>这段代码是什么呢？只是一个例子，自动导入<strong>smart_ptr库</strong>。当然，其他的tr1的库的导入也可以用这种方法。这段代码支持GNU-C++、VC++，如果电脑里的C++版本不够则会导入BOOST里的智能指针库，这时候要安装BOOST库，贴完这一段，就可以使用神奇的std::shared_point了。</p>
-
-<p>智能指针实现了在C++下的自动内存管理，同时使智能指针的用法和普通指针没有太大的区别，最重要的是它的效率并不弱于裸指针。</p>
-
-<p>据说2009年的boost的智能指针性能消耗大约在5%，这个很可以有。</p>
-
-<p>它里面采用了引用计数器，如果计数为0，则被认为是不能再被仍和变量访问到，就会被自动delete。</p>
-
-<p>其中std::shared_ptr是智能指针，一下是最简单的用法</p>
-
-<pre><code class="language-cpp">std::shared_ptr&lt;int&gt; a = std::shared_ptr&lt;int&gt;(new int()),
+</code></pre><p>这段代码是什么呢？只是一个例子，自动导入<strong>smart_ptr库</strong>。当然，其他的tr1的库的导入也可以用这种方法。这段代码支持GNU-C++、VC++，如果电脑里的C++版本不够则会导入BOOST里的智能指针库，这时候要安装BOOST库，贴完这一段，就可以使用神奇的std::shared_point了。</p><p>智能指针实现了在C++下的自动内存管理，同时使智能指针的用法和普通指针没有太大的区别，最重要的是它的效率并不弱于裸指针。</p><p>据说2009年的boost的智能指针性能消耗大约在5%，这个很可以有。</p><p>它里面采用了引用计数器，如果计数为0，则被认为是不能再被仍和变量访问到，就会被自动delete。</p><p>其中std::shared_ptr是智能指针，一下是最简单的用法</p><pre><code class=language-cpp>std::shared_ptr&lt;int&gt; a = std::shared_ptr&lt;int&gt;(new int()),
     b = std::shared_ptr&lt;int&gt;(new int());
 scanf(&quot;%d %d&quot;, a.get(), b.get());
 printf(&quot;%d\n&quot;, *a + *b);
-</code></pre>
-
-<p>你不需要在函数结束后delete资源，一切都是自动的。</p>
-
-<p>另外智能指针上还有个重要的东西叫std::weak_ptr，这是智能指针的一个监视器，内部不会改变引用技术，但是可以用于获取智能指针，当资源正常时lock函数会返回智能指针，当资源被释放了后会产生空指针。主要用途是避免访问已经释放了的资源导致的Run Time Error的好东东。</p>
-
-<p>另外，<strong>使用智能指针必须注意的两点：</strong></p>
-
-<ol>
-<li><p>避免引用成环</p>
-
-<blockquote>
-<p>引用成环会导致引用计数永不为0，造成内存泄漏，比如在类a，b，c里，各有一个成员变量p，使得a.p = &amp;b, b.p = &amp;c, c.p = &a; 那么即便没有方法可以访问这几个类后，计数也不会为0，就会永驻内存。或者最简单的自环，a.p = &a; 引用技术至少为1。</p>
-
-<pre><code class="language-cpp">struct foo {
+</code></pre><p>你不需要在函数结束后delete资源，一切都是自动的。</p><p>另外智能指针上还有个重要的东西叫std::weak_ptr，这是智能指针的一个监视器，内部不会改变引用技术，但是可以用于获取智能指针，当资源正常时lock函数会返回智能指针，当资源被释放了后会产生空指针。主要用途是避免访问已经释放了的资源导致的Run Time Error的好东东。</p><p>另外，<strong>使用智能指针必须注意的两点：</strong></p><ol><li><p>避免引用成环</p><blockquote><p>引用成环会导致引用计数永不为0，造成内存泄漏，比如在类a，b，c里，各有一个成员变量p，使得a.p = &amp;b, b.p = &amp;c, c.p = &a; 那么即便没有方法可以访问这几个类后，计数也不会为0，就会永驻内存。或者最简单的自环，a.p = &a; 引用技术至少为1。</p><pre><code class=language-cpp>struct foo {
 typedef std::shared_ptr&lt;foo&gt; type_ptr;
 type_ptr p;
 };
@@ -299,26 +119,12 @@ void fun () {
 foo::type_ptr p = foo::type_ptr(new foo());
 p-&gt;p = p;
 }
-</code></pre>
-
-<p>具体数值视系统位数而定。</p>
-</blockquote></li>
-
-<li><p>一个指针智只能被一个智能指针维护</p>
-
-<blockquote>
-<p>如果一个地址同时被两个或两个以上智能指针维护会出现什么事？当某一个智能指针引用技术为0的时候，资源会被释放，而另一个就像使用了一个指向已释放资源的指针，什么后果就不用多说了吧。</p>
-
-<pre><code class="language-cpp">int* p = new int();
+</code></pre><p>具体数值视系统位数而定。</p></blockquote></li><li><p>一个指针智只能被一个智能指针维护</p><blockquote><p>如果一个地址同时被两个或两个以上智能指针维护会出现什么事？当某一个智能指针引用技术为0的时候，资源会被释放，而另一个就像使用了一个指向已释放资源的指针，什么后果就不用多说了吧。</p><pre><code class=language-cpp>int* p = new int();
 std::shared_ptr&lt;int&gt; a = std::shared_ptr&lt;int&gt;(p),
 b = std::shared_ptr&lt;int&gt;(p);
 scanf(&quot;%d %d&quot;, a.get(), b.get());
 printf(&quot;%d\n&quot;, *a + *b);
-</code></pre>
-
-<p>如果你执行上面的代码，你就会爽到了。但是这个还不明显，也容易避免，我举个更明显的例子。</p>
-
-<pre><code class="language-cpp">class foo {
+</code></pre><p>如果你执行上面的代码，你就会爽到了。但是这个还不明显，也容易避免，我举个更明显的例子。</p><pre><code class=language-cpp>class foo {
 public:
 typedef std::shared_ptr&lt;foo&gt; type_ptr;
 //Blablabla.
@@ -334,13 +140,7 @@ foo::type_ptr p = foo::type_ptr(new foo());
 p-&gt;what_are_you_want_to_do();
 return 0;
 }
-</code></pre>
-</blockquote></li>
-</ol>
-
-<p>运行一下，你又爽到了。但是某些情况下我们需要返回自己的智能指针怎么办呢，又有个新玩意，std::enable_shared_from_this&lt;&gt; ，只要继承它，就有一个成员方法shared_from_this用于返回自身的智能指针。其内部使用一个weak_ptr维护，这就是weak_ptr的一个重要使用了。</p>
-
-<pre><code class="language-cpp">class foo: public std::enable_shared_from_this&lt;foo&gt; {
+</code></pre></blockquote></li></ol><p>运行一下，你又爽到了。但是某些情况下我们需要返回自己的智能指针怎么办呢，又有个新玩意，std::enable_shared_from_this&lt;&gt; ，只要继承它，就有一个成员方法shared_from_this用于返回自身的智能指针。其内部使用一个weak_ptr维护，这就是weak_ptr的一个重要使用了。</p><pre><code class=language-cpp>class foo: public std::enable_shared_from_this&lt;foo&gt; {
 public:
     typedef std::shared_ptr&lt;foo&gt; type_ptr;
     //Blablabla.
@@ -350,221 +150,12 @@ public:
         return shared_from_this();
     }
 };
-</code></pre>
-
-<p>然后，对于智能指针的类型转换，需要用到std::const_pointer_cast，std::dynamic_pointer_cast，using std::static_pointer_cast，强制类型转换是不行滴，一定要有类型检查。</p>
-
-<p>最后，智能指针的记录先到这里，以后有用到新的东西再记上来。</p>
-
-<p>Well done.</p>
-</div>
-      <hr />
-      <footer class="article-footer">
-        <div class="article-panel-footer article-meta article-footer">
-          <span class="article-meta-left">
-  <ol>
-    
-    <li><a href='//owent.net/categories/article.html'>Article</a></li>
-    
-    <li><a href='//owent.net/categories/blablabla.html'>Blablabla</a></li>
-    
-  </ol>
-</span>
-          <span class="article-meta-right"><time datetime='2011-10-14T04:12:48.000&#43;00:00' itemprop="datePublished">2011-10-14</time></span>
-          <span class="clearfix"></span>
-        </div>
-        
-        
-<div class="article-tags">
-  <ul class="article-tag-list">
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/boost.html'>BOOST</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/c.html'>c</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/c&#43;&#43;0x/11.html'>c++0x/11</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/c&#43;&#43;11.html'>c++11</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/smart_ptr.html'>smart_ptr</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/stl.html'>STL</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/tr1.html'>tr1</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88.html'>智能指针</a></li>
-    
-  </ul>
-</div>
-
-      </footer>
-    </div>
-    
-<hr />
-<nav id="article-nav">
-  <ul class="pagination">
-  
-    <li class="page-item">
-      <a class="page-link" id="article-nav-newer" class="article-nav-link-wrap" href='//owent.net/2011/518.html'>
-        上一篇<strong>C&#43;&#43; 新特性学习（二） -- Array、Tuple和Hash库</strong>
-      </a>
-    </li>
-  
-  
-    <li class="page-item">
-      <a class="page-link" id="article-nav-older" class="article-nav-link-wrap" href='//owent.net/2011/482.html'>
-        下一篇<strong>Linux 和 Windows PowerShell 常用工具/命令 记录</strong>
-      </a>
-    </li>
-  
-  </ul>
-</nav>
-
-    
-<hr />
-<section id="comments">
-<div id="disqus_thread"></div>
-<script type="text/javascript">
-var disqus_config = function () {
-
-this.page.identifier = '508';
-
-};
-(function() { 
-var d = document, s = d.createElement('script');
-s.src = 'https://owent.disqus.com/embed.js';
-s.setAttribute('data-timestamp', +new Date());
-(d.head || d.body).appendChild(s);
-})();
-</script>
-<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-</section>
-
-
-  </div>
-</article></div>
-</section></div>
-<footer id="footer">
-  <div class="outer">
-    <div id="footer-info" class="inner">
-      <strong id="footer-left">
-        &copy; 2019
-        OWenT
-        
-        
-      </strong>
-      <strong id="footer-right">
-        
-        
-        <a href="https://github.com/owent/blog-hugo" target="_blank">本站源码</a>,
-        
-        发布者 <a href="https://gohugo.io/" target="_blank">Hugo</a>,
-        主题 <a href="https://github.com/owt5008137/hugo-theme-distinctionpp" target="_blank">distinctionpp</a>
-      </strong>
-      <span class="clearfix"></span>
-    </div>
-  </div>
-</footer>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js' crossorigin="anonymous"></script>
-  
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js' crossorigin="anonymous"></script>
-
-
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js'></script>
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/bash.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cpp.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/capnproto.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cmake.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/d.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/diff.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/dos.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/erlang.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/less.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/lua.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/php.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/powershell.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/protobuf.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/profile.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/typescript.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/vim.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/rust.min.js'></script>
-<script type="text/javascript">
-jQuery(function (){
-    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/highlight.js\/9.15.6\/styles\/vs2015.min.css" />');
-    if (window.JSON) {
-        hljs.configure(JSON.parse("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
-    } else {
-        hljs.configure(evel("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
-    }
-    jQuery('pre\x3ecode').each(function(i, block) {
-        try {
-            hljs.highlightBlock(block);
-        } catch (e) {
-            if (window.console) {
-                console.log(e.toString() + "\r\nMaybe can not detect the language");
-            }
-        }
-    });
-});
-</script>
-
-
-
-
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-
-    function gtag() {
-        dataLayer.push(arguments);
-    }
-    gtag('js', new Date());
-    gtag('config', 'UA-19298704-1');
-</script>
-
-
-
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js'></script>
-<script type="text/javascript">
-jQuery(function(){
-    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/KaTeX\/0.10.0\/katex.min.css" />');
-    renderMathInElement(document.body, {
-        delimiters: [
-            {left: "$$", right: "$$", display: true},
-            {left: "\\[", right: "\\]", display: true},
-            {left: "\\(", right: "\\)", display: false},
-            {left: "`$", right: "$`", display: false}
-        ],
-        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
-    });
-});
-</script>
-
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js'></script>
-
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/mermaid/8.0.0/mermaid.min.js'></script>
-
-</div>
-</body></html>
+</code></pre><p>然后，对于智能指针的类型转换，需要用到std::const_pointer_cast，std::dynamic_pointer_cast，using std::static_pointer_cast，强制类型转换是不行滴，一定要有类型检查。</p><p>最后，智能指针的记录先到这里，以后有用到新的东西再记上来。</p><p>Well done.</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2011-10-14T04:12:48.000&#43;00:00 itemprop=datePublished>2011-10-14</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/boost.html>BOOST</a></li><li class=article-tag-list-item><a href=//owent.net/tags/c.html>c</a></li><li class=article-tag-list-item><a href=//owent.net/tags/c&#43;&#43;0x/11.html>c++0x/11</a></li><li class=article-tag-list-item><a href=//owent.net/tags/c&#43;&#43;11.html>c++11</a></li><li class=article-tag-list-item><a href=//owent.net/tags/smart_ptr.html>smart_ptr</a></li><li class=article-tag-list-item><a href=//owent.net/tags/stl.html>STL</a></li><li class=article-tag-list-item><a href=//owent.net/tags/tr1.html>tr1</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88.html>智能指针</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2011/518.html>上一篇<strong>C&#43;&#43; 新特性学习（二） -- Array、Tuple和Hash库</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2011/482.html>下一篇<strong>Linux 和 Windows PowerShell 常用工具/命令 记录</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier='508';};(function(){var d=document,s=d.createElement('script');s.src='https://owent.disqus.com/embed.js';s.setAttribute('data-timestamp',+new Date());(d.head||d.body).appendChild(s);})();</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class=inner><strong id=footer-left>&copy; 2019
+OWenT</strong>
+<strong id=footer-right><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owt5008137/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/bash.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cpp.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/capnproto.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cmake.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/d.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/diff.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/dos.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/erlang.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/less.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/lua.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/php.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/powershell.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/protobuf.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/profile.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/typescript.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/vim.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/rust.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/highlight.js\/9.15.6\/styles\/vs2015.min.css" />');if(window.JSON){hljs.configure(JSON.parse("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));}else{hljs.configure(evel("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));}
+jQuery('pre\x3ecode').each(function(i,block){try{hljs.highlightBlock(block);}catch(e){if(window.console){console.log(e.toString()+"\r\nMaybe can not detect the language");}}});});</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+gtag('js',new Date());gtag('config','UA-19298704-1');</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/KaTeX\/0.10.0\/katex.min.css" />');renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:true},{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false},{left:"`$",right:"$`",display:false}],ignoredTags:['script','noscript','style','textarea','pre','code']});});</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/mermaid/8.0.0/mermaid.min.js></script></div></body></html>

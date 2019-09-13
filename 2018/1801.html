@@ -1,122 +1,8 @@
-<!DOCTYPE html>
-<html lang="zh-cn">
-
-<head>
-  
-  
-  <meta charset="utf-8" />
-  <title>C&#43;&#43;的backtrace|I&#39;m OWenT</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <link rel="canonical" href="//owent.net/2018/1801.html">
-  <link href="//owent.net/index.xml" rel="alternate" type="application/rss+xml" title="I&#39;m OWenT" />
-  
-  <link rel="icon" href='../favicon.ico' />
-  
-  
-  <link rel="stylesheet" href='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css' crossorigin="anonymous" />
-  
-  <link rel="stylesheet" href='//owent.net/css/style.css' />
-
-  
-  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js' crossorigin="anonymous"></script>
-  
-  
-  
-  <link rel="stylesheet" href='//owent.net/css/syntax.css' />
-  
-</head>
-<body><div id="container"><div id="wrap">
-<header id="header">
-  <div id="banner"></div>
-  <div id="header-outer">
-    <div id="header-title">
-      <h1 id="site-title">
-        <a href="//owent.net" id="logo">I&#39;m OWenT</a>
-      </h1>
-      
-      <h2 id="site-description">Challenge Everything</h2>
-      
-    </div>
-    <div id="header-inner">
-      <nav id="main-nav" class="navbar navbar-expand-md navbar-dark">
-        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#main-nav-links" aria-controls="main-nav-links" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <a id="main-nav-brand" class="navbar-brand collapse" href="#">#</a>
-        <div class="collapse navbar-collapse" id="main-nav-links">
-          <ul class="navbar-nav mr-auto">
-            
-              
-                <li class="nav-item"><a class="nav-link" href="../" title='Home'>Home</a></li>
-              
-                <li class="nav-item"><a class="nav-link" href="../archives.html" title='Archives'>Archives</a></li>
-              
-                <li class="nav-item"><a class="nav-link" href="../about.html" title='About'>About</a></li>
-              
-            
-            <li class="nav-item"><a id="nav-rss-link" class="nav-link" href="//owent.net/index.xml" title='RSS订阅'>RSS订阅</a></li>
-          </ul>
-          
-          <form class="form-inline" method="get" accept-charset="UTF-8" action='//www.bing.com/search'>
-            <input type="hidden" name='q1' value='site:owent.net' />
-            <input class="form-control" type="text" placeholder='搜索' name='q' />
-            <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit">搜索</button>
-          </form>
-          
-        </div>
-      </nav>
-    </div>
-  </div>
-</header>
-<div id="main"><section id="main-content">
-<div id="post-content"><article id="post-c3c22bc3bb1b48842c3daeb6c025ba95" class="article-panel article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-panel-inner article-inner">
-    <div class="article-inner">
-      <header class="article-header"><h1 itemprop="name"><a class='article-title' href="//owent.net/2018/1801.html" target="_blank" itemprop="url">C&#43;&#43;的backtrace</a></h1></header><hr />
-      <div id="toc" class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right"><nav id="TableOfContents">
-<ul>
-<li><a href="#开始之前">开始之前</a></li>
-<li><a href="#思路和方案">思路和方案</a>
-<ul>
-<li><a href="#linux-unix-like环境">Linux/Unix like环境</a>
-<ul>
-<li><a href="#backtrace方案">backtrace方案</a>
-<ul>
-<li><a href="#libunwind-10"><a href="http://www.nongnu.org/libunwind/" target="_blank">libunwind</a></a></li>
-<li><a href="#execinfo-h和backtrace-11"><a href="https://www.gnu.org/software/libc/manual/html_node/Backtraces.html" target="_blank">execinfo.h和backtrace</a></a></li>
-<li><a href="#unwind-h和-unwind-backtrace">unwind.h和_Unwind_Backtrace</a></li>
-</ul></li>
-<li><a href="#解析符号-demangle">解析符号-demangle</a></li>
-<li><a href="#linux下使用libunwind">Linux下使用libunwind</a></li>
-<li><a href="#linux下使用backtrace">Linux下使用backtrace</a></li>
-<li><a href="#linux下使用unwind-addr2line">Linux下使用unwind+addr2line</a></li>
-</ul></li>
-<li><a href="#windows环境">Windows环境</a>
-<ul>
-<li><a href="#backtrace方案-1">backtrace方案</a>
-<ul>
-<li><a href="#dbghelp">dbghelp</a></li>
-<li><a href="#dbgeng-idebugclient-6-idebugcontrol-7-idebugsymbols-8">dbgeng+<a href="https://msdn.microsoft.com/library/windows/hardware/ff549827" target="_blank">IDebugClient</a>+<a href="https://msdn.microsoft.com/library/windows/hardware/ff550508" target="_blank">IDebugControl</a>+<a href="https://msdn.microsoft.com/library/windows/hardware/ff550856" target="_blank">IDebugSymbols</a></a></li>
-</ul></li>
-<li><a href="#windows-msvc使用dbghelp">Windows+MSVC使用dbghelp</a></li>
-<li><a href="#windows-msvc使用dbgeng组件">Windows+MSVC使用dbgeng组件</a></li>
-<li><a href="#windows-mingw64-addr2line">Windows+MinGW64+addr2line</a></li>
-</ul></li>
-</ul></li>
-<li><a href="#结束">结束</a></li>
-</ul>
-</nav></div><br />
-      <div class="article-entry" itemprop="articleBody">
-
-<h1 id="开始之前">开始之前</h1>
-
-<p>很多语言的log模块都有一个功能，就是在打log的时候能够追溯调用栈，有的时候对查bug能有点帮助。之前我也想过给我们的log模块加上C++的backtrace的功能，迟迟一直没有做主要是两个原因：一是C++的backtrace在各个平台和编译器上都不太一样，比较冗杂；二是C/C++在编译优化之后，调用行之类的信息和甚至一些函数可能就被优化没了。所以能提供的信息就相当有限。前两天刚好有朋友问有没有提供这个，所以就花了点时间整理了下适配方案。</p>
-
-<h1 id="思路和方案">思路和方案</h1>
-
-<p>具体到方案上，不同编译器、不同的平台都有自己的规则，但是也有少数的事实标准。所以还是可以笼统地分几个主流平台处理这个backtrace。我参考了一些gcc文档、boost代码和其他流传的一些库和方法，总结起来有几种方案。有些方法能提取去模块名称（函数在哪个动态库和或哪个二进制之类），但是有些不能。所以为了简化并且统一，我就没输出模块名。另外为了方便对比，我先贴一下测试的函数:</p>
-
-<pre><code class="language-cpp">// 普通函数
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>C&#43;&#43;的backtrace|I&#39;m OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2018/1801.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js crossorigin=anonymous></script><link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I&#39;m OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><form class=form-inline method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-c3c22bc3bb1b48842c3daeb6c025ba95 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2018/1801.html target=_blank itemprop=url>C&#43;&#43;的backtrace</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right"><nav id=TableOfContents><ul><li><a href=#开始之前>开始之前</a></li><li><a href=#思路和方案>思路和方案</a><ul><li><a href=#linux-unix-like环境>Linux/Unix like环境</a><ul><li><a href=#backtrace方案>backtrace方案</a><ul><li><a href=#libunwind-10><a href=http://www.nongnu.org/libunwind/ target=_blank>libunwind</a></a></li><li><a href=#execinfo-h和backtrace-11><a href=https://www.gnu.org/software/libc/manual/html_node/Backtraces.html target=_blank>execinfo.h和backtrace</a></a></li><li><a href=#unwind-h和-unwind-backtrace>unwind.h和_Unwind_Backtrace</a></li></ul></li><li><a href=#解析符号-demangle>解析符号-demangle</a></li><li><a href=#linux下使用libunwind>Linux下使用libunwind</a></li><li><a href=#linux下使用backtrace>Linux下使用backtrace</a></li><li><a href=#linux下使用unwind-addr2line>Linux下使用unwind+addr2line</a></li></ul></li><li><a href=#windows环境>Windows环境</a><ul><li><a href=#backtrace方案-1>backtrace方案</a><ul><li><a href=#dbghelp>dbghelp</a></li><li><a href=#dbgeng-idebugclient-6-idebugcontrol-7-idebugsymbols-8>dbgeng+<a href=https://msdn.microsoft.com/library/windows/hardware/ff549827 target=_blank>IDebugClient</a>+<a href=https://msdn.microsoft.com/library/windows/hardware/ff550508 target=_blank>IDebugControl</a>+<a href=https://msdn.microsoft.com/library/windows/hardware/ff550856 target=_blank>IDebugSymbols</a></a></li></ul></li><li><a href=#windows-msvc使用dbghelp>Windows+MSVC使用dbghelp</a></li><li><a href=#windows-msvc使用dbgeng组件>Windows+MSVC使用dbgeng组件</a></li><li><a href=#windows-mingw64-addr2line>Windows+MinGW64+addr2line</a></li></ul></li></ul></li><li><a href=#结束>结束</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><h1 id=开始之前>开始之前</h1><p>很多语言的log模块都有一个功能，就是在打log的时候能够追溯调用栈，有的时候对查bug能有点帮助。之前我也想过给我们的log模块加上C++的backtrace的功能，迟迟一直没有做主要是两个原因：一是C++的backtrace在各个平台和编译器上都不太一样，比较冗杂；二是C/C++在编译优化之后，调用行之类的信息和甚至一些函数可能就被优化没了。所以能提供的信息就相当有限。前两天刚好有朋友问有没有提供这个，所以就花了点时间整理了下适配方案。</p><h1 id=思路和方案>思路和方案</h1><p>具体到方案上，不同编译器、不同的平台都有自己的规则，但是也有少数的事实标准。所以还是可以笼统地分几个主流平台处理这个backtrace。我参考了一些gcc文档、boost代码和其他流传的一些库和方法，总结起来有几种方案。有些方法能提取去模块名称（函数在哪个动态库和或哪个二进制之类），但是有些不能。所以为了简化并且统一，我就没输出模块名。另外为了方便对比，我先贴一下测试的函数:</p><pre><code class=language-cpp>// 普通函数
 void func1(int times) {
     if (times &gt; 0) {
         func1(times - 1);
@@ -179,17 +65,7 @@ void func6(int times) {
         func5(times - 1);
     }
 }
-</code></pre>
-
-<h2 id="linux-unix-like环境">Linux/Unix like环境</h2>
-
-<h3 id="backtrace方案">backtrace方案</h3>
-
-<h4 id="libunwind-10"><a href="http://www.nongnu.org/libunwind/" target="_blank">libunwind</a></h4>
-
-<p>最简单的一种方式是使用<a href="http://www.nongnu.org/libunwind/" target="_blank">libunwind</a>。他已经给你封装好了接口，比较简单。基本流程就是unw_getcontext-&gt;unw_init_local-&gt;枚举每一帧unw_get_proc_name+unw_get_proc_info。简化一下代码大概这样:</p>
-
-<pre><code class="language-cpp">unw_context_t unw_ctx;
+</code></pre><h2 id=linux-unix-like环境>Linux/Unix like环境</h2><h3 id=backtrace方案>backtrace方案</h3><h4 id=libunwind-10><a href=http://www.nongnu.org/libunwind/ target=_blank>libunwind</a></h4><p>最简单的一种方式是使用<a href=http://www.nongnu.org/libunwind/ target=_blank>libunwind</a>。他已经给你封装好了接口，比较简单。基本流程就是unw_getcontext-&gt;unw_init_local-&gt;枚举每一帧unw_get_proc_name+unw_get_proc_info。简化一下代码大概这样:</p><pre><code class=language-cpp>unw_context_t unw_ctx;
 unw_cursor_t unw_cur;
 unw_proc_info_t unw_proc;
 unw_getcontext(&amp;unw_ctx);
@@ -211,13 +87,7 @@ do {
     }
     ++ frame_id;
 } while(true);
-</code></pre>
-
-<h4 id="execinfo-h和backtrace-11"><a href="https://www.gnu.org/software/libc/manual/html_node/Backtraces.html" target="_blank">execinfo.h和backtrace</a></h4>
-
-<p>第二种是使用gcc/clang自带的<a href="https://www.gnu.org/software/libc/manual/html_node/Backtraces.html" target="_blank">execinfo.h和backtrace</a>功能。代码如下：</p>
-
-<pre><code class="language-cpp">void *array[BACKTRACE_MAX_FRAME_NUMBER];
+</code></pre><h4 id=execinfo-h和backtrace-11><a href=https://www.gnu.org/software/libc/manual/html_node/Backtraces.html target=_blank>execinfo.h和backtrace</a></h4><p>第二种是使用gcc/clang自带的<a href=https://www.gnu.org/software/libc/manual/html_node/Backtraces.html target=_blank>execinfo.h和backtrace</a>功能。代码如下：</p><pre><code class=language-cpp>void *array[BACKTRACE_MAX_FRAME_NUMBER];
 size_t size;
 char **func_name_cache;
 
@@ -229,19 +99,7 @@ for (size_t i = 0; i &lt; size; i++) {
 }
 
 free (func_name_cache);
-</code></pre>
-
-<p>但是这种方法很多环境里并没有这个头文件和接口，比如MinGW和Android里都没有。所以好事得有fallback的候选方案。</p>
-
-<h4 id="unwind-h和-unwind-backtrace">unwind.h和_Unwind_Backtrace</h4>
-
-<p>第三种是用POSIX的 unwind.h: _Unwind_Backtrace。这个虽然MinGW里有，但是返回的数据是空的。NDK里也有，但是我没看是否可以用，ndk似乎提供了自己的backtrace函数，我没有去尝试，应该和这个差不多。</p>
-
-<p>这种方法只能提取出函数地址，并不能解析符号。<a href="www.boost.org/doc/html/stacktrace.html" target="_blank">boost.stacktrace</a>也是用了这种方法，它用_Unwind_Backtrace地区出符号以后用了addr2line去做符号转换，写法很暴力。所以我认为这是最后的fallback方案了。</p>
-
-<p>使用_Unwind_Backtrace得先定义回调函数用以填充数据，然后调用_Unwind_Backtrace，代码如下:</p>
-
-<pre><code class="language-cpp">#include &lt;unwind.h&gt;
+</code></pre><p>但是这种方法很多环境里并没有这个头文件和接口，比如MinGW和Android里都没有。所以好事得有fallback的候选方案。</p><h4 id=unwind-h和-unwind-backtrace>unwind.h和_Unwind_Backtrace</h4><p>第三种是用POSIX的 unwind.h: _Unwind_Backtrace。这个虽然MinGW里有，但是返回的数据是空的。NDK里也有，但是我没看是否可以用，ndk似乎提供了自己的backtrace函数，我没有去尝试，应该和这个差不多。</p><p>这种方法只能提取出函数地址，并不能解析符号。<a href=www.boost.org/doc/html/stacktrace.html target=_blank>boost.stacktrace</a>也是用了这种方法，它用_Unwind_Backtrace地区出符号以后用了addr2line去做符号转换，写法很暴力。所以我认为这是最后的fallback方案了。</p><p>使用_Unwind_Backtrace得先定义回调函数用以填充数据，然后调用_Unwind_Backtrace，代码如下:</p><pre><code class=language-cpp>#include &lt;unwind.h&gt;
 
 struct print_trace_unwind_state_t {
     size_t frames_to_skip;
@@ -281,27 +139,9 @@ void print_trace () {
         // stacks[i] 就是函数地址
     }
 }
-</code></pre>
-
-<p>上述方法理论上在Unix like的系统下都有效。不过我只测过macOS和Linux。</p>
-
-<h3 id="解析符号-demangle">解析符号-demangle</h3>
-
-<p>gcc和clang或者libunwind直接解出的符号是原始的符号名称。当然很不好看，所幸的是gcc和clang都提供了内置函数<a href="https://gcc.gnu.org/onlinedocs/libstdc++/manual/ext_demangling.html" target="_blank">abi::__cxa_demangle</a>来把符号翻译成易懂的版本。这个接口连文档里都是只是提及了一下，我还是看头文件里的注释才知道怎么用的。差评。</p>
-
-<p>前面也提到了<a href="www.boost.org/doc/html/stacktrace.html" target="_blank">boost.stacktrace</a>的做法，它使用了_Unwind_Backtrace来解析函数地址，然后fork进程用addr2line来转换，然后等进程执行完后读取输出，而且还是每个地址fork一个进程跑addr2line。真是暴力又不靠谱，平白无故增加了个进程开销。</p>
-
-<p><strong>接下来可以看看执行结果。</strong></p>
-
-<h3 id="linux下使用libunwind">Linux下使用libunwind</h3>
-
-<pre><code class="language-bash">g++ -Wall test_backtrace.cpp -O0 -g -ggdb -rdynamic -o test_backtrace.exe -DUSING_LIBUNWIND -lunwind -lunwind-x86_64
+</code></pre><p>上述方法理论上在Unix like的系统下都有效。不过我只测过macOS和Linux。</p><h3 id=解析符号-demangle>解析符号-demangle</h3><p>gcc和clang或者libunwind直接解出的符号是原始的符号名称。当然很不好看，所幸的是gcc和clang都提供了内置函数<a href=https://gcc.gnu.org/onlinedocs/libstdc++/manual/ext_demangling.html target=_blank>abi::__cxa_demangle</a>来把符号翻译成易懂的版本。这个接口连文档里都是只是提及了一下，我还是看头文件里的注释才知道怎么用的。差评。</p><p>前面也提到了<a href=www.boost.org/doc/html/stacktrace.html target=_blank>boost.stacktrace</a>的做法，它使用了_Unwind_Backtrace来解析函数地址，然后fork进程用addr2line来转换，然后等进程执行完后读取输出，而且还是每个地址fork一个进程跑addr2line。真是暴力又不靠谱，平白无故增加了个进程开销。</p><p><strong>接下来可以看看执行结果。</strong></p><h3 id=linux下使用libunwind>Linux下使用libunwind</h3><pre><code class=language-bash>g++ -Wall test_backtrace.cpp -O0 -g -ggdb -rdynamic -o test_backtrace.exe -DUSING_LIBUNWIND -lunwind -lunwind-x86_64
 clang++ -Wall test_backtrace.cpp -O0 -g -ggdb -rdynamic -o test_backtrace.exe -DUSING_LIBUNWIND -lunwind -lunwind-x86_64
-</code></pre>
-
-<p>命令和输出:</p>
-
-<pre><code class="language-bash">./test_backtrace.exe
+</code></pre><p>命令和输出:</p><pre><code class=language-bash>./test_backtrace.exe
 
 Frame #00: (print_trace()+0x17) [0x400c30]
 Frame #01: (func1(int)+0x2c) [0x400e80]
@@ -325,17 +165,9 @@ Frame #18: (__libc_start_main+0xf0) [0x7f2d3cf50740]
 Frame #19: (_start+0x29) [0x400b30]
 Frame #20: (+0x29) [0x0]
 All frames.
-</code></pre>
-
-<h3 id="linux下使用backtrace">Linux下使用backtrace</h3>
-
-<pre><code class="language-bash">g++ -Wall test_backtrace.cpp -O0 -g -ggdb -rdynamic -o test_backtrace.exe
+</code></pre><h3 id=linux下使用backtrace>Linux下使用backtrace</h3><pre><code class=language-bash>g++ -Wall test_backtrace.cpp -O0 -g -ggdb -rdynamic -o test_backtrace.exe
 clang++ -Wall test_backtrace.cpp -O0 -g -ggdb -rdynamic -o test_backtrace.exe
-</code></pre>
-
-<p>命令和输出:</p>
-
-<pre><code class="language-bash">./test_backtrace.exe
+</code></pre><p>命令和输出:</p><pre><code class=language-bash>./test_backtrace.exe
 
 Frame #00: (print_trace()+0x1c) [0x40100c]
 Frame #01: (func1(int)+0x2c) [0x40144c]
@@ -357,17 +189,9 @@ Frame #16: (func6(int)+0x27) [0x401487]
 Frame #17: (main+0x3f) [0x40152f]
 Frame #18: (__libc_start_main+0xf0) [0x7f4cfbf90830]
 Frame #19: (_start+0x29) [0x400f19]
-</code></pre>
-
-<h3 id="linux下使用unwind-addr2line">Linux下使用unwind+addr2line</h3>
-
-<pre><code class="language-bash">g++ -Wall test_backtrace.cpp -O0 -g -ggdb -o test_backtrace.exe
+</code></pre><h3 id=linux下使用unwind-addr2line>Linux下使用unwind+addr2line</h3><pre><code class=language-bash>g++ -Wall test_backtrace.cpp -O0 -g -ggdb -o test_backtrace.exe
 clang++ -Wall test_backtrace.cpp -O0 -g -ggdb -o test_backtrace.exe
-</code></pre>
-
-<p>命令和输出:</p>
-
-<pre><code class="language-bash">./test_backtrace.exe | eval 'while read -r line || [[ -n &quot;$line&quot; ]]; do ADDR=${line/*[}; ADDR=${ADDR%]*}; echo &quot;${line}&quot;; echo &quot;    $(addr2line -Cfpe ./test_backtrace.exe $ADDR)&quot;; done'
+</code></pre><p>命令和输出:</p><pre><code class=language-bash>./test_backtrace.exe | eval 'while read -r line || [[ -n &quot;$line&quot; ]]; do ADDR=${line/*[}; ADDR=${ADDR%]*}; echo &quot;${line}&quot;; echo &quot;    $(addr2line -Cfpe ./test_backtrace.exe $ADDR)&quot;; done'
 
 Frame #00: () [0x400c8c]
     print_trace() at /mnt/d/workspace/test/test_backtrace.cpp:290
@@ -409,36 +233,8 @@ Frame #18: (__libc_start_main+0xf0) [0x7f2cf6390830]
     ?? ??:0
 Frame #19: () [0x400b99]
     _start at ??:?
-</code></pre>
-
-<h2 id="windows环境">Windows环境</h2>
-
-<h3 id="backtrace方案-1">backtrace方案</h3>
-
-<p>Windows上的MinGW64里没有execinfo.h的头文件，gcc和clang都没有，所以不能用上面提到的方法。unwind.h倒是有，但是我本地试了下并没有作用，会返回一个空的0帧。于是参考了下<a href="www.boost.org/doc/html/stacktrace.html" target="_blank">boost.stacktrace</a>和<a href="https://msdn.microsoft.com/en-us/library/windows/desktop/ms680578(v=vs.85).aspx" target="_blank">MSDN</a>里的做法，主要分两种</p>
-
-<h4 id="dbghelp">dbghelp</h4>
-
-<p>第一种是使用dbghelp库。先用<a href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb204633(v=vs.85).aspx" target="_blank">CaptureStackBackTrace</a>抓出执行栈的地址集合。然后使用<a href="https://msdn.microsoft.com/en-us/library/windows/desktop/ms681323(v=vs.85).aspx" target="_blank">SymFromAddr</a>获取符号数据。</p>
-
-<h4 id="dbgeng-idebugclient-6-idebugcontrol-7-idebugsymbols-8">dbgeng+<a href="https://msdn.microsoft.com/library/windows/hardware/ff549827" target="_blank">IDebugClient</a>+<a href="https://msdn.microsoft.com/library/windows/hardware/ff550508" target="_blank">IDebugControl</a>+<a href="https://msdn.microsoft.com/library/windows/hardware/ff550856" target="_blank">IDebugSymbols</a></h4>
-
-<p>第二种是使用dbgeng库和几个调试服务的组件<a href="https://msdn.microsoft.com/library/windows/hardware/ff549827" target="_blank">IDebugClient</a>/<a href="https://msdn.microsoft.com/library/windows/hardware/ff550508" target="_blank">IDebugControl</a>/<a href="https://msdn.microsoft.com/library/windows/hardware/ff550856" target="_blank">IDebugSymbols</a>。也是需要先用<a href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb204633(v=vs.85).aspx" target="_blank">CaptureStackBackTrace</a>抓出执行栈的地址集合。然后用<a href="https://msdn.microsoft.com/library/windows/hardware/ff549827" target="_blank">IDebugClient</a>来Attach到当前进程上，再用<a href="https://msdn.microsoft.com/library/windows/hardware/ff550508" target="_blank">IDebugControl</a>等待Attach完成，最后用<a href="https://msdn.microsoft.com/library/windows/hardware/ff550856" target="_blank">IDebugSymbols</a>导出符号数据。</p>
-
-<p><a href="www.boost.org/doc/html/stacktrace.html" target="_blank">boost.stacktrace</a>就是用的第二种方法。这种方式比第一种那种更通用一些，因为导入了调试服务器，所以甚至可以使用远程调试文件。但是第二种方法再注册服务的时候有一大陀的magic number，我总觉得很不靠谱。而且需要等待Attach完成。这样的话怕是在突发性的大量使用的情况下（比如服务突然间短暂的异常，打印了茫茫多Error Log）会大幅降低性能。所以我感觉还是优先用第一种方式好一些。</p>
-
-<p>不过无论哪种方法。MSVC下都必须开/Zi选项，因为这两个接口都依赖pdb文件。如果pdb文件不正确，输出的符号也会错误（函数地址是正确的），如果没有pdb文件，输出就会缺失符号信息。</p>
-
-<p><strong>以下是两种方式的编译命令和结果。</strong></p>
-
-<h3 id="windows-msvc使用dbghelp">Windows+MSVC使用dbghelp</h3>
-
-<pre><code class="language-bash">cl /nologo /W4 /DEBUG /Zi test_backtrace.cpp
-</code></pre>
-
-<p>命令和输出:</p>
-
-<pre><code class="language-bash">test_backtrace.exe
+</code></pre><h2 id=windows环境>Windows环境</h2><h3 id=backtrace方案-1>backtrace方案</h3><p>Windows上的MinGW64里没有execinfo.h的头文件，gcc和clang都没有，所以不能用上面提到的方法。unwind.h倒是有，但是我本地试了下并没有作用，会返回一个空的0帧。于是参考了下<a href=www.boost.org/doc/html/stacktrace.html target=_blank>boost.stacktrace</a>和<a href="https://msdn.microsoft.com/en-us/library/windows/desktop/ms680578(v=vs.85).aspx" target=_blank>MSDN</a>里的做法，主要分两种</p><h4 id=dbghelp>dbghelp</h4><p>第一种是使用dbghelp库。先用<a href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb204633(v=vs.85).aspx" target=_blank>CaptureStackBackTrace</a>抓出执行栈的地址集合。然后使用<a href="https://msdn.microsoft.com/en-us/library/windows/desktop/ms681323(v=vs.85).aspx" target=_blank>SymFromAddr</a>获取符号数据。</p><h4 id=dbgeng-idebugclient-6-idebugcontrol-7-idebugsymbols-8>dbgeng+<a href=https://msdn.microsoft.com/library/windows/hardware/ff549827 target=_blank>IDebugClient</a>+<a href=https://msdn.microsoft.com/library/windows/hardware/ff550508 target=_blank>IDebugControl</a>+<a href=https://msdn.microsoft.com/library/windows/hardware/ff550856 target=_blank>IDebugSymbols</a></h4><p>第二种是使用dbgeng库和几个调试服务的组件<a href=https://msdn.microsoft.com/library/windows/hardware/ff549827 target=_blank>IDebugClient</a>/<a href=https://msdn.microsoft.com/library/windows/hardware/ff550508 target=_blank>IDebugControl</a>/<a href=https://msdn.microsoft.com/library/windows/hardware/ff550856 target=_blank>IDebugSymbols</a>。也是需要先用<a href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb204633(v=vs.85).aspx" target=_blank>CaptureStackBackTrace</a>抓出执行栈的地址集合。然后用<a href=https://msdn.microsoft.com/library/windows/hardware/ff549827 target=_blank>IDebugClient</a>来Attach到当前进程上，再用<a href=https://msdn.microsoft.com/library/windows/hardware/ff550508 target=_blank>IDebugControl</a>等待Attach完成，最后用<a href=https://msdn.microsoft.com/library/windows/hardware/ff550856 target=_blank>IDebugSymbols</a>导出符号数据。</p><p><a href=www.boost.org/doc/html/stacktrace.html target=_blank>boost.stacktrace</a>就是用的第二种方法。这种方式比第一种那种更通用一些，因为导入了调试服务器，所以甚至可以使用远程调试文件。但是第二种方法再注册服务的时候有一大陀的magic number，我总觉得很不靠谱。而且需要等待Attach完成。这样的话怕是在突发性的大量使用的情况下（比如服务突然间短暂的异常，打印了茫茫多Error Log）会大幅降低性能。所以我感觉还是优先用第一种方式好一些。</p><p>不过无论哪种方法。MSVC下都必须开/Zi选项，因为这两个接口都依赖pdb文件。如果pdb文件不正确，输出的符号也会错误（函数地址是正确的），如果没有pdb文件，输出就会缺失符号信息。</p><p><strong>以下是两种方式的编译命令和结果。</strong></p><h3 id=windows-msvc使用dbghelp>Windows+MSVC使用dbghelp</h3><pre><code class=language-bash>cl /nologo /W4 /DEBUG /Zi test_backtrace.cpp
+</code></pre><p>命令和输出:</p><pre><code class=language-bash>test_backtrace.exe
 
 Frame 00: (print_trace) [0x00007FF6C75768F0]
 Frame 01: (func1) [0x00007FF6C7576EE0]
@@ -461,16 +257,8 @@ Frame 17: (main) [0x00007FF6C7576F90]
 Frame 18: (__scrt_common_main_seh) [0x00007FF6C757A078]
 Frame 19: (BaseThreadInitThunk) [0x00007FFCAA081FD0]
 Frame 20: (RtlUserThreadStart) [0x00007FFCAC64EF90]
-</code></pre>
-
-<h3 id="windows-msvc使用dbgeng组件">Windows+MSVC使用dbgeng组件</h3>
-
-<pre><code class="language-bash">cl /nologo /W4 /DEBUG /Zi test_backtrace.cpp
-</code></pre>
-
-<p>命令和输出:</p>
-
-<pre><code class="language-bash">test_backtrace.exe
+</code></pre><h3 id=windows-msvc使用dbgeng组件>Windows+MSVC使用dbgeng组件</h3><pre><code class=language-bash>cl /nologo /W4 /DEBUG /Zi test_backtrace.cpp
+</code></pre><p>命令和输出:</p><pre><code class=language-bash>test_backtrace.exe
 
 Frame 00: (test_backtrace!print_trace) [0x00007FF6C7576921]
 Frame 01: (test_backtrace!func1) [0x00007FF6C7576F03]
@@ -493,19 +281,9 @@ Frame 17: (test_backtrace!main) [0x00007FF6C7576FD0]
 Frame 18: (test_backtrace!__scrt_common_main_seh) [0x00007FF6C757A188]
 Frame 19: (KERNEL32!BaseThreadInitThunk) [0x00007FFCAA081FE4]
 Frame 20: (ntdll!RtlUserThreadStart) [0x00007FFCAC64EFB1]
-</code></pre>
-
-<h3 id="windows-mingw64-addr2line">Windows+MinGW64+addr2line</h3>
-
-<p>前面也提到了MinGW下的gcc和clang是没有<a href="https://www.gnu.org/software/libc/manual/html_node/Backtraces.html" target="_blank">execinfo.h</a>的，unwind.h里的东西输出也是空值。所以也只能和MSVC一样使用dbghelp或者dbgeng。但是由于gcc和clang会把符号表写在二进制里而不是pdb文件里。所以解析符号必然失败。所以我们在Windows下得gcc和clang提取调用栈得时候得跳过符号解析。所幸我们仍然可以用addr2line来解析地址。所以就有了以下结果。</p>
-
-<pre><code class="language-bash">g++ test_backtrace.cpp -O0 -g -ggdb -o test_backtrace.exe -ldbghelp -ldbgeng -Wall -DUSING_GNU_UNWIND=0
+</code></pre><h3 id=windows-mingw64-addr2line>Windows+MinGW64+addr2line</h3><p>前面也提到了MinGW下的gcc和clang是没有<a href=https://www.gnu.org/software/libc/manual/html_node/Backtraces.html target=_blank>execinfo.h</a>的，unwind.h里的东西输出也是空值。所以也只能和MSVC一样使用dbghelp或者dbgeng。但是由于gcc和clang会把符号表写在二进制里而不是pdb文件里。所以解析符号必然失败。所以我们在Windows下得gcc和clang提取调用栈得时候得跳过符号解析。所幸我们仍然可以用addr2line来解析地址。所以就有了以下结果。</p><pre><code class=language-bash>g++ test_backtrace.cpp -O0 -g -ggdb -o test_backtrace.exe -ldbghelp -ldbgeng -Wall -DUSING_GNU_UNWIND=0
 clang++ test_backtrace.cpp -O0 -g -ggdb -o test_backtrace.exe -ldbghelp -ldbgeng -Wall -DUSING_GNU_UNWIND=0
-</code></pre>
-
-<p>命令和输出:</p>
-
-<pre><code class="language-bash">./test_backtrace.exe | eval 'while read -r line || [[ -n &quot;$line&quot; ]]; do ADDR=${line/*[}; ADDR=${ADDR%]*}; echo &quot;${line}&quot;; echo &quot;    $(addr2line -Cfpe ./test_backtrace.exe $ADDR)&quot;; done'
+</code></pre><p>命令和输出:</p><pre><code class=language-bash>./test_backtrace.exe | eval 'while read -r line || [[ -n &quot;$line&quot; ]]; do ADDR=${line/*[}; ADDR=${ADDR%]*}; echo &quot;${line}&quot;; echo &quot;    $(addr2line -Cfpe ./test_backtrace.exe $ADDR)&quot;; done'
 
 Frame 00: () [0x00000000004015b4]
     print_trace() 于 D:\workspace\test/test_backtrace.cpp:176
@@ -551,225 +329,12 @@ Frame 20: () [0x00007ffcaa081fe4]
     ?? ??:0
 Frame 21: () [0x00007ffcac64efb1]
     ?? ??:0
-</code></pre>
-
-<h1 id="结束">结束</h1>
-
-<p>以上所有测试代码和运行结果都放在 <a href="https://gist.github.com/owt5008137/78e1fea9a0221ddf9ed540f4adacf358" target="_blank">https://gist.github.com/owt5008137/78e1fea9a0221ddf9ed540f4adacf358</a> 。</p>
-
-<p>更完整的实现我已经放到了util代码的log模块中（<a href="https://github.com/atframework/atframe_utils/blob/master/include/log/log_stacktrace.h" target="_blank">log_stacktrace.h</a>和<a href="https://github.com/atframework/atframe_utils/blob/master/src/log/log_stacktrace.cpp" target="_blank">log_stacktrace.cpp</a>）。因为为了最小依赖，默认不会开libunwind的版本，默认windows下使用dbghelp。提取方法的检测可以写到cmake的检测脚本里，尽可能提供多的数据并且没有太高的额外开销(坚决不启动新进程，不block wait)。然后再log模块里增加了一个选项，可以控制一个范围内的错误级别，在打印原本得错误信息之后追加打印这个调用栈，这样看出错得关系得信息会更容易些。</p>
-
-<p>另外utils的代码在Linux/Windows和macOS上测试过ok了。valgrind也跑过了没有问题。唯一的麻烦是不同平台的libunwind的以来库不太一样。我写了个cmake脚本会尝试去查找一下libunwind-<CPU架构>和libunwind-generic，找不到的情况的话只手动加了。这也是默认不开libunwind的原因之一。</p>
-</div>
-      <hr />
-      <footer class="article-footer">
-        <div class="article-panel-footer article-meta article-footer">
-          <span class="article-meta-left">
-  <ol>
-    
-    <li><a href='//owent.net/categories/article.html'>Article</a></li>
-    
-    <li><a href='//owent.net/categories/blablabla.html'>Blablabla</a></li>
-    
-  </ol>
-</span>
-          <span class="article-meta-right"><time datetime='2018-01-08T17:55:00.000&#43;00:00' itemprop="datePublished">2018-01-08</time></span>
-          <span class="clearfix"></span>
-        </div>
-        
-        
-<div class="article-tags">
-  <ul class="article-tag-list">
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/c.html'>c</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/cxx.html'>cxx</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/cpp.html'>cpp</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/gcc.html'>gcc</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/clang.html'>clang</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/vc.html'>vc</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/msvc.html'>msvc</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/traceback.html'>traceback</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/stacktrace.html'>stacktrace</a></li>
-    
-  </ul>
-</div>
-
-      </footer>
-    </div>
-    
-<hr />
-<nav id="article-nav">
-  <ul class="pagination">
-  
-    <li class="page-item">
-      <a class="page-link" id="article-nav-newer" class="article-nav-link-wrap" href='//owent.net/2018/1802.html'>
-        上一篇<strong>atframework的etcd模块化重构</strong>
-      </a>
-    </li>
-  
-  
-    <li class="page-item">
-      <a class="page-link" id="article-nav-older" class="article-nav-link-wrap" href='//owent.net/2017/1472.html'>
-        下一篇<strong>ECDH椭圆双曲线（比DH快10倍的密钥交换）算法简介和封装</strong>
-      </a>
-    </li>
-  
-  </ul>
-</nav>
-
-    
-<hr />
-<section id="comments">
-<div id="disqus_thread"></div>
-<script type="text/javascript">
-var disqus_config = function () {
-
-this.page.identifier = '1801';
-
-};
-(function() { 
-var d = document, s = d.createElement('script');
-s.src = 'https://owent.disqus.com/embed.js';
-s.setAttribute('data-timestamp', +new Date());
-(d.head || d.body).appendChild(s);
-})();
-</script>
-<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-</section>
-
-
-  </div>
-</article></div>
-</section></div>
-<footer id="footer">
-  <div class="outer">
-    <div id="footer-info" class="inner">
-      <strong id="footer-left">
-        &copy; 2019
-        OWenT
-        
-        
-      </strong>
-      <strong id="footer-right">
-        
-        
-        <a href="https://github.com/owent/blog-hugo" target="_blank">本站源码</a>,
-        
-        发布者 <a href="https://gohugo.io/" target="_blank">Hugo</a>,
-        主题 <a href="https://github.com/owt5008137/hugo-theme-distinctionpp" target="_blank">distinctionpp</a>
-      </strong>
-      <span class="clearfix"></span>
-    </div>
-  </div>
-</footer>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js' crossorigin="anonymous"></script>
-  
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js' crossorigin="anonymous"></script>
-
-
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js'></script>
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/bash.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cpp.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/capnproto.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cmake.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/d.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/diff.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/dos.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/erlang.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/less.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/lua.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/php.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/powershell.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/protobuf.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/profile.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/typescript.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/vim.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/rust.min.js'></script>
-<script type="text/javascript">
-jQuery(function (){
-    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/highlight.js\/9.15.6\/styles\/vs2015.min.css" />');
-    if (window.JSON) {
-        hljs.configure(JSON.parse("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
-    } else {
-        hljs.configure(evel("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
-    }
-    jQuery('pre\x3ecode').each(function(i, block) {
-        try {
-            hljs.highlightBlock(block);
-        } catch (e) {
-            if (window.console) {
-                console.log(e.toString() + "\r\nMaybe can not detect the language");
-            }
-        }
-    });
-});
-</script>
-
-
-
-
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-
-    function gtag() {
-        dataLayer.push(arguments);
-    }
-    gtag('js', new Date());
-    gtag('config', 'UA-19298704-1');
-</script>
-
-
-
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js'></script>
-<script type="text/javascript">
-jQuery(function(){
-    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/KaTeX\/0.10.0\/katex.min.css" />');
-    renderMathInElement(document.body, {
-        delimiters: [
-            {left: "$$", right: "$$", display: true},
-            {left: "\\[", right: "\\]", display: true},
-            {left: "\\(", right: "\\)", display: false},
-            {left: "`$", right: "$`", display: false}
-        ],
-        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
-    });
-});
-</script>
-
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js'></script>
-
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/mermaid/8.0.0/mermaid.min.js'></script>
-
-</div>
-</body></html>
+</code></pre><h1 id=结束>结束</h1><p>以上所有测试代码和运行结果都放在 <a href=https://gist.github.com/owt5008137/78e1fea9a0221ddf9ed540f4adacf358 target=_blank>https://gist.github.com/owt5008137/78e1fea9a0221ddf9ed540f4adacf358</a> 。</p><p>更完整的实现我已经放到了util代码的log模块中（<a href=https://github.com/atframework/atframe_utils/blob/master/include/log/log_stacktrace.h target=_blank>log_stacktrace.h</a>和<a href=https://github.com/atframework/atframe_utils/blob/master/src/log/log_stacktrace.cpp target=_blank>log_stacktrace.cpp</a>）。因为为了最小依赖，默认不会开libunwind的版本，默认windows下使用dbghelp。提取方法的检测可以写到cmake的检测脚本里，尽可能提供多的数据并且没有太高的额外开销(坚决不启动新进程，不block wait)。然后再log模块里增加了一个选项，可以控制一个范围内的错误级别，在打印原本得错误信息之后追加打印这个调用栈，这样看出错得关系得信息会更容易些。</p><p>另外utils的代码在Linux/Windows和macOS上测试过ok了。valgrind也跑过了没有问题。唯一的麻烦是不同平台的libunwind的以来库不太一样。我写了个cmake脚本会尝试去查找一下libunwind-<cpu架构>和libunwind-generic，找不到的情况的话只手动加了。这也是默认不开libunwind的原因之一。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2018-01-08T17:55:00.000&#43;00:00 itemprop=datePublished>2018-01-08</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/c.html>c</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cxx.html>cxx</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cpp.html>cpp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/gcc.html>gcc</a></li><li class=article-tag-list-item><a href=//owent.net/tags/clang.html>clang</a></li><li class=article-tag-list-item><a href=//owent.net/tags/vc.html>vc</a></li><li class=article-tag-list-item><a href=//owent.net/tags/msvc.html>msvc</a></li><li class=article-tag-list-item><a href=//owent.net/tags/traceback.html>traceback</a></li><li class=article-tag-list-item><a href=//owent.net/tags/stacktrace.html>stacktrace</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2018/1802.html>上一篇<strong>atframework的etcd模块化重构</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2017/1472.html>下一篇<strong>ECDH椭圆双曲线（比DH快10倍的密钥交换）算法简介和封装</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier='1801';};(function(){var d=document,s=d.createElement('script');s.src='https://owent.disqus.com/embed.js';s.setAttribute('data-timestamp',+new Date());(d.head||d.body).appendChild(s);})();</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class=inner><strong id=footer-left>&copy; 2019
+OWenT</strong>
+<strong id=footer-right><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owt5008137/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/bash.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cpp.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/capnproto.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cmake.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/d.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/diff.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/dos.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/erlang.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/less.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/lua.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/php.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/powershell.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/protobuf.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/profile.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/typescript.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/vim.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/rust.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/highlight.js\/9.15.6\/styles\/vs2015.min.css" />');if(window.JSON){hljs.configure(JSON.parse("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));}else{hljs.configure(evel("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));}
+jQuery('pre\x3ecode').each(function(i,block){try{hljs.highlightBlock(block);}catch(e){if(window.console){console.log(e.toString()+"\r\nMaybe can not detect the language");}}});});</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+gtag('js',new Date());gtag('config','UA-19298704-1');</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/KaTeX\/0.10.0\/katex.min.css" />');renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:true},{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false},{left:"`$",right:"$`",display:false}],ignoredTags:['script','noscript','style','textarea','pre','code']});});</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/mermaid/8.0.0/mermaid.min.js></script></div></body></html>

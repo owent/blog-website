@@ -1,117 +1,8 @@
-<!DOCTYPE html>
-<html lang="zh-cn">
-
-<head>
-  
-  
-  <meta charset="utf-8" />
-  <title>近期研究VPN的一些记录(OpenVPN,pptp,l2tp)|I&#39;m OWenT</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <link rel="canonical" href="//owent.net/2014/1105.html">
-  <link href="//owent.net/index.xml" rel="alternate" type="application/rss+xml" title="I&#39;m OWenT" />
-  
-  <link rel="icon" href='../favicon.ico' />
-  
-  
-  <link rel="stylesheet" href='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css' crossorigin="anonymous" />
-  
-  <link rel="stylesheet" href='//owent.net/css/style.css' />
-
-  
-  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js' crossorigin="anonymous"></script>
-  
-  
-  
-  <link rel="stylesheet" href='//owent.net/css/syntax.css' />
-  
-</head>
-<body><div id="container"><div id="wrap">
-<header id="header">
-  <div id="banner"></div>
-  <div id="header-outer">
-    <div id="header-title">
-      <h1 id="site-title">
-        <a href="//owent.net" id="logo">I&#39;m OWenT</a>
-      </h1>
-      
-      <h2 id="site-description">Challenge Everything</h2>
-      
-    </div>
-    <div id="header-inner">
-      <nav id="main-nav" class="navbar navbar-expand-md navbar-dark">
-        <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#main-nav-links" aria-controls="main-nav-links" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <a id="main-nav-brand" class="navbar-brand collapse" href="#">#</a>
-        <div class="collapse navbar-collapse" id="main-nav-links">
-          <ul class="navbar-nav mr-auto">
-            
-              
-                <li class="nav-item"><a class="nav-link" href="../" title='Home'>Home</a></li>
-              
-                <li class="nav-item"><a class="nav-link" href="../archives.html" title='Archives'>Archives</a></li>
-              
-                <li class="nav-item"><a class="nav-link" href="../about.html" title='About'>About</a></li>
-              
-            
-            <li class="nav-item"><a id="nav-rss-link" class="nav-link" href="//owent.net/index.xml" title='RSS订阅'>RSS订阅</a></li>
-          </ul>
-          
-          <form class="form-inline" method="get" accept-charset="UTF-8" action='//www.bing.com/search'>
-            <input type="hidden" name='q1' value='site:owent.net' />
-            <input class="form-control" type="text" placeholder='搜索' name='q' />
-            <button class="btn btn-outline-secondary my-2 my-sm-0" type="submit">搜索</button>
-          </form>
-          
-        </div>
-      </nav>
-    </div>
-  </div>
-</header>
-<div id="main"><section id="main-content">
-<div id="post-content"><article id="post-b8a462bd7a4467ed0785571df3cdafa2" class="article-panel article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-panel-inner article-inner">
-    <div class="article-inner">
-      <header class="article-header"><h1 itemprop="name"><a class='article-title' href="//owent.net/2014/1105.html" target="_blank" itemprop="url">近期研究VPN的一些记录(OpenVPN,pptp,l2tp)</a></h1></header><hr />
-      <div id="toc" class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right"><nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#openvpn">OpenVPN</a></li>
-<li><a href="#ppp和pptpd">PPP和PPTPD</a></li>
-<li><a href="#ipsec和l2tp协议">IPSec和l2tp协议</a></li>
-<li><a href="#简化vpn服务器安装softether-vpn">简化VPN服务器安装Softether VPN</a></li>
-<li><a href="#通用要注意的地方">通用要注意的地方</a></li>
-</ul></li>
-</ul>
-</nav></div><br />
-      <div class="article-entry" itemprop="articleBody">
-
-<p>近期由于一些需要（特别是上Google），研究了下在VPS上搭建VPN服务器的方法。其中遇到一些坑，顺带记下来以备下次使用。</p>
-
-<p>其实在有VPS的情况下，还有另外一种替代方案。那就是在路由器上直接ssh隧道+sock5代理+使用<a href="http://www.harding.motd.ca/autossh/" target="_blank">autossh</a>自动重连+使用<a href="http://www.pps.univ-paris-diderot.fr/~jch/software/polipo/" target="_blank">polipo</a>作HTTP代理+<a href="https://calomel.org/proxy_auto_config.html" target="_blank">PAC文件</a>自动代理切换。实现，最终我在家里就是这么搞得，而且这样对网络结构没有其他影响。</p>
-
-<p><a href="https://github.com/owent/blog/blob/master/Resource/2014/proxy.pac" target="_blank">我的PAC文件</a></p>
-
-<hr />
-
-<p>以上那些都不重要，话不多说直接开始VPN的部分吧</p>
-
-<h2 id="openvpn">OpenVPN</h2>
-
-<p>OpenVPN的话网上有很多教程啦，很容易配，过程挺繁琐。大致过程是</p>
-
-<ol>
-<li>如果使用tun（第三层协议）的话检查tun设备(/dev/net/tun)<br /></li>
-<li>生成CA证书、服务器证书、客户端证书。（可以用<strong>easy-rsa</strong>生成，比较简单点）<br /></li>
-<li>配置防火墙端口开放和<strong>路由转发</strong> （可以拷贝openvpn的sample里的<strong>firewall.sh</strong>来用，注意没有内网网络设备的话把eth1相关的东西注释掉）<br /></li>
-<li>OpenVPN配置<br />
-<br /></li>
-</ol>
-
-<p><strong>要注意的一点是其实OpenVPN示例里有很多配好的带注释的配置，不需要照很多教程里的完全自己写iptables和server配置的</strong></p>
-
-<pre><code class="language-bash">#!/bin/sh
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>近期研究VPN的一些记录(OpenVPN,pptp,l2tp)|I&#39;m OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2014/1105.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js crossorigin=anonymous></script><link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I&#39;m OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><form class=form-inline method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-b8a462bd7a4467ed0785571df3cdafa2 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2014/1105.html target=_blank itemprop=url>近期研究VPN的一些记录(OpenVPN,pptp,l2tp)</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right"><nav id=TableOfContents><ul><li><ul><li><a href=#openvpn>OpenVPN</a></li><li><a href=#ppp和pptpd>PPP和PPTPD</a></li><li><a href=#ipsec和l2tp协议>IPSec和l2tp协议</a></li><li><a href=#简化vpn服务器安装softether-vpn>简化VPN服务器安装Softether VPN</a></li><li><a href=#通用要注意的地方>通用要注意的地方</a></li></ul></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><p>近期由于一些需要（特别是上Google），研究了下在VPS上搭建VPN服务器的方法。其中遇到一些坑，顺带记下来以备下次使用。</p><p>其实在有VPS的情况下，还有另外一种替代方案。那就是在路由器上直接ssh隧道+sock5代理+使用<a href=http://www.harding.motd.ca/autossh/ target=_blank>autossh</a>自动重连+使用<a href=http://www.pps.univ-paris-diderot.fr/~jch/software/polipo/ target=_blank>polipo</a>作HTTP代理+<a href=https://calomel.org/proxy_auto_config.html target=_blank>PAC文件</a>自动代理切换。实现，最终我在家里就是这么搞得，而且这样对网络结构没有其他影响。</p><p><a href=https://github.com/owent/blog/blob/master/Resource/2014/proxy.pac target=_blank>我的PAC文件</a></p><hr><p>以上那些都不重要，话不多说直接开始VPN的部分吧</p><h2 id=openvpn>OpenVPN</h2><p>OpenVPN的话网上有很多教程啦，很容易配，过程挺繁琐。大致过程是</p><ol><li>如果使用tun（第三层协议）的话检查tun设备(/dev/net/tun)<br></li><li>生成CA证书、服务器证书、客户端证书。（可以用<strong>easy-rsa</strong>生成，比较简单点）<br></li><li>配置防火墙端口开放和<strong>路由转发</strong> （可以拷贝openvpn的sample里的<strong>firewall.sh</strong>来用，注意没有内网网络设备的话把eth1相关的东西注释掉）<br></li><li>OpenVPN配置<br><br></li></ol><p><strong>要注意的一点是其实OpenVPN示例里有很多配好的带注释的配置，不需要照很多教程里的完全自己写iptables和server配置的</strong></p><pre><code class=language-bash>#!/bin/sh
 # CentOS 6 x86_64 下的命令，其他系统类似
 
 # 检查tun （如果出错说内核不支持tun）
@@ -134,15 +25,7 @@ cp -rf /usr/share/easy-rsa /etc/openvpn/ ;
 cd /etc/openvpn &amp;&amp; ./openvpn-startup.sh
 # 关闭openvpn
 cd /etc/openvpn &amp;&amp; ./openvpn-shutdown.sh
-</code></pre>
-
-<p><strong>建议尝试配置的过程中先使用虚拟机试一下</strong>，因为GFW灰常牛逼的可以按协议把握手包和丢掉。我就是卡在这非常久，UDP连接提示验证失败，TCP连接客户端和服务器都收到错误码为-1的断开连接报文。死活没连上，最后我换用国内的一个VPS同样的搭建方法就直接正常连上了。</p>
-
-<h2 id="ppp和pptpd">PPP和PPTPD</h2>
-
-<p>由于OpenVPN各种墙，所以我就想换一个支持度比较高的解决方案，使用pptp协议。CentOS 6 下大致过程如下：</p>
-
-<pre><code class="language-bash">#!/bin/sh
+</code></pre><p><strong>建议尝试配置的过程中先使用虚拟机试一下</strong>，因为GFW灰常牛逼的可以按协议把握手包和丢掉。我就是卡在这非常久，UDP连接提示验证失败，TCP连接客户端和服务器都收到错误码为-1的断开连接报文。死活没连上，最后我换用国内的一个VPS同样的搭建方法就直接正常连上了。</p><h2 id=ppp和pptpd>PPP和PPTPD</h2><p>由于OpenVPN各种墙，所以我就想换一个支持度比较高的解决方案，使用pptp协议。CentOS 6 下大致过程如下：</p><pre><code class=language-bash>#!/bin/sh
 # 1. 安装软件包
 # EPEL源
 rpm -ivh &quot;http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm&quot;;
@@ -179,25 +62,7 @@ iptables -A POSTROUTING -t nat -s 192.168.10.0/24 -o eth0 -j MASQUERADE
 iptables -A INPUT -p UDP --dport 53 -j ACCEPT
 iptables -A INPUT -p tcp --dport 53 -j ACCEPT
 service iptables save
-</code></pre>
-
-<p>最后客户端连接的时候的配置里要注意</p>
-
-<ol>
-<li>关闭EAP<br /></li>
-<li>打开 使用点到点加密(MPPE)<br /></li>
-<li>放心地使用MS-Chapv2吧<br /></li>
-<li>另外貌似要内核支持某个功能，可以通过dkms提供（忘记哪个模块了但是我的VPS里自带）<br />
-<br /></li>
-</ol>
-
-<p>我按这个配置成功连上了，但是后来配置l2tp的时候给搞乱了配置，又不知道为什么连不上了，好麻烦。</p>
-
-<h2 id="ipsec和l2tp协议">IPSec和l2tp协议</h2>
-
-<p>这个协议最麻烦，而且我没连成功过。不过记录一下操作流程。</p>
-
-<pre><code class="language-bash"># 1. 安装 yum install openswan xl2tpd openswan-doc lsof libpcap-devel
+</code></pre><p>最后客户端连接的时候的配置里要注意</p><ol><li>关闭EAP<br></li><li>打开 使用点到点加密(MPPE)<br></li><li>放心地使用MS-Chapv2吧<br></li><li>另外貌似要内核支持某个功能，可以通过dkms提供（忘记哪个模块了但是我的VPS里自带）<br><br></li></ol><p>我按这个配置成功连上了，但是后来配置l2tp的时候给搞乱了配置，又不知道为什么连不上了，好麻烦。</p><h2 id=ipsec和l2tp协议>IPSec和l2tp协议</h2><p>这个协议最麻烦，而且我没连成功过。不过记录一下操作流程。</p><pre><code class=language-bash># 1. 安装 yum install openswan xl2tpd openswan-doc lsof libpcap-devel
 # 2. 配置
 vim  /etc/ipsec.conf
 # 编辑 dumpdir=/var/run/pluto/
@@ -283,34 +148,7 @@ service iptables save
 # 6. 启动xl2tpd和自动运行
 chkconfig --level 2345 ipsec on
 chkconfig --level 2345 xl2tpd on
-</code></pre>
-
-<p>不过这个我没连接成功过，不知道什么原因。<br />
-另外据说也可以使用<a href="https://www.strongswan.org/" target="_blank"><strong>strongswan</strong></a>取代openswan，而且strongswan还可以用来配置<strong>IKEv1和IKEv2</strong>协议。</p>
-
-<h2 id="简化vpn服务器安装softether-vpn">简化VPN服务器安装Softether VPN</h2>
-
-<p>痛苦了两周之后，发现其实有简单暴力的VPN方案，就是日本的开源软件<a href="https://www.softether.org/" target="_blank">Softether VPN</a></p>
-
-<p>Source列表: <a href="https://www.softether.org/5-download/src" target="_blank">https://www.softether.org/5-download/src</a><br />
-Github地址: <a href="https://github.com/SoftEtherVPN/SoftEtherVPN/" target="_blank">https://github.com/SoftEtherVPN/SoftEtherVPN/</a><br />
-Google Code地址: <a href="https://code.google.com/p/softether/source/browse/" target="_blank">https://code.google.com/p/softether/source/browse/</a><br />
-Source Forge地址: <a href="http://sourceforge.net/p/softethervpn/code/ci/master/tree/src/" target="_blank">http://sourceforge.net/p/softethervpn/code/ci/master/tree/src/</a></p>
-
-<p>这玩意简化了VPN配置，可以再Linux上部署，然后用Windows管理程序连上去管理。并且支持很多协议，OpenVPN,l2tp,IKEv1,IKEv2,IKEv3,sstp等。（不够我值尝试过openvpn和l2tp，很好用）</p>
-
-<p>这货安装很简单，直接按官网的文档即可。使用上有几个注意点</p>
-
-<ol>
-<li>加密算法最好选RC4-SHA，选其他的我的Android设备都有很大概率连不上<br /></li>
-<li>需要开启虚拟HUB里的DHCP，否则不设置符合规范的地址会连不上<br /></li>
-<li>注意设置left地址和right的地址范围，默认好像是192.168.1.1，和默认局域网网段冲突<br /></li>
-<li>默认会监听443端口，建议关闭掉，否则和HTTPS冲突（我的VPS的Web服务器监听了443端口）。<br /></li>
-<li>建议换掉OPenVPN协议的默认端口1194，原因嘛，嘿嘿<br /></li>
-
-<li><p>需要开放使用的端口</p>
-
-<pre><code class="language-bash">#!/bin/sh
+</code></pre><p>不过这个我没连接成功过，不知道什么原因。<br>另外据说也可以使用<a href=https://www.strongswan.org/ target=_blank><strong>strongswan</strong></a>取代openswan，而且strongswan还可以用来配置<strong>IKEv1和IKEv2</strong>协议。</p><h2 id=简化vpn服务器安装softether-vpn>简化VPN服务器安装Softether VPN</h2><p>痛苦了两周之后，发现其实有简单暴力的VPN方案，就是日本的开源软件<a href=https://www.softether.org/ target=_blank>Softether VPN</a></p><p>Source列表: <a href=https://www.softether.org/5-download/src target=_blank>https://www.softether.org/5-download/src</a><br>Github地址: <a href=https://github.com/SoftEtherVPN/SoftEtherVPN/ target=_blank>https://github.com/SoftEtherVPN/SoftEtherVPN/</a><br>Google Code地址: <a href=https://code.google.com/p/softether/source/browse/ target=_blank>https://code.google.com/p/softether/source/browse/</a><br>Source Forge地址: <a href=http://sourceforge.net/p/softethervpn/code/ci/master/tree/src/ target=_blank>http://sourceforge.net/p/softethervpn/code/ci/master/tree/src/</a></p><p>这玩意简化了VPN配置，可以再Linux上部署，然后用Windows管理程序连上去管理。并且支持很多协议，OpenVPN,l2tp,IKEv1,IKEv2,IKEv3,sstp等。（不够我值尝试过openvpn和l2tp，很好用）</p><p>这货安装很简单，直接按官网的文档即可。使用上有几个注意点</p><ol><li>加密算法最好选RC4-SHA，选其他的我的Android设备都有很大概率连不上<br></li><li>需要开启虚拟HUB里的DHCP，否则不设置符合规范的地址会连不上<br></li><li>注意设置left地址和right的地址范围，默认好像是192.168.1.1，和默认局域网网段冲突<br></li><li>默认会监听443端口，建议关闭掉，否则和HTTPS冲突（我的VPS的Web服务器监听了443端口）。<br></li><li>建议换掉OPenVPN协议的默认端口1194，原因嘛，嘿嘿<br></li><li><p>需要开放使用的端口</p><pre><code class=language-bash>#!/bin/sh
 # 我开放的端口如下
 iptables -A INPUT -p tcp --dport 47 -j ACCEPT
 iptables -A INPUT -p tcp --dport 53 -j ACCEPT
@@ -322,229 +160,12 @@ iptables -A INPUT -p tcp --dport 1723 -j ACCEPT
 iptables -A INPUT -p udp --dport 4500 -j ACCEPT
 iptables -A INPUT -p tcp --dport 5555 -j ACCEPT
 service iptables save
-</code></pre></li>
-</ol>
-
-<h2 id="通用要注意的地方">通用要注意的地方</h2>
-
-<ol>
-<li>最后检查一下/etc/sysconfig/iptables里的重复项，去掉保存<br /></li>
-<li><strong>CentOS 7下默认使用firewall</strong>而不是iptables，需要相应地修改配置才行<br /></li>
-<li>一些系统，比如CentOS 7下默认<strong>使用systemd的systemctl命令</strong>而不是传统的chkconfig来控制服务，也要做相应得变更<br /></li>
-<li>注意CentOS里的selinux(可通过sestatus查看状态，建议关掉就好，没啥作用)<br /></li>
-<li>注意Ubuntu下的防火墙ufw<br />
-<br /></li>
-</ol>
-</div>
-      <hr />
-      <footer class="article-footer">
-        <div class="article-panel-footer article-meta article-footer">
-          <span class="article-meta-left">
-  <ol>
-    
-    <li><a href='//owent.net/categories/article.html'>Article</a></li>
-    
-    <li><a href='//owent.net/categories/work.html'>Work</a></li>
-    
-  </ol>
-</span>
-          <span class="article-meta-right"><time datetime='2014-09-28T20:36:46.000&#43;00:00' itemprop="datePublished">2014-09-28</time></span>
-          <span class="clearfix"></span>
-        </div>
-        
-        
-<div class="article-tags">
-  <ul class="article-tag-list">
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/l2tp.html'>l2tp</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/openswan.html'>openswan</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/openvpn.html'>openvpn</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/packetix.html'>PacketiX</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/pptp.html'>pptp</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/softether.html'>softether</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/strongswan.html'>strongswan</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/vpn.html'>vpn</a></li>
-    
-    <li class="article-tag-list-item"><a href='//owent.net/tags/vpnc.html'>vpnc</a></li>
-    
-  </ul>
-</div>
-
-      </footer>
-    </div>
-    
-<hr />
-<nav id="article-nav">
-  <ul class="pagination">
-  
-    <li class="page-item">
-      <a class="page-link" id="article-nav-newer" class="article-nav-link-wrap" href='//owent.net/2014/1110.html'>
-        上一篇<strong>Gitlab环境搭建小计</strong>
-      </a>
-    </li>
-  
-  
-    <li class="page-item">
-      <a class="page-link" id="article-nav-older" class="article-nav-link-wrap" href='//owent.net/2014/1101.html'>
-        下一篇<strong>LLVM &#43; Clang &#43; Libcxx &#43; Libcxxabi 工具链编译</strong>
-      </a>
-    </li>
-  
-  </ul>
-</nav>
-
-    
-<hr />
-<section id="comments">
-<div id="disqus_thread"></div>
-<script type="text/javascript">
-var disqus_config = function () {
-
-this.page.identifier = '1105';
-
-};
-(function() { 
-var d = document, s = d.createElement('script');
-s.src = 'https://owent.disqus.com/embed.js';
-s.setAttribute('data-timestamp', +new Date());
-(d.head || d.body).appendChild(s);
-})();
-</script>
-<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-</section>
-
-
-  </div>
-</article></div>
-</section></div>
-<footer id="footer">
-  <div class="outer">
-    <div id="footer-info" class="inner">
-      <strong id="footer-left">
-        &copy; 2019
-        OWenT
-        
-        
-      </strong>
-      <strong id="footer-right">
-        
-        
-        <a href="https://github.com/owent/blog-hugo" target="_blank">本站源码</a>,
-        
-        发布者 <a href="https://gohugo.io/" target="_blank">Hugo</a>,
-        主题 <a href="https://github.com/owt5008137/hugo-theme-distinctionpp" target="_blank">distinctionpp</a>
-      </strong>
-      <span class="clearfix"></span>
-    </div>
-  </div>
-</footer>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-  <script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js' crossorigin="anonymous"></script>
-  
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js' crossorigin="anonymous"></script>
-
-
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js'></script>
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/bash.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cpp.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/capnproto.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cmake.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/d.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/diff.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/dos.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/erlang.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/less.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/lua.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/php.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/powershell.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/protobuf.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/profile.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/typescript.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/vim.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/rust.min.js'></script>
-<script type="text/javascript">
-jQuery(function (){
-    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/highlight.js\/9.15.6\/styles\/vs2015.min.css" />');
-    if (window.JSON) {
-        hljs.configure(JSON.parse("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
-    } else {
-        hljs.configure(evel("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));
-    }
-    jQuery('pre\x3ecode').each(function(i, block) {
-        try {
-            hljs.highlightBlock(block);
-        } catch (e) {
-            if (window.console) {
-                console.log(e.toString() + "\r\nMaybe can not detect the language");
-            }
-        }
-    });
-});
-</script>
-
-
-
-
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-
-    function gtag() {
-        dataLayer.push(arguments);
-    }
-    gtag('js', new Date());
-    gtag('config', 'UA-19298704-1');
-</script>
-
-
-
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js'></script>
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js'></script>
-<script type="text/javascript">
-jQuery(function(){
-    jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/KaTeX\/0.10.0\/katex.min.css" />');
-    renderMathInElement(document.body, {
-        delimiters: [
-            {left: "$$", right: "$$", display: true},
-            {left: "\\[", right: "\\]", display: true},
-            {left: "\\(", right: "\\)", display: false},
-            {left: "`$", right: "$`", display: false}
-        ],
-        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
-    });
-});
-</script>
-
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js'></script>
-
-
-<script type="text/javascript" src='//cdnjs.cloudflare.com/ajax/libs/mermaid/8.0.0/mermaid.min.js'></script>
-
-</div>
-</body></html>
+</code></pre></li></ol><h2 id=通用要注意的地方>通用要注意的地方</h2><ol><li>最后检查一下/etc/sysconfig/iptables里的重复项，去掉保存<br></li><li><strong>CentOS 7下默认使用firewall</strong>而不是iptables，需要相应地修改配置才行<br></li><li>一些系统，比如CentOS 7下默认<strong>使用systemd的systemctl命令</strong>而不是传统的chkconfig来控制服务，也要做相应得变更<br></li><li>注意CentOS里的selinux(可通过sestatus查看状态，建议关掉就好，没啥作用)<br></li><li>注意Ubuntu下的防火墙ufw<br><br></li></ol></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/work.html>Work</a></li></ol></span><span class=article-meta-right><time datetime=2014-09-28T20:36:46.000&#43;00:00 itemprop=datePublished>2014-09-28</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/l2tp.html>l2tp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/openswan.html>openswan</a></li><li class=article-tag-list-item><a href=//owent.net/tags/openvpn.html>openvpn</a></li><li class=article-tag-list-item><a href=//owent.net/tags/packetix.html>PacketiX</a></li><li class=article-tag-list-item><a href=//owent.net/tags/pptp.html>pptp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/softether.html>softether</a></li><li class=article-tag-list-item><a href=//owent.net/tags/strongswan.html>strongswan</a></li><li class=article-tag-list-item><a href=//owent.net/tags/vpn.html>vpn</a></li><li class=article-tag-list-item><a href=//owent.net/tags/vpnc.html>vpnc</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2014/1110.html>上一篇<strong>Gitlab环境搭建小计</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2014/1101.html>下一篇<strong>LLVM &#43; Clang &#43; Libcxx &#43; Libcxxabi 工具链编译</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier='1105';};(function(){var d=document,s=d.createElement('script');s.src='https://owent.disqus.com/embed.js';s.setAttribute('data-timestamp',+new Date());(d.head||d.body).appendChild(s);})();</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class=inner><strong id=footer-left>&copy; 2019
+OWenT</strong>
+<strong id=footer-right><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owt5008137/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/bash.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cpp.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/capnproto.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/cmake.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/d.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/diff.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/dos.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/erlang.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/go.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/less.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/lua.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/php.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/powershell.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/protobuf.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/profile.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/typescript.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/vim.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/languages/rust.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/highlight.js\/9.15.6\/styles\/vs2015.min.css" />');if(window.JSON){hljs.configure(JSON.parse("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));}else{hljs.configure(evel("{\"languages\":{},\"tabreplace\":\"    \",\"usebr\":false}"));}
+jQuery('pre\x3ecode').each(function(i,block){try{hljs.highlightBlock(block);}catch(e){if(window.console){console.log(e.toString()+"\r\nMaybe can not detect the language");}}});});</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+gtag('js',new Date());gtag('config','UA-19298704-1');</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/contrib/auto-render.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="\/\/cdnjs.cloudflare.com\/ajax\/libs\/KaTeX\/0.10.0\/katex.min.css" />');renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:true},{left:"\\[",right:"\\]",display:true},{left:"\\(",right:"\\)",display:false},{left:"`$",right:"$`",display:false}],ignoredTags:['script','noscript','style','textarea','pre','code']});});</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/mermaid/8.0.0/mermaid.min.js></script></div></body></html>
