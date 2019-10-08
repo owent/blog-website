@@ -106,7 +106,7 @@ match msg {
         println!(&quot;Found some other id: {}&quot;, id)
     },
 }
-</code></pre><h2 id=返回值和语句块的最后一个值>返回值和语句块的最后一个值</h2><p>和很多其他函数式语言一样，<a href=https://rust-lang.org/ target=_blank>Rust</a>使用最后一个值作为语句块的“返回值”。如果语句块是一个函数，那么就是函数返回值。比如：</p><pre><code class=language-rust>fn print_usage() {
+</code></pre><h2 id=返回值和语句块的最后一个值>返回值和语句块的最后一个值</h2><p>和很多其他函数式语言一样，<a href=https://rust-lang.org/ target=_blank>Rust</a>使用最后一个值作为语句块的“返回值”。如果语句块是一个函数，那么就是函数返回值。比如：</p><pre><code class=language-rust>fn print_usage() -&gt; i32 {
     123
 }
 </code></pre><p>这时候123是返回值，这和传统的语言不太一样。之所以说是语句块的“返回值”，是因为他还可以这么用：</p><pre><code class=language-rust>let a = if abc {
