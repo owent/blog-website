@@ -37,7 +37,7 @@ export PATH=[新toolchains路径]/bin:$PATH
 export CC=arm-linux-androideabi-gcc  # 如果是其他的名字就设成其他的名字，建议实现ls一下那个目录
 export CXX=arm-linux-androideabi-g++ # 如果是其他的名字就设成其他的名字，建议实现ls一下那个目录
 export CXXFLAGS=&quot;-lstdc++&quot;           # 可选
-</code></pre><p>然后就可以交叉编译了，其实感觉还是 <strong>env CC=arm-linux-androideabi-gcc CXX=arm-linux-androideabi-g++ CXXFLAGS=&rdquo;-lstdc++&rdquo;</strong> 执行的指令 这样比较好
+</code></pre><p>然后就可以交叉编译了，其实感觉还是 <strong>env CC=arm-linux-androideabi-gcc CXX=arm-linux-androideabi-g++ CXXFLAGS="-lstdc++"</strong> 执行的指令 这样比较好
 另外，因为Android自带的库比较少，要用个什么东西还得一个一个编译依赖库，挺坑的</p><h2 id=方案三自己搞个arm版gcc编译器>方案三：（自己搞个Arm版GCC编译器）</h2><p>本来打算参照 <a href=https://www.owent.net/2013/730.html>Linux 编译安装 GCC 4.8</a> 的脚本改进而来
 后来发现太麻烦了, 大概是先编译arm架构用得binutils、newlib，再准备GCC的依赖库，和编译GCC 4.8的依赖库一样，然后编译初版的arm gcc
 接下来要以ARM架构为目标重新编译Linux kernel、glibc、glibc-ports、glibc-linuxthreads、libc、libz等等，然后再编译完整的cross-compile的gcc

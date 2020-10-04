@@ -7,7 +7,7 @@
 另外微软的INI读取，功能不是很强不说，还限制在Windows上，更重要的是API设计得实在不优雅。
 于是libiniloader就诞生啦。</p><p>这个库主要是用于提供一个跨平台并且简单易用的配置读取和转储方式，另一方面希望兼容很多开源组件的配置方式。（比如apache的httpd用#来注释）
 再有就是借鉴PHP框架Zend Framework对ini的多个层级关系的扩展。这些奇怪的特性导致了ini loader对ini的支持和最初设计的ini格式略微有所差异。
-主要有：</p><ul><li>支持Section</li><li>Secion支持父子关系,即 [ A : B : C ] 语法</li><li>支持多重父子关系,如 C.B.A = d</li><li>支持字符串转义，其中以&rsquo;包裹的不进行转义，以"包裹的可进行转义,如 C.B.A = &ldquo;Hello \r\n World!&rdquo;</li><li>配置的Key名称不能包含引号(&lsquo;和&rdquo;)、点(.)、冒号(:)和方括号([])</li><li>配置的Key名称区分大小写</li><li>#符号也将是做行注释，与 ; 等价</li></ul><p>另外为了转储便利，专门设计了一组API用于快速数据。dump_to。它可以用于快速提取数据和转换格式。
+主要有：</p><ul><li>支持Section</li><li>Secion支持父子关系,即 [ A : B : C ] 语法</li><li>支持多重父子关系,如 C.B.A = d</li><li>支持字符串转义，其中以&rsquo;包裹的不进行转义，以"包裹的可进行转义,如 C.B.A = &ldquo;Hello \r\n World!&rdquo;</li><li>配置的Key名称不能包含引号(&lsquo;和")、点(.)、冒号(:)和方括号([])</li><li>配置的Key名称区分大小写</li><li>#符号也将是做行注释，与 ; 等价</li></ul><p>另外为了转储便利，专门设计了一组API用于快速数据。dump_to。它可以用于快速提取数据和转换格式。
 并且为了方便配置，对于bool类型有特殊处理。即除 空字符串、no、0、disable、disabled、false外，其他所有值再转换为bool类型时都被视为true。</p><p>示例：
 test.ini:</p><pre><code class=language-ini>a.b.c1 = 123  # 整数
 a.b.c2 = 1.23 ; 小数

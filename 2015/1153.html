@@ -211,7 +211,7 @@ struct unwraper_static_fn : public unwraper_static_fn_base&lt;Tr&gt; {
         );
     }
 };
-</code></pre><p>在这里，把函数类型和顺序放到了<strong>tuple&lt;&mldr;></strong>里并移除了引用和常量标识，移除引用和常量标识的原因是我们在最终构建参数的时候会用一个右值，如果有这些标识会导致C++的类型检查不通过。（比如临时变量-也就是右值-不能转为左值引用）。并使用**build_args_index&lt;TParam&mldr;>::index_seq_type()**来实现枚举常量数字，1,2&mldr;参数个数。也就这个<em>build_args_index</em>使用了一点奇技淫巧（type_traits）。</p><pre><code class=language-cpp>template&lt;int... _index&gt;
+</code></pre><p>在这里，把函数类型和顺序放到了**tuple&lt;&mldr;><strong>里并移除了引用和常量标识，移除引用和常量标识的原因是我们在最终构建参数的时候会用一个右值，如果有这些标识会导致C++的类型检查不通过。（比如临时变量-也就是右值-不能转为左值引用）。并使用</strong>build_args_index&lt;TParam&mldr;>::index_seq_type()**来实现枚举常量数字，1,2&mldr;参数个数。也就这个<em>build_args_index</em>使用了一点奇技淫巧（type_traits）。</p><pre><code class=language-cpp>template&lt;int... _index&gt;
 struct index_seq_list{ typedef index_seq_list&lt;_index..., sizeof...(_index)&gt; next_type; };
 
 template &lt;typename... TP&gt;
