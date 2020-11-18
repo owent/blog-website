@@ -6,9 +6,11 @@
 use std::task::{Poll, Context, Waker, RawWaker, RawWakerVTable};
 use std::pin::Pin;
 use std::boxed::Box;
+use std::vec::Vec;
+use std::mem::size_of_val;
 use std::sync::mpsc::{channel,Receiver,Sender};
 
-// ============== 用户调度层接入 ==============
+// 用户调度层接入
 struct MessageEvent {
     tx: Sender&lt;i32&gt;,
     waker: Waker
@@ -46,19 +48,35 @@ impl Future for Message {
     }
 }
 
-// ============== 使用者示例 ==============
-async fn call_1() {
+// 使用者示例
+async fn call_1() -&gt; i32 {
     let msg = Message {
         rx: Option::None
     };
 
-    println!(&quot;await and got {}!&quot;, msg.await);
+    let ret = msg.await;
+    println!(&quot;await and got {}!&quot;, ret);
+    ret
 }
 
-// ============== 框架调度层接入 ==============
+async fn call_2() -&gt; i32 {
+    println!(&quot;ready to call call_1.&quot;);
+    let res1 = call_1().await;
+    let res2 = call_1().await;
+    if res1 &gt; res2 {
+        println!(&quot;got first call {} greater than the second {}.&quot;, res1, res2);    
+    } else {
+        println!(&quot;got first call {} less than the second {}.&quot;, res1, res2);    
+    }
+    
+    println!(&quot;call call_1 finished.&quot;);
+    res1 + res2
+}
+
+// 框架调度层接入
 struct TaskData {
     waker: Option&lt;Waker&gt;,
-    future: * mut Pin&lt;Box&lt;dyn Future&lt;Output = ()&gt;&gt;&gt;
+    future: * mut Pin&lt;Box&lt;dyn Future&lt;Output = i32&gt;&gt;&gt;
 }
 
 // 因为全局变量访问默认不是线程安全，不标记unsafe无法直接访问
@@ -68,7 +86,7 @@ static USER_WAKER_VTABLE: RawWakerVTable = RawWakerVTable::new(
 );
 
 struct Executor {
-    future: Option&lt;Pin&lt;Box&lt;dyn Future&lt;Output = ()&gt;&gt;&gt;&gt;
+    futures: Vec&lt;Pin&lt;Box&lt;dyn Future&lt;Output = i32&gt;&gt;&gt;&gt;
 }
 
 fn user_clone_fn(d: *const ()) -&gt; RawWaker {
@@ -97,26 +115,30 @@ fn user_drop_fn(_: *const ()) {
 
 impl Executor {
     fn run(&amp;mut self) {
-        if let Some(future) = self.future.as_mut() {
-            // 准备协程任务数据
-            let mut tast_data = TaskData {
-                waker: Option::None,
-                future: 0 as * mut Pin&lt;Box&lt;dyn Future&lt;Output = ()&gt;&gt;&gt;
-            };
-            let waker = unsafe{
-                Waker::from_raw(
-                    RawWaker::new((&amp;mut tast_data as * mut TaskData) as *const (), &amp;USER_WAKER_VTABLE)
-                )
-            };
-            tast_data.waker = Some(waker);
-            tast_data.future = future as * mut Pin&lt;Box&lt;dyn Future&lt;Output = ()&gt;&gt;&gt;;
-            tast_data.waker.unwrap().clone().wake(); // First poll
-
-            unsafe {
-                // 模拟有数据
-                if let Some(ref evt) = USER_DISPATCHER {
-                    let _ = evt.tx.send(200);
-                    evt.waker.clone().wake();
+        let mut allocator: i32 = 0;
+        loop {
+            for future in self.futures.iter_mut() {
+                // 准备协程任务数据
+                let mut task_data = TaskData {
+                    waker: Option::None,
+                    future: 0 as * mut Pin&lt;Box&lt;dyn Future&lt;Output = i32&gt;&gt;&gt;
+                };
+                let waker = unsafe{
+                    Waker::from_raw(
+                        RawWaker::new((&amp;mut task_data as * mut TaskData) as *const (), &amp;USER_WAKER_VTABLE)
+                    )
+                };
+                task_data.waker = Some(waker);
+                task_data.future = future as * mut Pin&lt;Box&lt;dyn Future&lt;Output = i32&gt;&gt;&gt;;
+                task_data.waker.unwrap().clone().wake(); // First poll
+    
+                unsafe {
+                    // 模拟有数据
+                    if let Some(ref evt) = USER_DISPATCHER {
+                        allocator = allocator + 1;
+                        let _ = evt.tx.send(allocator);
+                        evt.waker.clone().wake();
+                    }
                 }
             }
         }
@@ -125,13 +147,16 @@ impl Executor {
 
 fn main() {
     println!(&quot;Hello, world!&quot;);
-    let future = call_1();
+    let future1 = call_1();
+    let future2 = call_2();
+    println!(&quot;Sizeof(call_1()): {}&quot;, size_of_val(&amp;future1));
+    println!(&quot;Sizeof(call_2()): {}&quot;, size_of_val(&amp;future2));
     let mut exec = Executor {
-        future: Some(Box::pin(future)) /*转入到堆上分配*/
+        futures: vec![Box::pin(future1), Box::pin(future2)] /*转入到堆上分配*/
     };
     exec.run();
 }
-</code></pre><p>大致的结构如下:</p><p><img src=2004-rust-future-context-waker.png alt></p><p>有兴趣的童鞋可以去 <a href="https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=ea8c97f972905513afd5e7044841e97b">https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=ea8c97f972905513afd5e7044841e97b</a> 这里自己看运行结果。</p><h2 id=libcopp对-c20-协程的设计抽象>libcopp对 C++20 协程的设计抽象</h2><h3 id=为平滑迁移而设计的-future_t--poll_t-和-context_t>为平滑迁移而设计的 future_t 、 poll_t 和 context_t</h3><p>C++并没有在语言层面保证生命周期唯一性，如果为了防止误用和生命周期混乱，要么引入引用计数来保证生命周期得可靠性，要么禁止复制。我们这里为了减少不必要的开销选择了禁止复制。</p><p>提供的基本组件如下:</p><ul><li><code>future_t&lt;T></code> : 用户数据层抽象，指示未来完成以后返回类型 <code>T</code></li><li><code>poll_t&lt;T></code> : <code>future_t&lt;T></code> 中的存储结构， 提供了低开销的 <strong>转移</strong> 语义、is_ready语义、存储结构和一系列辅助函数。 有点像 <a href=https://www.rust-lang.org/>Rust</a> 里的 <code>std::option::Option&lt;T></code> : 同时提供了C++的低开销的存储结构、转移、赋值和小对象优化等等，下面会提到。</li><li><code>context_t&lt;TPD></code> : 用户调度层抽象，用于创建用户自定义类型(<code>TPD</code>)的执行状态机和通过提供构造、析构等函数提供功能性接口。</li><li><code>TPD::operator(...)</code> : 用户异步调用事件通知抽象，用来通知 <code>future_t&lt;T></code> 的状态变化和如何变化。目前的设计中， <code>future_t&lt;T>::poll(context_t&lt;TPD>)</code> 也会自动设置 <code>context_t&lt;TPD></code> 的wake行为，并且最终回调到 <code>TPD::operator(...)</code></li></ul><p>按目前的设计，引入 <a href=https://en.cppreference.com/w/cpp/language/coroutines>C++20协程</a> 以后几乎不需要修改接入代码，接入样例如下:</p><pre><code class=language-cpp>#include &lt;assert.h&gt;
+</code></pre><p>大致的结构如下:</p><p><img src=2004-rust-future-context-waker.png alt></p><p>有兴趣的童鞋可以去 <a href="https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=4f29ba9b41d09365e6e2c2032ce06dec">https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=4f29ba9b41d09365e6e2c2032ce06dec</a> 这里自己看运行结果。</p><h2 id=libcopp对-c20-协程的设计抽象>libcopp对 C++20 协程的设计抽象</h2><h3 id=为平滑迁移而设计的-future_t--poll_t-和-context_t>为平滑迁移而设计的 future_t 、 poll_t 和 context_t</h3><p>C++并没有在语言层面保证生命周期唯一性，如果为了防止误用和生命周期混乱，要么引入引用计数来保证生命周期得可靠性，要么禁止复制。我们这里为了减少不必要的开销选择了禁止复制。</p><p>提供的基本组件如下:</p><ul><li><code>future_t&lt;T></code> : 用户数据层抽象，指示未来完成以后返回类型 <code>T</code></li><li><code>poll_t&lt;T></code> : <code>future_t&lt;T></code> 中的存储结构， 提供了低开销的 <strong>转移</strong> 语义、is_ready语义、存储结构和一系列辅助函数。 有点像 <a href=https://www.rust-lang.org/>Rust</a> 里的 <code>std::option::Option&lt;T></code> : 同时提供了C++的低开销的存储结构、转移、赋值和小对象优化等等，下面会提到。</li><li><code>context_t&lt;TPD></code> : 用户调度层抽象，用于创建用户自定义类型(<code>TPD</code>)的执行状态机和通过提供构造、析构等函数提供功能性接口。</li><li><code>TPD::operator(...)</code> : 用户异步调用事件通知抽象，用来通知 <code>future_t&lt;T></code> 的状态变化和如何变化。目前的设计中， <code>future_t&lt;T>::poll(context_t&lt;TPD>)</code> 也会自动设置 <code>context_t&lt;TPD></code> 的wake行为，并且最终回调到 <code>TPD::operator(...)</code></li></ul><p>按目前的设计，引入 <a href=https://en.cppreference.com/w/cpp/language/coroutines>C++20协程</a> 以后几乎不需要修改接入代码，接入样例如下:</p><pre><code class=language-cpp>#include &lt;assert.h&gt;
 #include &lt;iostream&gt;
 #include &lt;list&gt;
 
