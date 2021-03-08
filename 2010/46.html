@@ -1,0 +1,105 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>PKU POJ 1141 Brackets Sequence 解题报告|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2010/46.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.min.js crossorigin=anonymous></script><link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><form class=form-inline method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-9453dce3d8ed45c5c0d061dcefef4664 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2010/46.html target=_blank itemprop=url>PKU POJ 1141 Brackets Sequence 解题报告</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right"><nav id=TableOfContents></nav></div><br><div class=article-entry itemprop=articleBody><p>链接: <a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=1141">http://acm.pku.edu.cn/JudgeOnline/problem?id=1141</a>
+题目意思是输入一些括号，补充括号使之成为没有错误的括号就是只能有括号组在括号组里面，不能出现([)]或者([)]一类的情况
+方法是DP，有点绕的DP
+DP方程是 <em>bc[i][j] = min(bc[i][k] + bc[k][j])</em> 注：bc[i][j]表示字符i和字符j之间需要插入几个括弧
+然后尽量多地分割字符串
+不解释，贴代码：</p><pre><code class=language-cpp>/**
+ * URL:http://acm.pku.edu.cn/JudgeOnline/problem?id=1141
+ * Author: OWenT
+ * DP问题:DP 方程bc[i][j] = min(bc[i][k] + bc[k][j])
+ */
+
+#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+#include &lt;cstring&gt;
+#include &lt;cstdlib&gt;
+using namespace std;
+
+#define MAXN 105
+
+long bc[MAXN][MAXN];//记录字符串之间需要补充几个字符
+long strSplit[MAXN][MAXN];
+
+char str[MAXN];
+
+void printStr(long b, long e);
+int main()
+{
+    long len, i, j, k, tmpEd;
+    while(gets(str) != NULL)
+    {
+        len = strlen(str);
+        memset(bc, 0, sizeof(bc));
+        memset(strSplit, -1, sizeof(strSplit));
+        if(len == 0)
+        {
+            putchar('\n');
+            continue;
+        }
+        for(i = 0; i &lt; len; i ++)
+            bc[i][i] = 1;
+
+        for(i = 1; i &lt; len; i ++)//跃进个数
+        {
+            for(j = 0; j + i &lt; len; j ++)//起始位置
+            {
+                tmpEd = i + j;
+                long tmpTBc, minBc = 1&lt;&lt; 16;
+                if((str[j] == '(' &amp;&amp; str[tmpEd] == ')') || (str[j] == '[' &amp;&amp; str[tmpEd] == ']'))
+                    minBc = bc[j + 1][tmpEd - 1];//如果不匹配下面必然有分割
+                for(k = j; k &lt; tmpEd; k ++)
+                {
+                    tmpTBc = bc[j][k] + bc[k + 1][tmpEd];//跃进个数为第一层循环就是要保证这里的子域都处理过了
+                    if(tmpTBc &lt; minBc)
+                    {
+                        minBc = tmpTBc;//最少补充个数
+                        strSplit[j][tmpEd] = k;//分割点
+                    }
+                }
+                bc[j][tmpEd] = minBc;
+            }
+        }
+
+        printStr(0, len - 1);
+        putchar('\n');
+    }
+    return 0;
+}
+
+void printStr(long b, long e)
+{
+    if(b &gt; e)
+        return;
+    else if(b == e)
+    {
+        if(str[b] == '(' || str[b] == ')')
+            printf(&quot;()&quot;);
+        else
+            printf(&quot;[]&quot;);
+    }
+    else
+    {
+        if(strSplit[b][e] &lt; 0)//无分割点
+        {
+            putchar(str[b]);
+            printStr( b + 1, e - 1);
+            putchar((str[b] == '(')? ')' : ']');
+        }
+        else
+        {
+            printStr(b, strSplit[b][e]);
+            printStr(strSplit[b][e] + 1, e);
+        }
+    }
+}
+</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2010-04-05T16:52:28.000+00:00 itemprop=datePublished>2010-04-05</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/acm.html>acm</a></li><li class=article-tag-list-item><a href=//owent.net/tags/pku.html>pku</a></li><li class=article-tag-list-item><a href=//owent.net/tags/poj.html>poj</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2010/45.html>上一篇<strong>PKU POJ 2728 Desert King 解题报告</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2010/47.html>下一篇<strong>POJ PKU 2155 Matrix 解题报告</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier='46'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class=inner><strong id=footer-left>&copy; 2021
+OWenT</strong>
+<strong id=footer-right><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owt5008137/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.0/umd/popper.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/highlight.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/bash.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/cpp.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/capnproto.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/cmake.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/d.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/diff.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/dos.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/erlang.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/go.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/less.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/lua.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/php.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/powershell.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/protobuf.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/python.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/profile.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/typescript.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/vim.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/rust.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/yaml.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/mermaid/8.9.1/mermaid.min.js></script></div></body></html>

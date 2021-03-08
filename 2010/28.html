@@ -1,0 +1,85 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>POJ PKU 3659 Cell Phone Network 解题报告|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2010/28.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.min.js crossorigin=anonymous></script><link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><form class=form-inline method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-13d5ee77a8ff08c87ca97f156d0eb4a6 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2010/28.html target=_blank itemprop=url>POJ PKU 3659 Cell Phone Network 解题报告</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right"><nav id=TableOfContents></nav></div><br><div class=article-entry itemprop=articleBody><p>题目链接：<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3659">http://acm.pku.edu.cn/JudgeOnline/problem?id=3659</a></p><p>这题不算难题了，基本算是中等题</p><p>题目大意是给出一颗树，在一些点建一个信号塔，信号塔覆盖范围是其所在点和邻近点，问最少几个信号塔可以覆盖全区域</p><p><strong>思路是树状DP（后序遍历）</strong>，有三个状态，分别记录父节点建塔，本节点建塔和子节点建塔的最少建塔数量</p><p>需要注意的就是子节点建塔的判断，子节点建塔只要一个以上的子节点建塔即可</p><p>代码如下：</p><pre><code class=language-cpp>#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+#include &lt;cstring&gt;
+#include &lt;vector&gt;
+#include &lt;cmath&gt;
+using namespace std;
+
+struct node
+{
+    vector&lt;int&gt; linkto;
+    int build[3];//0 为自己建塔， 1 为父节点建塔， 2为子节点建塔
+};
+
+node pasture[10005];
+
+int calcPos(int pos, int f);
+int main()
+{
+    int i, j, n, a, b, res;
+
+    scanf(&quot;%d&quot;, &amp;n);
+    for(i = 0; i &lt; n - 1; i ++)
+    {
+        scanf(&quot;%d %d&quot;, &amp;a, &amp;b);
+        pasture[a - 1].linkto.push_back(b - 1);
+        pasture[b - 1].linkto.push_back(a - 1);
+    }
+
+    calcPos(0, 0);
+    res = min(pasture[0].build[0], pasture[0].build[2]);
+
+    printf(&quot;%d\n&quot;, res);
+    return 0;
+}
+
+int calcPos(int pos, int f)
+{
+    int i, tmp;
+    bool flag = false;
+    pasture[pos].build[0] = 1;
+    pasture[pos].build[1] = 0;
+    pasture[pos].build[2] = 0;
+
+    for(i = 0; i &lt; pasture[pos].linkto.size(); i ++)
+    {
+        if(pasture[pos].linkto[i] != f)
+        {
+            calcPos(pasture[pos].linkto[i], pos);
+            pasture[pos].build[0] += min(min(pasture[ pasture[pos].linkto[i] ].build[0], pasture[ pasture[pos].linkto[i] ].build[1])
+                , pasture[ pasture[pos].linkto[i] ].build[2]);
+            pasture[pos].build[1] += min(pasture[ pasture[pos].linkto[i] ].build[0], pasture[ pasture[pos].linkto[i] ].build[2]);
+            pasture[pos].build[2] += min(pasture[ pasture[pos].linkto[i] ].build[0], pasture[ pasture[pos].linkto[i] ].build[2]);
+            flag = flag || (pasture[ pasture[pos].linkto[i] ].build[0] &lt;= pasture[ pasture[pos].linkto[i] ].build[2]);
+        }
+    }
+
+    if(pasture[pos].build[2] == 0)
+    {
+        pasture[pos].build[2] = 100000;
+        return 0;
+    }
+    if(flag == false)
+    {
+        tmp = 100000;
+        for(i = 0; i &lt; pasture[pos].linkto.size(); i ++)
+        {
+            if(pasture[pos].linkto[i] != f
+                &amp;&amp; pasture[pasture[pos].linkto[i]].build[0] - pasture[pasture[pos].linkto[i]].build[2] &lt; tmp)
+            tmp = pasture[pasture[pos].linkto[i]].build[0] - pasture[pasture[pos].linkto[i]].build[2];
+        }
+        pasture[pos].build[2] += tmp;
+    }
+    return 0;
+}
+</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2010-06-01T15:51:00.000+00:00 itemprop=datePublished>2010-06-01</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/acm.html>acm</a></li><li class=article-tag-list-item><a href=//owent.net/tags/pku.html>pku</a></li><li class=article-tag-list-item><a href=//owent.net/tags/poj.html>poj</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2010/27.html>上一篇<strong>USACO 2008 March Gold Cow Jogging 解题报告</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2010/29.html>下一篇<strong>浙江理工 省赛总结 team62 By OWenT of Coeus</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier='28'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class=inner><strong id=footer-left>&copy; 2021
+OWenT</strong>
+<strong id=footer-right><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owt5008137/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.0/umd/popper.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/highlight.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/bash.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/cpp.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/capnproto.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/cmake.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/d.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/diff.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/dos.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/erlang.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/go.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/less.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/lua.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/php.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/powershell.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/protobuf.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/python.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/profile.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/typescript.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/vim.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/rust.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/yaml.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/mermaid/8.9.1/mermaid.min.js></script></div></body></html>

@@ -1,0 +1,240 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>ECUST 09年 校赛个人赛第八场（最后一场）总结|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2009/78.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.min.js crossorigin=anonymous></script><link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><form class=form-inline method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-35a2ad4dc2fb6b5d6030914dea297a81 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2009/78.html target=_blank itemprop=url>ECUST 09年 校赛个人赛第八场（最后一场）总结</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right"><nav id=TableOfContents><ul><li><a href=#然后是i题>然后是I题</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><p>懒惰了，暂时休息一下</p><p>这次我只AC了一题（在结束的那一刻，另一题在题目来源地网站上AC了，我们的OJ上仍然WA，我们OJ的Special Judge真是—_—!）</p><p>H题是用木棒拼数字，给出木棒数量，要求算出拼出的最大和最小数字</p><p>最大数字部分很明显7要用3根棒，1用2根棒，所以如果是奇数就是7+K个1，k=（n-1）/2 -1偶数直接n/2个1</p><p>最小数字部分比较麻烦，因为分几种情况，我是DP解决的，也可以找规律，DP的话要注意0和6都是用6根棒，而0不能作为第一个数字</p><p>代码如下：</p><pre><code class=language-cpp>#include&lt;iostream&gt;
+using namespace std;
+class cal
+{
+public:
+    int num[10];
+    int length;
+    void Equal(cal a);
+    bool sThan(cal a);
+    cal AandB(cal a);
+};
+cal Num[101];
+int main()
+{
+    freopen(&quot;h.in&quot;,&quot;r&quot;,stdin);
+    freopen(&quot;h.out&quot;,&quot;w&quot;,stdout);
+    int i,j;
+
+    for(i = 0 ; i &lt; 101 ; i ++)
+        for(j = 0 ; j &lt; 10 ; j ++)
+            Num[i].num[j] = 0;
+
+    Num[2].num[1] = 1;Num[2].length = 1;
+    Num[3].num[7] = 1;Num[3].length = 1;
+    Num[4].num[4] = 1;Num[4].length = 1;
+    Num[5].num[2] = 1;Num[5].length = 1;
+    Num[6].num[0] = 1;Num[6].length = 1;
+    Num[7].num[8] = 1;Num[7].length = 1;
+
+
+    for(i = 8 ; i &lt; 101 ; i ++)
+    {
+        Num[i].Equal(Num[2].AandB(Num[i - 2]));
+        for(j = 3 ; j &lt; 8 &amp;&amp; i - j &gt;= 2 ; j ++)
+        {
+            if(Num[j].AandB(Num[i - j]).sThan(Num[i]))
+                Num[i].Equal(Num[j].AandB(Num[i - j]));
+        }
+    }
+
+
+    int t;
+    scanf(&quot;%d&quot;,&amp;t);
+    while(t --)
+    {
+        int n;
+        scanf(&quot;%d&quot;,&amp;n);
+        if(n == 6)
+            printf(&quot;6 111\n&quot;);
+        else
+        {
+            for(i = 1 ; i &lt; 10 ; i ++)
+                if(Num[n].num[i])
+                    break;
+            int b1 = i;
+            printf(&quot;%d&quot;,b1);
+            for(i = 0 ; i &lt; 10 ; i ++)
+                for(j = 0 ; (j &lt; Num[n].num[i] &amp;&amp; i != b1)
+                    || (j &lt; Num[n].num[i] - 1 &amp;&amp; i == b1); j ++)
+                    printf(&quot;%d&quot;,i);
+            putchar(' ');
+
+            if(n % 2)
+                printf(&quot;7&quot;);
+            else
+                printf(&quot;1&quot;);
+            n = n / 2 - 1;
+            while(n --)
+                putchar('1');
+            putchar('\n');
+        }
+
+    }
+    return 0;
+}
+
+cal cal::AandB(cal a)
+{
+    cal tmpCal;
+    tmpCal.length = length + a.length;
+    for(int i = 0 ; i &lt; 10 ; i ++)
+        tmpCal.num[i] = num[i] + a.num[i];
+
+    tmpCal.num[0] += tmpCal.num[6];
+    tmpCal.num[6] = 0;
+
+    int j;
+    for( j = 1 ; j &lt; 10 ; j ++)
+        if(tmpCal.num[j])
+            break;
+    int b1 = j;
+
+    if(tmpCal.num[0] &amp;&amp; b1 &gt; 6)
+        tmpCal.num[0] --,tmpCal.num[6] ++;
+
+    return tmpCal;
+};
+
+bool cal::sThan(cal a)
+{
+    if(length &lt; a.length)
+        return true;
+    else if(a.length &gt; length)
+        return false;
+    else
+    {
+        int i;
+        for(i = 1 ; i &lt; 10 ; i ++)
+            if(num[i])
+                break;
+        int b1 = i;
+        for(i = 1 ; i &lt; 10 ; i ++)
+            if(a.num[i])
+                break;
+        int b2 = i;
+
+        if(b1 &lt; b2)
+            return true;
+        else if(b1 &gt; b2)
+            return false;
+        else
+            for(i = 0 ; i &lt; 10 ; i ++)
+                if(a.num[i] != num[i])
+                    return num[i] &gt; a.num[i];
+    }
+
+    return false;
+};
+
+void cal::Equal(cal a)
+{
+    for(int i = 0 ; i &lt; 10 ; i ++)
+        num[i] = a.num[i];
+
+    length = a.length;
+
+
+    num[0] += num[6];
+    num[6] = 0;
+
+    int j;
+    for( j = 1 ; j &lt; 10 ; j ++)
+        if(num[j])
+            break;
+    int b1 = j;
+
+    if(num[0] &amp;&amp; b1 &gt; 6)
+        num[0] --,num[6] ++;
+
+}
+</code></pre><h2 id=然后是i题>然后是I题</h2><p>其实I题很水，就是前两天写的点到线段距离的改版，只不过这是线段到线段间的最短距离</p><p>题目按顺时针或逆时针输入，数据量只有100，所以任然暴搜解决</p><p>代码如下：</p><pre><code class=language-cpp>#include&lt;stdio.h&gt;
+#include&lt;math.h&gt;
+double GetLineDistance(double x1,double y1,double x2,double y2,double x3,double y3,double x4,double y4);
+double disBetweenPointAndLine(double x0,double y0,double x1,double y1,double x2,double y2);
+
+double X1[100],Y1[100],X2[100],Y2[100];
+int main()
+{
+    int t;
+    scanf(&quot;%d&quot;,&amp;t);
+    while(t --)
+    {
+        int n,m,i,j;
+        double out = 100000000;
+        scanf(&quot;%d&quot;,&amp;n);
+        for(i = 0 ; i &lt; n ; i ++)
+            scanf(&quot;%lf %lf&quot;,&amp;X1[i],&amp;Y1[i]);
+
+        scanf(&quot;%d&quot;,&amp;m);
+        for(i = 0 ; i &lt; m ; i ++)
+            scanf(&quot;%lf %lf&quot;,&amp;X2[i],&amp;Y2[i]);
+
+        for(i = 0 ; i &lt; n ; i ++)
+            for(j = 0 ; j &lt; m ; j ++)
+            {
+                double tmpDou = GetLineDistance(X1[i],Y1[i],X1[(i + 1) % n],Y1[(i + 1) % n]
+                    ,X2[j],Y2[j],X2[(j + 1) % m],Y2[(j + 1) % m]);
+                if(out &gt; tmpDou)
+                    out = tmpDou;
+            };
+
+        printf(&quot;%.8lg\n&quot;,out / 2);
+    }
+    return 0;
+}
+
+
+
+//{(x1,y1),(x2,y2)}{(x3,y3),(x4,y4)}
+//导入点到直线或线段的距离模板
+
+double GetLineDistance(double x1,double y1,double x2,double y2,double x3,double y3,double x4,double y4)
+{
+    double tmpDouble = disBetweenPointAndLine(x1,y1,x3,y3,x4,y4);
+    if(tmpDouble &gt; disBetweenPointAndLine(x2,y2,x3,y3,x4,y4))
+        tmpDouble = disBetweenPointAndLine(x2,y2,x3,y3,x4,y4);
+    if(tmpDouble &gt; disBetweenPointAndLine(x3,y3,x1,y1,x2,y2))
+        tmpDouble = disBetweenPointAndLine(x3,y3,x1,y1,x2,y2);
+    if(tmpDouble &gt; disBetweenPointAndLine(x4,y4,x1,y1,x2,y2))
+        tmpDouble = disBetweenPointAndLine(x4,y4,x1,y1,x2,y2);
+
+    return tmpDouble;
+}
+
+double disBetweenPointAndLine(double x0,double y0,double x1,double y1,double x2,double y2)
+{
+    //化为ax+by+c=0的形式
+    double a = y1-y2;
+    double b = x2-x1;
+    double c = x1*y2-x2*y1;
+    double d = (a*x0+b*y0+c)/sqrt(a*a+b*b);
+    /*
+    如果是线段判断垂足
+    */
+    double xp = (b*b*x0-a*b*y0-a*c)/(a*a+b*b);
+    double yp = (-a*b*x0+a*a*y0-b*c)/(a*a+b*b);
+    double xb = (x1&gt;x2)?x1:x2;
+    double yb = (y1&gt;y2)?y1:y2;
+    double xs = x1+x2-xb;
+    double ys = y1+y2-yb;
+    if(xp &gt; xb || xp &lt; xs || yp &gt; yb || yp &lt; ys)
+    {
+        d = sqrt((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
+        if(d &gt; sqrt((x0 - x2) * (x0 - x2) + (y0 - y2) * (y0 - y2)))
+            d = sqrt((x0 - x2) * (x0 - x2) + (y0 - y2) * (y0 - y2));
+    }
+
+    return fabs(d);
+}
+</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2009-08-14T11:41:45.000+00:00 itemprop=datePublished>2009-08-14</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/acm.html>acm</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2009/77.html>上一篇<strong>09年8月14日 ECUST ACM 练习赛总结</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2009/79.html>下一篇<strong>ECUST 09年 校赛个人训练赛第五场总结</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier='78'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class=inner><strong id=footer-left>&copy; 2021
+OWenT</strong>
+<strong id=footer-right><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owt5008137/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.0/umd/popper.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/highlight.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/bash.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/cpp.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/capnproto.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/cmake.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/d.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/diff.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/dos.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/erlang.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/go.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/less.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/lua.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/php.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/powershell.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/protobuf.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/python.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/profile.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/typescript.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/vim.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/rust.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/yaml.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/mermaid/8.9.1/mermaid.min.js></script></div></body></html>

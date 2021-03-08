@@ -1,0 +1,274 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>ECDH椭圆双曲线（比DH快10倍的密钥交换）算法简介和封装|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2017/1472.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.min.js crossorigin=anonymous></script><link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><form class=form-inline method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-3b831765adcc2a3300f26436b6c4f08c class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2017/1472.html target=_blank itemprop=url>ECDH椭圆双曲线（比DH快10倍的密钥交换）算法简介和封装</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right"><nav id=TableOfContents><ul><li><a href=#背景>背景</a></li><li><a href=#ecdh和dh>ECDH和DH</a><ul><li><a href=#适配和接入>适配和接入</a></li><li><a href=#交互流程差异>交互流程差异</a></li></ul></li><li><a href=#api>API</a></li><li><a href=#单元测试性能和valgrind报告>单元测试、性能和valgrind报告</a></li><li><a href=#最后>最后</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><p>前面有几篇blog就提到我有计划支持使用ECDH密钥交换。近期也是抽空把以前的DH密钥交换跨平台适配从<a href=https://github.com/atframework/atsf4g-co/tree/master/atframework/service/atgateway>atgateway</a>抽离出来，而后接入了<a href=https://en.wikipedia.org/wiki/Elliptic-curve_Diffie%E2%80%93Hellman>ECDH</a>流程。</p><h2 id=背景>背景</h2><p>对<a href=https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange>DH</a>和<a href=https://en.wikipedia.org/wiki/Elliptic-curve_Diffie%E2%80%93Hellman>ECDH</a>算法的具体原理这里不做具体介绍了，可以点击链接看。<a href=https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange>DH</a>和<a href=https://en.wikipedia.org/wiki/Elliptic-curve_Diffie%E2%80%93Hellman>ECDH</a>的主要的作用就是在通信双方发送一些公有参数，保留私有参数，而后通过一系列计算双方都能够得到一个一致的结果。而这个运算的逆运算复杂度过高，在有限时间内不可解（至少量子计算机问世以前不可解），以保证密钥安全性。除了维基百科外，我还看到篇文章图画的很好看的：http://andrea.corbellini.name/2015/05/30/elliptic-curve-cryptography-ecdh-and-ecdsa/ 。而<a href=https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange>DH</a>和<a href=https://en.wikipedia.org/wiki/Elliptic-curve_Diffie%E2%80%93Hellman>ECDH</a>得区别简单来说就是，前者使用了一个大素数和两个随机数，而后者使用了<a href=https://en.wikipedia.org/wiki/Elliptic-curve_cryptography>ECC</a>算法和两个随机点。</p><p>实际应用中，有些加密算法的密钥碰撞计算难度反而比破解<a href=https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange>DH</a>和<a href=https://en.wikipedia.org/wiki/Elliptic-curve_Diffie%E2%80%93Hellman>ECDH</a>要容易（比如<a href=https://github.com/atframework/atsf4g-co/tree/master/atframework/service/atgateway>atgateway</a>支持的<a href=https://en.wikipedia.org/wiki/XXTEA>XXTEA</a>算法，这个算法很简单所以也非常高效）。所以有些工程实践中会每隔一段时间再走一次密钥交换流程来更换密钥。</p><h2 id=ecdh和dh>ECDH和DH</h2><p>使用<a href=https://en.wikipedia.org/wiki/Elliptic-curve_Diffie%E2%80%93Hellman>ECDH</a>做密钥交换得时候你可能也会看到<a href=https://en.wikipedia.org/wiki/Elliptic-curve_Diffie%E2%80%93Hellman>ECDHE</a>这个词，这个多出来的E的意思是指每次公钥都随机生成。因为像HTTPS里那种是可以从证书文件里取静态公钥的。我封装的接口其实也是每次都随机生成公钥。</p><h3 id=适配和接入>适配和接入</h3><p>我这里选择了按<a href=https://tools.ietf.org/html/rfc4492>RFC 4492</a>进行接入，因为我主要适配的两个库（<a href=https://www.openssl.org/>openssl</a>和<a href=https://tls.mbed.org/>mbedtls</a>）共同支持的似乎只有<a href=https://tools.ietf.org/html/rfc4492>RFC 4492</a>。<a href=https://www.openssl.org/>openssl</a>自不用说了，<a href=https://tls.mbed.org/>mbedtls</a>主要是为了如果需要用到Android或者iOS上的话，用<a href=https://tls.mbed.org/>mbedtls</a>比较容易一些。接入的过程中主要有三个问题。</p><p>第一个是<a href=https://www.openssl.org/>openssl</a>的1.0.1版本支持的算法较少，而高版本比较多一些，而且<a href=https://www.openssl.org/>openssl</a>本身是可以裁剪算法的。这个用宏来判定就行了，比较easy。</p><p>第二个是<a href=https://www.openssl.org/>openssl</a>和<a href=https://tls.mbed.org/>mbedtls</a>都有自己内部的ID和名称，并且不一样，传参数都是用内部ID的，然后输出再做转换。解决方法就是手夯了一个映射表，和之前搞<a href=https://github.com/atframework/atframe_utils/blob/master/include/algorithm/crypto_cipher.h>crypto_cipher</a>得方法一样。</p><p>第三就是<a href=https://www.openssl.org/>openssl</a>的1.0.2和1.1.0的结构大不一样了，1.1.0版本的接口也更加严谨。这个比较麻烦，找了好久才找到1.1.0的这两部分代码实现。现在的做法是按1.1.0的方法封装了一些接口给1.0.1/1.0.2使用。比如这种:</p><pre><code class=language-cpp>/**
+ * @see crypto/dh/dh_lib.c in openssl 1.1.x
+ */
+static inline void DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key) {
+    if (pub_key != NULL) *pub_key = dh-&gt;pub_key;
+    if (priv_key != NULL) *priv_key = dh-&gt;priv_key;
+}
+</code></pre><p>比较好的消息是<a href=https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange>DH</a>和<a href=https://en.wikipedia.org/wiki/Elliptic-curve_Diffie%E2%80%93Hellman>ECDH</a>的流程基本一致，只是传输内容不同。但是<a href=https://www.openssl.org/>openssl</a>不像<a href=https://tls.mbed.org/>mbedtls</a>，没有良好的接口封装，里面密钥交换的细节实现得到<a href=https://www.openssl.org/>openssl</a>的源码里去找。并且流程比较长，而且<a href=https://www.openssl.org/>openssl</a>的实现不太好，有很多冗余的拷贝操作。实际上我接入的时候是对它的代码流程有些许优化话，主要还是减少不必要的拷贝。<a href=https://www.openssl.org/>openssl</a>1.0.2的<a href=https://en.wikipedia.org/wiki/Elliptic-curve_Diffie%E2%80%93Hellman>ECDH</a>和<a href=https://en.wikipedia.org/wiki/Elliptic-curve_cryptography>ECDSA</a>流程代码在ssl/s3_srvr.c和ssl/s3_clnt.c里，而1.1.0版本的相关流程代码在ssl/statem/statem_clnt.c和ssl/statem/statem_srvr.c里。版本适配代码大多在ssl/ssl_locl.h和ssl/t1_lib.c里。</p><p>唉openssl的文档和代码找起来真是蛋疼，比如<a href=https://en.wikipedia.org/wiki/Elliptic-curve_Diffie%E2%80%93Hellman>ECDHE</a>的服务器下发系数的<a href=https://www.openssl.org/>openssl</a>1.0.2的代码简化一下就是这样（不简化的话太长了）：</p><pre><code class=language-cpp>if (((group = EC_KEY_get0_group(ecdh)) == NULL) ||
+    (EC_KEY_get0_public_key(ecdh) == NULL) ||
+    (EC_KEY_get0_private_key(ecdh) == NULL)) {
+    SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, ERR_R_ECDH_LIB);
+    goto err;
+}
+
+if ((curve_id =
+        tls1_ec_nid2curve_id(EC_GROUP_get_curve_name(group)))
+    == 0) {
+    SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+            SSL_R_UNSUPPORTED_ELLIPTIC_CURVE);
+    goto err;
+}
+encodedlen = EC_POINT_point2oct(group,
+    EC_KEY_get0_public_key(ecdh),
+    POINT_CONVERSION_UNCOMPRESSED,
+    NULL, 0, NULL);
+
+encodedPoint = (unsigned char *)
+    OPENSSL_malloc(encodedlen * sizeof(unsigned char));
+bn_ctx = BN_CTX_new();
+if ((encodedPoint == NULL) || (bn_ctx == NULL)) {
+    SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+            ERR_R_MALLOC_FAILURE);
+    goto err;
+}
+
+encodedlen = EC_POINT_point2oct(group,
+    EC_KEY_get0_public_key(ecdh),
+    POINT_CONVERSION_UNCOMPRESSED,
+    encodedPoint, encodedlen, bn_ctx);
+
+if (encodedlen == 0) {
+    SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, ERR_R_ECDH_LIB);
+    goto err;
+}
+
+BN_CTX_free(bn_ctx);
+bn_ctx = NULL;
+
+// ... 然后是dump的代码 ..., p是输出缓冲区的起始指针
+*p = NAMED_CURVE_TYPE;
+p += 1;
+*p = 0;
+p += 1;
+*p = curve_id;
+p += 1;
+*p = encodedlen;
+p += 1;
+memcpy((unsigned char *)p,
+        (unsigned char *)encodedPoint, encodedlen);
+OPENSSL_free(encodedPoint);
+encodedPoint = NULL;
+p += encodedlen;
+</code></pre><p>相比之下<a href=https://tls.mbed.org/>mbedtls</a>的简洁多了，都不用裁剪:</p><pre><code class=language-cpp>int mbedtls_ecdh_make_params( mbedtls_ecdh_context *ctx, size_t *olen,
+                      unsigned char *buf, size_t blen,
+                      int (*f_rng)(void *, unsigned char *, size_t),
+                      void *p_rng )
+{
+    int ret;
+    size_t grp_len, pt_len;
+
+    if( ctx == NULL || ctx-&gt;grp.pbits == 0 )
+        return( MBEDTLS_ERR_ECP_BAD_INPUT_DATA );
+
+    if( ( ret = mbedtls_ecdh_gen_public( &amp;ctx-&gt;grp, &amp;ctx-&gt;d, &amp;ctx-&gt;Q, f_rng, p_rng ) )
+                != 0 )
+        return( ret );
+
+    if( ( ret = mbedtls_ecp_tls_write_group( &amp;ctx-&gt;grp, &amp;grp_len, buf, blen ) )
+                != 0 )
+        return( ret );
+
+    buf += grp_len;
+    blen -= grp_len;
+
+    if( ( ret = mbedtls_ecp_tls_write_point( &amp;ctx-&gt;grp, &amp;ctx-&gt;Q, ctx-&gt;point_format,
+                                     &amp;pt_len, buf, blen ) ) != 0 )
+        return( ret );
+
+    *olen = grp_len + pt_len;
+    return( 0 );
+}
+
+int mbedtls_ecp_tls_write_group( const mbedtls_ecp_group *grp, size_t *olen,
+                         unsigned char *buf, size_t blen )
+{
+    const mbedtls_ecp_curve_info *curve_info;
+
+    if( ( curve_info = mbedtls_ecp_curve_info_from_grp_id( grp-&gt;id ) ) == NULL )
+        return( MBEDTLS_ERR_ECP_BAD_INPUT_DATA );
+
+    /*
+     * We are going to write 3 bytes (see below)
+     */
+    *olen = 3;
+    if( blen &lt; *olen )
+        return( MBEDTLS_ERR_ECP_BUFFER_TOO_SMALL );
+
+    /*
+     * First byte is curve_type, always named_curve
+     */
+    *buf++ = MBEDTLS_ECP_TLS_NAMED_CURVE;
+
+    /*
+     * Next two bytes are the namedcurve value
+     */
+    buf[0] = curve_info-&gt;tls_id &gt;&gt; 8;
+    buf[1] = curve_info-&gt;tls_id &amp; 0xFF;
+
+    return( 0 );
+}
+
+int mbedtls_ecp_tls_write_point( const mbedtls_ecp_group *grp, const mbedtls_ecp_point *pt,
+                         int format, size_t *olen,
+                         unsigned char *buf, size_t blen )
+{
+    int ret;
+
+    /*
+     * buffer length must be at least one, for our length byte
+     */
+    if( blen &lt; 1 )
+        return( MBEDTLS_ERR_ECP_BAD_INPUT_DATA );
+
+    if( ( ret = mbedtls_ecp_point_write_binary( grp, pt, format,
+                    olen, buf + 1, blen - 1) ) != 0 )
+        return( ret );
+
+    /*
+     * write length to the first byte and update total length
+     */
+    buf[0] = (unsigned char) *olen;
+    ++*olen;
+
+    return( 0 );
+}
+</code></pre><p>另外我只接入了密钥交换的流程，像它们其实有更高级的SSL/TLS接口，还包含验证流程、加解密流程、握手的cookie等等。我希望提供的是一个个单独可拆开用的组件，所以这里只接入了密钥交换。像加解密就封装到了<a href=https://github.com/atframework/atframe_utils/blob/master/include/algorithm/crypto_cipher.h>crypto_cipher</a>里。而像<a href=https://github.com/atframework/atsf4g-co/tree/master/atframework/service/atgateway>atgateway</a>有自己的验证流程，并不像标准TLS/SSL那样走Hash。</p><h3 id=交互流程差异>交互流程差异</h3><table><thead><tr><th>步骤</th><th>DH</th><th>ECDH</th></tr></thead><tbody><tr><td>初始化</td><td>加载DH参数（主要是一个大素数P和系数G），由DH参数决定密钥长度</td><td>加载双曲线（<a href=https://tools.ietf.org/html/rfc4492>RFC 4492</a>），由双曲线决定密钥长度</td></tr><tr><td>服务器下发系数</td><td>下发DH算法的P（大素数）、G、GY(G^Y mod P)，保留私有数据Y</td><td>下发双曲线算法group和公钥点Q，保留私钥点d</td></tr><tr><td>服务器下发内容</td><td>2字节P长度，P, 2字节G长度，G,2字节GY长度，GY</td><td>1字节类型(3)，2字节双曲线ID，1字节Q长度,Q</td></tr><tr><td>客户端读取系数</td><td>读入P、G,记录GY为远端公钥</td><td>读入双曲线算法group，记录Q为远端公钥</td></tr><tr><td>客户端创建公钥</td><td>随机出X，计算并上传GX(G^X mod P)，保留私有数据X</td><td>生成和上传公钥点Qp，保留私钥点z</td></tr><tr><td>客户端上传内容</td><td>2字节GX长度，GX</td><td>1字节Qp长度,Qp</td></tr><tr><td>客户端计算密钥</td><td>根据P、G、GY、X计算出密钥</td><td>根据group、Q、z计算出密钥</td></tr><tr><td>服务器计算密钥</td><td>根据P、G、GX、Y计算出密钥</td><td>根据group、Qp、d计算出密钥</td></tr></tbody></table><h2 id=api>API</h2><p>封装了接口以后，现在的接口就非常简单了，和<a href=https://tls.mbed.org/>mbedtls</a>的流程很像。比如下面DH算法的（截取自单元测试）</p><pre><code class=language-cpp>// 客户端共享配置
+util::crypto::dh cli_dh;
+
+// 服务器共享配置(保存DH系数等)
+util::crypto::dh svr_dh;
+
+// 服务器 - init: 读取DHParam的PEM文件
+{
+    util::crypto::dh::shared_context::ptr_t svr_shctx = util::crypto::dh::shared_context::create();
+
+    std::string dir;
+    CASE_EXPECT_TRUE(util::file_system::dirname(__FILE__, 0, dir, 2));
+    dir += util::file_system::DIRECTORY_SEPARATOR;
+    dir += &quot;resource&quot;;
+    dir += util::file_system::DIRECTORY_SEPARATOR;
+    dir += &quot;test-dhparam.pem&quot;;
+    // 前面只是找到PEM文件路径
+    CASE_EXPECT_EQ(0, svr_shctx-&gt;init(dir.c_str()));
+    CASE_EXPECT_EQ(0, svr_dh.init(svr_shctx));
+}
+
+// 客户端 - init: 设置成DH模式
+{
+    util::crypto::dh::shared_context::ptr_t cli_shctx = util::crypto::dh::shared_context::create();
+    CASE_EXPECT_EQ(0, cli_shctx-&gt;init(util::crypto::dh::method_t::EN_CDT_DH));
+    CASE_EXPECT_EQ(0, cli_dh.init(cli_shctx));
+}
+
+std::vector&lt;unsigned char&gt; switch_params; // 服务器下发的数据
+std::vector&lt;unsigned char&gt; switch_public; // 客户端上传的数据
+std::vector&lt;unsigned char&gt; cli_secret; // 保存客户端计算的密钥
+std::vector&lt;unsigned char&gt; svr_secret; // 保存服务器计算的密钥
+
+// step 1 - 服务器: 计算密钥对，输出DH参数和公钥
+CASE_EXPECT_EQ(0, svr_dh.make_params(switch_params));
+
+// step 2 - 客户端: 读取服务器的公钥和DH参数
+CASE_EXPECT_EQ(0, cli_dh.read_params(switch_params.data(), switch_params.size()));
+
+// step 3 - 客户端: 计算密钥对，输出公钥
+CASE_EXPECT_EQ(0, cli_dh.make_public(switch_public));
+
+// step 4 - 客户端: 计算协商结果
+CASE_EXPECT_EQ(0, cli_dh.calc_secret(cli_secret));
+
+// step 5 - 服务器: 读取客户端的公钥
+CASE_EXPECT_EQ(0, svr_dh.read_public(switch_public.data(), switch_public.size()));
+
+// step 6 - 服务器: 计算协商结果
+CASE_EXPECT_EQ(0, svr_dh.calc_secret(svr_secret));
+
+// DH流程结束，后面是检查两边结果一致
+CASE_EXPECT_EQ(cli_secret.size(), svr_secret.size());
+if (cli_secret.size() == svr_secret.size()) {
+    CASE_EXPECT_EQ(0, memcmp(cli_secret.data(), svr_secret.data(), svr_secret.size()));
+}
+</code></pre><p>还有ECDH算法的（截取自单元测试）</p><pre><code class=language-cpp>// 枚举所有的加密算法
+const std::vector&lt;std::string&gt; &amp;all_curves = util::crypto::dh::get_all_curve_names();
+
+for (size_t curve_idx = 0; curve_idx &lt; all_curves.size(); ++curve_idx) {
+
+    // 客户端共享配置
+    util::crypto::dh cli_dh;
+
+    // 服务器共享配置(保存椭圆算法ID等)
+    util::crypto::dh svr_dh;
+
+    // 服务器 - init: 读取指定的椭圆曲线
+    {
+        util::crypto::dh::shared_context::ptr_t svr_shctx = util::crypto::dh::shared_context::create();
+        CASE_EXPECT_EQ(0, svr_shctx-&gt;init(all_curves[curve_idx].c_str()));
+        CASE_EXPECT_EQ(0, svr_dh.init(svr_shctx));
+    }
+
+    // 客户端 - init: 设置为ECDH模式
+    {
+        util::crypto::dh::shared_context::ptr_t cli_shctx = util::crypto::dh::shared_context::create();
+        CASE_EXPECT_EQ(0, cli_shctx-&gt;init(util::crypto::dh::method_t::EN_CDT_ECDH));
+        CASE_EXPECT_EQ(0, cli_dh.init(cli_shctx));
+    }
+
+    std::vector&lt;unsigned char&gt; switch_params;  // 服务器下发的数据
+    std::vector&lt;unsigned char&gt; switch_public;  // 客户端上传的数据
+    std::vector&lt;unsigned char&gt; cli_secret;  // 保存客户端计算的密钥
+    std::vector&lt;unsigned char&gt; svr_secret;  // 保存服务器计算的密钥
+
+    // step 1 - 服务器: 计算密钥对，输出双曲线ID和公钥点
+    CASE_EXPECT_EQ(0, svr_dh.make_params(switch_params));
+
+    // step 2 - 客户端: 读取服务器的双曲线ID和公钥点
+    CASE_EXPECT_EQ(0, cli_dh.read_params(switch_params.data(), switch_params.size()));
+
+    // step 3 - 客户端: 计算密钥对，输出公钥点
+    CASE_EXPECT_EQ(0, cli_dh.make_public(switch_public));
+
+    // step 4 - 客户端: 计算协商结果
+    CASE_EXPECT_EQ(0, cli_dh.calc_secret(cli_secret));
+
+    // step 5 - 服务器: 读取客户端的公钥点
+    CASE_EXPECT_EQ(0, svr_dh.read_public(switch_public.data(), switch_public.size()));
+
+    // step 6 - 服务器: 计算协商结果
+    CASE_EXPECT_EQ(0, svr_dh.calc_secret(svr_secret));
+
+    // ECDH流程结束，后面是检查两边结果一致
+    CASE_EXPECT_EQ(cli_secret.size(), svr_secret.size());
+    if (cli_secret.size() == svr_secret.size()) {
+        CASE_EXPECT_EQ(0, memcmp(cli_secret.data(), svr_secret.data(), svr_secret.size()));
+    }
+}
+</code></pre><h2 id=单元测试性能和valgrind报告>单元测试、性能和valgrind报告</h2><p>抽离出来以后就比较方便加单元测试了。单元测试的时候发现openssl底层会分配一些全局数据，导致valgrind报still reachable。但是实测了多次不同次数的加解密后的报告的块数和总大小都一样。所以这个就可以忽略了。</p><p>然后就是报告的结果，我直接从CI里复制出来了一部分。Windows和Linux里的结果一致：</p><pre><code>[ RUN      ] crypto_dh.dh
+[ RUNNING  ] Test DH algorithm 32 times, key len 128 bits. 
+[       OK ] crypto_dh.dh (228.725 ms)
+[ RUN      ] crypto_dh.ecdh
+[ RUNNING  ] Test ECDH algorithm 16 times for 8 curves done. 
+[ RUNNING  ]   Fastest =&gt; ecdh:secp224r1 cost 0.60075ms(avg.) key len 224 bits. 
+[ RUNNING  ]   Slowest =&gt; ecdh:secp384r1 cost 3.86687ms(avg.) key len 384 bits. 
+[       OK ] crypto_dh.ecdh (221.049 ms)
+</code></pre><p>这就是标题里说的<strong>快10倍</strong>的来源。可以看到，耗时最短的双曲线，密钥长度是224，平均每次耗时是0.6ms(client+server)。而DH用的是1024bits的DHParameter，密钥长度128，平均耗时是228.725/32=7.14ms 。而最慢的双曲线性能也是两倍多，而平均值是221.049/16/18=1.73ms，性能也是4倍多。</p><p>封装接口的时候，其实我是选取了<a href=https://tls.mbed.org/>mbedtls</a>目前支持的全部算法。其实openssl本身支持的更多，并且可以裁剪算法。最后适配完之后，看了下单元测试，<a href=https://www.openssl.org/>openssl</a>1.0.1最多只支持其中8种算法，而1.0.2以上版本是支持全部16种的。交叉测试也pass了（用<a href=https://www.openssl.org/>openssl</a>版本做服务端，<a href=https://tls.mbed.org/>mbedtls</a>做客户端），但是不太好写构建工程所以交叉测试是手动进行的（用<a href=https://github.com/atframework/atsf4g-co/tree/master/atframework/service/atgateway>atgateway</a>编的服务器，然后里面的sample换另一个库编）。</p><h2 id=最后>最后</h2><p>现在所有代码都放在 <a href=https://github.com/atframework/atframe_utils/blob/master/include/algorithm/crypto_cipher.h>https://github.com/atframework/atframe_utils/blob/master/include/algorithm/crypto_cipher.h</a> 和 <a href=https://github.com/atframework/atframe_utils/blob/master/src/algorithm/crypto_dh.cpp>https://github.com/atframework/atframe_utils/blob/master/src/algorithm/crypto_dh.cpp</a> 封装完以后，万一其他什么模块要用，就方便很多了。</p><p>其实对于Android，官方推荐的做法是从Java接口封因此鞥过来，而iOS也有自带的加解密库，适配这两个可能是能够最大幅度减小包大小的方法。但是我感觉裁剪良好的情况下，用mbedtls也没大多少。所以暂时还没有去研究这两个平台独立的接入方式。</p><p>我也不是专门搞密码学的，所以理解上可能还会有些偏差，欢迎大家拍砖指正交流。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2017-11-10T13:30:00.000+00:00 itemprop=datePublished>2017-11-10</time></span>
+<span class=clearfix></span></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2018/1801.html>上一篇<strong>C++的backtrace</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2017/1471.html>下一篇<strong>protobuf-net的动态Message实现</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier='1472'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class=inner><strong id=footer-left>&copy; 2021
+OWenT</strong>
+<strong id=footer-right><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owt5008137/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.0/umd/popper.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/highlight.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/bash.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/cpp.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/capnproto.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/cmake.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/d.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/diff.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/dos.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/erlang.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/go.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/less.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/lua.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/php.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/powershell.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/protobuf.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/python.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/profile.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/typescript.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/vim.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/rust.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/yaml.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/mermaid/8.9.1/mermaid.min.js></script></div></body></html>

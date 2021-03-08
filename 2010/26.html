@@ -1,0 +1,77 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>C#格式化输出(记录)|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2010/26.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.min.js crossorigin=anonymous></script><link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><form class=form-inline method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-a1bd92236448ce0fa8ad77c471ec4d8d class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2010/26.html target=_blank itemprop=url>C#格式化输出(记录)</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right"><nav id=TableOfContents></nav></div><br><div class=article-entry itemprop=articleBody><pre><code class=language-cs>int a = 12345678;
+//格式为sring输出
+Label1.Text = string.Format(&quot;asdfadsf{0}adsfasdf&quot;,a);
+Label2.Text = &quot;asdfadsf&quot;+a.ToString()+&quot;adsfasdf&quot;;
+Label1.Text = string.Format(&quot;asdfadsf{0:C}adsfasdf&quot;,a);//asdfadsf￥1,234.00adsfasdf
+Label2.Text = &quot;asdfadsf&quot;+a.ToString(&quot;C&quot;)+&quot;adsfasdf&quot;;//asdfadsf￥1,234.00adsfasdf
+double b = 1234.12543;
+int a = 12345678;
+//格式为特殊的string样式输出
+Label1.Text = string.Format(&quot;asdfadsf{0:C}adsfasdf&quot;,b);//asdfadsf￥1,234.13adsfasdf
+Label2.Text = &quot;asdfadsf&quot;+b.ToString(&quot;C&quot;)+&quot;adsfasdf&quot;;//asdfadsf￥1,234.13adsfasdf
+Label1.Text = string.Format(&quot;{0:C3}&quot;,b);//￥1,234.125
+Label2.Text = b.ToString(&quot;C3&quot;);//￥1,234.125
+Label1.Text = string.Format(&quot;{0:d}&quot;,a);//十进制--12345678
+Label2.Text = b.ToString(&quot;d&quot;);//十进制--相同的类型，转换报错
+Label1.Text = string.Format(&quot;{0:e}&quot;,a);//指数--1.234568e+007
+Label2.Text = b.ToString(&quot;e&quot;);//指数--1.234125e+003
+Label1.Text = string.Format(&quot;{0:f}&quot;,a);//定点数--12345678.00
+Label2.Text = b.ToString(&quot;f&quot;);//定点数--1234.13
+Label1.Text = string.Format(&quot;{0:n}&quot;,a);//数值--12,345,678.00
+Label2.Text = b.ToString(&quot;n&quot;);//数值--1,234.13
+Label1.Text = string.Format(&quot;{0:x}&quot;,a);//十六进制--bc614e
+Label2.Text = b.ToString(&quot;x&quot;);//16--带有小数不能转换，出错
+Label1.Text = string.Format(&quot;{0:g}&quot;,a);//通用为最紧凑--12345678
+Label2.Text = b.ToString(&quot;g&quot;);//通用为最紧凑--1234.12543
+Label1.Text = string.Format(&quot;{0:r}&quot;,a);//转来转去不损失精度--整数不允许用，报错
+Label2.Text = b.ToString(&quot;r&quot;);//转来转去不损失精度--1234.12543
+double b = 4321.12543;
+int a = 1234;
+自定义模式输出：
+//&quot;0&quot;描述：占位符，如果可能，填充位
+Label1.Text = string.Format(&quot;{0:000000}&quot;,a);// 001234
+Label2.Text = string.Format(&quot;{0:000000}&quot;,b);// 004321
+//&quot;#&quot;描述：占位符，如果可能，填充位
+Label1.Text = string.Format(&quot;{0:####### }&quot;,a);// 1234
+Label2.Text = string.Format(&quot;{0:####### }&quot;,b);// 4321
+Label1.Text = string.Format(&quot;{0:#0#### }&quot;,a);// 01234
+Label2.Text = string.Format(&quot;{0:0#0000}&quot;,b);// 004321
+//&quot;.&quot;描述：小数点
+Label1.Text = string.Format(&quot;{0:000.000}&quot;,a);//1234.000
+Label2.Text = string.Format(&quot;{0:000.000}&quot;,b);//4321.125
+double b = 87654321.12543;
+int a = 12345678;
+//&quot;,&quot;描述：数字分组，也用于增倍器
+Label1.Text = string.Format(&quot;{0:0,00}&quot;,a);// 12,345,678
+Label2.Text = string.Format(&quot;{0:0,00}&quot;,b);// 87,654,32
+Label1.Text = string.Format(&quot;{0:0,}&quot;,a);// 12346
+Label2.Text = string.Format(&quot;{0:0,}&quot;,b);// 87654
+Label1.Text = string.Format(&quot;{0:0,,}&quot;,a);// 12
+Label2.Text = string.Format(&quot;{0:0,,}&quot;,b);// 88
+Label1.Text = string.Format(&quot;{0:0,,,}&quot;,a);// 0
+Label2.Text = string.Format(&quot;{0:0,,,}&quot;,b);// 0
+//&quot;%&quot;描述：格式为百分数
+Label1.Text = string.Format(&quot;{ 0:0% }&quot;,a);// 1234567800%
+Label2.Text = string.Format(&quot;{ 0:#% }&quot;,b);// 8765432113%
+Label1.Text = string.Format(&quot;{ 0:0.00% }&quot;,a);// 1234567800.00%
+Label2.Text = string.Format(&quot;{ 0:#.00% }&quot;,b);// 8765432112.54%
+//&quot;abc&quot;描述：显示单引号内的文本
+Label1.Text = string.Format(&quot;{0:'文本'0}&quot;,a);// 文本12345678
+Label2.Text = string.Format(&quot;{0:文本0}&quot;,b);// 文本87654321
+//&quot;\&quot;描述：后跟1要打印字的字符，也用于转移符\n等
+Label1.Text = string.Format(&quot;\&quot;你好！\&quot;&quot;);// &quot;你好！&quot;
+Label2.Text = string.Format(&quot;[url=file://\\c\\books\\new\\we.asp]\\c\\books\\new\\we.asp&quot;);//\c\books\new\we.asp
+//&quot;@&quot;描述：后跟要打印字的字符,
+Label1.Text = string.Format(@&quot;&quot;&quot;你好！&quot;&quot;&quot;); // &quot;你好！&quot;要打印&quot;则需要输入两对才可以
+Label2.Text = string.Format(@&quot;\c\books\new\we.asp&quot;);//\c\books\new\we.asp 
+</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2010-06-08T05:39:06.000+00:00 itemprop=datePublished>2010-06-08</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/c.html>c</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2010/25.html>上一篇<strong>参加有道难题笔记</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2010/27.html>下一篇<strong>USACO 2008 March Gold Cow Jogging 解题报告</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier='26'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class=inner><strong id=footer-left>&copy; 2021
+OWenT</strong>
+<strong id=footer-right><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owt5008137/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.0/umd/popper.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/highlight.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/bash.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/cpp.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/capnproto.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/cmake.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/d.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/diff.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/dos.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/erlang.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/go.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/less.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/lua.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/php.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/powershell.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/protobuf.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/python.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/profile.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/typescript.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/vim.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/rust.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/yaml.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/mermaid/8.9.1/mermaid.min.js></script></div></body></html>

@@ -1,0 +1,109 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>HDU HDOJ 3400 Line belt 解题报告|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2010/33.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.min.js crossorigin=anonymous></script><link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><form class=form-inline method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-add04356017d626439484503f8a9c977 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2010/33.html target=_blank itemprop=url>HDU HDOJ 3400 Line belt 解题报告</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right"><nav id=TableOfContents></nav></div><br><div class=article-entry itemprop=articleBody><p>题目链接：<a href="http://acm.hdu.edu.cn/showproblem.php?pid=3400">http://acm.hdu.edu.cn/showproblem.php?pid=3400</a></p><p>这题就是一道简单的两重三分</p><p>首先设e点为从ab上离开的点，f为从cd上进入的点</p><p>显然对固定点e,f从距c的距离的长度是一个单调函数或者先减后增的函数，这里可以三分算出最优解。这里是第一个三分</p><p>然后对e点的最优解易证也存在这个性质，所以再来一个三分，就能解除最优解</p><p>代码如下：</p><pre><code class=language-cpp>#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+#include &lt;cstring&gt;
+#include &lt;algorithm&gt;
+#include &lt;cmath&gt;
+using namespace std;
+
+const double EPS = 1e-10;
+
+typedef struct
+{
+    double x,y;
+}point;
+
+double sulAB(point a, point b, point c, point d, double p, double q, double r);
+double sulCD(point e, point c, point d, double q, double r);
+double getSulCD(double l,const point &amp;e,const point &amp;c,const point &amp;d,const double &amp;q,const double &amp;r);
+double getSulAB(double l,const point &amp;a,const point &amp;b, const point &amp;c,const point &amp;d
+    , const double &amp;p,const double &amp;q,const double &amp;r);
+double getDis(point a, point b)
+{
+    return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+}
+int main()
+{
+    long t,p,q,r;
+    double res;
+    point a,b,c,d;
+    scanf(&quot;%ld&quot;, &amp;t);
+    while(t --)
+    {
+        scanf(&quot;%lf %lf %lf %lf&quot;, &amp;a.x, &amp;a.y, &amp;b.x, &amp;b.y);
+        scanf(&quot;%lf %lf %lf %lf&quot;, &amp;c.x, &amp;c.y, &amp;d.x, &amp;d.y);
+        scanf(&quot;%ld %ld %ld&quot;, &amp;p, &amp;q, &amp;r);
+        res = sulAB(a, b, c, d, p, q, r);
+        printf(&quot;%.2lf\n&quot;, res);
+    }
+    return 0;
+}
+
+double sulAB(point a, point b, point c, point d, double p, double q, double r)
+{
+    double l,rr,m,mm;
+    double tmp1, tmp2;
+    l = 0;
+    rr = 1.0;
+    while(l + EPS &lt; rr)
+    {
+        m = (l + rr) / 2;
+        mm = (m + rr) / 2;
+        tmp1 = getSulAB(m, a, b, c, d, p, q, r);
+        tmp2 = getSulAB(mm, a, b, c, d, p, q, r);
+        if(tmp1 &lt; tmp2)
+            rr = mm;
+        else
+            l = m;
+    }
+
+    return getSulAB(l, a, b, c, d, p, q, r);
+}
+
+double sulCD(point e, point c, point d, double q, double r)
+{
+    double l,rr,m,mm;
+    double tmp1, tmp2;
+    l = 0;
+    rr = 1.0;
+    while(l + EPS &lt; rr)
+    {
+        m = (l + rr) / 2;
+        mm = (m + rr) / 2;
+        tmp1 = getSulCD(m, e, c, d, q, r);
+        tmp2 = getSulCD(mm, e, c, d, q, r);
+        if(tmp1 &lt; tmp2)
+            rr = mm;
+        else
+            l = m;
+    }
+
+    return getSulCD(l, e, c, d, q, r);
+}
+
+double getSulCD(double l,const point &amp;e,const point &amp;c,const point &amp;d,const double &amp;q,const double &amp;r)
+{
+    point p;
+    p.x = c.x + (d.x - c.x) * l;
+    p.y = c.y + (d.y - c.y) * l;
+    return getDis(e, p) / r + getDis(p, d) / q;
+}
+
+double getSulAB(double l,const point &amp;a,const point &amp;b, const point &amp;c,const point &amp;d
+    , const double &amp;p,const double &amp;q,const double &amp;r)
+{
+    point pp;
+    pp.x = a.x + (b.x - a.x) * l;
+    pp.y = a.y + (b.y - a.y) * l;
+    return getDis(a, pp) / p + sulCD(pp, c, d, q, r);
+}
+</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2010-05-03T11:17:15.000+00:00 itemprop=datePublished>2010-05-03</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/acm.html>acm</a></li><li class=article-tag-list-item><a href=//owent.net/tags/hdoj.html>hdoj</a></li><li class=article-tag-list-item><a href=//owent.net/tags/hdu.html>hdu</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2010/32.html>上一篇<strong>线性筛法求质数(素数)表 及其原理</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2010/34.html>下一篇<strong>Southeastern European 2008 Sky Code 解题报告</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier='33'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class=inner><strong id=footer-left>&copy; 2021
+OWenT</strong>
+<strong id=footer-right><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owt5008137/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.0/umd/popper.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js crossorigin=anonymous></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/highlight.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/bash.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/cpp.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/capnproto.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/cmake.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/d.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/diff.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/dos.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/erlang.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/go.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/less.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/lua.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/php.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/powershell.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/protobuf.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/python.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/profile.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/typescript.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/vim.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/rust.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/languages/yaml.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.6.0/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js></script><script type=text/javascript src=//cdnjs.cloudflare.com/ajax/libs/mermaid/8.9.1/mermaid.min.js></script></div></body></html>
