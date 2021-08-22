@@ -1,8 +1,70 @@
-<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>protobuf、flatbuffer、msgpack 针对小数据包的简单对比|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2019/1908.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script><link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
-<span class=navbar-toggler-icon></span></button>
-<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<!doctype html><html lang=zh-cn>
+<head>
+<meta charset=utf-8>
+<title>protobuf、flatbuffer、msgpack 针对小数据包的简单对比|I'm OWenT</title>
+<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
+<link rel=canonical href=//owent.net/2019/1908.html>
+<link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT">
+<link rel=icon href=../favicon.ico>
+<link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous>
+<link rel=stylesheet href=//owent.net/css/style.css>
+<script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
+<link rel=stylesheet href=//owent.net/css/syntax.css>
+</head>
+<body><div id=container><div id=wrap>
+<header id=header>
+<div id=banner></div>
+<div id=header-outer>
+<div id=header-title>
+<h1 id=site-title>
+<a href=//owent.net id=logo>I'm OWenT</a>
+</h1>
+<h2 id=site-description>Challenge Everything</h2>
+</div>
+<div id=header-inner>
+<nav id=main-nav class="navbar navbar-expand-md navbar-dark">
+<button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a>
+<div class="collapse navbar-collapse position-relative" id=main-nav-links>
+<ul class="navbar-nav mr-auto">
+<li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li>
+<li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li>
+<li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li>
+<li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li>
+</ul>
+<div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search>
+<input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-e5f30390eec9c0efc6bb932cd4d87699 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2019/1908.html target=_blank itemprop=url>protobuf、flatbuffer、msgpack 针对小数据包的简单对比</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#前言>前言</a></li><li><a href=#测试数据>测试数据</a></li><li><a href=#msgpack>msgpack</a></li><li><a href=#flatbuffers>flatbuffers</a></li><li><a href=#protobuf>protobuf</a></li><li><a href=#写在最后>写在最后</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><h2 id=前言>前言</h2><p>前段时间我尝试给 <a href=https://github.com/atframework/>atframework</a> 的 <a href=https://github.com/atframework/libatapp>libatapp</a> 整合进UnrealEngine做Dedicated Server和逻辑server通信的时候碰到了一些问题。主要在于这些客户端引擎一般来说默认都是关闭exception的甚至会关闭RTTI。而 <a href=https://github.com/atframework/libatapp>libatapp</a> 所依赖的通信组件 <a href=https://github.com/atframework/libatbus>libatbus</a> 里内部协议是<a href=https://msgpack.org/>msgpack</a> ， 而 <a href=https://msgpack.org/>msgpack</a> 的官方 C++ 的header only的实现是必须开异常的功能的。所以我近期打算抽空增强一波 <a href=https://github.com/atframework/libatbus>libatbus</a> 的功能，增加一些跨版本向前向后兼容功能，和一些简单的验证功能（仅仅是为了防止误操作导致的问题）。具体的变更等我弄完了再发一篇。</p><p>回到协议上打解包上，本来我是想用 <a href=https://github.com/google/flatbuffers>flatbuffers</a> ，原因也很简单。这个通信层的协议不会太复杂，<a href=https://github.com/google/flatbuffers>flatbuffers</a> 对memory copy非常友好，也是head only，并且仅仅需要3个头文件，这样使用 <a href=https://github.com/atframework/libatbus>libatbus</a> 的时候就不需要额外管理外部的打解包层版本必须和内部的一致了。但是后来我跑测试的时候看到的结果 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 打出的包体太大了，并不理想。所以就简单地测试了一下 <a href=https://msgpack.org/>msgpack</a> 、 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 和 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 效果。</p><h2 id=测试数据>测试数据</h2><p>我只采用了一个简单的测试数据，贴近最大比率的实际使用场景的数据内容。也是 <a href=https://github.com/atframework/libatbus>libatbus</a> 的数据传输协议。数据结构大致如下:</p><pre><code class=language-js>{
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button>
+</form></div>
+</div>
+</nav>
+</div>
+</div>
+</header>
+<div id=main><section id=main-content>
+<div id=post-content><article id=post-e5f30390eec9c0efc6bb932cd4d87699 class="article-panel article article-type-post" itemscope itemprop=blogPost>
+<div class="article-panel-inner article-inner">
+<div class=article-inner>
+<header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2019/1908.html target=_blank itemprop=url>protobuf、flatbuffer、msgpack 针对小数据包的简单对比</a></h1></header><hr>
+<div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents>
+<ul>
+<li><a href=#前言>前言</a></li>
+<li><a href=#测试数据>测试数据</a></li>
+<li><a href=#msgpack>msgpack</a></li>
+<li><a href=#flatbuffers>flatbuffers</a></li>
+<li><a href=#protobuf>protobuf</a></li>
+<li><a href=#写在最后>写在最后</a></li>
+</ul>
+</nav></div><br>
+<div class=article-entry itemprop=articleBody><h2 id=前言>前言</h2>
+<p>前段时间我尝试给 <a href=https://github.com/atframework/>atframework</a> 的 <a href=https://github.com/atframework/libatapp>libatapp</a> 整合进UnrealEngine做Dedicated Server和逻辑server通信的时候碰到了一些问题。主要在于这些客户端引擎一般来说默认都是关闭exception的甚至会关闭RTTI。而 <a href=https://github.com/atframework/libatapp>libatapp</a> 所依赖的通信组件 <a href=https://github.com/atframework/libatbus>libatbus</a> 里内部协议是<a href=https://msgpack.org/>msgpack</a> ， 而 <a href=https://msgpack.org/>msgpack</a> 的官方 C++ 的header only的实现是必须开异常的功能的。所以我近期打算抽空增强一波 <a href=https://github.com/atframework/libatbus>libatbus</a> 的功能，增加一些跨版本向前向后兼容功能，和一些简单的验证功能（仅仅是为了防止误操作导致的问题）。具体的变更等我弄完了再发一篇。</p>
+<p>回到协议上打解包上，本来我是想用 <a href=https://github.com/google/flatbuffers>flatbuffers</a> ，原因也很简单。这个通信层的协议不会太复杂，<a href=https://github.com/google/flatbuffers>flatbuffers</a> 对memory copy非常友好，也是head only，并且仅仅需要3个头文件，这样使用 <a href=https://github.com/atframework/libatbus>libatbus</a> 的时候就不需要额外管理外部的打解包层版本必须和内部的一致了。但是后来我跑测试的时候看到的结果 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 打出的包体太大了，并不理想。所以就简单地测试了一下 <a href=https://msgpack.org/>msgpack</a> 、 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 和 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 效果。</p>
+<h2 id=测试数据>测试数据</h2>
+<p>我只采用了一个简单的测试数据，贴近最大比率的实际使用场景的数据内容。也是 <a href=https://github.com/atframework/libatbus>libatbus</a> 的数据传输协议。数据结构大致如下:</p>
+<pre><code class=language-js>{
     &quot;head&quot;: {
         &quot;cmd&quot;: 1, // 这个字段msgpack独占
         &quot;version&quot;: 2,
@@ -21,7 +83,11 @@
         }
     }
 }
-</code></pre><h2 id=msgpack>msgpack</h2><p>首先是原来使用的 <a href=https://msgpack.org/>msgpack</a> ， 原来使用 <a href=https://msgpack.org/>msgpack</a> 很重要的原因是因为可以 header only ，并且性能足够高。而且当时的 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 还很不成熟，对解包后的数据追加内容很不友好。其他的协议打解包库也没有特别好用的，如果不是 header only 我还不如去用 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 。</p><p>不过之前使用 <a href=https://msgpack.org/>msgpack</a> 的小对象分配比较暴力，依赖于 malloc 实现的优化。协议结构定义如下:</p><pre><code class=language-cpp>enum ATBUS_PROTOCOL_CMD {
+</code></pre>
+<h2 id=msgpack>msgpack</h2>
+<p>首先是原来使用的 <a href=https://msgpack.org/>msgpack</a> ， 原来使用 <a href=https://msgpack.org/>msgpack</a> 很重要的原因是因为可以 header only ，并且性能足够高。而且当时的 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 还很不成熟，对解包后的数据追加内容很不友好。其他的协议打解包库也没有特别好用的，如果不是 header only 我还不如去用 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 。</p>
+<p>不过之前使用 <a href=https://msgpack.org/>msgpack</a> 的小对象分配比较暴力，依赖于 malloc 实现的优化。协议结构定义如下:</p>
+<pre><code class=language-cpp>enum ATBUS_PROTOCOL_CMD {
     ATBUS_CMD_INVALID = 0,
 
     //  数据协议
@@ -85,7 +151,9 @@ struct msg {
 };
 
 // 下面对自定义encode/decode的封装就不贴了
-</code></pre><p>然后代码如下:</p><pre><code class=language-cpp>atbus::protocol::msg m_src;
+</code></pre>
+<p>然后代码如下:</p>
+<pre><code class=language-cpp>atbus::protocol::msg m_src;
 std::string packed_buffer;
 char test_buffer[] = &quot;hello world!&quot;;
 
@@ -112,8 +180,14 @@ char test_buffer[] = &quot;hello world!&quot;;
     util::string::serialization(packed_buffer.data(), packed_buffer.size(), so);
     std::cout&lt;&lt; &quot;msgpack encoded(size=&quot; &lt;&lt; packed_buffer.size() &lt;&lt; &quot;): &quot; &lt;&lt; so.str() &lt;&lt; std::endl;
 }
-</code></pre><p>输出:</p><pre><code>msgpack encoded(size=59): \602\001\626\001{\000\717\000\000\000\002L\660\026\752\716\0224Vx\002\002\625\716\0224Vx\717\000\000\000\011\607eC!\621\716\0224Vx\704\015hello world!\000\001
-</code></pre><p>打包后大小是59字节，除去数据段的13字节后，相当于附加信息的数据是46字节。 <a href=https://msgpack.org/>msgpack</a> 会对整数类型有一个字节记录长度，后面才是实际整数，有一定的压缩效果。这里看起来这个长度还是比较理想的。</p><h2 id=flatbuffers>flatbuffers</h2><p>我第一版写好的是接入了 <a href=https://github.com/google/flatbuffers>flatbuffers</a> , 协议定义如下:</p><pre><code class=language-flatbuffers>table forward_data {
+</code></pre>
+<p>输出:</p>
+<pre><code>msgpack encoded(size=59): \602\001\626\001{\000\717\000\000\000\002L\660\026\752\716\0224Vx\002\002\625\716\0224Vx\717\000\000\000\011\607eC!\621\716\0224Vx\704\015hello world!\000\001
+</code></pre>
+<p>打包后大小是59字节，除去数据段的13字节后，相当于附加信息的数据是46字节。 <a href=https://msgpack.org/>msgpack</a> 会对整数类型有一个字节记录长度，后面才是实际整数，有一定的压缩效果。这里看起来这个长度还是比较理想的。</p>
+<h2 id=flatbuffers>flatbuffers</h2>
+<p>我第一版写好的是接入了 <a href=https://github.com/google/flatbuffers>flatbuffers</a> , 协议定义如下:</p>
+<pre><code class=language-flatbuffers>table forward_data {
     from    : uint64   (id: 0);
     to      : uint64   (id: 1);
     router  : [uint64] (id: 2);
@@ -142,7 +216,9 @@ table msg {
     head: msg_head  (id: 0);
     body: msg_body  (id: 2); // id: 1 is implicitly added for body case by flatc
 }
-</code></pre><p>打包代码如下:</p><pre><code class=language-cpp>std::vector&lt;unsigned char&gt; packed_buffer;
+</code></pre>
+<p>打包代码如下:</p>
+<pre><code class=language-cpp>std::vector&lt;unsigned char&gt; packed_buffer;
 char test_buffer[] = &quot;hello world!&quot;;
 
 {
@@ -168,8 +244,18 @@ char test_buffer[] = &quot;hello world!&quot;;
     util::string::serialization(packed_buffer.data(), packed_buffer.size(), so);
     std::cout&lt;&lt; &quot;flatbuffers encoded(size=&quot; &lt;&lt; packed_buffer.size() &lt;&lt; &quot;): &quot; &lt;&lt; so.str() &lt;&lt; std::endl;
 }
-</code></pre><p>现在 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 的打包和读取还是比较容易的，就是追加数据处理器来麻烦一些，但是也还行。本来 在 <a href=https://github.com/atframework/libatbus>libatbus</a> 内部我是想能够尽量减少数据copy的，但是 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 一旦打包Finish了以后，数据指向的就是静态缓冲区，不允许再改变数据块大小。所以操作起来并不那么容易，所以最后还是fallback到了和 <a href=https://msgpack.org/>msgpack</a> 一样来copy一次。</p><p>输出如下:</p><pre><code>flatbuffers encoded(size=160): \020\000\000\000\000\000\012\000\022\000\010\000\007\000\014\000\012\000\000\000\000\000\000\003l\000\000\000\024\000\000\000\000\000\016\000 \000\020\000\030\000\004\000\010\000\014\000\016\000\000\0000\000\000\000\030\000\000\000\002\000\000\000\611gE#\001\000\000\000!Ce\607\011\000\000\000\015\000\000\000hello world!\000\000\000\000\001\000\000\000xV4\022\000\000\000\000\000\000\000\000\000\000\016\000\034\000\004\000\010\000\000\000\014\000\024\000\016\000\000\000\002\000\000\000{\000\000\000\752\026\660L\002\000\000\000xV4\022\000\000\000\000
-</code></pre><p>这里看到，打包后的数据有夸张的 160 字节。<a href=https://github.com/google/flatbuffers>flatbuffers</a> 官方也是说假设你不删除字段，只会把字段设为 desperated ，而且字段ID必须从0开始，然后递增。这个是和 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 的打包数据组织结构相关的。</p><p><a href=https://github.com/google/flatbuffers>flatbuffers</a> 打包后操作的都是指向数据块内部的地址。它为了支持一个数据块可以打入多个message和数据层面支持动态的field数量，是额外多些了一个vtable进去数据块，这个vtable有点像虚表，然后指向了各个字段。这个vtable就是不允许删字段的原因，它是通过看你当前版本的 vtable 里的field的offset大于了数据块里记录的vtable的长度，就认为这个field不存在。另外 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 的实现是对数据内容直接访问的，他的mutable接口也是要求数据长度不能发生变化。这也意味着它不能压缩数据块。</p><p><a href=https://github.com/google/flatbuffers>flatbuffers</a> 官方的说法是没有unpack开销，实际上是在每次去读取的时候先找数据块里的vtable，然后找到数据真正指向的位置，如果是数字还要转字节序然后返回。其实这个开销相当于把unpack操作分散到了你读数据的地方。而且每次读都得走一遍这个流程。我觉得其实是没有 <a href=https://msgpack.org/>msgpack</a> 和 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 那种在统一的地方只解包一次的开销低的。毕竟在实际使用的过程中，大部分字段都不会只读一次。</p><h2 id=protobuf>protobuf</h2><p>最后是 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> ， <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 也是这三个里唯一需要预编译的组件，特别是在交叉编译的时候会特别麻烦，在 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 3.6.1 之前的交叉编译还得改一点它的cmake脚本，否则里面有些组件不能关掉，并且在编译libprotoc的过程中要先编译js_mbed来运行，但是交叉编译大多都是编译其他架构的target不能本地运行的。在 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 3.6.1 之后才提供关闭这写组件的选项，好像是 3.7 之后才不依赖先编译js_mbed。这样对交叉编译才足够友好。</p><p>还是先贴相关的协议描述:</p><pre><code class=language-protobuf>syntax = &quot;proto3&quot;;
+</code></pre>
+<p>现在 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 的打包和读取还是比较容易的，就是追加数据处理器来麻烦一些，但是也还行。本来 在 <a href=https://github.com/atframework/libatbus>libatbus</a> 内部我是想能够尽量减少数据copy的，但是 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 一旦打包Finish了以后，数据指向的就是静态缓冲区，不允许再改变数据块大小。所以操作起来并不那么容易，所以最后还是fallback到了和 <a href=https://msgpack.org/>msgpack</a> 一样来copy一次。</p>
+<p>输出如下:</p>
+<pre><code>flatbuffers encoded(size=160): \020\000\000\000\000\000\012\000\022\000\010\000\007\000\014\000\012\000\000\000\000\000\000\003l\000\000\000\024\000\000\000\000\000\016\000 \000\020\000\030\000\004\000\010\000\014\000\016\000\000\0000\000\000\000\030\000\000\000\002\000\000\000\611gE#\001\000\000\000!Ce\607\011\000\000\000\015\000\000\000hello world!\000\000\000\000\001\000\000\000xV4\022\000\000\000\000\000\000\000\000\000\000\016\000\034\000\004\000\010\000\000\000\014\000\024\000\016\000\000\000\002\000\000\000{\000\000\000\752\026\660L\002\000\000\000xV4\022\000\000\000\000
+</code></pre>
+<p>这里看到，打包后的数据有夸张的 160 字节。<a href=https://github.com/google/flatbuffers>flatbuffers</a> 官方也是说假设你不删除字段，只会把字段设为 desperated ，而且字段ID必须从0开始，然后递增。这个是和 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 的打包数据组织结构相关的。</p>
+<p><a href=https://github.com/google/flatbuffers>flatbuffers</a> 打包后操作的都是指向数据块内部的地址。它为了支持一个数据块可以打入多个message和数据层面支持动态的field数量，是额外多些了一个vtable进去数据块，这个vtable有点像虚表，然后指向了各个字段。这个vtable就是不允许删字段的原因，它是通过看你当前版本的 vtable 里的field的offset大于了数据块里记录的vtable的长度，就认为这个field不存在。另外 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 的实现是对数据内容直接访问的，他的mutable接口也是要求数据长度不能发生变化。这也意味着它不能压缩数据块。</p>
+<p><a href=https://github.com/google/flatbuffers>flatbuffers</a> 官方的说法是没有unpack开销，实际上是在每次去读取的时候先找数据块里的vtable，然后找到数据真正指向的位置，如果是数字还要转字节序然后返回。其实这个开销相当于把unpack操作分散到了你读数据的地方。而且每次读都得走一遍这个流程。我觉得其实是没有 <a href=https://msgpack.org/>msgpack</a> 和 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 那种在统一的地方只解包一次的开销低的。毕竟在实际使用的过程中，大部分字段都不会只读一次。</p>
+<h2 id=protobuf>protobuf</h2>
+<p>最后是 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> ， <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 也是这三个里唯一需要预编译的组件，特别是在交叉编译的时候会特别麻烦，在 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 3.6.1 之前的交叉编译还得改一点它的cmake脚本，否则里面有些组件不能关掉，并且在编译libprotoc的过程中要先编译js_mbed来运行，但是交叉编译大多都是编译其他架构的target不能本地运行的。在 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 3.6.1 之后才提供关闭这写组件的选项，好像是 3.7 之后才不依赖先编译js_mbed。这样对交叉编译才足够友好。</p>
+<p>还是先贴相关的协议描述:</p>
+<pre><code class=language-protobuf>syntax = &quot;proto3&quot;;
 
 package atbus.protocol;
 
@@ -213,7 +299,9 @@ message msg {
         // ...
     }
 }
-</code></pre><p>然后打包代码:</p><pre><code class=language-cpp>::google::protobuf::Arena arena;
+</code></pre>
+<p>然后打包代码:</p>
+<pre><code class=language-cpp>::google::protobuf::Arena arena;
 atbus::protocol::msg *    m_src = ::google::protobuf::Arena::CreateMessage&lt;atbus::protocol::msg&gt;(&amp;arena);
 std::string               packed_buffer;
 char                      test_buffer[] = &quot;hello world!&quot;;
@@ -237,14 +325,117 @@ char                      test_buffer[] = &quot;hello world!&quot;;
     std::cout &lt;&lt; &quot;arena(allocated= &quot; &lt;&lt; arena.SpaceAllocated() &lt;&lt; &quot;, used= &quot; &lt;&lt; arena.SpaceUsed() &lt;&lt; &quot;), protobuf encoded(size=&quot; &lt;&lt; packed_buffer.size()
               &lt;&lt; &quot;): &quot; &lt;&lt; so.str() &lt;&lt; std::endl;
 }
-</code></pre><p>输出:</p><pre><code>arena(allocated= 768, used= 376), protobuf encoded(size=57): \012\020\010\002\020{ \752\655\700\745$(\770\654\721\621\001j%\010\770\654\721\621\001\020\641\606\625\673\630\001\032\005\770\654\721\621\001&quot;\015hello world!\000(\001
-</code></pre><p><a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 会对整数类型使用varint来压缩空数据来减少长度。效果也比较好，打包后数据块只占用了57字节。
+</code></pre>
+<p>输出:</p>
+<pre><code>arena(allocated= 768, used= 376), protobuf encoded(size=57): \012\020\010\002\020{ \752\655\700\745$(\770\654\721\621\001j%\010\770\654\721\621\001\020\641\606\625\673\630\001\032\005\770\654\721\621\001&quot;\015hello world!\000(\001
+</code></pre>
+<p><a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 会对整数类型使用varint来压缩空数据来减少长度。效果也比较好，打包后数据块只占用了57字节。
 protobuf 3.0 开始，为了缓解protobuf的碎片对象问题，提供了arena功能。这个arena其实就是一个不断增长的内存块链表，可以用于保存protobuf的对象和对象数据，没有回收功能。
-非常简单但也很适合 <a href=https://github.com/atframework/libatbus>libatbus</a> 这种动态结构少而且结构简单的协议。</p><p>在上面的sample代码里我也是开了arena，可以看到内存块分配了768字节，使用了376字节。</p><h2 id=写在最后>写在最后</h2><p><a href=https://github.com/google/flatbuffers>flatbuffers</a> 或是 <a href=https://capnproto.org/>caps&rsquo;n proto</a> 的一个涉及理念是打解包本身不做压缩，让上一层走专有的压缩模块。这样不止对整数，对字符串也可以有效压缩。但是目前我找了一圈，没找到性能足够理想的压缩算法。现在即便是很快的压缩算法如 z-std 、 brotli 、 lz4 、 snappy 等都是单核百兆级别的压缩速度。而且会追加额外的字典块。 这就很不适合我们这种传输组件了，因为本身的header就不大，字典本身可能占比很大，并且 <a href=https://github.com/atframework/libatbus>libatbus</a> 本身是单核 GB/秒 级别的性能，肯定是不能接受压缩数据导致新能下降一个数量级的。</p><p>前面也提到了，这个协议块内存是贴近实际使用场景的。所以它的包体大小就比较有参考意义。<a href=https://github.com/google/flatbuffers>flatbuffers</a> 的解包后内存占用其实就是buffer块的占用，160字节。<a href=https://msgpack.org/>msgpack</a> 的解包后内存占用我没有统计，但是内部结构其实和 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 是差不多的，比 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 少了vtable 但是多了几个指针，估计内存占用也差不多吧。 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 的内存占用比较多一些，达到了 376。<a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 的arena默认配置是初始预分配块256字节，然后每次*2，一直到8K为止。sample里是分配了两个块一共768字节。实际上我觉得针对于这个消息直接初始预分配块512字节就好了。<a href=https://github.com/atframework/libatbus>libatbus</a> 的消息其实也比较容易分析估算预分配块的大小。总的来说这是内存占用，也不是很大。</p><p>我们再来关注打包后的数据大小。 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 是160字节，减去数据内容的13字节可以理解为数据meta外占用是147字节。<a href=https://msgpack.org/>msgpack</a> 是59字节，减去数据内容的13字节后是46字节。<a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 是57字节，减去数据内容的13字节后是44字节。这个差距就比较大了。在我们的实际应用场景总，往往还有一层业务层面的包头，也差不多40-50字节。但是业务逻辑里大部分的数据包都是小包，200字节甚至100字节以下的占很大一部分比重。这里的话 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 的147字节额外消耗几乎翻倍了这个带宽损耗。这也是我不太能接受的地方。而相对而言 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 和 <a href=https://msgpack.org/>msgpack</a> 就可接受多了。我们也可以参照对比一下ipv4+tcp的header长度，不算扩展部分是40字节。</p><p>简单的压力测试没有太大的意义，缓存命中率高会导致和实际场景中相差很大，而且之前很多人也测试过了这三种序列化库的性能并没有数量级的差距。所以我就没有额外再做压力测试了。</p><p>最后我还是决定麻烦一点使用回 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> ，然后提供选项来指定外部的 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> ，这样就可以和外部使用的一样版本的 protobuf。唯一的缺陷就是增加了使用上的麻烦。但是 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 的工具确实比其他两个成熟太多了，API也很方便使用。不依赖RTTI并且异常功能可以很轻松关闭。移动平台上还可以用lite库来减小运行时包大小，也算是比较完美了。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2019-08-03T10:59:58.000+00:00 itemprop=datePublished>2019-08-03</time></span>
-<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/atframework.html>atframework</a></li><li class=article-tag-list-item><a href=//owent.net/tags/atbus.html>atbus</a></li><li class=article-tag-list-item><a href=//owent.net/tags/libatbus.html>libatbus</a></li><li class=article-tag-list-item><a href=//owent.net/tags/bus.html>bus</a></li><li class=article-tag-list-item><a href=//owent.net/tags/msgpack.html>msgpack</a></li><li class=article-tag-list-item><a href=//owent.net/tags/protobuf.html>protobuf</a></li><li class=article-tag-list-item><a href=//owent.net/tags/flatbuffers.html>flatbuffers</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2019/1909.html>上一篇<strong>一些xresloader（转表工具）的改进</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2019/1907.html>下一篇<strong>协程框架(libcopp) 小幅优化</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier='1908'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+非常简单但也很适合 <a href=https://github.com/atframework/libatbus>libatbus</a> 这种动态结构少而且结构简单的协议。</p>
+<p>在上面的sample代码里我也是开了arena，可以看到内存块分配了768字节，使用了376字节。</p>
+<h2 id=写在最后>写在最后</h2>
+<p><a href=https://github.com/google/flatbuffers>flatbuffers</a> 或是 <a href=https://capnproto.org/>caps&rsquo;n proto</a> 的一个涉及理念是打解包本身不做压缩，让上一层走专有的压缩模块。这样不止对整数，对字符串也可以有效压缩。但是目前我找了一圈，没找到性能足够理想的压缩算法。现在即便是很快的压缩算法如 z-std 、 brotli 、 lz4 、 snappy 等都是单核百兆级别的压缩速度。而且会追加额外的字典块。 这就很不适合我们这种传输组件了，因为本身的header就不大，字典本身可能占比很大，并且 <a href=https://github.com/atframework/libatbus>libatbus</a> 本身是单核 GB/秒 级别的性能，肯定是不能接受压缩数据导致新能下降一个数量级的。</p>
+<p>前面也提到了，这个协议块内存是贴近实际使用场景的。所以它的包体大小就比较有参考意义。<a href=https://github.com/google/flatbuffers>flatbuffers</a> 的解包后内存占用其实就是buffer块的占用，160字节。<a href=https://msgpack.org/>msgpack</a> 的解包后内存占用我没有统计，但是内部结构其实和 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 是差不多的，比 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 少了vtable 但是多了几个指针，估计内存占用也差不多吧。 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 的内存占用比较多一些，达到了 376。<a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 的arena默认配置是初始预分配块256字节，然后每次*2，一直到8K为止。sample里是分配了两个块一共768字节。实际上我觉得针对于这个消息直接初始预分配块512字节就好了。<a href=https://github.com/atframework/libatbus>libatbus</a> 的消息其实也比较容易分析估算预分配块的大小。总的来说这是内存占用，也不是很大。</p>
+<p>我们再来关注打包后的数据大小。 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 是160字节，减去数据内容的13字节可以理解为数据meta外占用是147字节。<a href=https://msgpack.org/>msgpack</a> 是59字节，减去数据内容的13字节后是46字节。<a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 是57字节，减去数据内容的13字节后是44字节。这个差距就比较大了。在我们的实际应用场景总，往往还有一层业务层面的包头，也差不多40-50字节。但是业务逻辑里大部分的数据包都是小包，200字节甚至100字节以下的占很大一部分比重。这里的话 <a href=https://github.com/google/flatbuffers>flatbuffers</a> 的147字节额外消耗几乎翻倍了这个带宽损耗。这也是我不太能接受的地方。而相对而言 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 和 <a href=https://msgpack.org/>msgpack</a> 就可接受多了。我们也可以参照对比一下ipv4+tcp的header长度，不算扩展部分是40字节。</p>
+<p>简单的压力测试没有太大的意义，缓存命中率高会导致和实际场景中相差很大，而且之前很多人也测试过了这三种序列化库的性能并没有数量级的差距。所以我就没有额外再做压力测试了。</p>
+<p>最后我还是决定麻烦一点使用回 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> ，然后提供选项来指定外部的 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> ，这样就可以和外部使用的一样版本的 protobuf。唯一的缺陷就是增加了使用上的麻烦。但是 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 的工具确实比其他两个成熟太多了，API也很方便使用。不依赖RTTI并且异常功能可以很轻松关闭。移动平台上还可以用lite库来减小运行时包大小，也算是比较完美了。</p>
+</div>
+<hr>
+<footer class=article-footer>
+<div class="article-panel-footer article-meta article-footer clearfix">
+<span class=article-meta-left>
+<ol>
+<li><a href=//owent.net/categories/article.html>Article</a></li>
+<li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li>
+</ol>
+</span>
+<span class=article-meta-right><time datetime=2019-08-03T10:59:58.000+00:00 itemprop=datePublished>2019-08-03</time></span>
+<span class=clearfix></span>
+</div>
+<div class=article-tags>
+<ul class=article-tag-list>
+<li class=article-tag-list-item><a href=//owent.net/tags/atframework.html>atframework</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/atbus.html>atbus</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/libatbus.html>libatbus</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/bus.html>bus</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/msgpack.html>msgpack</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/protobuf.html>protobuf</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/flatbuffers.html>flatbuffers</a></li>
+</ul>
+</div>
+</footer>
+</div>
+<hr>
+<nav id=article-nav>
+<ul class=pagination>
+<li class=page-item>
+<a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2019/1909.html>
+上一篇<strong>一些xresloader（转表工具）的改进</strong>
+</a>
+</li>
+<li class=page-item>
+<a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2019/1907.html>
+下一篇<strong>协程框架(libcopp) 小幅优化</strong>
+</a>
+</li>
+</ul>
+</nav>
+<hr>
+<section id=comments>
+<div id=disqus_thread></div>
+<script type=text/javascript>var disqus_config=function(){this.page.identifier='1908'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script>
+<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
+</section>
+</div>
+</article></div>
+</section></div>
+<footer id=footer>
+<div class=outer>
+<div id=footer-info class="inner clearfix">
+<strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
 2021
-OWenT</strong>
-<strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+OWenT
+</strong>
+<strong id=footer-right class="float-right float-end">
+<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
-主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
-<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script><script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cpp.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/capnproto.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cmake.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/d.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/diff.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dos.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/erlang.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/go.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/less.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/lua.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/php.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/powershell.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/protobuf.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/python.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/profile.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/typescript.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script><script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script><script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script><script type=text/javascript src=//unpkg.com/chart.js@latest/dist/Chart.min.js></script><script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script></div></body></html>
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong>
+<span class=clearfix></span>
+</div>
+</div>
+</footer>
+</div>
+<script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cpp.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/capnproto.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cmake.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/d.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/diff.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dos.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/erlang.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/go.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/less.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/lua.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/php.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/powershell.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/protobuf.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/python.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/profile.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/typescript.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script>
+<script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
+<script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script>
+<script type=text/javascript src=//unpkg.com/chart.js@latest/dist/Chart.min.js></script>
+<script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script>
+</div>
+</body></html>

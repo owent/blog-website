@@ -1,8 +1,80 @@
-<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>使用ELK辅助监控开发测试环境服务质量和问题定位|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2018/1812.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script><link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
-<span class=navbar-toggler-icon></span></button>
-<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<!doctype html><html lang=zh-cn>
+<head>
+<meta charset=utf-8>
+<title>使用ELK辅助监控开发测试环境服务质量和问题定位|I'm OWenT</title>
+<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
+<link rel=canonical href=//owent.net/2018/1812.html>
+<link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT">
+<link rel=icon href=../favicon.ico>
+<link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous>
+<link rel=stylesheet href=//owent.net/css/style.css>
+<script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
+<link rel=stylesheet href=//owent.net/css/syntax.css>
+</head>
+<body><div id=container><div id=wrap>
+<header id=header>
+<div id=banner></div>
+<div id=header-outer>
+<div id=header-title>
+<h1 id=site-title>
+<a href=//owent.net id=logo>I'm OWenT</a>
+</h1>
+<h2 id=site-description>Challenge Everything</h2>
+</div>
+<div id=header-inner>
+<nav id=main-nav class="navbar navbar-expand-md navbar-dark">
+<button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a>
+<div class="collapse navbar-collapse position-relative" id=main-nav-links>
+<ul class="navbar-nav mr-auto">
+<li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li>
+<li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li>
+<li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li>
+<li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li>
+</ul>
+<div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search>
+<input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-11e01cd7bf0256d41ff535c487e2d154 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2018/1812.html target=_blank itemprop=url>使用ELK辅助监控开发测试环境服务质量和问题定位</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#什么是elk>什么是ELK？</a></li><li><a href=#节点部署>节点部署</a><ul><li><a href=#elasticsearch-集群部署>elasticsearch 集群部署</a></li><li><a href=#logstash-部署>logstash 部署</a></li><li><a href=#kibana-部署>kibana 部署</a></li></ul></li><li><a href=#日志接入>日志接入</a></li><li><a href=#定期清理elasticsearch-curator>定期清理(elasticsearch-curator)</a></li><li><a href=#最后sample>最后Sample</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><h2 id=什么是elk>什么是ELK？</h2><p>ELK 是 <a href=https://www.elastic.co/cn/products/elasticsearch>elasticsearch</a> + <a href=https://www.elastic.co/cn/products/logstash>logstash</a> + <a href=https://www.elastic.co/cn/products/kibana>kibana</a>的缩写。这一套是现在比较流行的日志全文索引系统了。我之前的项目也有用它来做过日志分析，这次主要是拿来搭建开发测试环境的监控和分析系统，顺带记录一下部署脚本和流程。</p><p>其中 <a href=https://www.elastic.co/cn/products/elasticsearch>elasticsearch</a> 是日志索引系统，我按两个master，3个数据和处理节点来部署。 <a href=https://www.elastic.co/cn/products/logstash>logstash</a> 和 <a href=https://www.elastic.co/cn/products/kibana>kibana</a> 因为是开发测试环境使用，量级不大，所以只部署了一个节点。但是在使用过程中发现 <a href=https://www.elastic.co/cn/products/elasticsearch>elasticsearch</a> 在jre的GC的时候还是有较长时间的 <em><strong>Stop The World</strong></em> 的问题，而且这期间的数据会倍丢弃。所以为了缓解这个状况，又引入了 <a href=https://redis.io/>redis</a> 作为消息队列使用。然后使用两组pipeline，一个从 client -> <a href=https://www.elastic.co/cn/products/logstash>logstash</a> -> <a href=https://redis.io/>redis</a> ，另一个从 <a href=https://redis.io/>redis</a> -> <a href=https://www.elastic.co/cn/products/logstash>logstash</a> -> <a href=https://www.elastic.co/cn/products/elasticsearch>elasticsearch</a> 来传输。这样如果在 <a href=https://www.elastic.co/cn/products/elasticsearch>elasticsearch</a> GC的 <em><strong>Stop The World</strong></em> 结束的时候会把数据补回去。 外面更大型的部署也有用 <a href=https://kafka.apache.org/>kafka</a> 或者更进一步优化的 <a href=https://pulsar.apache.org/>pulsar</a>。不过我们目前的应用也不太需要 <a href=https://kafka.apache.org/>kafka</a> 和 <a href=https://pulsar.apache.org/>pulsar</a> 那种数据落地和强一致性，使用 <a href=https://redis.io/>redis</a> 也已经够了。</p><p>后面的脚本都已 6.4.2 为准，因为最后一次更新多节点部署的脚本是基于 6.4.2 的。而且这个版本 x-pack 内置进 <a href=https://www.elastic.co/cn/products/elasticsearch>elasticsearch</a> 了，也能省了 x-pack 的部署和基础版的License。</p><h2 id=节点部署>节点部署</h2><p>首先要准备好部署的包: jdk-8u181-linux-x64.rpm 、 elasticsearch-6.4.2.tar.gz 、 logstash-6.4.2.tar.gz 、 kibana-6.4.2-linux-x86_64.tar.gz 。</p><p>先贴整体结构图，后面的脚本和配置模板比较长。</p><p><img src=1812-01.dot.png alt=1812-01.dot.png></p><h3 id=elasticsearch-集群部署>elasticsearch 集群部署</h3><p>然后是我复制出来的init.d的启动脚本模板 (init.d/elasticsearch.template)</p><pre><code class=language-bash>#!/bin/bash
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button>
+</form></div>
+</div>
+</nav>
+</div>
+</div>
+</header>
+<div id=main><section id=main-content>
+<div id=post-content><article id=post-11e01cd7bf0256d41ff535c487e2d154 class="article-panel article article-type-post" itemscope itemprop=blogPost>
+<div class="article-panel-inner article-inner">
+<div class=article-inner>
+<header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2018/1812.html target=_blank itemprop=url>使用ELK辅助监控开发测试环境服务质量和问题定位</a></h1></header><hr>
+<div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents>
+<ul>
+<li><a href=#什么是elk>什么是ELK？</a></li>
+<li><a href=#节点部署>节点部署</a>
+<ul>
+<li><a href=#elasticsearch-集群部署>elasticsearch 集群部署</a></li>
+<li><a href=#logstash-部署>logstash 部署</a></li>
+<li><a href=#kibana-部署>kibana 部署</a></li>
+</ul>
+</li>
+<li><a href=#日志接入>日志接入</a></li>
+<li><a href=#定期清理elasticsearch-curator>定期清理(elasticsearch-curator)</a></li>
+<li><a href=#最后sample>最后Sample</a></li>
+</ul>
+</nav></div><br>
+<div class=article-entry itemprop=articleBody><h2 id=什么是elk>什么是ELK？</h2>
+<p>ELK 是 <a href=https://www.elastic.co/cn/products/elasticsearch>elasticsearch</a> + <a href=https://www.elastic.co/cn/products/logstash>logstash</a> + <a href=https://www.elastic.co/cn/products/kibana>kibana</a>的缩写。这一套是现在比较流行的日志全文索引系统了。我之前的项目也有用它来做过日志分析，这次主要是拿来搭建开发测试环境的监控和分析系统，顺带记录一下部署脚本和流程。</p>
+<p>其中 <a href=https://www.elastic.co/cn/products/elasticsearch>elasticsearch</a> 是日志索引系统，我按两个master，3个数据和处理节点来部署。 <a href=https://www.elastic.co/cn/products/logstash>logstash</a> 和 <a href=https://www.elastic.co/cn/products/kibana>kibana</a> 因为是开发测试环境使用，量级不大，所以只部署了一个节点。但是在使用过程中发现 <a href=https://www.elastic.co/cn/products/elasticsearch>elasticsearch</a> 在jre的GC的时候还是有较长时间的 <em><strong>Stop The World</strong></em> 的问题，而且这期间的数据会倍丢弃。所以为了缓解这个状况，又引入了 <a href=https://redis.io/>redis</a> 作为消息队列使用。然后使用两组pipeline，一个从 client -> <a href=https://www.elastic.co/cn/products/logstash>logstash</a> -> <a href=https://redis.io/>redis</a> ，另一个从 <a href=https://redis.io/>redis</a> -> <a href=https://www.elastic.co/cn/products/logstash>logstash</a> -> <a href=https://www.elastic.co/cn/products/elasticsearch>elasticsearch</a> 来传输。这样如果在 <a href=https://www.elastic.co/cn/products/elasticsearch>elasticsearch</a> GC的 <em><strong>Stop The World</strong></em> 结束的时候会把数据补回去。 外面更大型的部署也有用 <a href=https://kafka.apache.org/>kafka</a> 或者更进一步优化的 <a href=https://pulsar.apache.org/>pulsar</a>。不过我们目前的应用也不太需要 <a href=https://kafka.apache.org/>kafka</a> 和 <a href=https://pulsar.apache.org/>pulsar</a> 那种数据落地和强一致性，使用 <a href=https://redis.io/>redis</a> 也已经够了。</p>
+<p>后面的脚本都已 6.4.2 为准，因为最后一次更新多节点部署的脚本是基于 6.4.2 的。而且这个版本 x-pack 内置进 <a href=https://www.elastic.co/cn/products/elasticsearch>elasticsearch</a> 了，也能省了 x-pack 的部署和基础版的License。</p>
+<h2 id=节点部署>节点部署</h2>
+<p>首先要准备好部署的包: jdk-8u181-linux-x64.rpm 、 elasticsearch-6.4.2.tar.gz 、 logstash-6.4.2.tar.gz 、 kibana-6.4.2-linux-x86_64.tar.gz 。</p>
+<p>先贴整体结构图，后面的脚本和配置模板比较长。</p>
+<p><img src=1812-01.dot.png alt=1812-01.dot.png></p>
+<h3 id=elasticsearch-集群部署>elasticsearch 集群部署</h3>
+<p>然后是我复制出来的init.d的启动脚本模板 (init.d/elasticsearch.template)</p>
+<pre><code class=language-bash>#!/bin/bash
 #
 # elasticsearch &lt;summary&gt;
 #
@@ -181,7 +253,9 @@ case &quot;$1&quot; in
         exit 2
 esac
 exit $?
-</code></pre><p>如果是使用systemd的话就不需要上面那个，要另外写个守护服务配置模板和环境配置模板 (sysconfig/elasticsearch.template):</p><pre><code class=language-bash>################################
+</code></pre>
+<p>如果是使用systemd的话就不需要上面那个，要另外写个守护服务配置模板和环境配置模板 (sysconfig/elasticsearch.template):</p>
+<pre><code class=language-bash>################################
 # Elasticsearch
 ################################
 
@@ -234,7 +308,9 @@ ES_STARTUP_SLEEP_TIME=%TEMPLATE_VAR_ELK_STARTUP_SLEEP%
 # When using Systemd, this setting is ignored and the 'vm.max_map_count'
 # property is set at boot time in /usr/lib/sysctl.d/elasticsearch.conf
 #MAX_MAP_COUNT=262144
-</code></pre><p><a href=https://www.elastic.co/cn/products/elasticsearch>elasticsearch</a> 的部署脚本分几个文件，其中配置文件(deploy-conf.sh)如下(里面也包含了一下依赖包):</p><pre><code class=language-bash>#!/bin/bash
+</code></pre>
+<p><a href=https://www.elastic.co/cn/products/elasticsearch>elasticsearch</a> 的部署脚本分几个文件，其中配置文件(deploy-conf.sh)如下(里面也包含了一下依赖包):</p>
+<pre><code class=language-bash>#!/bin/bash
 
 USER=执行用户;
 GROUP=执行组;
@@ -285,7 +361,9 @@ function wait_for_elasticsearch_startup() {
     done
     echo &quot;&quot;;
 }
-</code></pre><p>然后是部署机用的脚本(deploy-remote.sh)，这个脚本每个机器IP执行一次，要确保有权限:</p><pre><code class=language-bash>#!/bin/bash
+</code></pre>
+<p>然后是部署机用的脚本(deploy-remote.sh)，这个脚本每个机器IP执行一次，要确保有权限:</p>
+<pre><code class=language-bash>#!/bin/bash
 
 if [ $# -lt 2 ]; then
     echo &quot;Usage: $0 &lt;ip&gt; &lt;use memory&gt;&quot;;
@@ -299,7 +377,9 @@ ssh 用户名@$REMOTE_IP &quot;echo \&quot;PWD=\$PWD\&quot; &amp;&amp; echo \&qu
 scp jdk-8u181-linux-x64.rpm *.tar.gz *.sh init.d sysconfig &quot;用户名@$REMOTE_IP:/HOME目录/elk/&quot;;
 
 ssh owentou@$REMOTE_IP &quot;echo \&quot;PWD=\$PWD\&quot; &amp;&amp; echo \&quot;HOME=\$HOME\&quot; &amp;&amp; cd \$HOME/elk &amp;&amp; chmod +x *.sh &amp;&amp; sudo ./deploy.sh $REMOTE_IP $USE_MEMORY&quot;;
-</code></pre><p>然后是目标机上执行的脚本(deploy.sh)，要注意防火墙要额外开一下:</p><pre><code class=language-bash>#!/bin/bash
+</code></pre>
+<p>然后是目标机上执行的脚本(deploy.sh)，要注意防火墙要额外开一下:</p>
+<pre><code class=language-bash>#!/bin/bash
 
 export PATH=$PATH:/sbin;
 
@@ -461,7 +541,12 @@ wait_for_elasticsearch_startup;
 
 # ====================== check license ======================
 # curl -u elastic:$ELK_CLUSTER_PASSWORD &quot;http://$BIND_IP:$ELK_ELASTICSEARCH_PORT/_xpack/license&quot;;
-</code></pre><p>以上，就可以比较方便地部署 <a href=https://www.elastic.co/cn/products/elasticsearch>elasticsearch</a>的多节点集群了。</p><h3 id=logstash-部署>logstash 部署</h3><p>然后需要对日志采集做部署，<a href=https://redis.io/>redis</a> 部署就补贴了，比较简单。单节点没写部署脚本，直接贴我的配置吧:</p><p>主配置: config/logstash.yml</p><pre><code class=language-yaml>node.name: logstash节点名称
+</code></pre>
+<p>以上，就可以比较方便地部署 <a href=https://www.elastic.co/cn/products/elasticsearch>elasticsearch</a>的多节点集群了。</p>
+<h3 id=logstash-部署>logstash 部署</h3>
+<p>然后需要对日志采集做部署，<a href=https://redis.io/>redis</a> 部署就补贴了，比较简单。单节点没写部署脚本，直接贴我的配置吧:</p>
+<p>主配置: config/logstash.yml</p>
+<pre><code class=language-yaml>node.name: logstash节点名称
 path.data: 数据目录
 
 http.host: &quot;监听IP&quot;
@@ -487,7 +572,9 @@ xpack.monitoring.elasticsearch.password: &quot;密码&quot;
 xpack.monitoring.elasticsearch.sniffing: false
 #xpack.monitoring.collection.interval: 10s
 #xpack.monitoring.collection.pipeline.details.enabled: true
-</code></pre><p>pipeline入口配置: config/pipelines.yml</p><pre><code class=language-yaml>- pipeline.id: app_to_redis
+</code></pre>
+<p>pipeline入口配置: config/pipelines.yml</p>
+<pre><code class=language-yaml>- pipeline.id: app_to_redis
   pipeline.workers: 8
   queue.type: memory
   path.config: &quot;logstash主目录/config/app_to_redis.config&quot;
@@ -496,7 +583,9 @@ xpack.monitoring.elasticsearch.sniffing: false
   pipeline.workers: 8
   queue.type: memory
   path.config: &quot;logstash主目录/config/redis_to_elasticsearch.config&quot;
-</code></pre><p>然后是pipeline - config/app_to_redis.config :</p><pre><code>input {
+</code></pre>
+<p>然后是pipeline - config/app_to_redis.config :</p>
+<pre><code>input {
     udp {
         port =&gt; 9345
         workers =&gt; 4
@@ -542,7 +631,9 @@ output {
     data_type =&gt; &quot;list&quot;
   }
 }
-</code></pre><p>最后是pipeline - config/app_to_redis.config :</p><pre><code>input {
+</code></pre>
+<p>最后是pipeline - config/app_to_redis.config :</p>
+<pre><code>input {
     redis {
         port =&gt; 16379
         data_type =&gt; &quot;list&quot;
@@ -565,7 +656,11 @@ output {
   }
 }
 
-</code></pre><p>最后加一下启动脚本就好了。</p><h3 id=kibana-部署>kibana 部署</h3><p><a href=https://www.elastic.co/cn/products/kibana>kibana</a> 是用于集群管理的，也贴一下我的配置吧。就一个文件 config/kibana.yml</p><pre><code class=language-yaml># 监听端口
+</code></pre>
+<p>最后加一下启动脚本就好了。</p>
+<h3 id=kibana-部署>kibana 部署</h3>
+<p><a href=https://www.elastic.co/cn/products/kibana>kibana</a> 是用于集群管理的，也贴一下我的配置吧。就一个文件 config/kibana.yml</p>
+<pre><code class=language-yaml># 监听端口
 server.port: 5601
 server.host: &quot;监听地址&quot;
 
@@ -591,7 +686,10 @@ elasticsearch.password: &quot;密码&quot;
 pid.file: pidfile路径/kibana.pid
 
 i18n.defaultLocale: &quot;zh_CN&quot;
-</code></pre><p>也是最后加一下启动脚本就好了。</p><p>我还用了nginx做反向代理，配置如下:</p><pre><code class=language-nginx>upstream elasticsearch {
+</code></pre>
+<p>也是最后加一下启动脚本就好了。</p>
+<p>我还用了nginx做反向代理，配置如下:</p>
+<pre><code class=language-nginx>upstream elasticsearch {
     server elasticsearch主节点-IP:9200;
 }
 
@@ -630,7 +728,13 @@ location ^~ /elk/kibana {
     proxy_set_header Connection 'upgrade';
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 }
-</code></pre><h2 id=日志接入>日志接入</h2><p>日志接入我是用的是protobuf转json。然后用上面的UDP发送到 <a href=https://www.elastic.co/cn/products/logstash>logstash</a> 。这个也比较简单，就是额外多做了负载均衡支持和reload支持。不过多描述了。</p><h2 id=定期清理elasticsearch-curator>定期清理(elasticsearch-curator)</h2><p>我们使用的方式非常的暴力，没有做太多的索引优化，<a href=https://www.elastic.co/cn/products/elasticsearch>elasticsearch</a>的全文索引内存消耗爆炸高。所以用了个官方的工具 <a href=https://www.elastic.co/guide/en/elasticsearch/client/curator/current/index.html>elasticsearch-curator</a> 来定期清理掉不再需要的日志，具体使用可以见官方文档，我这里设置了清理30天以上的条目。</p><p>跪着文件: action</p><pre><code class=language-yaml>---
+</code></pre>
+<h2 id=日志接入>日志接入</h2>
+<p>日志接入我是用的是protobuf转json。然后用上面的UDP发送到 <a href=https://www.elastic.co/cn/products/logstash>logstash</a> 。这个也比较简单，就是额外多做了负载均衡支持和reload支持。不过多描述了。</p>
+<h2 id=定期清理elasticsearch-curator>定期清理(elasticsearch-curator)</h2>
+<p>我们使用的方式非常的暴力，没有做太多的索引优化，<a href=https://www.elastic.co/cn/products/elasticsearch>elasticsearch</a>的全文索引内存消耗爆炸高。所以用了个官方的工具 <a href=https://www.elastic.co/guide/en/elasticsearch/client/curator/current/index.html>elasticsearch-curator</a> 来定期清理掉不再需要的日志，具体使用可以见官方文档，我这里设置了清理30天以上的条目。</p>
+<p>跪着文件: action</p>
+<pre><code class=language-yaml>---
 actions:
   1:
     action: delete_indices
@@ -648,7 +752,9 @@ actions:
     - filtertype: pattern
       kind: prefix
       value: applog-  # 这个前缀要和上面的 pipeline 里的匹配
-</code></pre><p>连接配置文件: curator.yml</p><pre><code class=language-yaml>---
+</code></pre>
+<p>连接配置文件: curator.yml</p>
+<pre><code class=language-yaml>---
 client:
   hosts:
     - 主节点1-IP
@@ -669,18 +775,117 @@ logging:
   logfile:
   logformat: default
   blacklist: ['elasticsearch', 'urllib3']
-</code></pre><p>这个工具需要python3，然后定时执行就行了。</p><pre><code class=language-bash>#!/bin/bash
+</code></pre>
+<p>这个工具需要python3，然后定时执行就行了。</p>
+<pre><code class=language-bash>#!/bin/bash
 
 export LC_ALL=en_US.utf8
 
 cd &quot;$(dirname $0)&quot;;
 
 curator --config curator.yml actions
-</code></pre><h2 id=最后sample>最后Sample</h2><p>最后贴一张我们项目内用的图吧。</p><p><img src=1812-02.png alt=1812-02.png></p><p>上面的图是我拿来分析项目的错误码分布和监控远程调用和任务的健康情况的（失败率、延迟之类），其实更深入的使用不止于此，比如拿来查测试账号的登入时间点和登入服务器，对开发调试非常有用。我们的验证数据上报和抓取也是靠它，甚至可以加事件脚本来做告警等等。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2018-11-17T02:00:00.000+00:00 itemprop=datePublished>2018-11-17</time></span>
-<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/elk.html>ELK</a></li><li class=article-tag-list-item><a href=//owent.net/tags/elasticsearch.html>elasticsearch</a></li><li class=article-tag-list-item><a href=//owent.net/tags/logstash.html>logstash</a></li><li class=article-tag-list-item><a href=//owent.net/tags/kibana.html>kibana</a></li><li class=article-tag-list-item><a href=//owent.net/tags/kafka.html>kafka</a></li><li class=article-tag-list-item><a href=//owent.net/tags/redis.html>redis</a></li><li class=article-tag-list-item><a href=//owent.net/tags/pulsar.html>pulsar</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2019/1901.html>上一篇<strong>Rust玩具-企业微信机器人通用服务</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2018/1810.html>下一篇<strong>2018年的新通用伪随机数算法(xoshiro / xoroshiro)的C++(head only)实现</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier='1812'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+</code></pre>
+<h2 id=最后sample>最后Sample</h2>
+<p>最后贴一张我们项目内用的图吧。</p>
+<p><img src=1812-02.png alt=1812-02.png></p>
+<p>上面的图是我拿来分析项目的错误码分布和监控远程调用和任务的健康情况的（失败率、延迟之类），其实更深入的使用不止于此，比如拿来查测试账号的登入时间点和登入服务器，对开发调试非常有用。我们的验证数据上报和抓取也是靠它，甚至可以加事件脚本来做告警等等。</p>
+</div>
+<hr>
+<footer class=article-footer>
+<div class="article-panel-footer article-meta article-footer clearfix">
+<span class=article-meta-left>
+<ol>
+<li><a href=//owent.net/categories/article.html>Article</a></li>
+<li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li>
+</ol>
+</span>
+<span class=article-meta-right><time datetime=2018-11-17T02:00:00.000+00:00 itemprop=datePublished>2018-11-17</time></span>
+<span class=clearfix></span>
+</div>
+<div class=article-tags>
+<ul class=article-tag-list>
+<li class=article-tag-list-item><a href=//owent.net/tags/elk.html>ELK</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/elasticsearch.html>elasticsearch</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/logstash.html>logstash</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/kibana.html>kibana</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/kafka.html>kafka</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/redis.html>redis</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/pulsar.html>pulsar</a></li>
+</ul>
+</div>
+</footer>
+</div>
+<hr>
+<nav id=article-nav>
+<ul class=pagination>
+<li class=page-item>
+<a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2019/1901.html>
+上一篇<strong>Rust玩具-企业微信机器人通用服务</strong>
+</a>
+</li>
+<li class=page-item>
+<a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2018/1810.html>
+下一篇<strong>2018年的新通用伪随机数算法(xoshiro / xoroshiro)的C++(head only)实现</strong>
+</a>
+</li>
+</ul>
+</nav>
+<hr>
+<section id=comments>
+<div id=disqus_thread></div>
+<script type=text/javascript>var disqus_config=function(){this.page.identifier='1812'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script>
+<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
+</section>
+</div>
+</article></div>
+</section></div>
+<footer id=footer>
+<div class=outer>
+<div id=footer-info class="inner clearfix">
+<strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
 2021
-OWenT</strong>
-<strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+OWenT
+</strong>
+<strong id=footer-right class="float-right float-end">
+<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
-主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
-<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script><script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cpp.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/capnproto.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cmake.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/d.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/diff.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dos.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/erlang.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/go.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/less.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/lua.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/php.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/powershell.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/protobuf.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/python.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/profile.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/typescript.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script><script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script><script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script><script type=text/javascript src=//unpkg.com/chart.js@latest/dist/Chart.min.js></script><script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script></div></body></html>
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong>
+<span class=clearfix></span>
+</div>
+</div>
+</footer>
+</div>
+<script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cpp.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/capnproto.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cmake.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/d.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/diff.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dos.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/erlang.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/go.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/less.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/lua.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/php.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/powershell.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/protobuf.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/python.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/profile.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/typescript.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script>
+<script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
+<script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script>
+<script type=text/javascript src=//unpkg.com/chart.js@latest/dist/Chart.min.js></script>
+<script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script>
+</div>
+</body></html>

@@ -1,13 +1,102 @@
-<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>重构基于CMake的构建工具链|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2021/2106.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script><link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
-<span class=navbar-toggler-icon></span></button>
-<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<!doctype html><html lang=zh-cn>
+<head>
+<meta charset=utf-8>
+<title>重构基于CMake的构建工具链|I'm OWenT</title>
+<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
+<link rel=canonical href=//owent.net/2021/2106.html>
+<link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT">
+<link rel=icon href=../favicon.ico>
+<link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous>
+<link rel=stylesheet href=//owent.net/css/style.css>
+<script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
+<link rel=stylesheet href=//owent.net/css/syntax.css>
+</head>
+<body><div id=container><div id=wrap>
+<header id=header>
+<div id=banner></div>
+<div id=header-outer>
+<div id=header-title>
+<h1 id=site-title>
+<a href=//owent.net id=logo>I'm OWenT</a>
+</h1>
+<h2 id=site-description>Challenge Everything</h2>
+</div>
+<div id=header-inner>
+<nav id=main-nav class="navbar navbar-expand-md navbar-dark">
+<button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a>
+<div class="collapse navbar-collapse position-relative" id=main-nav-links>
+<ul class="navbar-nav mr-auto">
+<li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li>
+<li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li>
+<li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li>
+<li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li>
+</ul>
+<div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search>
+<input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-e6c6c6b17f2a38e8748a9a4eacd2ab21 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2021/2106.html target=_blank itemprop=url>重构基于CMake的构建工具链</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#背景>背景</a></li><li><a href=#bazel的问题>Bazel的问题</a></li><li><a href=#vcpkgconan-它不香吗>vcpkg/conan 它不香吗？</a></li><li><a href=#cmake-toolset>cmake-toolset</a><ul><li><a href=#noconfig>NOCONFIG</a></li><li><a href=#交叉编译的二进制>交叉编译的二进制</a></li><li><a href=#cmake的registry机制>CMake的REGISTRY机制</a></li><li><a href=#windows-长路径问题260路径长度限制>Windows 长路径问题（260路径长度限制）</a></li><li><a href=#windows-sdk版本>Windows SDK版本</a></li><li><a href=#ci的内存不足>CI的内存不足</a></li></ul></li><li><a href=#最后>最后</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><h2 id=背景>背景</h2><p>对大型项目来说，必然会有很多的依赖项。特别是现代化的组件都会尝试去复用社区资源。而对于C/C++而言，依赖管理一直是一个比较头大的问题。
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button>
+</form></div>
+</div>
+</nav>
+</div>
+</div>
+</header>
+<div id=main><section id=main-content>
+<div id=post-content><article id=post-e6c6c6b17f2a38e8748a9a4eacd2ab21 class="article-panel article article-type-post" itemscope itemprop=blogPost>
+<div class="article-panel-inner article-inner">
+<div class=article-inner>
+<header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2021/2106.html target=_blank itemprop=url>重构基于CMake的构建工具链</a></h1></header><hr>
+<div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents>
+<ul>
+<li><a href=#背景>背景</a></li>
+<li><a href=#bazel的问题>Bazel的问题</a></li>
+<li><a href=#vcpkgconan-它不香吗>vcpkg/conan 它不香吗？</a></li>
+<li><a href=#cmake-toolset>cmake-toolset</a>
+<ul>
+<li><a href=#noconfig>NOCONFIG</a></li>
+<li><a href=#交叉编译的二进制>交叉编译的二进制</a></li>
+<li><a href=#cmake的registry机制>CMake的REGISTRY机制</a></li>
+<li><a href=#windows-长路径问题260路径长度限制>Windows 长路径问题（260路径长度限制）</a></li>
+<li><a href=#windows-sdk版本>Windows SDK版本</a></li>
+<li><a href=#ci的内存不足>CI的内存不足</a></li>
+</ul>
+</li>
+<li><a href=#最后>最后</a></li>
+</ul>
+</nav></div><br>
+<div class=article-entry itemprop=articleBody><h2 id=背景>背景</h2>
+<p>对大型项目来说，必然会有很多的依赖项。特别是现代化的组件都会尝试去复用社区资源。而对于C/C++而言，依赖管理一直是一个比较头大的问题。
 很多老式的系统和工具都会尝试去走相对标准化的安装过程，比如说用 <a href=https://linux.die.net/man/1/pkg-config>pkg-config</a> 或者用系统自带的包管理工具装在系统默认路径里。
 当然这样很不方便，也不容易定制组件。我使用 <a href=https://cmake.org/>cmake</a> 比较多，所以一直以来在我的 <a href=https://github.com/atframework>atframework</a> 项目集中有一个 utility 项目 <a href=https://github.com/atframework/atframe_utils>atframe_utils</a>，里面包含一些常用的构建脚本。
-并且在 <a href=https://github.com/atframework/atsf4g-co>atsf4g-co</a> 中实现了一些简单的包管理和构建流程。</p><p>但是随着依赖日益复杂，在增加依赖和更新依赖的时候，测试多个包之间的兼容性也变得更加频繁，有时候也需要自己打patch。有些组件可能仅仅需要某几个依赖包，这时候也要导入 <a href=https://github.com/atframework/atframe_utils>atframe_utils</a> 的话就有点不合适了。
-所以产生了把构建系统配置和包管理抽离出来单独维护的想法。</p><p>其实现在已经有挺多C/C++的包管理系统了。比较主流的有 <a href=https://bazel.build/>bazel</a>, <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 等。还有一些不太主流的比如 <a href=https://conan.io/>conan</a>, <a href=https://build2.org/>build2</a>, <a href=https://cget.readthedocs.io/>cget</a>, <a href=https://spack.io/>spack</a> 等等。我没有去研究这里面每一种的细节和差异。
-但是即便是比较主流的 <a href=https://bazel.build/>bazel</a> 和 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a>，也无法满足我们的需求。</p><h2 id=bazel的问题>Bazel的问题</h2><p><a href=https://bazel.build/>bazel</a> 号称是原生支持分布式编译的构建系统。它的工程管理主要分两个阶段，首先是 WORKSPACE 声明阶段，大多数开源项目在这个阶段管理了依赖包的声明和配置；接下来是 BUILD 阶段，这就是实际编译执行的行为。</p><p>但是 <a href=https://bazel.build/>bazel</a> 有一些问题。首先，他需要所有的依赖包都提供 <a href=https://bazel.build/>bazel</a> 构建系统支持。现有支持 <a href=https://bazel.build/>bazel</a> 的包并不是特别多，而且即便支持，也并不是都支持得很好（有些环境编译还是有问题的）。有一点 <a href=https://bazel.build/>bazel</a> 还比较好的是，它的依赖包是靠包名来的索引的。所以当存在依赖包之间互相有依赖的时候，父级节点声明的包名标准化统一，那么也可以控制子依赖的版本。因为C/C++多个包之间的调用是直接使用符号的，所以并不能实现某些语言的同包名的多版本并存。上游系统有能力选择合适的依赖组合就非常重要。</p><p>其次 C/C++ 很多包和库都有功能开关，会根据系统环境和选项的不同来选择不同的功能开关组合。 而 <a href=https://bazel.build/>bazel</a> 构建的包，大多情况下由那个包本身去提供一些config，来实现不同的功能组，而编译的时候需要用户去设置使用哪些功能组。但是 C/C++ 的但大多数包和库都是通过检测环境和功能的方式多每个细节做切换的，每个功能之间的组合配置显然不实际，所以一般 <a href=https://bazel.build/>bazel</a> 构建的包都只会提供几个典型的选项，这对我们希望精确控制功能细节非常不友好。相比起来，我觉得 Rust 的 Cargo 和模仿 Cargo 的 <a href=https://build2.org/>build2</a> 在这点上就做得非常好。</p><p>也可能是我对 <a href=https://bazel.build/>bazel</a> 的理解有限，我没有找到使用 <a href=https://bazel.build/>bazel</a> 做功能检测进行功能开关或者依赖包切换的方法。举个例子，我前段时间给 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 提交了一个PR，就碰到了一些问题。<a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 官方对编译器的支持是 GCC 4.8-最新，MSVC 2019+，Clang忘记版本最低要求了。其依赖的包里有gRPC和protobuf，其中gRPC又依赖abseil-cpp 。在使用GCC的时候：</p><ul><li>gRPC 要 1.33 版本开始升级 了protobuf 到 1.34，这是第一个支持 <a href=https://bazel.build/>bazel</a> 4 的版本</li><li>原先依赖的 gRPC 1.28 仅支持 <a href=https://bazel.build/>bazel</a> 3。</li><li>但是 gRPC 要 1.34 版本开始 abseil-cpp 到 20200923.X ，这个版本开始不再支持 gcc 4.8 。</li></ul><p>所以最佳的方法是高版本的gcc使用最新的gRPC，但是 gcc 4.8 仅使用 gRPC 1.33 。</p><blockquote><ol><li><a href=https://bazel.build/>bazel</a> select 和宏仅能在 BUILD 阶段使用，WORKSPACE 声明阶段无法使用。但是包的声明在 WORKSPACE 阶段。</li><li>alias功能似乎也是 BUILD 阶段的功能，无法影响其他依赖库？</li><li>我也尝试过用 <code>--override_repository</code> 来覆盖包的信息，但是这个选项似乎仅仅能替换成本地路径。</li></ol></blockquote><p>总而言之，我没有找到合适的方法完成这个功能。希望有熟悉 <a href=https://bazel.build/>bazel</a> 的小伙伴能提供解决方案。</p><p>上面提到的我尝试的使用 <code>--override_repository</code> 方式类似这样:</p><pre><code class=language-bazel>maybe(
+并且在 <a href=https://github.com/atframework/atsf4g-co>atsf4g-co</a> 中实现了一些简单的包管理和构建流程。</p>
+<p>但是随着依赖日益复杂，在增加依赖和更新依赖的时候，测试多个包之间的兼容性也变得更加频繁，有时候也需要自己打patch。有些组件可能仅仅需要某几个依赖包，这时候也要导入 <a href=https://github.com/atframework/atframe_utils>atframe_utils</a> 的话就有点不合适了。
+所以产生了把构建系统配置和包管理抽离出来单独维护的想法。</p>
+<p>其实现在已经有挺多C/C++的包管理系统了。比较主流的有 <a href=https://bazel.build/>bazel</a>, <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 等。还有一些不太主流的比如 <a href=https://conan.io/>conan</a>, <a href=https://build2.org/>build2</a>, <a href=https://cget.readthedocs.io/>cget</a>, <a href=https://spack.io/>spack</a> 等等。我没有去研究这里面每一种的细节和差异。
+但是即便是比较主流的 <a href=https://bazel.build/>bazel</a> 和 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a>，也无法满足我们的需求。</p>
+<h2 id=bazel的问题>Bazel的问题</h2>
+<p><a href=https://bazel.build/>bazel</a> 号称是原生支持分布式编译的构建系统。它的工程管理主要分两个阶段，首先是 WORKSPACE 声明阶段，大多数开源项目在这个阶段管理了依赖包的声明和配置；接下来是 BUILD 阶段，这就是实际编译执行的行为。</p>
+<p>但是 <a href=https://bazel.build/>bazel</a> 有一些问题。首先，他需要所有的依赖包都提供 <a href=https://bazel.build/>bazel</a> 构建系统支持。现有支持 <a href=https://bazel.build/>bazel</a> 的包并不是特别多，而且即便支持，也并不是都支持得很好（有些环境编译还是有问题的）。有一点 <a href=https://bazel.build/>bazel</a> 还比较好的是，它的依赖包是靠包名来的索引的。所以当存在依赖包之间互相有依赖的时候，父级节点声明的包名标准化统一，那么也可以控制子依赖的版本。因为C/C++多个包之间的调用是直接使用符号的，所以并不能实现某些语言的同包名的多版本并存。上游系统有能力选择合适的依赖组合就非常重要。</p>
+<p>其次 C/C++ 很多包和库都有功能开关，会根据系统环境和选项的不同来选择不同的功能开关组合。 而 <a href=https://bazel.build/>bazel</a> 构建的包，大多情况下由那个包本身去提供一些config，来实现不同的功能组，而编译的时候需要用户去设置使用哪些功能组。但是 C/C++ 的但大多数包和库都是通过检测环境和功能的方式多每个细节做切换的，每个功能之间的组合配置显然不实际，所以一般 <a href=https://bazel.build/>bazel</a> 构建的包都只会提供几个典型的选项，这对我们希望精确控制功能细节非常不友好。相比起来，我觉得 Rust 的 Cargo 和模仿 Cargo 的 <a href=https://build2.org/>build2</a> 在这点上就做得非常好。</p>
+<p>也可能是我对 <a href=https://bazel.build/>bazel</a> 的理解有限，我没有找到使用 <a href=https://bazel.build/>bazel</a> 做功能检测进行功能开关或者依赖包切换的方法。举个例子，我前段时间给 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 提交了一个PR，就碰到了一些问题。<a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 官方对编译器的支持是 GCC 4.8-最新，MSVC 2019+，Clang忘记版本最低要求了。其依赖的包里有gRPC和protobuf，其中gRPC又依赖abseil-cpp 。在使用GCC的时候：</p>
+<ul>
+<li>gRPC 要 1.33 版本开始升级 了protobuf 到 1.34，这是第一个支持 <a href=https://bazel.build/>bazel</a> 4 的版本</li>
+<li>原先依赖的 gRPC 1.28 仅支持 <a href=https://bazel.build/>bazel</a> 3。</li>
+<li>但是 gRPC 要 1.34 版本开始 abseil-cpp 到 20200923.X ，这个版本开始不再支持 gcc 4.8 。</li>
+</ul>
+<p>所以最佳的方法是高版本的gcc使用最新的gRPC，但是 gcc 4.8 仅使用 gRPC 1.33 。</p>
+<blockquote>
+<ol>
+<li><a href=https://bazel.build/>bazel</a> select 和宏仅能在 BUILD 阶段使用，WORKSPACE 声明阶段无法使用。但是包的声明在 WORKSPACE 阶段。</li>
+<li>alias功能似乎也是 BUILD 阶段的功能，无法影响其他依赖库？</li>
+<li>我也尝试过用 <code>--override_repository</code> 来覆盖包的信息，但是这个选项似乎仅仅能替换成本地路径。</li>
+</ol>
+</blockquote>
+<p>总而言之，我没有找到合适的方法完成这个功能。希望有熟悉 <a href=https://bazel.build/>bazel</a> 的小伙伴能提供解决方案。</p>
+<p>上面提到的我尝试的使用 <code>--override_repository</code> 方式类似这样:</p>
+<pre><code class=language-bazel>maybe(
     http_archive,
     name = &quot;com_github_grpc_grpc_legacy&quot;,
     strip_prefix = &quot;grpc-1.33.2&quot;,
@@ -25,20 +114,221 @@ maybe(
         &quot;https://github.com/grpc/grpc/archive/v1.38.0.tar.gz&quot;,
     ],
 )
-</code></pre><p>然后命令行里执行 <code>bazel build --override_repository=com_github_grpc_grpc=@com_github_grpc_grpc_legacy //...</code></p><h2 id=vcpkgconan-它不香吗>vcpkg/conan 它不香吗？</h2><p>那使用 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 或者 <a href=https://conan.io/>conan</a> 之类的怎么样呢？首先我们可以在 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 的页面里找到其和 <a href=https://conan.io/>conan</a> 的主要区别（https://github.com/microsoft/vcpkg/blob/master/docs/about/faq.md#why-not-conan）。简单地翻译一下区别如下:</p><p><strong>Vcpkg VS Conan:</strong></p><ol><li>Conan仅提供工具，不保证包的质量和互相兼容性。编译环境支持较vcpkg更多。</li><li>Vcpkg统一了包管理副本，而Conan需要用户自己负责包之间的兼容性和搭配。也可能多个包的依赖同一个包的不同版本，这在C/C++里十分危险。</li><li>Vcpck基于CMake，Conan基于Python，但是包构建过程大多数又依赖cmake。</li></ol><p>显然易用性和安全性 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 好很多，而且基于 <a href=https://git-scm.com/>git</a> 和 <a href=https://cmake.org/>cmake</a> 的 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 也可以实现非常灵活的功能，但是 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 也有一些缺陷。</p><p>首先是和 <a href=https://bazel.build/>bazel</a> 类似的，很难对依赖包做一些定制。导入一个包的时候，要么不要，要么全要。比如使用 libwebsockets 的时候，本来是可以选择使用openssl，mbedtls或者其他的库作为SSL库的，或者说有些功能不需要可以连依赖库带功能都不开。但是使用 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 安装 libwebsockets 的话，就没得选了。不过现在好像设计了一个有点类似 <a href=https://build2.org/>build2</a> 的方案(<a href=https://github.com/microsoft/vcpkg/blob/master/docs/users/selecting-library-features.md><strong>Selecting library features</strong></a> 和 <a href=https://github.com/Microsoft/vcpkg/blob/master/docs/maintainers/vcpkg_check_features.md><code>vcpkg_check_features</code></a>)，一定层度上解决了这个问题。</p><p>第二个问题就是 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 官方支持的编译环境比较新。Windows下要求 VS 2015 Update 3以上，Linux 下要求 GCC 6以上, macOS也要求 Homebrew 且安装gcc 6以上。其他的环境有些也能支持但是是不受官方支持的。</p><blockquote><p>相对来说Conan的环境支持就比较好: <a href=https://docs.conan.io/en/latest/reference/config_files/settings.yml.html#settings-yml>https://docs.conan.io/en/latest/reference/config_files/settings.yml.html#settings-yml</a> 。但是每个包的版本和对应工具链的兼容性得自己管理，还是十分不便。</p></blockquote><p>第三个问题比较难解决。大多数 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 里的包都是配置了从github下载的，也有些只从一些其他的URL下载。虽然说可以配置github的地址，但是 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 的从github下载包版本的代码里写的是使用的github的开放平台接口。新版本好像是加了个 <a href=https://github.com/microsoft/vcpkg/blob/master/docs/users/registries.md>https://github.com/microsoft/vcpkg/blob/master/docs/users/registries.md</a> 可以解决这个问题，不过操作方式还比较麻烦，相当于对依赖的包要自己重写 ports 了，对使用者的要求还是有点高。</p><p>还有一些周边的问题，有一个也是这几天搞 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 的时候发现的。截至我写这篇文章的时候，<a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 的最后的Release版本是 <code>2021.05.12</code> ,里面的protobuf版本是 <code>3.15.8</code> 。前几天MSVC更新了 1929版本（VS 16.10） ，然后这个版本的 protobuf 刚好不支持，这就很尴尬了。</p><p>所以综合来说，大部分情况下 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 还是挺香的。但是某些场景，比如自定义内部源、组件版本好控制和低版本编译器支持它也不是很香。</p><h2 id=cmake-toolset>cmake-toolset</h2><p>我原先项目管理使用的也是 <a href=https://cmake.org/>cmake</a> ，所以现在也是使用的 <a href=https://cmake.org/>cmake</a> 和 <a href=https://git-scm.com/>git</a>。另外学了一手 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 的CI检测，要保证发布版本在各种环境下都能正常构建使用。</p><p>这套工具主要的功能之一是实现原先 <a href=https://github.com/atframework/atframe_utils>atframe_utils</a> 里的一些对编译器功能的检测，比如是否开启了异常，是否支持RTTI，是否支持C++20 Coroutine等等。
+</code></pre>
+<p>然后命令行里执行 <code>bazel build --override_repository=com_github_grpc_grpc=@com_github_grpc_grpc_legacy //...</code></p>
+<h2 id=vcpkgconan-它不香吗>vcpkg/conan 它不香吗？</h2>
+<p>那使用 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 或者 <a href=https://conan.io/>conan</a> 之类的怎么样呢？首先我们可以在 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 的页面里找到其和 <a href=https://conan.io/>conan</a> 的主要区别（https://github.com/microsoft/vcpkg/blob/master/docs/about/faq.md#why-not-conan）。简单地翻译一下区别如下:</p>
+<p><strong>Vcpkg VS Conan:</strong></p>
+<ol>
+<li>Conan仅提供工具，不保证包的质量和互相兼容性。编译环境支持较vcpkg更多。</li>
+<li>Vcpkg统一了包管理副本，而Conan需要用户自己负责包之间的兼容性和搭配。也可能多个包的依赖同一个包的不同版本，这在C/C++里十分危险。</li>
+<li>Vcpck基于CMake，Conan基于Python，但是包构建过程大多数又依赖cmake。</li>
+</ol>
+<p>显然易用性和安全性 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 好很多，而且基于 <a href=https://git-scm.com/>git</a> 和 <a href=https://cmake.org/>cmake</a> 的 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 也可以实现非常灵活的功能，但是 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 也有一些缺陷。</p>
+<p>首先是和 <a href=https://bazel.build/>bazel</a> 类似的，很难对依赖包做一些定制。导入一个包的时候，要么不要，要么全要。比如使用 libwebsockets 的时候，本来是可以选择使用openssl，mbedtls或者其他的库作为SSL库的，或者说有些功能不需要可以连依赖库带功能都不开。但是使用 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 安装 libwebsockets 的话，就没得选了。不过现在好像设计了一个有点类似 <a href=https://build2.org/>build2</a> 的方案(<a href=https://github.com/microsoft/vcpkg/blob/master/docs/users/selecting-library-features.md><strong>Selecting library features</strong></a> 和 <a href=https://github.com/Microsoft/vcpkg/blob/master/docs/maintainers/vcpkg_check_features.md><code>vcpkg_check_features</code></a>)，一定层度上解决了这个问题。</p>
+<p>第二个问题就是 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 官方支持的编译环境比较新。Windows下要求 VS 2015 Update 3以上，Linux 下要求 GCC 6以上, macOS也要求 Homebrew 且安装gcc 6以上。其他的环境有些也能支持但是是不受官方支持的。</p>
+<blockquote>
+<p>相对来说Conan的环境支持就比较好: <a href=https://docs.conan.io/en/latest/reference/config_files/settings.yml.html#settings-yml>https://docs.conan.io/en/latest/reference/config_files/settings.yml.html#settings-yml</a> 。但是每个包的版本和对应工具链的兼容性得自己管理，还是十分不便。</p>
+</blockquote>
+<p>第三个问题比较难解决。大多数 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 里的包都是配置了从github下载的，也有些只从一些其他的URL下载。虽然说可以配置github的地址，但是 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 的从github下载包版本的代码里写的是使用的github的开放平台接口。新版本好像是加了个 <a href=https://github.com/microsoft/vcpkg/blob/master/docs/users/registries.md>https://github.com/microsoft/vcpkg/blob/master/docs/users/registries.md</a> 可以解决这个问题，不过操作方式还比较麻烦，相当于对依赖的包要自己重写 ports 了，对使用者的要求还是有点高。</p>
+<p>还有一些周边的问题，有一个也是这几天搞 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 的时候发现的。截至我写这篇文章的时候，<a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 的最后的Release版本是 <code>2021.05.12</code> ,里面的protobuf版本是 <code>3.15.8</code> 。前几天MSVC更新了 1929版本（VS 16.10） ，然后这个版本的 protobuf 刚好不支持，这就很尴尬了。</p>
+<p>所以综合来说，大部分情况下 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 还是挺香的。但是某些场景，比如自定义内部源、组件版本好控制和低版本编译器支持它也不是很香。</p>
+<h2 id=cmake-toolset>cmake-toolset</h2>
+<p>我原先项目管理使用的也是 <a href=https://cmake.org/>cmake</a> ，所以现在也是使用的 <a href=https://cmake.org/>cmake</a> 和 <a href=https://git-scm.com/>git</a>。另外学了一手 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 的CI检测，要保证发布版本在各种环境下都能正常构建使用。</p>
+<p>这套工具主要的功能之一是实现原先 <a href=https://github.com/atframework/atframe_utils>atframe_utils</a> 里的一些对编译器功能的检测，比如是否开启了异常，是否支持RTTI，是否支持C++20 Coroutine等等。
 我们项目都是开了比较严格的编译告警选项的（GCC和Clang下 <code>-Wall -Wextra -Werror</code>, MSVC下 <code>/W4 /WX</code>），所以要提供工具让某些功能使用这些选项。
-另外还要提供工具让子模块继承部分父级项目的选项，比如如果外层使用 <code>clang+libc++</code>，那么依赖库和子仓库也要用 <code>clang+libc++</code> 。</p><p>我个人觉得 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 的发展前景还比较好，很多问题慢慢地都能够妥善解决，所以对于比较新的编译器环境和首支持的平台还是更推崇直接用 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a>。在 <a href=https://github.com/atframework/cmake-toolset>cmake-toolset</a> 里我也添加了对 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 的适配支持。可以直接导入 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 的toolchain文件使用，大多数导入的依赖库都支持直接从 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 中查找 。</p><p>另外就是在不使用 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 或者 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 内未安装某个依赖的时候，我会走自己内部的统一编译安装流程，并且预留了可以由上层应用来控制下载的源和版本号，甚至是一些编译参数。这样在上层需要定制化的时候就比较容易了。</p><p>稍微列举一下整理迁移过程中的新问题吧：</p><h3 id=noconfig>NOCONFIG</h3><p>有些环境会生成 <code>NOCONFIG</code> 的cmake config模块。然后如果父级项目指定了 <code>CMAKE_BUILD_TYPE</code> 的话会找不到匹配的链接目标。所以我写了工具自动导出某些特定 <code>CMAKE_BUILD_TYPE</code> fallback到未指定的配置。
-这样可以适配一些依赖包的查找过程。</p><h3 id=交叉编译的二进制>交叉编译的二进制</h3><p>交叉编译的时候，有时候需要编译出host版本的二进制使用。比如我们如果使用了protobuf，那么链接库是要使用目标平台的库的，但是如果要使用 <code>protoc</code> 生成代码，就需要用host平台的版本了。
-所以针对这类库，目前的做法是走了特殊的编译流程，同时编译出两个平台的可执行程序。</p><p>然后我先尝试的做法是目标平台不编译二进制，仅编译库。host平台仅编译可执行程序。但是发现这会导致 <code>find_package()</code> 查找cmake config模块时缺失部分目标。所以最后我采取了目标平台全编译，然后编完host平台的可执行程序以后，patch掉可执行程序的 <code>IMPORTED_LOCATION</code> 的方法。</p><p>另外就是对于 iOS ，tvOS 和 watchOS需要给可执行程序设置BUNDLE，我这里仅仅是编译时工具链，并不需要安转运行。所以我就直接把 <code>CMAKE_MACOSX_BUNDLE</code> 设置 <code>OFF</code> 了。</p><h3 id=cmake的registry机制>CMake的REGISTRY机制</h3><p>CMake内置了一个包仓库机制，有些依赖包会在安装的时候注册进去。这会影响到 <code>find_package()</code> 的结果，所以我给继承的变量增加了 <code>CMAKE_EXPORT_PACKAGE_REGISTRY</code> , <code>CMAKE_EXPORT_NO_PACKAGE_REGISTRY</code>, <code>CMAKE_FIND_USE_PACKAGE_REGISTRY</code> , <code>CMAKE_FIND_PACKAGE_NO_PACKAGE_REGISTRY</code> , <code>CMAKE_FIND_USE_PACKAGE_REGISTRY</code>, <code>CMAKE_FIND_PACKAGE_NO_SYSTEM_PACKAGE_REGISTRY</code> 。并且继承了 <code>CMP0090</code> 这个policy。</p><ul><li>Windows下这个REGISTRY的数据会写在注册表 <code>HKEY_CURRENT_USER\Software\Kitware\CMake\Packages\&lt;PackageName></code> 和 <code>HKEY_LOCAL_MACHINE\Software\Kitware\CMake\Packages\&lt;PackageName></code> 里。</li><li>Unix类环境这个REGISTRY的数据会写在 <code>~/.cmake/packages/&lt;PackageName></code> 里。</li></ul><p>如果 <code>find_package()</code> 找打了非预期的奇怪的路径，可以去这里面找找删掉就行了。</p><h3 id=windows-长路径问题260路径长度限制>Windows 长路径问题（260路径长度限制）</h3><p>还有个问题是使用 <a href=https://github.com/atframework/cmake-toolset>cmake-toolset</a> 的时候，默认是的依赖编译目录是 <code>BUILD目录/_deps/平台及工具链名/包名</code> 。容易名字很长，Windows下就碰到了碰到了编译时路径过长的问题。</p><p>解决方法之一是直接改注册表, 可以用 powershell 脚本 <code>New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force</code> 或者注册表文件</p><pre><code>Windows Registry Editor Version 5.00
+另外还要提供工具让子模块继承部分父级项目的选项，比如如果外层使用 <code>clang+libc++</code>，那么依赖库和子仓库也要用 <code>clang+libc++</code> 。</p>
+<p>我个人觉得 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 的发展前景还比较好，很多问题慢慢地都能够妥善解决，所以对于比较新的编译器环境和首支持的平台还是更推崇直接用 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a>。在 <a href=https://github.com/atframework/cmake-toolset>cmake-toolset</a> 里我也添加了对 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 的适配支持。可以直接导入 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 的toolchain文件使用，大多数导入的依赖库都支持直接从 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 中查找 。</p>
+<p>另外就是在不使用 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 或者 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 内未安装某个依赖的时候，我会走自己内部的统一编译安装流程，并且预留了可以由上层应用来控制下载的源和版本号，甚至是一些编译参数。这样在上层需要定制化的时候就比较容易了。</p>
+<p>稍微列举一下整理迁移过程中的新问题吧：</p>
+<h3 id=noconfig>NOCONFIG</h3>
+<p>有些环境会生成 <code>NOCONFIG</code> 的cmake config模块。然后如果父级项目指定了 <code>CMAKE_BUILD_TYPE</code> 的话会找不到匹配的链接目标。所以我写了工具自动导出某些特定 <code>CMAKE_BUILD_TYPE</code> fallback到未指定的配置。
+这样可以适配一些依赖包的查找过程。</p>
+<h3 id=交叉编译的二进制>交叉编译的二进制</h3>
+<p>交叉编译的时候，有时候需要编译出host版本的二进制使用。比如我们如果使用了protobuf，那么链接库是要使用目标平台的库的，但是如果要使用 <code>protoc</code> 生成代码，就需要用host平台的版本了。
+所以针对这类库，目前的做法是走了特殊的编译流程，同时编译出两个平台的可执行程序。</p>
+<p>然后我先尝试的做法是目标平台不编译二进制，仅编译库。host平台仅编译可执行程序。但是发现这会导致 <code>find_package()</code> 查找cmake config模块时缺失部分目标。所以最后我采取了目标平台全编译，然后编完host平台的可执行程序以后，patch掉可执行程序的 <code>IMPORTED_LOCATION</code> 的方法。</p>
+<p>另外就是对于 iOS ，tvOS 和 watchOS需要给可执行程序设置BUNDLE，我这里仅仅是编译时工具链，并不需要安转运行。所以我就直接把 <code>CMAKE_MACOSX_BUNDLE</code> 设置 <code>OFF</code> 了。</p>
+<h3 id=cmake的registry机制>CMake的REGISTRY机制</h3>
+<p>CMake内置了一个包仓库机制，有些依赖包会在安装的时候注册进去。这会影响到 <code>find_package()</code> 的结果，所以我给继承的变量增加了 <code>CMAKE_EXPORT_PACKAGE_REGISTRY</code> , <code>CMAKE_EXPORT_NO_PACKAGE_REGISTRY</code>, <code>CMAKE_FIND_USE_PACKAGE_REGISTRY</code> , <code>CMAKE_FIND_PACKAGE_NO_PACKAGE_REGISTRY</code> , <code>CMAKE_FIND_USE_PACKAGE_REGISTRY</code>, <code>CMAKE_FIND_PACKAGE_NO_SYSTEM_PACKAGE_REGISTRY</code> 。并且继承了 <code>CMP0090</code> 这个policy。</p>
+<ul>
+<li>Windows下这个REGISTRY的数据会写在注册表 <code>HKEY_CURRENT_USER\Software\Kitware\CMake\Packages\&lt;PackageName></code> 和 <code>HKEY_LOCAL_MACHINE\Software\Kitware\CMake\Packages\&lt;PackageName></code> 里。</li>
+<li>Unix类环境这个REGISTRY的数据会写在 <code>~/.cmake/packages/&lt;PackageName></code> 里。</li>
+</ul>
+<p>如果 <code>find_package()</code> 找打了非预期的奇怪的路径，可以去这里面找找删掉就行了。</p>
+<h3 id=windows-长路径问题260路径长度限制>Windows 长路径问题（260路径长度限制）</h3>
+<p>还有个问题是使用 <a href=https://github.com/atframework/cmake-toolset>cmake-toolset</a> 的时候，默认是的依赖编译目录是 <code>BUILD目录/_deps/平台及工具链名/包名</code> 。容易名字很长，Windows下就碰到了碰到了编译时路径过长的问题。</p>
+<p>解决方法之一是直接改注册表, 可以用 powershell 脚本 <code>New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force</code> 或者注册表文件</p>
+<pre><code>Windows Registry Editor Version 5.00
 
 [HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem]
 &quot;LongPathsEnabled&quot;=dword:00000001
-</code></pre><p>但是似乎并不是都有的工具对这个都有良好支持，并且这需要管理员权限。所以最终我再Windwows下构建的时候会把依赖编译目录改成 <code>用户目录/cmake-toolset-&lt;hash></code> 中，用来减少一定的长度。</p><h3 id=windows-sdk版本>Windows SDK版本</h3><p>新版本的MSVC支持C11了，但是需要使用新版本的Windows SDK，这可以通过 <code>CMAKE_SYSTEM_VERSION</code> 来指定。特别是某些C的依赖包，使用了C11支持以后不需要再做额外的patch就能编译了（比如lua,libwebsockets等）。
-具体查找并使用最新版本Windows SDK的做法可以参考CI脚本 <a href=https://github.com/atframework/cmake-toolset/blob/main/ci/do_ci.ps1>https://github.com/atframework/cmake-toolset/blob/main/ci/do_ci.ps1</a> 。</p><h3 id=ci的内存不足>CI的内存不足</h3><p>因为使用的github的免费Action，有些依赖包开多进程编译还是会OOM。然后cmake对docker环境检测CPU数量和控制并发数也不准确，所以我加入了低内存模式。人工降低并发度来让github action不OOM。</p><h2 id=最后>最后</h2><p>我的大部分工具已经迁移到新的 <a href=https://github.com/atframework/cmake-toolset>cmake-toolset</a> 了，后续的也会慢慢迁移。以后再碰到什么问题再来写吧。</p><p>最终重构抽离出来的构建工具集 (<a href=https://github.com/atframework/cmake-toolset>cmake-toolset</a>) 位于 <a href=https://github.com/atframework/cmake-toolset>https://github.com/atframework/cmake-toolset</a> 。主版本号保证API兼容，二级版本号指示是否有新功能，三级版本号是实现优化和修订。</p><p>以下是支持的环境(配置在CI测试中):</p><ul><li>默认行为:<ul><li>启用<a href=https://cmake.org/>cmake</a>能够识别的编译器所支持的最新标准(当前最新会开启 <code>C++20</code> 和 <code>C11</code>)</li><li>对支持的编译环境启用 <code>C++20</code> 协程支持</li><li>对支持的编译环境启用 <code>C++20</code> Module支持</li><li>MSVC:<ul><li>默认使用 <strong>UTF-8</strong> 编码</li><li>对高版本编译器设置 <code>__cplusplus == _MSVC_LANG</code><ul><li>即设置 <code>/Zc:__cplusplus</code></li><li>即和C++标准保持一致</li><li>可通过 <code>-DCOMPILER_OPTION_MSVC_ZC_CPP=OFF</code> 来关闭</li></ul></li><li>(非 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 模式)默认设置 <code>CMAKE_MSVC_RUNTIME_LIBRARY</code> 为 <code>MultiThreaded$&lt;$&lt;CONFIG:Debug>:Debug>$&lt;$&lt;NOT:$&lt;STREQUAL:${VCPKG_CRT_LINKAGE},static>>:DLL></code> (影响 <code>/MDd</code>, <code>/MD</code> 和 <code>/MTd</code>, <code>/MT</code>)</li></ul></li><li>Clang/AppleClang: 尝试优先使用 <code>libc++</code> 作为STL库。<ul><li>可通过 <code>-DCOMPILER_OPTION_CLANG_ENABLE_LIBCXX=OFF</code> 来关闭</li></ul></li><li>Windows:<ul><li><code>option(COMPILER_OPTION_WINDOWS_ENABLE_NOMINMAX "Add #define NOMINMAX." ON)</code></li><li><code>option(COMPILER_OPTION_WINDOWS_ENABLE_WIN32_LEAN_AND_MEAN "Add #define WIN32_LEAN_AND_MEAN." OFF)</code></li></ul></li><li>额外的编译告警<ul><li>提供 <code>COMPILER_STRICT_CFLAGS</code> 来开启严格的编译警告，并且关闭一些常用的设计模式导致的告警。(<code>-Wall -Werror</code>, <code>/W4 /WX</code>)</li><li>提供 <code>COMPILER_STRICT_EXTRA_CFLAGS</code> 来开启更严格的编译警告，并且关闭一些常用的设计模式导致的告警。(<code>-Wextra</code>)</li></ul></li></ul></li><li>支持平台:<ul><li>Linux</li><li>Windows</li><li>MinGW</li><li>macOS</li><li>Android</li><li>iOS</li><li>iPhone.Simulator</li></ul></li><li>编译器:<ul><li>GCC 4.8-最新(当前GCC 11)</li><li>Clang 5.0-最新(当前GCC 12)</li><li>Visual Studio 2017-最新(当前Visual Studio 2019, 16.10, MSVC 1929)</li></ul></li><li>特殊的包:<ul><li>SSL替代: openssl,libressl,mbedtls(<a href=https://github.com/google/boringssl>boringssl</a>依赖golang,会在未来添加)<blockquote><p>未来还会添加: <a href=https://libsodium.org/>libsodium</a></p></blockquote></li></ul></li></ul><p>欢迎有兴趣的小伙伴互相交流。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2021-06-05T22:38:45.000+00:00 itemprop=datePublished>2021-06-05</time></span>
-<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/rust.html>rust</a></li><li class=article-tag-list-item><a href=//owent.net/tags/linkedlist.html>linkedlist</a></li><li class=article-tag-list-item><a href=//owent.net/tags/list.html>list</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2021/2105.html>下一篇<strong>新版GCC和LLVM+Clang终于Release啦</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier='2106'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+</code></pre>
+<p>但是似乎并不是都有的工具对这个都有良好支持，并且这需要管理员权限。所以最终我再Windwows下构建的时候会把依赖编译目录改成 <code>用户目录/cmake-toolset-&lt;hash></code> 中，用来减少一定的长度。</p>
+<h3 id=windows-sdk版本>Windows SDK版本</h3>
+<p>新版本的MSVC支持C11了，但是需要使用新版本的Windows SDK，这可以通过 <code>CMAKE_SYSTEM_VERSION</code> 来指定。特别是某些C的依赖包，使用了C11支持以后不需要再做额外的patch就能编译了（比如lua,libwebsockets等）。
+具体查找并使用最新版本Windows SDK的做法可以参考CI脚本 <a href=https://github.com/atframework/cmake-toolset/blob/main/ci/do_ci.ps1>https://github.com/atframework/cmake-toolset/blob/main/ci/do_ci.ps1</a> 。</p>
+<h3 id=ci的内存不足>CI的内存不足</h3>
+<p>因为使用的github的免费Action，有些依赖包开多进程编译还是会OOM。然后cmake对docker环境检测CPU数量和控制并发数也不准确，所以我加入了低内存模式。人工降低并发度来让github action不OOM。</p>
+<h2 id=最后>最后</h2>
+<p>我的大部分工具已经迁移到新的 <a href=https://github.com/atframework/cmake-toolset>cmake-toolset</a> 了，后续的也会慢慢迁移。以后再碰到什么问题再来写吧。</p>
+<p>最终重构抽离出来的构建工具集 (<a href=https://github.com/atframework/cmake-toolset>cmake-toolset</a>) 位于 <a href=https://github.com/atframework/cmake-toolset>https://github.com/atframework/cmake-toolset</a> 。主版本号保证API兼容，二级版本号指示是否有新功能，三级版本号是实现优化和修订。</p>
+<p>以下是支持的环境(配置在CI测试中):</p>
+<ul>
+<li>默认行为:
+<ul>
+<li>启用<a href=https://cmake.org/>cmake</a>能够识别的编译器所支持的最新标准(当前最新会开启 <code>C++20</code> 和 <code>C11</code>)</li>
+<li>对支持的编译环境启用 <code>C++20</code> 协程支持</li>
+<li>对支持的编译环境启用 <code>C++20</code> Module支持</li>
+<li>MSVC:
+<ul>
+<li>默认使用 <strong>UTF-8</strong> 编码</li>
+<li>对高版本编译器设置 <code>__cplusplus == _MSVC_LANG</code>
+<ul>
+<li>即设置 <code>/Zc:__cplusplus</code></li>
+<li>即和C++标准保持一致</li>
+<li>可通过 <code>-DCOMPILER_OPTION_MSVC_ZC_CPP=OFF</code> 来关闭</li>
+</ul>
+</li>
+<li>(非 <a href=https://github.com/Microsoft/vcpkg>vcpkg</a> 模式)默认设置 <code>CMAKE_MSVC_RUNTIME_LIBRARY</code> 为 <code>MultiThreaded$&lt;$&lt;CONFIG:Debug>:Debug>$&lt;$&lt;NOT:$&lt;STREQUAL:${VCPKG_CRT_LINKAGE},static>>:DLL></code> (影响 <code>/MDd</code>, <code>/MD</code> 和 <code>/MTd</code>, <code>/MT</code>)</li>
+</ul>
+</li>
+<li>Clang/AppleClang: 尝试优先使用 <code>libc++</code> 作为STL库。
+<ul>
+<li>可通过 <code>-DCOMPILER_OPTION_CLANG_ENABLE_LIBCXX=OFF</code> 来关闭</li>
+</ul>
+</li>
+<li>Windows:
+<ul>
+<li><code>option(COMPILER_OPTION_WINDOWS_ENABLE_NOMINMAX "Add #define NOMINMAX." ON)</code></li>
+<li><code>option(COMPILER_OPTION_WINDOWS_ENABLE_WIN32_LEAN_AND_MEAN "Add #define WIN32_LEAN_AND_MEAN." OFF)</code></li>
+</ul>
+</li>
+<li>额外的编译告警
+<ul>
+<li>提供 <code>COMPILER_STRICT_CFLAGS</code> 来开启严格的编译警告，并且关闭一些常用的设计模式导致的告警。(<code>-Wall -Werror</code>, <code>/W4 /WX</code>)</li>
+<li>提供 <code>COMPILER_STRICT_EXTRA_CFLAGS</code> 来开启更严格的编译警告，并且关闭一些常用的设计模式导致的告警。(<code>-Wextra</code>)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>支持平台:
+<ul>
+<li>Linux</li>
+<li>Windows</li>
+<li>MinGW</li>
+<li>macOS</li>
+<li>Android</li>
+<li>iOS</li>
+<li>iPhone.Simulator</li>
+</ul>
+</li>
+<li>编译器:
+<ul>
+<li>GCC 4.8-最新(当前GCC 11)</li>
+<li>Clang 5.0-最新(当前GCC 12)</li>
+<li>Visual Studio 2017-最新(当前Visual Studio 2019, 16.10, MSVC 1929)</li>
+</ul>
+</li>
+<li>特殊的包:
+<ul>
+<li>SSL替代: openssl,libressl,mbedtls(<a href=https://github.com/google/boringssl>boringssl</a>依赖golang,会在未来添加)
+<blockquote>
+<p>未来还会添加: <a href=https://libsodium.org/>libsodium</a></p>
+</blockquote>
+</li>
+</ul>
+</li>
+</ul>
+<p>欢迎有兴趣的小伙伴互相交流。</p>
+</div>
+<hr>
+<footer class=article-footer>
+<div class="article-panel-footer article-meta article-footer clearfix">
+<span class=article-meta-left>
+<ol>
+<li><a href=//owent.net/categories/article.html>Article</a></li>
+<li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li>
+</ol>
+</span>
+<span class=article-meta-right><time datetime=2021-06-05T22:38:45.000+00:00 itemprop=datePublished>2021-06-05</time></span>
+<span class=clearfix></span>
+</div>
+<div class=article-tags>
+<ul class=article-tag-list>
+<li class=article-tag-list-item><a href=//owent.net/tags/rust.html>rust</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/linkedlist.html>linkedlist</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/list.html>list</a></li>
+</ul>
+</div>
+</footer>
+</div>
+<hr>
+<nav id=article-nav>
+<ul class=pagination>
+<li class=page-item>
+<a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2021/2105.html>
+下一篇<strong>新版GCC和LLVM+Clang终于Release啦</strong>
+</a>
+</li>
+</ul>
+</nav>
+<hr>
+<section id=comments>
+<div id=disqus_thread></div>
+<script type=text/javascript>var disqus_config=function(){this.page.identifier='2106'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script>
+<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
+</section>
+</div>
+</article></div>
+</section></div>
+<footer id=footer>
+<div class=outer>
+<div id=footer-info class="inner clearfix">
+<strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
 2021
-OWenT</strong>
-<strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+OWenT
+</strong>
+<strong id=footer-right class="float-right float-end">
+<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
-主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
-<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script><script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cpp.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/capnproto.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cmake.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/d.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/diff.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dos.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/erlang.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/go.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/less.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/lua.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/php.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/powershell.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/protobuf.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/python.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/profile.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/typescript.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script><script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script><script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script><script type=text/javascript src=//unpkg.com/chart.js@latest/dist/Chart.min.js></script><script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script></div></body></html>
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong>
+<span class=clearfix></span>
+</div>
+</div>
+</footer>
+</div>
+<script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cpp.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/capnproto.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cmake.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/d.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/diff.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dos.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/erlang.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/go.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/less.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/lua.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/php.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/powershell.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/protobuf.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/python.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/profile.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/typescript.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script>
+<script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
+<script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script>
+<script type=text/javascript src=//unpkg.com/chart.js@latest/dist/Chart.min.js></script>
+<script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script>
+</div>
+</body></html>

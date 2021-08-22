@@ -1,27 +1,238 @@
-<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>容器配置开发环境小计|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2020/2001.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script><link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
-<span class=navbar-toggler-icon></span></button>
-<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<!doctype html><html lang=zh-cn>
+<head>
+<meta charset=utf-8>
+<title>容器配置开发环境小计|I'm OWenT</title>
+<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
+<link rel=canonical href=//owent.net/2020/2001.html>
+<link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT">
+<link rel=icon href=../favicon.ico>
+<link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous>
+<link rel=stylesheet href=//owent.net/css/style.css>
+<script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
+<link rel=stylesheet href=//owent.net/css/syntax.css>
+</head>
+<body><div id=container><div id=wrap>
+<header id=header>
+<div id=banner></div>
+<div id=header-outer>
+<div id=header-title>
+<h1 id=site-title>
+<a href=//owent.net id=logo>I'm OWenT</a>
+</h1>
+<h2 id=site-description>Challenge Everything</h2>
+</div>
+<div id=header-inner>
+<nav id=main-nav class="navbar navbar-expand-md navbar-dark">
+<button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a>
+<div class="collapse navbar-collapse position-relative" id=main-nav-links>
+<ul class="navbar-nav mr-auto">
+<li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li>
+<li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li>
+<li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li>
+<li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li>
+</ul>
+<div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search>
+<input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-3172d5ef0c39367e9068570cb709c2dc class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2020/2001.html target=_blank itemprop=url>容器配置开发环境小计</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#前言>前言</a><ul><li><a href=#编译podman>编译podman</a></li><li><a href=#基本设置>基本设置</a></li><li><a href=#在宿主机上测试-兼容systemd->在宿主机上测试（ 兼容systemd ）</a></li><li><a href=#网络代理和vscode和zsh>网络代理和vscode和zsh</a></li><li><a href=#其他>其他</a></li></ul></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><h2 id=前言>前言</h2><p>这段时间折腾了好久容器搭建开发环境和家里软路由趟的一些坑。这里先记录一下使用容器搭开发环境的一些流程和问题。</p><p>开发环境一般里面会包含很多的工具和开启一些服务。 我自己的环境测试和搭建了 <a href=https://ubuntu.com/>ubuntu</a> 、 <a href=https://centos.org/>centos</a> 、 <a href=https://www.archlinux.org/>archlinux</a> 。 开启了 <a href=https://en.wikipedia.org/wiki/Systemd>systemd</a> ， 支持网络代理+vscode远程开发， 支持 <a href=https://www.docker.com/>docker</a> 和 <a href=https://podman.io/>podman</a> ，支持k8s，开启了 sshd 。 所有的构建脚本及 Dockerfile 都放在 <a href=https://github.com/owent-utils/docker-setup>https://github.com/owent-utils/docker-setup</a> 了，有需要的小伙伴可以自取。</p><h3 id=编译podman>编译podman</h3><p>之前看一些文章把 <a href=https://podman.io/>podman</a> 吹上了天，于是我就当了下小白鼠。最后的建议是除非你想去折腾这玩意，不然现阶段还是珍爱生命，远离它（BUG茫茫多，想想都是泪）。</p><p>除了一些自带的发行版以外，有些发行版（比如 <a href=http://debian.org/>Debian</a>）还是得自己编译自己装。发行版自带的版本也相对较低，如果想用比较新的版本也是得自己编译安装。
-官方给出的编译安装组件并不完整，而且 <a href=https://podman.io/>podman</a> 内部的一些组件互相依赖的版本也很高，系统自带的组件版本也不一定能够支持，我自己总结的需要准备的列表如下:</p><ol><li>golang</li><li>ostree</li><li>conmon(容器监控工具)</li><li>runc(容器运行工具)</li><li>cni(对非host模式rootful容器的网络支持)</li><li>libpod(<a href=https://podman.io/>podman</a> 命令行工具)</li><li>fuse-overlayfs(rootless容器的用户空间文件系统挂载支持)</li><li>slirp4netns(rootless容器的用网络支持)</li></ol><p>具体的流程在: <a href=https://github.com/owent-utils/docker-setup/blob/master/build-podman.sh>https://github.com/owent-utils/docker-setup/blob/master/build-podman.sh</a></p><h3 id=基本设置>基本设置</h3><h4 id=拉取镜像和网络代理和自建镜像仓库>拉取镜像和网络代理和自建镜像仓库</h4><p>拉取 <a href=https://www.docker.com/>docker</a> 镜像的命令我就不贴了。这里如果是用的<a href=https://www.docker.com/>docker</a> 而不是 <a href=https://podman.io/>podman</a> 并且网络要要走代理需要配置下。</p><p>首先 <a href=https://www.docker.com/>docker</a> 服务的代理只能配环境变量，需要在 <code>/lib/systemd/system/docker.service</code> 里（假设用的 <a href=https://en.wikipedia.org/wiki/Systemd>systemd</a> 启动的 <a href=https://www.docker.com/>docker</a> 服务）的 <code>[Service]</code> 段里加上</p><pre><code>Environment=&quot;HTTP_PROXY=HTTP代理地址:端口&quot; &quot;HTTPS_PROXY=HTTP代理地址:端口&quot; &quot;NO_PROXY=代理排除列表&quot;
-</code></pre><p>然后如果有自定义镜像仓库要排除TLS证书检查的话可以在 <code>/etc/docker/daemon.json</code> 里配置:</p><pre><code class=language-json>{
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button>
+</form></div>
+</div>
+</nav>
+</div>
+</div>
+</header>
+<div id=main><section id=main-content>
+<div id=post-content><article id=post-3172d5ef0c39367e9068570cb709c2dc class="article-panel article article-type-post" itemscope itemprop=blogPost>
+<div class="article-panel-inner article-inner">
+<div class=article-inner>
+<header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2020/2001.html target=_blank itemprop=url>容器配置开发环境小计</a></h1></header><hr>
+<div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents>
+<ul>
+<li><a href=#前言>前言</a>
+<ul>
+<li><a href=#编译podman>编译podman</a></li>
+<li><a href=#基本设置>基本设置</a></li>
+<li><a href=#在宿主机上测试-兼容systemd->在宿主机上测试（ 兼容systemd ）</a></li>
+<li><a href=#网络代理和vscode和zsh>网络代理和vscode和zsh</a></li>
+<li><a href=#其他>其他</a></li>
+</ul>
+</li>
+</ul>
+</nav></div><br>
+<div class=article-entry itemprop=articleBody><h2 id=前言>前言</h2>
+<p>这段时间折腾了好久容器搭建开发环境和家里软路由趟的一些坑。这里先记录一下使用容器搭开发环境的一些流程和问题。</p>
+<p>开发环境一般里面会包含很多的工具和开启一些服务。 我自己的环境测试和搭建了 <a href=https://ubuntu.com/>ubuntu</a> 、 <a href=https://centos.org/>centos</a> 、 <a href=https://www.archlinux.org/>archlinux</a> 。 开启了 <a href=https://en.wikipedia.org/wiki/Systemd>systemd</a> ， 支持网络代理+vscode远程开发， 支持 <a href=https://www.docker.com/>docker</a> 和 <a href=https://podman.io/>podman</a> ，支持k8s，开启了 sshd 。 所有的构建脚本及 Dockerfile 都放在 <a href=https://github.com/owent-utils/docker-setup>https://github.com/owent-utils/docker-setup</a> 了，有需要的小伙伴可以自取。</p>
+<h3 id=编译podman>编译podman</h3>
+<p>之前看一些文章把 <a href=https://podman.io/>podman</a> 吹上了天，于是我就当了下小白鼠。最后的建议是除非你想去折腾这玩意，不然现阶段还是珍爱生命，远离它（BUG茫茫多，想想都是泪）。</p>
+<p>除了一些自带的发行版以外，有些发行版（比如 <a href=http://debian.org/>Debian</a>）还是得自己编译自己装。发行版自带的版本也相对较低，如果想用比较新的版本也是得自己编译安装。
+官方给出的编译安装组件并不完整，而且 <a href=https://podman.io/>podman</a> 内部的一些组件互相依赖的版本也很高，系统自带的组件版本也不一定能够支持，我自己总结的需要准备的列表如下:</p>
+<ol>
+<li>golang</li>
+<li>ostree</li>
+<li>conmon(容器监控工具)</li>
+<li>runc(容器运行工具)</li>
+<li>cni(对非host模式rootful容器的网络支持)</li>
+<li>libpod(<a href=https://podman.io/>podman</a> 命令行工具)</li>
+<li>fuse-overlayfs(rootless容器的用户空间文件系统挂载支持)</li>
+<li>slirp4netns(rootless容器的用网络支持)</li>
+</ol>
+<p>具体的流程在: <a href=https://github.com/owent-utils/docker-setup/blob/master/build-podman.sh>https://github.com/owent-utils/docker-setup/blob/master/build-podman.sh</a></p>
+<h3 id=基本设置>基本设置</h3>
+<h4 id=拉取镜像和网络代理和自建镜像仓库>拉取镜像和网络代理和自建镜像仓库</h4>
+<p>拉取 <a href=https://www.docker.com/>docker</a> 镜像的命令我就不贴了。这里如果是用的<a href=https://www.docker.com/>docker</a> 而不是 <a href=https://podman.io/>podman</a> 并且网络要要走代理需要配置下。</p>
+<p>首先 <a href=https://www.docker.com/>docker</a> 服务的代理只能配环境变量，需要在 <code>/lib/systemd/system/docker.service</code> 里（假设用的 <a href=https://en.wikipedia.org/wiki/Systemd>systemd</a> 启动的 <a href=https://www.docker.com/>docker</a> 服务）的 <code>[Service]</code> 段里加上</p>
+<pre><code>Environment=&quot;HTTP_PROXY=HTTP代理地址:端口&quot; &quot;HTTPS_PROXY=HTTP代理地址:端口&quot; &quot;NO_PROXY=代理排除列表&quot;
+</code></pre>
+<p>然后如果有自定义镜像仓库要排除TLS证书检查的话可以在 <code>/etc/docker/daemon.json</code> 里配置:</p>
+<pre><code class=language-json>{
     &quot;graph&quot;: &quot;数据存放路径，如: /data/docker-data&quot;,
     &quot;storage-driver&quot;: &quot;overlay&quot;,
     &quot;insecure-registries&quot; : [ &quot;registry.fedoraproject.org&quot;, &quot;registry.access.redhat.com&quot;, &quot;registry.centos.org&quot;, &quot;docker.io&quot;, &quot;quay.io&quot;, &quot;其他自建仓库...&quot; ]
 }
-</code></pre><h4 id=镜像构建流程>镜像构建流程</h4><ol><li>换源</li><li>很多容器官方镜像是关闭文档的，开发环境还是需要它所以打开文档安装man-db</li><li>开文档后可能要重新安装某些组件触发一次拉取文档和man-db</li><li>安装基本工具</li><li>安装编译环境</li><li>生成locale，某些发行版没有 <code>locale.gen</code> ， 直接执行 <code>localectl set-locale LANG=en_GB.utf8</code> 吧</li><li>设置时区</li><li>开启sshd服务，改服务端口，把 <code>/etc/pam.d/*</code> 里的 <code>pam_loginuid.so</code> 改成 optional 。</li><li>清理安装包缓存目录和日志</li></ol><p>大致就是如上的流程，这里提供一下我自己构建过的几个 <code>Dockerfile</code> , 都在 <a href=https://github.com/owent-utils/docker-setup>https://github.com/owent-utils/docker-setup</a> 这个仓库里，部分Dockerfile可能会依赖里面的脚本所以最好整个仓库clone下来就可以直接用。如果要设置开发环境代理的话可以在构建镜像的时候加上 <code>--env SETUP_INSTALL_PROXY=HTTP代理地址</code> 和 <code>--env SETUP_INSTALL_NO_PROXY=代理排除地址</code> 。</p><ul><li><a href=https://ubuntu.com/>Ubuntu</a>: <a href=https://github.com/owent-utils/docker-setup/blob/master/ubuntu.devtools.Dockerfile>https://github.com/owent-utils/docker-setup/blob/master/ubuntu.devtools.Dockerfile</a></li><li><a href=http://debian.org/>Debian</a>: <a href=https://github.com/owent-utils/docker-setup/blob/master/debian.devtools.Dockerfile>https://github.com/owent-utils/docker-setup/blob/master/debian.devtools.Dockerfile</a></li><li><a href=https://centos.org/>CentOS 7</a>: <a href=https://github.com/owent-utils/docker-setup/blob/master/centos7.devtools.Dockerfile>https://github.com/owent-utils/docker-setup/blob/master/centos7.devtools.Dockerfile</a></li><li><a href=https://centos.org/>CentOS 8</a>: <a href=https://github.com/owent-utils/docker-setup/blob/master/centos8.devtools.Dockerfile>https://github.com/owent-utils/docker-setup/blob/master/centos8.devtools.Dockerfile</a></li><li><a href=https://www.archlinux.org/>Archlinux</a>: <a href=https://github.com/owent-utils/docker-setup/blob/master/arch.devtools.Dockerfile>https://github.com/owent-utils/docker-setup/blob/master/arch.devtools.Dockerfile</a></li></ul><h3 id=在宿主机上测试-兼容systemd->在宿主机上测试（ 兼容systemd ）</h3><p>要让容器能够启动 <a href=https://en.wikipedia.org/wiki/Systemd>systemd</a> 的话需要额外给一些权限和共享出cgroup。 然后启动命令必须是 <code>/lib/systemd/systemd</code> 。</p><blockquote><p>我试了几个主要的发行版都是 <code>/lib/systemd/systemd</code> ，有些发行版会安装 <a href=https://en.wikipedia.org/wiki/Systemd>systemd</a> 适配 sysv 的包，然后 <code>/sbin/init</code> 会被软链到 <code>/lib/systemd/systemd</code> ，用这个也可以。</p></blockquote><p>如果是 <a href=https://podman.io/>podman</a> 的话内建了对 <a href=https://en.wikipedia.org/wiki/Systemd>systemd</a> 的支持。只要加上启动参数 <code>--systemd true</code> 就可以了。</p><p>如果是原版的 <a href=https://www.docker.com/>docker</a> 的话，这里提供一个命令参考（参数选项来自 <a href=https://podman.io/>podman</a> 的代码）:</p><pre><code class=language-bash>docker run -d --name 容器名称 --cap-add=SYS_ADMIN                                           \
+</code></pre>
+<h4 id=镜像构建流程>镜像构建流程</h4>
+<ol>
+<li>换源</li>
+<li>很多容器官方镜像是关闭文档的，开发环境还是需要它所以打开文档安装man-db</li>
+<li>开文档后可能要重新安装某些组件触发一次拉取文档和man-db</li>
+<li>安装基本工具</li>
+<li>安装编译环境</li>
+<li>生成locale，某些发行版没有 <code>locale.gen</code> ， 直接执行 <code>localectl set-locale LANG=en_GB.utf8</code> 吧</li>
+<li>设置时区</li>
+<li>开启sshd服务，改服务端口，把 <code>/etc/pam.d/*</code> 里的 <code>pam_loginuid.so</code> 改成 optional 。</li>
+<li>清理安装包缓存目录和日志</li>
+</ol>
+<p>大致就是如上的流程，这里提供一下我自己构建过的几个 <code>Dockerfile</code> , 都在 <a href=https://github.com/owent-utils/docker-setup>https://github.com/owent-utils/docker-setup</a> 这个仓库里，部分Dockerfile可能会依赖里面的脚本所以最好整个仓库clone下来就可以直接用。如果要设置开发环境代理的话可以在构建镜像的时候加上 <code>--env SETUP_INSTALL_PROXY=HTTP代理地址</code> 和 <code>--env SETUP_INSTALL_NO_PROXY=代理排除地址</code> 。</p>
+<ul>
+<li><a href=https://ubuntu.com/>Ubuntu</a>: <a href=https://github.com/owent-utils/docker-setup/blob/master/ubuntu.devtools.Dockerfile>https://github.com/owent-utils/docker-setup/blob/master/ubuntu.devtools.Dockerfile</a></li>
+<li><a href=http://debian.org/>Debian</a>: <a href=https://github.com/owent-utils/docker-setup/blob/master/debian.devtools.Dockerfile>https://github.com/owent-utils/docker-setup/blob/master/debian.devtools.Dockerfile</a></li>
+<li><a href=https://centos.org/>CentOS 7</a>: <a href=https://github.com/owent-utils/docker-setup/blob/master/centos7.devtools.Dockerfile>https://github.com/owent-utils/docker-setup/blob/master/centos7.devtools.Dockerfile</a></li>
+<li><a href=https://centos.org/>CentOS 8</a>: <a href=https://github.com/owent-utils/docker-setup/blob/master/centos8.devtools.Dockerfile>https://github.com/owent-utils/docker-setup/blob/master/centos8.devtools.Dockerfile</a></li>
+<li><a href=https://www.archlinux.org/>Archlinux</a>: <a href=https://github.com/owent-utils/docker-setup/blob/master/arch.devtools.Dockerfile>https://github.com/owent-utils/docker-setup/blob/master/arch.devtools.Dockerfile</a></li>
+</ul>
+<h3 id=在宿主机上测试-兼容systemd->在宿主机上测试（ 兼容systemd ）</h3>
+<p>要让容器能够启动 <a href=https://en.wikipedia.org/wiki/Systemd>systemd</a> 的话需要额外给一些权限和共享出cgroup。 然后启动命令必须是 <code>/lib/systemd/systemd</code> 。</p>
+<blockquote>
+<p>我试了几个主要的发行版都是 <code>/lib/systemd/systemd</code> ，有些发行版会安装 <a href=https://en.wikipedia.org/wiki/Systemd>systemd</a> 适配 sysv 的包，然后 <code>/sbin/init</code> 会被软链到 <code>/lib/systemd/systemd</code> ，用这个也可以。</p>
+</blockquote>
+<p>如果是 <a href=https://podman.io/>podman</a> 的话内建了对 <a href=https://en.wikipedia.org/wiki/Systemd>systemd</a> 的支持。只要加上启动参数 <code>--systemd true</code> 就可以了。</p>
+<p>如果是原版的 <a href=https://www.docker.com/>docker</a> 的话，这里提供一个命令参考（参数选项来自 <a href=https://podman.io/>podman</a> 的代码）:</p>
+<pre><code class=language-bash>docker run -d --name 容器名称 --cap-add=SYS_ADMIN                                           \
         --mount type=tmpfs,target=/run,tmpfs-mode=1777,tmpfs-size=67108864                  \
         --mount type=tmpfs,target=/run/lock,tmpfs-mode=1777,tmpfs-size=67108864             \
         --mount type=tmpfs,target=/tmp,tmpfs-mode=1777                                      \
         --mount type=tmpfs,target=/var/log/journal,tmpfs-mode=1777                          \
         --mount type=bind,source=/sys/fs/cgroup,target=/sys/fs/cgroup                       \
         镜像HASH值或TAG名称 /sbin/init
-</code></pre><h3 id=网络代理和vscode和zsh>网络代理和vscode和zsh</h3><p>我现在主力使用vscode 远程开发插件来远程开发的。但是配置容器网络的时候碰到过很多问题，要么某些环境初始化不了，要么更新失败。</p><p>我试过加初始化代理的环境变量脚本到 <code>$HOME/.bashrc</code> 和加到 <code>/etc/profile.d/xxx.sh</code> 都不能完美解决问题。特别是使用了 <code>zsh</code> 之后。</p><p>最终比较完美的解决方案有两种，第一种是把代理环境变量写进 <strong>Dockerfile</strong> 里， 另一种是 <strong>sshd</strong> 的配置( <code>/etc/ssh/sshd_config</code> ) 里开启 <code>PermitUserEnvironment yes</code> 然后把环境变量写进 <code>$HOME/.ssh/environment</code> 里。（记得要 <code>chmod 600 $HOME/.ssh/environment</code>）</p><h3 id=其他>其他</h3><p>这段时间还折腾了下 <code>nftables</code> ，用起来很爽，但是也是踩了一些坑。不过这个组件比 <a href=https://podman.io/>podman</a> 靠谱多了，只是功能上还不能完全替代 <code>iptables</code> + <code>ebtables</code> 而已。
-我也是尝试用了好多种发行版docker里跑软路由，后面再来填坑吧。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2020-01-19T21:43:50.000+00:00 itemprop=datePublished>2020-01-19</time></span>
-<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/podman.html>podman</a></li><li class=article-tag-list-item><a href=//owent.net/tags/docker.html>docker</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cni.html>cni</a></li><li class=article-tag-list-item><a href=//owent.net/tags/runc.html>runc</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E5%AE%B9%E5%99%A8.html>容器</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83.html>开发环境</a></li><li class=article-tag-list-item><a href=//owent.net/tags/systemd.html>systemd</a></li><li class=article-tag-list-item><a href=//owent.net/tags/sshd.html>sshd</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2020/2002.html>上一篇<strong>nftables初体验</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2019/1913.html>下一篇<strong>PALM Tree - 适合多核并发架构的B+树 - 论文阅读小记</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier='2001'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+</code></pre>
+<h3 id=网络代理和vscode和zsh>网络代理和vscode和zsh</h3>
+<p>我现在主力使用vscode 远程开发插件来远程开发的。但是配置容器网络的时候碰到过很多问题，要么某些环境初始化不了，要么更新失败。</p>
+<p>我试过加初始化代理的环境变量脚本到 <code>$HOME/.bashrc</code> 和加到 <code>/etc/profile.d/xxx.sh</code> 都不能完美解决问题。特别是使用了 <code>zsh</code> 之后。</p>
+<p>最终比较完美的解决方案有两种，第一种是把代理环境变量写进 <strong>Dockerfile</strong> 里， 另一种是 <strong>sshd</strong> 的配置( <code>/etc/ssh/sshd_config</code> ) 里开启 <code>PermitUserEnvironment yes</code> 然后把环境变量写进 <code>$HOME/.ssh/environment</code> 里。（记得要 <code>chmod 600 $HOME/.ssh/environment</code>）</p>
+<h3 id=其他>其他</h3>
+<p>这段时间还折腾了下 <code>nftables</code> ，用起来很爽，但是也是踩了一些坑。不过这个组件比 <a href=https://podman.io/>podman</a> 靠谱多了，只是功能上还不能完全替代 <code>iptables</code> + <code>ebtables</code> 而已。
+我也是尝试用了好多种发行版docker里跑软路由，后面再来填坑吧。</p>
+</div>
+<hr>
+<footer class=article-footer>
+<div class="article-panel-footer article-meta article-footer clearfix">
+<span class=article-meta-left>
+<ol>
+<li><a href=//owent.net/categories/article.html>Article</a></li>
+<li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li>
+</ol>
+</span>
+<span class=article-meta-right><time datetime=2020-01-19T21:43:50.000+00:00 itemprop=datePublished>2020-01-19</time></span>
+<span class=clearfix></span>
+</div>
+<div class=article-tags>
+<ul class=article-tag-list>
+<li class=article-tag-list-item><a href=//owent.net/tags/podman.html>podman</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/docker.html>docker</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/cni.html>cni</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/runc.html>runc</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/%E5%AE%B9%E5%99%A8.html>容器</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83.html>开发环境</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/systemd.html>systemd</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/sshd.html>sshd</a></li>
+</ul>
+</div>
+</footer>
+</div>
+<hr>
+<nav id=article-nav>
+<ul class=pagination>
+<li class=page-item>
+<a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2020/2002.html>
+上一篇<strong>nftables初体验</strong>
+</a>
+</li>
+<li class=page-item>
+<a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2019/1913.html>
+下一篇<strong>PALM Tree - 适合多核并发架构的B+树 - 论文阅读小记</strong>
+</a>
+</li>
+</ul>
+</nav>
+<hr>
+<section id=comments>
+<div id=disqus_thread></div>
+<script type=text/javascript>var disqus_config=function(){this.page.identifier='2001'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script>
+<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
+</section>
+</div>
+</article></div>
+</section></div>
+<footer id=footer>
+<div class=outer>
+<div id=footer-info class="inner clearfix">
+<strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
 2021
-OWenT</strong>
-<strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+OWenT
+</strong>
+<strong id=footer-right class="float-right float-end">
+<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
-主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
-<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script><script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cpp.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/capnproto.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cmake.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/d.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/diff.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dos.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/erlang.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/go.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/less.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/lua.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/php.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/powershell.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/protobuf.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/python.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/profile.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/typescript.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script><script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script><script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script><script type=text/javascript src=//unpkg.com/chart.js@latest/dist/Chart.min.js></script><script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script></div></body></html>
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong>
+<span class=clearfix></span>
+</div>
+</div>
+</footer>
+</div>
+<script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cpp.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/capnproto.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cmake.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/d.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/diff.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dos.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/erlang.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/go.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/less.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/lua.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/php.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/powershell.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/protobuf.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/python.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/profile.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/typescript.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script>
+<script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
+<script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script>
+<script type=text/javascript src=//unpkg.com/chart.js@latest/dist/Chart.min.js></script>
+<script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script>
+</div>
+</body></html>

@@ -1,8 +1,79 @@
-<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>几个使用protobuf中C++接口的Arena的坑|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2020/2009.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script><link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
-<span class=navbar-toggler-icon></span></button>
-<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<!doctype html><html lang=zh-cn>
+<head>
+<meta charset=utf-8>
+<title>几个使用protobuf中C++接口的Arena的坑|I'm OWenT</title>
+<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
+<link rel=canonical href=//owent.net/2020/2009.html>
+<link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT">
+<link rel=icon href=../favicon.ico>
+<link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous>
+<link rel=stylesheet href=//owent.net/css/style.css>
+<script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
+<link rel=stylesheet href=//owent.net/css/syntax.css>
+</head>
+<body><div id=container><div id=wrap>
+<header id=header>
+<div id=banner></div>
+<div id=header-outer>
+<div id=header-title>
+<h1 id=site-title>
+<a href=//owent.net id=logo>I'm OWenT</a>
+</h1>
+<h2 id=site-description>Challenge Everything</h2>
+</div>
+<div id=header-inner>
+<nav id=main-nav class="navbar navbar-expand-md navbar-dark">
+<button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a>
+<div class="collapse navbar-collapse position-relative" id=main-nav-links>
+<ul class="navbar-nav mr-auto">
+<li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li>
+<li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li>
+<li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li>
+<li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li>
+</ul>
+<div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search>
+<input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-9dbb90fe42fdee0622c177d9b512d72a class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2020/2009.html target=_blank itemprop=url>几个使用protobuf中C++接口的Arena的坑</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#前言>前言</a></li><li><a href=#arena的基本原理>Arena的基本原理</a></li><li><a href=#长期存在对象的生命周期>长期存在对象的生命周期</a></li><li><a href=#初始化分配的大小和最大分配的大小>初始化分配的大小和最大分配的大小</a></li><li><a href=#直接迁移-set_allocated_xxxrelease_xxx-可能导致内存泄漏>直接迁移 <code>set_allocated_XXX/release_XXX</code> 可能导致内存泄漏</a></li><li><a href=#swap退化成copy>Swap退化成Copy</a></li><li><a href=#写在最后>写在最后</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><h2 id=前言>前言</h2><p><a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 从3.0版本开始对C++增加了Arena接口，可以用于使用连续的内存块分配内部对象，并且可以更容易精确地控制对象地生命周期，最终达到减少内存碎片地目的。最近我给我们项目的部分接口流程进行相关地改造，在大多数使用 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 的地方都增加了对Arena的支持，但是在接入过程中也碰到了一些问题和坑。</p><h2 id=arena的基本原理>Arena的基本原理</h2><p>Arena的原理十分简单，就是预先分配一个内存块。创建Message和内部对象的时候全部在分配好的内存块上 <a href=https://en.cppreference.com/w/cpp/language/new>placement new</a> 出来，所有的Message对象也会内部记录所属的Arena以便创建字对象和某些情况下需要检查Arena时使用。如果创建的对象不支持Arena的，在 <a href=https://en.cppreference.com/w/cpp/language/new>placement new</a> 完成后要在Arena上设置一个析构回调，以便在释放的时候调用析构流程。如果Arena内部的内存块剩余内存不足则会自动创建下一个(可能是更大的)内存块。</p><p>Arena可以在创建Arena的时候通过指定自定义的ArenaOptions来设置一些系数，包括最大内存块大小（如果超出了会直接用）、初始内存块大小、分配/回收内存块的实现、事件接口等。</p><p>每次Arena内存块剩余内存不足时，会尝试分配 <em><strong>最后一个内存块size*2</strong></em> 和 <em><strong>ArenaOptions设置里的最大内存块</strong></em> 中的最小值（即: <code>min(2 * last_block.size, ArenaOptions.max_block_size)</code> ）。如果要分配的内存大小本身就是大于 <em><strong>ArenaOptions设置里的最大内存块</strong></em> 的，则会直接分配需要的内存块的大小+Header的大小（当前版本Header的大小是三个指针长度对齐到8，64位系统下就是24字节）。</p><h2 id=长期存在对象的生命周期>长期存在对象的生命周期</h2><p>Arena有一个特点是它维护的 <strong>所有对象都是在Arena析构的时候统一释放</strong> 的。这中间它内部维护的内存块只会不断地append，并不会删除。所以这也决定了由Arena维护的对象要么只能是临时对象，要么是不可变的。否则它的内存会无限增长下去。比如，我们是有状态服务器，如果我们把一个用户的数据块长期缓存在内存里，然后Arena和用户对象的生命绑定。那么中间很多操作会不断地变更内部的对象结构，这就会导致用户下线前Arena无限增长。</p><p>所以，我们主要对Arena的集成最终集中在各个Task的入口处，然后一个Task里的子Task和RPC请求中需要创建的局部变量数据都复用这个Arena。当一个Task及其子Task全部结束以后，Arena就释放了。而除非少量的一些对全服数据操作的Task以外，大多数Task生命周期也就几秒钟，内存的回收时间就相对可控。</p><h2 id=初始化分配的大小和最大分配的大小>初始化分配的大小和最大分配的大小</h2><p>在 <em><strong>ArenaOptions设置</strong></em> 里，默认的初始分配大小是 256B ，最大分配大小是 8KB 。前面也提到，我们的集成主要在各个Task的入口处，在Task里光是链路跟踪和RPC header相关的数据就占了100-200字节，而实际使用中一个Task的请求包、应答包就2倍曹处256B了。所以我们把初始值提升到了512B。同时我们项目中战斗记录的包都偏大，然后一些玩家数据拉取的包体也比较大，所以最大值也提高到了64KB。当然这些值后面有待观察，我们后面出了更详细的统计之后可能也再会调整。</p><h2 id=直接迁移-set_allocated_xxxrelease_xxx-可能导致内存泄漏>直接迁移 <code>set_allocated_XXX/release_XXX</code> 可能导致内存泄漏</h2><p>在 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 里，经常会碰上一些类似消息转发或者复用某些Message的操作，如果这些Message比较大，Copy的话显然是比较浪费的。所以有些地方会使用 <code>set_allocated_XXX</code> 和 <code>release_XXX</code> 接口来复用某些Message。 比如在我们的项目里，保存数据到DB的时候经常会有这种操作：</p><pre><code class=language-cpp>// 参数传入 user_basic_profile;
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button>
+</form></div>
+</div>
+</nav>
+</div>
+</div>
+</header>
+<div id=main><section id=main-content>
+<div id=post-content><article id=post-9dbb90fe42fdee0622c177d9b512d72a class="article-panel article article-type-post" itemscope itemprop=blogPost>
+<div class="article-panel-inner article-inner">
+<div class=article-inner>
+<header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2020/2009.html target=_blank itemprop=url>几个使用protobuf中C++接口的Arena的坑</a></h1></header><hr>
+<div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents>
+<ul>
+<li><a href=#前言>前言</a></li>
+<li><a href=#arena的基本原理>Arena的基本原理</a></li>
+<li><a href=#长期存在对象的生命周期>长期存在对象的生命周期</a></li>
+<li><a href=#初始化分配的大小和最大分配的大小>初始化分配的大小和最大分配的大小</a></li>
+<li><a href=#直接迁移-set_allocated_xxxrelease_xxx-可能导致内存泄漏>直接迁移 <code>set_allocated_XXX/release_XXX</code> 可能导致内存泄漏</a></li>
+<li><a href=#swap退化成copy>Swap退化成Copy</a></li>
+<li><a href=#写在最后>写在最后</a></li>
+</ul>
+</nav></div><br>
+<div class=article-entry itemprop=articleBody><h2 id=前言>前言</h2>
+<p><a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 从3.0版本开始对C++增加了Arena接口，可以用于使用连续的内存块分配内部对象，并且可以更容易精确地控制对象地生命周期，最终达到减少内存碎片地目的。最近我给我们项目的部分接口流程进行相关地改造，在大多数使用 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 的地方都增加了对Arena的支持，但是在接入过程中也碰到了一些问题和坑。</p>
+<h2 id=arena的基本原理>Arena的基本原理</h2>
+<p>Arena的原理十分简单，就是预先分配一个内存块。创建Message和内部对象的时候全部在分配好的内存块上 <a href=https://en.cppreference.com/w/cpp/language/new>placement new</a> 出来，所有的Message对象也会内部记录所属的Arena以便创建字对象和某些情况下需要检查Arena时使用。如果创建的对象不支持Arena的，在 <a href=https://en.cppreference.com/w/cpp/language/new>placement new</a> 完成后要在Arena上设置一个析构回调，以便在释放的时候调用析构流程。如果Arena内部的内存块剩余内存不足则会自动创建下一个(可能是更大的)内存块。</p>
+<p>Arena可以在创建Arena的时候通过指定自定义的ArenaOptions来设置一些系数，包括最大内存块大小（如果超出了会直接用）、初始内存块大小、分配/回收内存块的实现、事件接口等。</p>
+<p>每次Arena内存块剩余内存不足时，会尝试分配 <em><strong>最后一个内存块size*2</strong></em> 和 <em><strong>ArenaOptions设置里的最大内存块</strong></em> 中的最小值（即: <code>min(2 * last_block.size, ArenaOptions.max_block_size)</code> ）。如果要分配的内存大小本身就是大于 <em><strong>ArenaOptions设置里的最大内存块</strong></em> 的，则会直接分配需要的内存块的大小+Header的大小（当前版本Header的大小是三个指针长度对齐到8，64位系统下就是24字节）。</p>
+<h2 id=长期存在对象的生命周期>长期存在对象的生命周期</h2>
+<p>Arena有一个特点是它维护的 <strong>所有对象都是在Arena析构的时候统一释放</strong> 的。这中间它内部维护的内存块只会不断地append，并不会删除。所以这也决定了由Arena维护的对象要么只能是临时对象，要么是不可变的。否则它的内存会无限增长下去。比如，我们是有状态服务器，如果我们把一个用户的数据块长期缓存在内存里，然后Arena和用户对象的生命绑定。那么中间很多操作会不断地变更内部的对象结构，这就会导致用户下线前Arena无限增长。</p>
+<p>所以，我们主要对Arena的集成最终集中在各个Task的入口处，然后一个Task里的子Task和RPC请求中需要创建的局部变量数据都复用这个Arena。当一个Task及其子Task全部结束以后，Arena就释放了。而除非少量的一些对全服数据操作的Task以外，大多数Task生命周期也就几秒钟，内存的回收时间就相对可控。</p>
+<h2 id=初始化分配的大小和最大分配的大小>初始化分配的大小和最大分配的大小</h2>
+<p>在 <em><strong>ArenaOptions设置</strong></em> 里，默认的初始分配大小是 256B ，最大分配大小是 8KB 。前面也提到，我们的集成主要在各个Task的入口处，在Task里光是链路跟踪和RPC header相关的数据就占了100-200字节，而实际使用中一个Task的请求包、应答包就2倍曹处256B了。所以我们把初始值提升到了512B。同时我们项目中战斗记录的包都偏大，然后一些玩家数据拉取的包体也比较大，所以最大值也提高到了64KB。当然这些值后面有待观察，我们后面出了更详细的统计之后可能也再会调整。</p>
+<h2 id=直接迁移-set_allocated_xxxrelease_xxx-可能导致内存泄漏>直接迁移 <code>set_allocated_XXX/release_XXX</code> 可能导致内存泄漏</h2>
+<p>在 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 里，经常会碰上一些类似消息转发或者复用某些Message的操作，如果这些Message比较大，Copy的话显然是比较浪费的。所以有些地方会使用 <code>set_allocated_XXX</code> 和 <code>release_XXX</code> 接口来复用某些Message。 比如在我们的项目里，保存数据到DB的时候经常会有这种操作：</p>
+<pre><code class=language-cpp>// 参数传入 user_basic_profile;
 table_message_type container;
 container.set_id(user_id);
 container.set_allocated_basic_profile(&amp;user_basic_profile); // 直接复用已有的数据结构，用于后续打包
@@ -10,7 +81,9 @@ container.set_allocated_basic_profile(&amp;user_basic_profile); // 直接复用�
 int result = pack_and_send(TcaplusService::TCAPLUS_API_UPDATE_REQ, container); // 打包和RPC
 container.release_basic_profile(&amp;user_basic_profile);       // 释放生命周期管理
 // ... 其他类似释放代码
-</code></pre><p>但是加入了Arena之后就不一样了。我们 <strong>不能</strong> 简单地把代码改成这样 :</p><pre><code class=language-cpp>// 参数传入 arena, user_basic_profile;
+</code></pre>
+<p>但是加入了Arena之后就不一样了。我们 <strong>不能</strong> 简单地把代码改成这样 :</p>
+<pre><code class=language-cpp>// 参数传入 arena, user_basic_profile;
 table_message_type* container = ::google::protobuf::Arena::CreateMessage&lt;table_message_type&gt;(arena);
 container-&gt;set_id(user_id);
 container-&gt;set_allocated_basic_profile(&amp;user_basic_profile); // 直接复用已有的数据结构，用于后续打包
@@ -19,7 +92,9 @@ int result = pack_and_send(TcaplusService::TCAPLUS_API_UPDATE_REQ, container); /
 container-&gt;release_basic_profile(&amp;user_basic_profile);       // 释放生命周期管理
 // ... 其他类似释放代码
 // ...
-</code></pre><p>为什么呢？我们来看看生成的 <code>set_allocated_basic_profile</code> 和 <code>release_basic_profile</code> 。</p><pre><code class=language-cpp>// ============ set_allocated_basic_profile ============
+</code></pre>
+<p>为什么呢？我们来看看生成的 <code>set_allocated_basic_profile</code> 和 <code>release_basic_profile</code> 。</p>
+<pre><code class=language-cpp>// ============ set_allocated_basic_profile ============
 void table_message_type::set_allocated_basic_profile(user_basic_profile_t* basic_profile) {
   ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArena();
   if (message_arena == nullptr) {
@@ -76,7 +151,9 @@ inline user_basic_profile_t* table_message_type::release_basic_profile() {
   }
   return temp;
 }
-</code></pre><p>重要的注解都在上面标注了。回到我们之前的例子，对于底层接口而言，我们不能假设传入的 <code>user_basic_profile</code> 是在哪里分配的。实际上对于上面例子里的数据库保存操作，大多数情况下 <code>user_basic_profile</code> 来自于user对象的内存缓存。前面也提及了，这部分数据是在堆上的，那么对于这种情况，前面改Arena的例子里实际的流程就会变成这样:</p><pre><code class=language-cpp>// 参数传入 arena, user_basic_profile;
+</code></pre>
+<p>重要的注解都在上面标注了。回到我们之前的例子，对于底层接口而言，我们不能假设传入的 <code>user_basic_profile</code> 是在哪里分配的。实际上对于上面例子里的数据库保存操作，大多数情况下 <code>user_basic_profile</code> 来自于user对象的内存缓存。前面也提及了，这部分数据是在堆上的，那么对于这种情况，前面改Arena的例子里实际的流程就会变成这样:</p>
+<pre><code class=language-cpp>// 参数传入 arena, user_basic_profile;
 table_message_type* container = ::google::protobuf::Arena::CreateMessage&lt;table_message_type&gt;(arena);
 container-&gt;set_id(user_id);
 container-&gt;set_allocated_basic_profile(&amp;user_basic_profile); // 只要user_basic_profile不在arena上，那么这里就复制了一份数据
@@ -85,7 +162,9 @@ int result = pack_and_send(TcaplusService::TCAPLUS_API_UPDATE_REQ, container); /
 container-&gt;release_basic_profile(&amp;user_basic_profile);       // 这里则是复制了一份user_basic_profile，因为返回值被忽略了，这里就内存泄露了。
 // ... 其他类似释放代码
 // ...
-</code></pre><p>开启Arena之后，实际上增加了两个函数 <code>unsafe_arena_set_allocated_XXX</code> 和 <code>unsafe_arena_release_XXX</code> 。我们能不能直接用这个代替掉 <code>set_allocated_XXX</code> 和 <code>release_XXX</code> 呢？我们继续来看它生成的代码:</p><pre><code class=language-cpp>// ============ unsafe_arena_set_allocated_basic_profile ============
+</code></pre>
+<p>开启Arena之后，实际上增加了两个函数 <code>unsafe_arena_set_allocated_XXX</code> 和 <code>unsafe_arena_release_XXX</code> 。我们能不能直接用这个代替掉 <code>set_allocated_XXX</code> 和 <code>release_XXX</code> 呢？我们继续来看它生成的代码:</p>
+<pre><code class=language-cpp>// ============ unsafe_arena_set_allocated_basic_profile ============
 inline void TABLE_USER_DEF::unsafe_arena_set_allocated_basic_profile(
     ::mvp::table_user_basic_profile* basic_profile) {
   if (GetArena() == nullptr) {
@@ -108,7 +187,9 @@ inline user_basic_profile_t* TABLE_USER_DEF::unsafe_arena_release_basic_profile(
   basic_profile_ = nullptr;
   return temp;
 }
-</code></pre><p>使用的时候 <strong>如果父级Message如果是Arena分配的，只要使用者能保证调用 <code>unsafe_arena_set_allocated_XXX</code> 时成员为空，那么这里是可以直接代替的</strong>。但是在实际调用流程复杂了以后仍然怕这部分不小心误用，一旦误用带来的后果也很严重并且很难排查。所以我们项目中是 <strong>仅仅代码生成器会使用这个接口，人工调用是禁止的</strong> 。最终的变更形式如下:</p><pre><code class=language-cpp>// 参数传入 arena, user_basic_profile;
+</code></pre>
+<p>使用的时候 <strong>如果父级Message如果是Arena分配的，只要使用者能保证调用 <code>unsafe_arena_set_allocated_XXX</code> 时成员为空，那么这里是可以直接代替的</strong>。但是在实际调用流程复杂了以后仍然怕这部分不小心误用，一旦误用带来的后果也很严重并且很难排查。所以我们项目中是 <strong>仅仅代码生成器会使用这个接口，人工调用是禁止的</strong> 。最终的变更形式如下:</p>
+<pre><code class=language-cpp>// 参数传入 arena, user_basic_profile;
 table_message_type* container = ::google::protobuf::Arena::CreateMessage&lt;table_message_type&gt;(arena); // 这里能保证刚创建出来的一定为空
 container-&gt;set_id(user_id);
 if (container-&gt;GetArena() == user_basic_profile.GetArena()) {
@@ -131,7 +212,10 @@ if (container-&gt;GetArena() == user_basic_profile.GetArena()) {
 }
 // ... 其他类似释放代码
 // ...
-</code></pre><h2 id=swap退化成copy>Swap退化成Copy</h2><p>最后一个问题是和 <code>Swap</code> 接口有关。有些接口流程里，我们会用Swap来减少不必要的复制。常见的地方比如在dispatcher层（有些框架叫 executor）来解包后处理一些前置信息，完了之后透传部分数据到业务层。这时候就经常用 <code>Swap</code> 接口来减少不必要的复制。但是开启了Arena之后，生成的代码就变成了如下形式:</p><pre><code class=language-cpp>// .pb.h
+</code></pre>
+<h2 id=swap退化成copy>Swap退化成Copy</h2>
+<p>最后一个问题是和 <code>Swap</code> 接口有关。有些接口流程里，我们会用Swap来减少不必要的复制。常见的地方比如在dispatcher层（有些框架叫 executor）来解包后处理一些前置信息，完了之后透传部分数据到业务层。这时候就经常用 <code>Swap</code> 接口来减少不必要的复制。但是开启了Arena之后，生成的代码就变成了如下形式:</p>
+<pre><code class=language-cpp>// .pb.h
 inline void Swap(ConstSettingsType* other) {
   if (other == this) return;
   if (GetArena() == other-&gt;GetArena()) {
@@ -169,8 +253,10 @@ void GenericSwap(Message* m1, Message* m2) {
   m1-&gt;CheckTypeAndMergeFrom(*m2);
   m2-&gt;GetReflection()-&gt;Swap(tmp, m2);
 }
-</code></pre><p>可以看到，<strong>在所属的Arena不同的时候 <code>Swap</code> 函数实际执行了两次Copy和一次创建Message，这种时候还不如直接Copy</strong> 。
-基于此，我们原来为了编译期检查一下Copy的protobuf message的类型提供了 <code>protobuf_copy_message</code> 函数来代替直接 <code>CopyFrom</code> ， 现在又额外提供了 <code>protobuf_move_message</code> 来处理这种转移数据的 <code>Swap</code> 调用。</p><pre><code class=language-cpp>// protobuf_copy_message
+</code></pre>
+<p>可以看到，<strong>在所属的Arena不同的时候 <code>Swap</code> 函数实际执行了两次Copy和一次创建Message，这种时候还不如直接Copy</strong> 。
+基于此，我们原来为了编译期检查一下Copy的protobuf message的类型提供了 <code>protobuf_copy_message</code> 函数来代替直接 <code>CopyFrom</code> ， 现在又额外提供了 <code>protobuf_move_message</code> 来处理这种转移数据的 <code>Swap</code> 调用。</p>
+<pre><code class=language-cpp>// protobuf_copy_message
 template &lt;class TMsg&gt;
 inline void protobuf_copy_message(TMsg &amp;dst, const TMsg &amp;src) {
     dst.CopyFrom(src);
@@ -221,11 +307,104 @@ inline void protobuf_move_message(::google::protobuf::RepeatedPtrField&lt;TField
 
     src.Clear();
 }
-</code></pre><h2 id=写在最后>写在最后</h2><p>目前的碰到的问题基本就这么多了，近期的 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 大版本更新对Arena还有一些改进，其中包含对 <code>std::string</code> 类型的特殊处理和在Arena上分配Map时的一处 <strong>use-after-destroy bug</strong> ，避开使用就好了。</p><blockquote><p>以上代码使用 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 3.13.0 版本。在 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 3.14.0 版本之前，要开启C++ Arena接口要在proto的文件级选项里加上 <code>option cc_enable_arenas = true;</code> 。</p></blockquote></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2020-11-10T16:35:33.000+00:00 itemprop=datePublished>2020-11-10</time></span>
-<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/protobuf.html>protobuf</a></li><li class=article-tag-list-item><a href=//owent.net/tags/arena.html>arena</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2021/2101.html>上一篇<strong>基于protobuf的代码生成</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2020/2008.html>下一篇<strong>Amazon Aurora DB存储引擎论文阅读小记</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier='2009'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+</code></pre>
+<h2 id=写在最后>写在最后</h2>
+<p>目前的碰到的问题基本就这么多了，近期的 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 大版本更新对Arena还有一些改进，其中包含对 <code>std::string</code> 类型的特殊处理和在Arena上分配Map时的一处 <strong>use-after-destroy bug</strong> ，避开使用就好了。</p>
+<blockquote>
+<p>以上代码使用 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 3.13.0 版本。在 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 3.14.0 版本之前，要开启C++ Arena接口要在proto的文件级选项里加上 <code>option cc_enable_arenas = true;</code> 。</p>
+</blockquote>
+</div>
+<hr>
+<footer class=article-footer>
+<div class="article-panel-footer article-meta article-footer clearfix">
+<span class=article-meta-left>
+<ol>
+<li><a href=//owent.net/categories/article.html>Article</a></li>
+<li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li>
+</ol>
+</span>
+<span class=article-meta-right><time datetime=2020-11-10T16:35:33.000+00:00 itemprop=datePublished>2020-11-10</time></span>
+<span class=clearfix></span>
+</div>
+<div class=article-tags>
+<ul class=article-tag-list>
+<li class=article-tag-list-item><a href=//owent.net/tags/protobuf.html>protobuf</a></li>
+<li class=article-tag-list-item><a href=//owent.net/tags/arena.html>arena</a></li>
+</ul>
+</div>
+</footer>
+</div>
+<hr>
+<nav id=article-nav>
+<ul class=pagination>
+<li class=page-item>
+<a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2021/2101.html>
+上一篇<strong>基于protobuf的代码生成</strong>
+</a>
+</li>
+<li class=page-item>
+<a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2020/2008.html>
+下一篇<strong>Amazon Aurora DB存储引擎论文阅读小记</strong>
+</a>
+</li>
+</ul>
+</nav>
+<hr>
+<section id=comments>
+<div id=disqus_thread></div>
+<script type=text/javascript>var disqus_config=function(){this.page.identifier='2009'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script>
+<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
+</section>
+</div>
+</article></div>
+</section></div>
+<footer id=footer>
+<div class=outer>
+<div id=footer-info class="inner clearfix">
+<strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
 2021
-OWenT</strong>
-<strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+OWenT
+</strong>
+<strong id=footer-right class="float-right float-end">
+<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
-主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
-<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script><script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cpp.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/capnproto.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cmake.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/d.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/diff.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dos.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/erlang.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/go.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/less.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/lua.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/php.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/powershell.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/protobuf.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/python.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/profile.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/typescript.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script><script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script><script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script><script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script><script type=text/javascript src=//unpkg.com/chart.js@latest/dist/Chart.min.js></script><script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script></div></body></html>
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong>
+<span class=clearfix></span>
+</div>
+</div>
+</footer>
+</div>
+<script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cpp.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/capnproto.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cmake.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/d.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/diff.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dos.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/erlang.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/go.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/less.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/lua.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/php.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/powershell.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/protobuf.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/python.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/profile.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/typescript.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script>
+<script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
+<script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script>
+<script type=text/javascript src=//unpkg.com/chart.js@latest/dist/Chart.min.js></script>
+<script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script>
+</div>
+</body></html>
