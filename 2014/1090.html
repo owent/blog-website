@@ -118,7 +118,7 @@
 <p>不过不得不说，ZeroMQ确实把通信模式总结得非常好，支持请求-回应模式、发布-订阅模式、路由消息等。而且它的上层API完成了一个非常重要的功能，就是使用zmq的ROUTER sock可以把接收方路由节点可以收敛到一个端点上。</p>
 <p>但是它的面向消息的设计带来一个问题就是，逻辑过于重了。特别是它的很多模式都是基于<em>同步操作</em>的，而且<strong>弱化了连接</strong>的概念。在要构建服务器的需要的异步操作里不得不用一些底层的操作，并且它的通信模式对消息内容还有些<strong>潜规则</strong>（比如REQ消息会有一个节点名称包头和一个空包头、路由消息会有一个节点名称包头等）</p>
 <p>另一个问题就是跨进程通信只支持网络socket和Unix socket。虽然ZeroMQ内部<strong>提供了命名节点的失败重发</strong>机制，但是仍然避免不了<strong>进程崩溃会导致包丢失</strong>的问题。</p>
-<p>再一个问题就是即便使用Unix socket，性能还是比共享内存差不少。在写这篇博文前我按照前面第二种通信模式写了一个对<strong>zeromq的压力测试</strong>，具体代码可见这里<a href=https://gist.github.com/owt5008137/72c3fd5f4bb63a863641>https://gist.github.com/owt5008137/72c3fd5f4bb63a863641</a>。压测结果在这里<a href=http://api.owent.net/resource/doc/link/zerqmq%20%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E6%8A%A5%E5%91%8A.xlsx>http://api.owent.net/resource/doc/link/zerqmq%20%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E6%8A%A5%E5%91%8A.xlsx</a>。</p>
+<p>再一个问题就是即便使用Unix socket，性能还是比共享内存差不少。在写这篇博文前我按照前面第二种通信模式写了一个对<strong>zeromq的压力测试</strong>，具体代码可见这里<a href=https://gist.github.com/owent/72c3fd5f4bb63a863641>https://gist.github.com/owent/72c3fd5f4bb63a863641</a>。压测结果在这里<a href=http://api.owent.net/resource/doc/link/zerqmq%20%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E6%8A%A5%E5%91%8A.xlsx>http://api.owent.net/resource/doc/link/zerqmq%20%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E6%8A%A5%E5%91%8A.xlsx</a>。</p>
 <p>相对与前面共享内存通信而言，<em><strong>大消息包时性能和前面的接近，小消息包时大约是前面共享内存性能的二分之一到三分之一</strong></em>。而游戏进程间通信的消息体大多数情况下不大。</p>
 <p>不过我个人觉得，最重要的问题还是消息的可靠性问题。</p>
 <h2 id=开源bus组件--dbushttpenwikipediaorgwikid-busdbus>开源BUS组件- <a href=http://en.wikipedia.org/wiki/D-Bus>D—Bus</a><sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup></h2>

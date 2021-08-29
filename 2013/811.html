@@ -725,7 +725,7 @@ posix::stream_descriptor out(my_io_service, ::dup(STDOUT_FILENO));</p>
 <li>测试结果: 5000-8000连接，每秒收到约320K个报文，7MB流量，每秒发送约320K个报文，12MB流量， CPU 负载: 180%(5000连接) – 195% (8000连接)</li>
 </ul>
 <p>结论： 不知道为什么，压力再也上不去了， 我是把输出重定向到文件的，所以开始以为是磁盘IO爆了，写出日志次数太多，但是gperftools显示磁盘IO占用并不高，性能分布还是比较平均的。但是基本上就在16万个报文了(每个包有一次发送长度的包[4字节]和一次数据的send[不定长])</p>
-<p>测试代码地址： <a href=https://gist.github.com/owt5008137/5660983>https://gist.github.com/owt5008137/5660983</a>
+<p>测试代码地址： <a href=https://gist.github.com/owent/5660983>https://gist.github.com/owent/5660983</a>
 profile性能分析报告: <a href=http://api.owent.net/resource/doc/link/test.asio.pdf>http://api.owent.net/resource/doc/link/test.asio.pdf</a></p>
 <p>主要就是这个样子，一些更底层的东西比如srand可以以后再看( * ^ _ ^ * )</p>
 </div>

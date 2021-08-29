@@ -58,10 +58,10 @@
 </nav></div><br>
 <div class=article-entry itemprop=articleBody><h1 id=libcopp更新-merge-boost-159-context>libcopp更新 (merge boost 1.59 context)</h1>
 <p>之前由于兴趣写了一个<a href=https://www.owent.net/2014/1000.html>协程框架</a>，目前这个框架已经投入项目中使用。</p>
-<p>这个框架的上下文部分是使用了<a href=http://www.boost.org/doc/libs/1_59_0/libs/context>boost.context</a>，但是从开始写<a href=https://github.com/owt5008137/libcopp>libcopp</a>到现在，boost.context也更新了几个版本。而之前几次merge基本都是简单地跟进了<em>make_fcontext</em>和<em>jump_fcontext</em>两个函数，这次就再稍微翻了一遍其他部分的代码。</p>
+<p>这个框架的上下文部分是使用了<a href=http://www.boost.org/doc/libs/1_59_0/libs/context>boost.context</a>，但是从开始写<a href=https://github.com/owent/libcopp>libcopp</a>到现在，boost.context也更新了几个版本。而之前几次merge基本都是简单地跟进了<em>make_fcontext</em>和<em>jump_fcontext</em>两个函数，这次就再稍微翻了一遍其他部分的代码。</p>
 <h2 id=boostcontext的变化>boost.context的变化</h2>
 <p>首先是它在非windows栈分配的时候，增加了valgrind的适配。不过boost.context里的不同平台的栈缓冲区其实结构差不多，但是boost的实现里给复制粘贴了很多遍，所以我就干脆把这些地方合并啦。减少了一些重复代码。</p>
-<p>从1.58开始，boost.context增加了一个东东叫<strong>execute_context</strong>。看了下定位基本就是和我的<a href=https://github.com/owt5008137/libcopp>libcopp</a>里的<strong>copp</strong>部分（也就是不包括<strong>cotask</strong>）一样。但是它实现地比较简单，不像<strong>copp</strong>，<strong>execute_context</strong>的执行回调直接使用了<em>boost::function</em>,而<strong>copp</strong>里另外定义了一个<em>runner</em>。</p>
+<p>从1.58开始，boost.context增加了一个东东叫<strong>execute_context</strong>。看了下定位基本就是和我的<a href=https://github.com/owent/libcopp>libcopp</a>里的<strong>copp</strong>部分（也就是不包括<strong>cotask</strong>）一样。但是它实现地比较简单，不像<strong>copp</strong>，<strong>execute_context</strong>的执行回调直接使用了<em>boost::function</em>,而<strong>copp</strong>里另外定义了一个<em>runner</em>。</p>
 <p>不过从实现上来说，<strong>boost.context</strong>做了一个优化，就是把<em>runner</em>的<em>boost::function<em>直接放进了分配的栈里，减少了一次内存分配的操作，这么做的缺点就是，每个<strong>execute_context</strong>的创建，都必须复制调仿函数，如果仿函数复制会造成其他复制开销的话，那也是不可避免的。而<strong>copp</strong>的设计则是每个<strong>coroutine_context_container</strong>。都需要指定</em>runner</em>，而这些<em>runner</em>是可以被多个<strong>coroutine_context_container</strong>共享的。</p>
 <p>在我们目前项目的使用上，会针对不同的消息类型定义一个处理的task。每次收到消息都会创建一个协程任务（对应有一个<strong>coroutine_context_container</strong>），但是处理的调用对象（就是task的action）对于某一种特定消息来说是唯一的。可以直接预创建，而不是每次收到消息的时候重新创建。所以<strong>copp</strong>的方式显然更适合我们的需求。</p>
 <p>另外<strong>execute_context</strong>和<strong>copp</strong>一样，提供了获取当前执行对象的功能。并且实现方法都一样，是使用了thread local storage。不过有一点不同的是，<strong>boost.context</strong>直接使用了c++11的关键字，而我的<strong>libcopp</strong>中是会根据环境选择的。因为在使用过程中，我们发现有些平台或者环境不支持线程本地存储，比如Android。所以在这些平台中，<strong>boost.context</strong>的<strong>execute_context</strong>会不可用，而<strong>libcopp</strong>只是不能多线程运行。</p>
@@ -70,7 +70,7 @@
 <p><strong>PS</strong>: boost的汇编里默默地把一个系统宏换成了带BOOST_前缀的宏，然后由环境检测工具来判断是否追加这个宏。差点漏掉的说。</p>
 </blockquote>
 <h2 id=变更列表>变更列表</h2>
-<p><a href=https://github.com/owt5008137/libcopp>libcopp</a>的近期的变动如下：</p>
+<p><a href=https://github.com/owent/libcopp>libcopp</a>的近期的变动如下：</p>
 <ol>
 <li>跟进上下文初始化和切换的汇编代码更新</li>
 <li>跟进增加了pe下的gnu as支持的上下文汇编支持（但是貌似不太正常）</li>

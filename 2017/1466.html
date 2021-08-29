@@ -61,7 +61,7 @@
 <li><a href=#初步成果>初步成果</a></li>
 </ul>
 </nav></div><br>
-<div class=article-entry itemprop=articleBody><p>之前测出来<a href=https://github.com/owt5008137/libcopp>libcopp</a>还有一些列优化点，但是要破坏之前的API，所以整理了一下优化的想法和方案。</p>
+<div class=article-entry itemprop=articleBody><p>之前测出来<a href=https://github.com/owent/libcopp>libcopp</a>还有一些列优化点，但是要破坏之前的API，所以整理了一下优化的想法和方案。</p>
 <h2 id=预留空间和合并分配>预留空间和合并分配</h2>
 <p>之前有太多的堆内存分配了，导致很多碎片。那么第一个想法就是协程对象可以分配在栈上，runner也可以分配在栈上。然后还可以加一个自定义预留长度。每个对象对齐到sizeof(long)，总长度对齐到64 Bytes。</p>
 <p>然后暴露出一个很小的足够编译优化时放进寄存器的对象，直接拷贝这个对象来传递协程（类似boost.context的continuation）。</p>
@@ -78,7 +78,7 @@
 <p>我和<a href=https://github.com/yuanzhubi/call_in_stack>call_in_stack</a>的作者聊了聊，有不少收获。但是他使用的避免return stack buffer失效方法我感觉有点暴力了，直接重定义掉了ret的汇编指令。这种怕是跨架构并且和后面各种编译器行为和编译优化相关性都很强。虽然说效果很明显，但是我觉得还是要放弃这种实现。不过关于缓存命中率的问题倒是可以加入一个随机长度的栈起始offset来解决。现在很多CPU的L1 cache都是32KB，然后4-8路。所以保险点的话大约有64-128ways吧。反正如果是64的话，64和0是一样的，所以可以offset从*(0-127) &#171; 3*，然后就可以命中在不同的cache line上了。</p>
 <p>但是后来我测试的时候发现，其实在第一项优化之后，由于不同的cotask（包括其内部的协程上下文和task runner）的地址间隔比较远。导致<em><strong>L1 Cache Read Miss</strong></em>增高，反而实际切换开销增大了。但是实际使用过程中，协程内部的逻辑应该会更容易导致切换时的<em><strong>L1 Cache Read Miss</strong></em>，所以这个数值应该更具有参考意义。在这种情况下，那个带offset的减少cache miss的优化根本上没有效果，所以后来又去除了。</p>
 <h2 id=减少原子操作>减少原子操作</h2>
-<p>之前写<a href=https://github.com/owt5008137/libcopp>libcopp</a> merge boost 1.64和相关优化的blog里有提到这一点。主要是原子操作会导致cache miss。原来由于是用智能指针来维护生命周期，很容易传递这个协程的时候发生原子操作，另外就是每次切换上下文前，由于要检查状态，都避免不了一次load、一次CAS和一次restore。然后cotask要做一次这个操作，copp也要做一次。然后在当时的测试里，使用的是栈池，而栈池为了保证线程安全，又有一次splin lock的加锁和解锁。这导致cotask的开销比copp多了40+ns。而精简的情况下，协程操作才70ns左右。这就增加了非常多了。</p>
+<p>之前写<a href=https://github.com/owent/libcopp>libcopp</a> merge boost 1.64和相关优化的blog里有提到这一点。主要是原子操作会导致cache miss。原来由于是用智能指针来维护生命周期，很容易传递这个协程的时候发生原子操作，另外就是每次切换上下文前，由于要检查状态，都避免不了一次load、一次CAS和一次restore。然后cotask要做一次这个操作，copp也要做一次。然后在当时的测试里，使用的是栈池，而栈池为了保证线程安全，又有一次splin lock的加锁和解锁。这导致cotask的开销比copp多了40+ns。而精简的情况下，协程操作才70ns左右。这就增加了非常多了。</p>
 <p>所以减少原子操作，一方面是要简化cotask和copp里的两次，可以优化成一次。另外可以开启一个非线程安全选项，这时候吧原子整数换成普通整数。因为我们游戏进程里都是单线程的服务，这种开销也不需要。</p>
 <h2 id=右值引用>右值引用</h2>
 <p>本来大部分逻辑是可以用简单的方法，无视掉低量的复制消耗的。但是随着原子操作的消耗增加，我们就不得不注意类似智能指针复制导致的这种原子开销。所以就得更加智能地判定编译器并且使用右值，因为使用右值转移智能指针的话，不涉及计数器的增减，所以也就没有这个开销。</p>
@@ -259,7 +259,7 @@ remove 30000 tasks, cost time: 0 s, clock time: 13 ms, avg: 433 ns
 </code></pre>
 <p>这是CI里Linux上的结果，osx和windows上的结果就不贴了，都没linux上的数据好，不过相差不大。</p>
 <p>这一批优化过后，其实切换性能并没有提高，反而下降了，我查了一下是原先对read的L1 cache命中率也比较高，但是现在下降了。不过我认为这种miss的情况可能更能说明问题，因为现在是几乎0逻辑，一旦有逻辑之后也容易增加cache miss。究其原因，应该是新的组织方式把一个协程（特别是task）的维护数据放在了栈上，那么切换的时候切换地址就会比较遥远。而之前的方式，只要多个协程对象靠得近，而协程对象又足够小（task对象里的数据比较大，但是coroutine里的比较小），因为只有压测代码，所以new的时候malloc一般会把类似大小的对象放一起，这也增加了命中率。但是实际应用的话，必然中间会插入很多其他对象的，所以这个情况也会不贴近实际场景。但是另一方面，v2的优化也使得在使用栈池的情况下，分配开销被大幅降低了，我们的项目里由于开始需要大量的定时器，定时器回调的时候也需要在协程内进行，这也给大量定时器的触发的时候提供了更好的支持和保障。</p>
-<p>不过我认为现在的v2任然有可以再优化的地方，本来想在优化完一波再放出这篇总结，但是一方面还没找到什么特别好的不破坏设计的点。另一方面最近看了下SSR-libev的源码，觉得他那种方式的适配的扩展性更好，所以后面可能回去优化服务器框架<a href=https://github.com/atframework/atsf4g-co>asf4g-co</a>的网关层部分，可能要有比较大的改动，改变密钥协商流程，让atgateway支持协商加密方式、更多的加密算法和支持椭圆双曲线协商。所以<a href=https://github.com/owt5008137/libcopp>libcopp</a>的优化暂时搁置吧，不过以后会主要以v2版本的api为准，基本不会再变更接口了吧。</p>
+<p>不过我认为现在的v2任然有可以再优化的地方，本来想在优化完一波再放出这篇总结，但是一方面还没找到什么特别好的不破坏设计的点。另一方面最近看了下SSR-libev的源码，觉得他那种方式的适配的扩展性更好，所以后面可能回去优化服务器框架<a href=https://github.com/atframework/atsf4g-co>asf4g-co</a>的网关层部分，可能要有比较大的改动，改变密钥协商流程，让atgateway支持协商加密方式、更多的加密算法和支持椭圆双曲线协商。所以<a href=https://github.com/owent/libcopp>libcopp</a>的优化暂时搁置吧，不过以后会主要以v2版本的api为准，基本不会再变更接口了吧。</p>
 </div>
 <hr>
 <footer class=article-footer>

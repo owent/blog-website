@@ -203,7 +203,7 @@ ASK跳转还有一个特别的步骤是客户端先要发送一个<strong>ASKING
 <p>整体上最重要的思路就是用主循环来简化逻辑复杂度。而主循环增加的那部分CPU消耗几乎可以忽略，不过这种异步传参方式对应着大量的malloc操作，以后看需要可以优化成c++ allocator的机制，这样就能支持自定义内存池。</p>
 <p>流程图中建立连接后的命令发送流程比较特别，因为hiredis的异步发送接口是向缓冲区中添加数据，并且等fd可写后才实际执行，所以可以不等connect完成就直接调用发送接口。</p>
 <p>另外Cluster更新服务器连接池的方式比较讨巧，既能避免频繁更新地址池，又可以及时更新Slot缓存，需要注意一下。</p>
-<p>以上思路我会先在 <a href=https://github.com/owt5008137/hiredis-happ>https://github.com/owt5008137/hiredis-happ</a> 中进行实现和测试，然后用于生产环境。</p>
+<p>以上思路我会先在 <a href=https://github.com/owent/hiredis-happ>https://github.com/owent/hiredis-happ</a> 中进行实现和测试，然后用于生产环境。</p>
 <blockquote>
 <p>Written with <a href=https://stackedit.io/>StackEdit</a>.</p>
 </blockquote>

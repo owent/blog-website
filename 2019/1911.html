@@ -160,7 +160,7 @@
 </tbody>
 </table>
 <h2 id=测试代码>测试代码</h2>
-<p><a href=https://en.cppreference.com/w/cpp/language/coroutines>C++20 Coroutine</a> 上手比较麻烦，所以测试代码那是真滴长。 <code>co_await</code> 的原理和 <code>co_yield</code> 是一样的，只是 <code>co_await</code> 多了一点点对封装类似 <a href=https://github.com/owt5008137/libcopp>libcotask</a> 的支持，单纯的上下文切换仅使用 <code>co_yield</code> 就可以了。这样也更能公平地拿来和其他几个协程库对比。</p>
+<p><a href=https://en.cppreference.com/w/cpp/language/coroutines>C++20 Coroutine</a> 上手比较麻烦，所以测试代码那是真滴长。 <code>co_await</code> 的原理和 <code>co_yield</code> 是一样的，只是 <code>co_await</code> 多了一点点对封装类似 <a href=https://github.com/owent/libcopp>libcotask</a> 的支持，单纯的上下文切换仅使用 <code>co_yield</code> 就可以了。这样也更能公平地拿来和其他几个协程库对比。</p>
 <p>Clang编译命令: <code>$LLVM_CLANG_PREFIX/bin/clang++ -std=c++2a -O2 -g -ggdb -stdlib=libc++ -fcoroutines-ts -lc++ -lc++abi -Wl,-rpath=$LLVM_CLANG_PREFIX/lib/ test.cpp</code></p>
 <p>MSVC编译命令: <code>cl /nologo /O2 /std:c++latest /Zi /MDd /Zc:__cplusplus /EHsc /await test.cpp</code></p>
 <pre><code class=language-cpp>#include &lt;cstdio&gt;
@@ -424,7 +424,7 @@ int main(int argc, char* argv[]) {
 }
 
 </code></pre>
-<p>其他库的测试代码在 <a href=https://gist.github.com/owt5008137/1842b56ac1edd5a7db54590d41af1c44>https://gist.github.com/owt5008137/1842b56ac1edd5a7db54590d41af1c44</a></p>
+<p>其他库的测试代码在 <a href=https://gist.github.com/owent/1842b56ac1edd5a7db54590d41af1c44>https://gist.github.com/owent/1842b56ac1edd5a7db54590d41af1c44</a></p>
 <h2 id=测试结果及对比>测试结果及对比</h2>
 <table>
 <thead>
@@ -456,8 +456,8 @@ int main(int argc, char* argv[]) {
 </tr>
 </tbody>
 </table>
-<p>C++20 裸测试的性能真是非常夸张地高，基本上性能已经赶上 <a href=https://github.com/yuanzhubi/call_in_stack>call_in_stack</a> 这种对分支预测做优化的版本，并且还有不错的灵活性。这里性能测试的结果很好看一方面是 <code>coroutine_handle&lt;T></code> 的成员是个指针，再里面的管理上下文的部分我没法控制它的实现，所以没法模拟cache miss。另一方面也是由于它是使用operator new并且分析调用的函数需要多少栈来分配栈空间的，这样不会有内存缺页的问题（因为和其他的逻辑共享内存块），而且地址空间使用量也很小并且是按需分配的，也减少了系统调用的次数。还有一点影响比较大的是这次测试的C++20 Coroutine的代码全部是非线程安全的。而 <a href=https://github.com/owt5008137/libcopp>libcopp</a> 在实际应用中是搭配上了线程安全检查和一些防止误用的状态检查的，全是atomic操作，甚至 <a href=https://owent.net/2019/1904.html>libgo</a> 那种加锁的线程安全的检查，性能会会受到一定影响。如果在实际应用C++20 Coroutine的时候也加上这些检查，估计性能会下降几倍，但是应该还是会比现在的成熟方案要快一些。</p>
-<p>不过现阶段 <a href=https://owent.net/2019/1904.html>《C++20 Coroutine》</a> 使用上还有些限制，所有使用 <code>co_await</code> 或者 <code>co_yield</code> 的函数返回值必须有 promise_type 。 也就是说如果嵌套使用或者递归调用的话不能直接用上层的协程对象，一旦出现嵌套使用只能 <code>co_await</code> 然后新创建一个协程对象。比如调用链 <code>func1()->func2()->func3()->func4()</code> ， 如果 func1 和 func4 是需要使用协程调用，要么得 func2 和 func3 也实现成协程，然后 func1 里 <code>co_await func2()</code> , 要么 func2 和 func3 把 func4 产生的 <code>awaitable</code> 对象透传回来，然后由 func1 来 <code>co_await func2().awaitable</code> 。 也就是说 func2 和 func3 对 func4 不能完全透明。这是 <a href=https://owent.net/2019/1904.html>《C++20 Coroutine》</a> 比不上 <a href=https://github.com/owt5008137/libcopp>libcopp</a> 的地方。 这也是我前段时间思考给 <a href=https://github.com/owt5008137/libcopp>libcopp</a> 接入 <a href=https://owent.net/2019/1904.html>《C++20 Coroutine》</a> 做Context管理的最大困难。</p>
+<p>C++20 裸测试的性能真是非常夸张地高，基本上性能已经赶上 <a href=https://github.com/yuanzhubi/call_in_stack>call_in_stack</a> 这种对分支预测做优化的版本，并且还有不错的灵活性。这里性能测试的结果很好看一方面是 <code>coroutine_handle&lt;T></code> 的成员是个指针，再里面的管理上下文的部分我没法控制它的实现，所以没法模拟cache miss。另一方面也是由于它是使用operator new并且分析调用的函数需要多少栈来分配栈空间的，这样不会有内存缺页的问题（因为和其他的逻辑共享内存块），而且地址空间使用量也很小并且是按需分配的，也减少了系统调用的次数。还有一点影响比较大的是这次测试的C++20 Coroutine的代码全部是非线程安全的。而 <a href=https://github.com/owent/libcopp>libcopp</a> 在实际应用中是搭配上了线程安全检查和一些防止误用的状态检查的，全是atomic操作，甚至 <a href=https://owent.net/2019/1904.html>libgo</a> 那种加锁的线程安全的检查，性能会会受到一定影响。如果在实际应用C++20 Coroutine的时候也加上这些检查，估计性能会下降几倍，但是应该还是会比现在的成熟方案要快一些。</p>
+<p>不过现阶段 <a href=https://owent.net/2019/1904.html>《C++20 Coroutine》</a> 使用上还有些限制，所有使用 <code>co_await</code> 或者 <code>co_yield</code> 的函数返回值必须有 promise_type 。 也就是说如果嵌套使用或者递归调用的话不能直接用上层的协程对象，一旦出现嵌套使用只能 <code>co_await</code> 然后新创建一个协程对象。比如调用链 <code>func1()->func2()->func3()->func4()</code> ， 如果 func1 和 func4 是需要使用协程调用，要么得 func2 和 func3 也实现成协程，然后 func1 里 <code>co_await func2()</code> , 要么 func2 和 func3 把 func4 产生的 <code>awaitable</code> 对象透传回来，然后由 func1 来 <code>co_await func2().awaitable</code> 。 也就是说 func2 和 func3 对 func4 不能完全透明。这是 <a href=https://owent.net/2019/1904.html>《C++20 Coroutine》</a> 比不上 <a href=https://github.com/owent/libcopp>libcopp</a> 的地方。 这也是我前段时间思考给 <a href=https://github.com/owent/libcopp>libcopp</a> 接入 <a href=https://owent.net/2019/1904.html>《C++20 Coroutine》</a> 做Context管理的最大困难。</p>
 <p>我们拿之前 <a href=https://owent.net/2018/1806.html>《协程框架(libcopp)v2优化、自适应栈池和同类库的Benchmark对比》</a> 对比过的其他库放一起来看：</p>
 <table>
 <thead>
@@ -496,7 +496,7 @@ int main(int argc, char* argv[]) {
 <td>28 ns</td>
 </tr>
 <tr>
-<td><a href=https://github.com/owt5008137/libcopp>libcopp</a></td>
+<td><a href=https://github.com/owent/libcopp>libcopp</a></td>
 <td>34 ns</td>
 <td>4.1 us</td>
 <td>80 ns</td>
@@ -504,7 +504,7 @@ int main(int argc, char* argv[]) {
 <td>223 ns</td>
 </tr>
 <tr>
-<td><a href=https://github.com/owt5008137/libcopp>libcopp+动态栈池</a></td>
+<td><a href=https://github.com/owent/libcopp>libcopp+动态栈池</a></td>
 <td>32 ns</td>
 <td>96 ns</td>
 <td>77 ns</td>
@@ -512,7 +512,7 @@ int main(int argc, char* argv[]) {
 <td>213 ns</td>
 </tr>
 <tr>
-<td><a href=https://github.com/owt5008137/libcopp>libcopp+libcotask</a></td>
+<td><a href=https://github.com/owent/libcopp>libcopp+libcotask</a></td>
 <td>50 ns</td>
 <td>4.1 us</td>
 <td>141 ns</td>
@@ -520,7 +520,7 @@ int main(int argc, char* argv[]) {
 <td>389 ns</td>
 </tr>
 <tr>
-<td><a href=https://github.com/owt5008137/libcopp>libcopp+libcotask+动态栈池</a></td>
+<td><a href=https://github.com/owent/libcopp>libcopp+libcotask+动态栈池</a></td>
 <td>49 ns</td>
 <td>134 ns</td>
 <td>134 ns</td>

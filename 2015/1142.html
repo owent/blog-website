@@ -98,11 +98,11 @@
 </ul>
 <h1 id=新增的开源项目>新增的开源项目</h1>
 <ol>
-<li><a href=https://github.com/owt5008137/WP-Code-Highlight.js>WP Code Highlight.js</a></li>
+<li><a href=https://github.com/owent/WP-Code-Highlight.js>WP Code Highlight.js</a></li>
 <li><a href=https://github.com/atframework/libatbus>libatbus</a></li>
 <li><a href=https://github.com/xresloader/xresloader>xresloader</a></li>
-<li><a href=https://github.com/owt5008137/libiniloader>libiniloader</a></li>
-<li><a href=https://github.com/owt5008137/client-debuger>client-debuger</a></li>
+<li><a href=https://github.com/owent/libiniloader>libiniloader</a></li>
+<li><a href=https://github.com/owent/client-debuger>client-debuger</a></li>
 </ol>
 <h1 id=2014年的规划完成情况>2014年的规划完成情况</h1>
 <ul>
@@ -117,8 +117,8 @@
 <p>其实还是有很多平常研究的小东西应为时间原因并没有记上来，比如学习python之余大体看了一下hadoop和spark怎么用，并且试着用python+spark写了个日志分析的工具。</p>
 <p>研究vpn的时候顺便把家里的路由器玩了一番。刷了几种开源系统，架设自动翻墙代理，甚至刷坏系统以后，淘宝买了个TTL模块焊接到路由器上，有点玩硬件的感觉。但实际上我也没深入研究，没有交叉编译系统或者软件，都是用得别人弄好的现成的东西。</p>
 <p>今年在项目大量使用<a href=http://cmake.org/>cmake</a>以后，我也开始编写一些<a href=http://cmake.org/>cmake</a>的通用模块，但是现在还没有搞得很成熟，所以也暂时没分享出来。</p>
-<p>其实c++方面，之前搞<a href=https://github.com/owt5008137/libcopp>libcopp</a>的时候想研究下<a href=http://gcc.gnu.org/>gcc</a>是怎么做动态栈的，然后加一个最大动态栈限制、然后让老的<a href=http://gcc.gnu.org/>gcc</a>版本使用<a href=https://github.com/owt5008137/libcopp>libcopp</a>的时候也能使用动态栈，甚至vc也能用。逐步看了些源码之后发现和abi有关，挺复杂的就作罢了。</p>
-<p>web方面我开始用<a href=http://zh.wikipedia.org/zh/Markdown>markdown</a>来写作，主要是找到几个不错的工具，<a href=http://gaccob.com/>gaccob</a>同时向我介绍了<a href=http://zh.wikipedia.org/zh/LaTeX>latex</a>，我试了一下发现虽然功能很强大，但是过于复杂了，像我这种写blog又不是写书的，用起来还是不方便。所以最终还是转向<a href=http://zh.wikipedia.org/zh/Markdown>markdown</a>，然后wordpress使用<a href=http://zh.wikipedia.org/zh/Markdown>markdown</a>代码高亮没有太好的方案，于是<a href=https://github.com/owt5008137/WP-Code-Highlight.js>WP Code Highlight.js</a> 项目就诞生了。但是我以前写的文章都是用<a href=http://alexgorbatchev.com/SyntaxHighlighter/>SyntaxHighlighter</a>来高亮的，我又很懒不愿写工具转已发布的文章内容，所以做了对<a href=http://alexgorbatchev.com/SyntaxHighlighter/>SyntaxHighlighter</a>和<a href=https://code.google.com/p/google-code-prettify/>prettify</a>的兼容。</p>
+<p>其实c++方面，之前搞<a href=https://github.com/owent/libcopp>libcopp</a>的时候想研究下<a href=http://gcc.gnu.org/>gcc</a>是怎么做动态栈的，然后加一个最大动态栈限制、然后让老的<a href=http://gcc.gnu.org/>gcc</a>版本使用<a href=https://github.com/owent/libcopp>libcopp</a>的时候也能使用动态栈，甚至vc也能用。逐步看了些源码之后发现和abi有关，挺复杂的就作罢了。</p>
+<p>web方面我开始用<a href=http://zh.wikipedia.org/zh/Markdown>markdown</a>来写作，主要是找到几个不错的工具，<a href=http://gaccob.com/>gaccob</a>同时向我介绍了<a href=http://zh.wikipedia.org/zh/LaTeX>latex</a>，我试了一下发现虽然功能很强大，但是过于复杂了，像我这种写blog又不是写书的，用起来还是不方便。所以最终还是转向<a href=http://zh.wikipedia.org/zh/Markdown>markdown</a>，然后wordpress使用<a href=http://zh.wikipedia.org/zh/Markdown>markdown</a>代码高亮没有太好的方案，于是<a href=https://github.com/owent/WP-Code-Highlight.js>WP Code Highlight.js</a> 项目就诞生了。但是我以前写的文章都是用<a href=http://alexgorbatchev.com/SyntaxHighlighter/>SyntaxHighlighter</a>来高亮的，我又很懒不愿写工具转已发布的文章内容，所以做了对<a href=http://alexgorbatchev.com/SyntaxHighlighter/>SyntaxHighlighter</a>和<a href=https://code.google.com/p/google-code-prettify/>prettify</a>的兼容。</p>
 <p><a href=https://github.com/xresloader/xresloader>xresloader</a>是之前一直想做的转表工具，应为之前在公司用得转表工具配置好复杂，并且命令行版本很不好用，GUI版本一般般，还有很多很烦的编码问题，还拿不到源码。所以干脆重写一个。为了跨平台使用了java，效果不错。感觉性能一般，但是关键是跨平台而且开源哇。而且做了c++、lua、和pbc版本的读取器。还是比较爽的，有源码要拓展也是比较简单的。</p>
 <p>其他的项目纯粹是项目中碰到一个工具需求，那么写一个工具，这种模式，所以2014年的新开项目比较多。比较开心的是有人开始给我开源的项目推送request啦。</p>
 <h1 id=2015年的规划>2015年的规划</h1>

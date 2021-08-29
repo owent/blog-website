@@ -67,9 +67,9 @@
 </ul>
 </nav></div><br>
 <div class=article-entry itemprop=articleBody><h1 id=协程系统优化>协程系统优化</h1>
-<p><a href=https://github.com/owt5008137/libcopp>libcopp</a>很早就实现完成了v2版本，现在迁移进<a href=https://github.com/atframework/atsf4g-co/tree/sample_solution>atsf4g-co/tree/sample_solution</a>以后也把v2分支正式并入了主干。原来的版本切出到v1分支并且停止维护了。</p>
+<p><a href=https://github.com/owent/libcopp>libcopp</a>很早就实现完成了v2版本，现在迁移进<a href=https://github.com/atframework/atsf4g-co/tree/sample_solution>atsf4g-co/tree/sample_solution</a>以后也把v2分支正式并入了主干。原来的版本切出到v1分支并且停止维护了。</p>
 <h2 id=libcopp-v2内存布局>libcopp v2内存布局</h2>
-<p>开发<a href=https://github.com/owt5008137/libcopp>libcopp</a> v2版本的最大目的是优化allocator的接口和内存碎片。</p>
+<p>开发<a href=https://github.com/owent/libcopp>libcopp</a> v2版本的最大目的是优化allocator的接口和内存碎片。</p>
 <p>原来的allocator虽然是可定制的，但是是内置的。每次创建一个allocator对象，不同allocator之间共享数据只能通过全局数据或者TLS数据。现在则可以传入allocator了。这也是为后续的共享栈池做准备。</p>
 <p>其次就是优化结构布局以优化内存碎片问题。在v1版本里，一个很重要的设计要点是各项组件可拆卸，就是说一些设计模式层面的东西比如协程任务、任务管理、等待和依赖关系等是可选的。同时栈分配器也可以是多种选择，采用系统地址映射加保护帧、采用malloc或者自定义分配器。为了各项组件尽可能解耦和易于组合，模块间较少采用组合关系，较多采用了引用关系，原来的协程任务结构大致上是这样的。</p>
 <p><img src=1806-01.dot.png alt=1806-01.png></p>
@@ -158,7 +158,7 @@
 <td>64 KB</td>
 </tr>
 <tr>
-<td><a href=https://github.com/owt5008137/libcopp>libcopp</a></td>
+<td><a href=https://github.com/owent/libcopp>libcopp</a></td>
 <td>60 ns</td>
 <td>3.7 us</td>
 <td>91 ns</td>
@@ -166,7 +166,7 @@
 <td>239 ns</td>
 </tr>
 <tr>
-<td><a href=https://github.com/owt5008137/libcopp>libcopp+动态栈池</a></td>
+<td><a href=https://github.com/owent/libcopp>libcopp+动态栈池</a></td>
 <td>60 ns</td>
 <td>109 ns</td>
 <td>90 ns</td>
@@ -174,7 +174,7 @@
 <td>238 ns</td>
 </tr>
 <tr>
-<td><a href=https://github.com/owt5008137/libcopp>libcopp+libcotask</a></td>
+<td><a href=https://github.com/owent/libcopp>libcopp+libcotask</a></td>
 <td>79 ns</td>
 <td>4.2 us</td>
 <td>124 ns</td>
@@ -182,7 +182,7 @@
 <td>338 ns</td>
 </tr>
 <tr>
-<td><a href=https://github.com/owt5008137/libcopp>libcopp+libcotask+动态栈池</a></td>
+<td><a href=https://github.com/owent/libcopp>libcopp+libcotask+动态栈池</a></td>
 <td>80 ns</td>
 <td>246 ns</td>
 <td>126 ns</td>
@@ -259,11 +259,11 @@
 <p><a href=https://github.com/yyzybb537/libgo>libgo</a>的作者已经不再建议使用共享栈所以我们没有压测<a href=https://github.com/yyzybb537/libgo>libgo</a>的共享栈性能。<a href=https://github.com/yyzybb537/libgo>libgo</a>采用锁实现了线程安全，我们压测过程中没有启动多线程所以测试结果也不包含线程等待的消耗。</p>
 <p><a href=https://github.com/Tencent/libco>libco</a>仅支持静态栈池，并且静态栈池只是为了减少共享栈时的copy开销，所以<a href=https://github.com/Tencent/libco>libco</a>也分别对模拟栈使用量为4K、8K和32K时模拟栈池耗尽时的压力测试，可以看到栈使用量较大时，切换的memcpy开销较大。但是在工程中，<a href=https://github.com/Tencent/libco>libco</a>的栈池也不会只分配一个，所以项目中的真实消耗还是要看最终的命中率，如果栈池剩余量越大，性能更向第一组靠近，否则根据栈使用量向后面靠近。</p>
 <ul>
-<li>libcopp/libcotask测试代码：https://github.com/owt5008137/libcopp/tree/v2/sample</li>
-<li><a href=https://golang.org/>goroutine</a> 测试代码: <a href=https://gist.github.com/owt5008137/1842b56ac1edd5a7db54590d41af1c44#file-goroutine_benchmark-go>https://gist.github.com/owt5008137/1842b56ac1edd5a7db54590d41af1c44#file-goroutine_benchmark-go</a></li>
-<li><a href=https://github.com/Tencent/libco>libco</a> 测试代码: <a href=https://gist.github.com/owt5008137/1842b56ac1edd5a7db54590d41af1c44#file-libco_benchmark-cpp>https://gist.github.com/owt5008137/1842b56ac1edd5a7db54590d41af1c44#file-libco_benchmark-cpp</a></li>
-<li>ucontext 测试代码: <a href=https://gist.github.com/owt5008137/1842b56ac1edd5a7db54590d41af1c44#file-ucontext_benchmark-cpp>https://gist.github.com/owt5008137/1842b56ac1edd5a7db54590d41af1c44#file-ucontext_benchmark-cpp</a></li>
-<li><a href=https://github.com/yyzybb537/libgo>libgo</a> 测试代码: <a href=https://gist.github.com/owt5008137/1842b56ac1edd5a7db54590d41af1c44#file-libgo_benchmark-cpp>https://gist.github.com/owt5008137/1842b56ac1edd5a7db54590d41af1c44#file-libgo_benchmark-cpp</a></li>
+<li>libcopp/libcotask测试代码：https://github.com/owent/libcopp/tree/v2/sample</li>
+<li><a href=https://golang.org/>goroutine</a> 测试代码: <a href=https://gist.github.com/owent/1842b56ac1edd5a7db54590d41af1c44#file-goroutine_benchmark-go>https://gist.github.com/owent/1842b56ac1edd5a7db54590d41af1c44#file-goroutine_benchmark-go</a></li>
+<li><a href=https://github.com/Tencent/libco>libco</a> 测试代码: <a href=https://gist.github.com/owent/1842b56ac1edd5a7db54590d41af1c44#file-libco_benchmark-cpp>https://gist.github.com/owent/1842b56ac1edd5a7db54590d41af1c44#file-libco_benchmark-cpp</a></li>
+<li>ucontext 测试代码: <a href=https://gist.github.com/owent/1842b56ac1edd5a7db54590d41af1c44#file-ucontext_benchmark-cpp>https://gist.github.com/owent/1842b56ac1edd5a7db54590d41af1c44#file-ucontext_benchmark-cpp</a></li>
+<li><a href=https://github.com/yyzybb537/libgo>libgo</a> 测试代码: <a href=https://gist.github.com/owent/1842b56ac1edd5a7db54590d41af1c44#file-libgo_benchmark-cpp>https://gist.github.com/owent/1842b56ac1edd5a7db54590d41af1c44#file-libgo_benchmark-cpp</a></li>
 </ul>
 <h3 id=协程数1栈大小16kb---切换耗时对比>【协程数：1，栈大小16KB】 - 切换耗时对比</h3>
 <canvas id=charjs-chart-0>Chart 0</canvas>
@@ -280,7 +280,7 @@
 <h3 id=协程数30000栈大小64kb---切换耗时对比>【协程数：30000，栈大小64KB】 - 切换耗时对比</h3>
 <canvas id=charjs-chart-4>Chart 4</canvas>
 <script type=text/javascript>jQuery(function(){var a="charjs-chart-4";new Chart(document.getElementById(a),{type:"horizontalBar",data:{labels:["libcopp+动态栈池","libcopp","libcopp+libcotask+动态栈池","libcopp+libcotask","libgo with boost","libco+静态栈池","libco（共享栈4K占用）","goroutine","libgo with ucontext","ucontext","libco（共享栈8K占用）","libco（共享栈32K占用）"],datasets:[{label:"切换耗时对比【协程数：30000，栈大小64KB】",data:[238,239,335,338,441,451,558,799,921,946,1810,6429],backgroundColor:["rgba(255, 99, 132, 0.5)","rgba(54, 162, 235, 0.5)","rgba(255, 206, 86, 0.5)","rgba(75, 192, 192, 0.5)","rgba(153, 102, 255, 0.5)","rgba(255, 159, 64, 0.5)","rgba(54, 192, 192, 0.5)","rgba(92, 102, 255, 0.5)","rgba(255, 232, 86, 0.5)","rgba(22, 130, 303, 0.5)","rgba(223, 67, 100, 0.5)","rgba(223, 127, 32, 0.5)"],borderColor:["rgba(255, 99, 132, 1)","rgba(54, 162, 235, 1)","rgba(255, 206, 86, 1)","rgba(75, 192, 192, 1)","rgba(153, 102, 255, 1)","rgba(255, 159, 64, 1)","rgba(54, 192, 192, 1)","rgba(92, 102, 255, 1)","rgba(255, 232, 86, 1)","rgba(22, 130, 303, 1)","rgba(223, 67, 100, 1)","rgba(223, 127, 32, 1)"],borderWidth:1,maxBarThickness:5}]},options:{}})})</script>
-<p>总体来说，<a href=https://github.com/owt5008137/libcopp>libcopp</a>和<a href=https://github.com/owt5008137/libcopp>libcotask</a>还是很有优势的。特别是动态栈池，几乎可以让创建开销逼近上下文切换，可以放心地无脑创建协程了。这里面需要特别说明一下的是<a href=https://golang.org/>goroutine</a>和<a href=https://github.com/Tencent/libco>libco</a>。goroutine的切换并没有优势，但是创建性能还是挺高的，原因之一是我对<a href=https://golang.org/>go</a>不是很熟，不太清楚怎么让go的cachemiss掉，看起来它自带一些池子的功能。而<a href=https://github.com/Tencent/libco>libco</a>是支持静态栈池的，如果静态的栈池足够大或者使用量不大的时候，也能有不错的切换性能（不需要memcpy栈），只是池子用完以后波动会很大。</p>
+<p>总体来说，<a href=https://github.com/owent/libcopp>libcopp</a>和<a href=https://github.com/owent/libcopp>libcotask</a>还是很有优势的。特别是动态栈池，几乎可以让创建开销逼近上下文切换，可以放心地无脑创建协程了。这里面需要特别说明一下的是<a href=https://golang.org/>goroutine</a>和<a href=https://github.com/Tencent/libco>libco</a>。goroutine的切换并没有优势，但是创建性能还是挺高的，原因之一是我对<a href=https://golang.org/>go</a>不是很熟，不太清楚怎么让go的cachemiss掉，看起来它自带一些池子的功能。而<a href=https://github.com/Tencent/libco>libco</a>是支持静态栈池的，如果静态的栈池足够大或者使用量不大的时候，也能有不错的切换性能（不需要memcpy栈），只是池子用完以后波动会很大。</p>
 </div>
 <hr>
 <footer class=article-footer>

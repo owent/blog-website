@@ -71,7 +71,7 @@
 GTest在ARM架构下需要额外作一些适配
 Boost.Test的话，按Boost的尿性，一旦引入就会涉及上千个文件</p>
 <p>目前这个单元测试框架还没有抽离出来，所以代码暂时放在
-<a href=https://github.com/owt5008137/libcopp/tree/master/test>https://github.com/owt5008137/libcopp/tree/master/test</a>
+<a href=https://github.com/owent/libcopp/tree/master/test>https://github.com/owent/libcopp/tree/master/test</a>
 还有个镜像地址: <a href=http://git.oschina.net/owent/libcopp>http://git.oschina.net/owent/libcopp</a> 后面的链接基本也有一样的镜像地址
 这里面除了case目录是用于libcopp的单元测试外，其他的都属于单元测试框架部分
 以后如果需要的话，可以再抽离出来</p>
@@ -155,14 +155,14 @@ void test_case_func_name(test_name, case_name) ()
 #define CASE_EXPECT_GT(l, r) EXPECT_GT(l, r)
 #define CASE_EXPECT_GE(l, r) EXPECT_GE(l, r)
 </code></pre>
-<p>即可，然后在main函数的入口处作一些函数调用的适配即可。（详见: <a href=https://github.com/owt5008137/libcopp/tree/master/test/frame/test_macros.h>https://github.com/owt5008137/libcopp/tree/master/test/frame/test_macros.h</a> 和 <a href=https://github.com/owt5008137/libcopp/tree/master/test/app/main.cpp>https://github.com/owt5008137/libcopp/tree/master/test/app/main.cpp</a> ）</p>
+<p>即可，然后在main函数的入口处作一些函数调用的适配即可。（详见: <a href=https://github.com/owent/libcopp/tree/master/test/frame/test_macros.h>https://github.com/owent/libcopp/tree/master/test/frame/test_macros.h</a> 和 <a href=https://github.com/owent/libcopp/tree/master/test/app/main.cpp>https://github.com/owent/libcopp/tree/master/test/app/main.cpp</a> ）</p>
 <h2 id=一键切换适配方案--boosttest>一键切换适配方案 – Boost.Test</h2>
 <p>boost这个比较麻烦，因为boost的接口方式不一样，甚至在使用静态库的时候有自己的入口函数
 简单地说就是分支比较多</p>
 <ol>
-<li>在入口处要判断是静态库还是动态库，有没有使用boost.test内置的函数（详见: <a href=https://github.com/owt5008137/libcopp/tree/master/test/app/main.cpp>https://github.com/owt5008137/libcopp/tree/master/test/app/main.cpp</a> ）</li>
-<li>添加suite和case的方式有变化（详见: <a href=https://github.com/owt5008137/libcopp/tree/master/test/frame/test_manager.cpp>https://github.com/owt5008137/libcopp/tree/master/test/frame/test_manager.cpp</a> ）</li>
-<li>还是宏定义的部分变更（详见: <a href=https://github.com/owt5008137/libcopp/tree/master/test/frame/test_macros.h>https://github.com/owt5008137/libcopp/tree/master/test/frame/test_macros.h</a> ）</li>
+<li>在入口处要判断是静态库还是动态库，有没有使用boost.test内置的函数（详见: <a href=https://github.com/owent/libcopp/tree/master/test/app/main.cpp>https://github.com/owent/libcopp/tree/master/test/app/main.cpp</a> ）</li>
+<li>添加suite和case的方式有变化（详见: <a href=https://github.com/owent/libcopp/tree/master/test/frame/test_manager.cpp>https://github.com/owent/libcopp/tree/master/test/frame/test_manager.cpp</a> ）</li>
+<li>还是宏定义的部分变更（详见: <a href=https://github.com/owent/libcopp/tree/master/test/frame/test_macros.h>https://github.com/owent/libcopp/tree/master/test/frame/test_macros.h</a> ）</li>
 </ol>
 <p>剩下的就是一些环境判断和控制开关的宏了</p>
 <h2 id=效果展示>效果展示</h2>
