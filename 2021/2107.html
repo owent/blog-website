@@ -54,10 +54,11 @@
 <li><a href=#背景>背景</a></li>
 <li><a href=#依赖库>依赖库</a></li>
 <li><a href=#bootstrap编译>Bootstrap编译</a></li>
-<li><a href=#llvm_enable_projects-和-llvm_enable_runtimes><code>LLVM_ENABLE_PROJECTS</code> 和 <code>LLVM_ENABLE_RUNTIMES</code></a>
+<li><a href=#llvm_enable_projects--llvm_enable_runtimes-和-llvm_distribution_components><code>LLVM_ENABLE_PROJECTS</code> , <code>LLVM_ENABLE_RUNTIMES</code> 和 <code>LLVM_DISTRIBUTION_COMPONENTS</code></a>
 <ul>
 <li><a href=#stage-1中>Stage 1中</a></li>
 <li><a href=#stage-2中>Stage 2中</a></li>
+<li><a href=#llvm_distribution_components><code>LLVM_DISTRIBUTION_COMPONENTS</code></a></li>
 </ul>
 </li>
 <li><a href=#设置缓存>设置缓存</a></li>
@@ -87,7 +88,7 @@ set(CLANG_BOOTSTRAP_EXTRA_DEPS builtins runtimes CACHE STRING &quot;&quot;)
 <p>对于第二阶段自举编译传入的参数，可以通过上面的配置文件指定。也可以通过最外层执行 cmake 时使用带 <code>BOOTSTRAP_</code> 前缀的参数指定。
 比如我们如果使用自己编译的GCC来进行Stage 1阶段编译，为了保证Stage 1和Stage 2查找的GCC一致，可以通过 <code>cmake [...] -DBOOTSTRAP_CMAKE_CXX_FLAGS=--gcc-toolchain=$GCC_TOOLCHAIN -DBOOTSTRAP_CMAKE_C_FLAGS=--gcc-toolchain=$GCC_TOOLCHAIN</code> 来指定Stage 2阶段增加 <code>CMAKE_CXX_FLAGS=--gcc-toolchain=$GCC_TOOLCHAIN CMAKE_C_FLAGS=--gcc-toolchain=$GCC_TOOLCHAIN</code> 。来手动指定GCC Toolchain的目录。</p>
 <p>然后，在Stage 1的设置文件里要给 <code>CLANG_BOOTSTRAP_TARGETS</code> 里包含 <code>install-distribution</code> 和 <code>install-distribution-stripped</code> (我尝试过和Example一样加 <code>install-distribution-toolchain</code> 的话会编不过，如果有知道为啥的小伙伴欢迎解答一下)。接下来，在Stage 2的设置文件里 <code>set(LLVM_DISTRIBUTION_COMPONENTS 要安装的组件列表)</code> 就可以了。接下来就是要精心选择需要的组件集合。</p>
-<h2 id=llvm_enable_projects-和-llvm_enable_runtimes><code>LLVM_ENABLE_PROJECTS</code> 和 <code>LLVM_ENABLE_RUNTIMES</code></h2>
+<h2 id=llvm_enable_projects--llvm_enable_runtimes-和-llvm_distribution_components><code>LLVM_ENABLE_PROJECTS</code> , <code>LLVM_ENABLE_RUNTIMES</code> 和 <code>LLVM_DISTRIBUTION_COMPONENTS</code></h2>
 <p><a href=https://llvm.org/>LLVM</a> 的构建系统里分为 <code>LLVM_ENABLE_PROJECTS</code> 和 <code>LLVM_ENABLE_RUNTIMES</code> 两组配置。一些组件可以在 <code>LLVM_ENABLE_PROJECTS</code> 或 <code>LLVM_ENABLE_RUNTIMES</code> 里任选其一。有些只能在 <code>LLVM_ENABLE_PROJECTS</code> 里，同样有一些组件只能在 <code>LLVM_ENABLE_RUNTIMES</code> 里。那些可以在 <code>LLVM_ENABLE_PROJECTS</code> 或 <code>LLVM_ENABLE_RUNTIMES</code> 里任选其一的组件中，配在哪里会影响是否参与自举编译和是否install（因为我们最终是通过 <code>cmake --build . --config $BUILD_TYPE --target stage2 stage2-distribution</code> 来安装需要的组件的）。这些组件不能在两边同时存在，否则会生成多个同名的target。</p>
 <p>至于最终 <code>LLVM_ENABLE_PROJECTS</code> 和 <code>LLVM_ENABLE_RUNTIMES</code> 里放哪些组件，其实取决于最重要安装的内容的依赖关系。经过多次测试，我最终的设置如下:</p>
 <h3 id=stage-1中>Stage 1中</h3>
@@ -101,6 +102,8 @@ set(LLVM_ENABLE_RUNTIMES &quot;compiler-rt;libcxx;libcxxabi;libunwind&quot; CACH
 
 set(LLVM_TARGETS_TO_BUILD Native CACHE STRING &quot;&quot;) # X86;ARM;AArch64;RISCV
 </code></pre>
+<h3 id=llvm_distribution_components><code>LLVM_DISTRIBUTION_COMPONENTS</code></h3>
+<p>最终安装的时候需要install哪些组件是写在 <code>LLVM_DISTRIBUTION_COMPONENTS</code> 里面的。官方给的Example的设置里都缺失一些我需要的组件。但是相对来说 <a href=https://github.com/llvm/llvm-project/blob/main/clang/cmake/caches/Fuchsia-stage2.cmake>Fuchsia-stage2.cmake</a> 的设置相对来说比较全面。所以我最终使用的设置就是在 <a href=https://github.com/llvm/llvm-project/blob/main/clang/cmake/caches/Fuchsia-stage2.cmake>Fuchsia-stage2.cmake</a> 的基础上，增加了 <code>llvm-as</code> , <code>llvm-addr2line</code> , <code>llvm-addr2line</code> , <code>llvm-config</code> , <code>llvm-elfabi</code> , <code>llvm-install-name-tool</code> , <code>llvm-jitlink</code> , <code>llvm-lto</code> , <code>llvm-lto2</code> , <code>llvm-ml</code> , <code>llvm-pdbutil</code> , <code>LLVM</code> , <code>LTO</code> , <code>Remarks</code> , <code>lldb</code> 及相关工具 , <code>libclang</code> 及相关库和头文件, <code>clang-check</code> , <code>clang-cpp</code> , <code>clang-libraries</code> , <code>scan-build</code> , <code>scan-view</code> , <code>pp-trace</code> , <code>modularize</code> , <code>opt-viewer</code> 。基本上就是补充了一些常用工具和这些工具的运行时依赖，比如说各类 Santinizer 好像是在 <code>clang-libraries</code> 这个 Component 里。</p>
 <h2 id=设置缓存>设置缓存</h2>
 <p>因为大部分我们在配置文件里写的代码都是 <code>set(LLVM_ENABLE_LIBCXX ON CACHE BOOL "")</code> 这种形式。这种形式有个问题是如果之前缓存存在的话就用之前的设置，否则才会用我们设置的值。而在有自举编译的情况下，<a href=https://llvm.org/>LLVM</a> 里的组件是一个一个编译的，导致有些Stage 1的设置会被传递到Stage 2里来。那么为了解决这个问题，<a href=https://llvm.org/>LLVM</a>的构建系统允许我们通过指定特定目标架构的配置来覆盖默认配置。这样我们就可以在Stage 2里通过指定目标平台的设置来强制复写Stage 1阶段的设置。</p>
 <p>在我的设置文件里，我通过</p>
