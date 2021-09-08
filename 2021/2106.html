@@ -96,7 +96,7 @@
 </blockquote>
 <p>总而言之，我没有找到合适的方法完成这个功能。希望有熟悉 <a href=https://bazel.build/>bazel</a> 的小伙伴能提供解决方案。</p>
 <p>上面提到的我尝试的使用 <code>--override_repository</code> 方式类似这样:</p>
-<pre><code class=language-bazel>maybe(
+<pre><code class=language-python>maybe(
     http_archive,
     name = &quot;com_github_grpc_grpc_legacy&quot;,
     strip_prefix = &quot;grpc-1.33.2&quot;,
@@ -159,7 +159,7 @@ maybe(
 <h3 id=windows-长路径问题260路径长度限制>Windows 长路径问题（260路径长度限制）</h3>
 <p>还有个问题是使用 <a href=https://github.com/atframework/cmake-toolset>cmake-toolset</a> 的时候，默认是的依赖编译目录是 <code>BUILD目录/_deps/平台及工具链名/包名</code> 。容易名字很长，Windows下就碰到了碰到了编译时路径过长的问题。</p>
 <p>解决方法之一是直接改注册表, 可以用 powershell 脚本 <code>New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force</code> 或者注册表文件</p>
-<pre><code>Windows Registry Editor Version 5.00
+<pre><code class=language-bat>Windows Registry Editor Version 5.00
 
 [HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem]
 &quot;LongPathsEnabled&quot;=dword:00000001
