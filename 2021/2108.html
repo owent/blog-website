@@ -130,7 +130,7 @@ template &lt;typename S&gt; auto runtime(const S&amp; s) -&gt; basic_runtime&lt;
 }
 #endif
 </code></pre>
-<p>可以看到，在GCC 4.9以上货其他编译器，<code>format_string</code> 是其内部实现的 <code>basic_format_string</code> 这个结构。那么我们再来看看 <code>basic_format_string</code> 。</p>
+<p>可以看到，在GCC 4.9以上或其他编译器，<code>format_string</code> 是其内部实现的 <code>basic_format_string</code> 这个结构。那么我们再来看看 <code>basic_format_string</code> 。</p>
 <pre><code class=language-cpp>template &lt;typename Char, typename... Args&gt; class basic_format_string {
  private:
   basic_string_view&lt;Char&gt; str_;
@@ -160,7 +160,7 @@ template &lt;typename S&gt; auto runtime(const S&amp; s) -&gt; basic_runtime&lt;
   FMT_INLINE operator basic_string_view&lt;Char&gt;() const { return str_; }
 };
 </code></pre>
-<p>这里的重点就来了。我们能看到， <code>basic_format_string</code> 的构造函数加上了 <code>FMT_CONSTEVAL</code> ，其实就是 <code>constexpr</code> 关键字。它的含义是可在编译期求值（注意和 <code>const</code> 关键字区分开来，一个函数和类型申明可以是 <code>constexpr</code> 但不是 <code>const</code> 的）。再加上 <code>format</code> 接口的申明是 <code>format_string</code> （ 我们关注它是 <code>basic_format_string</code> 的情况。），所以它接受一次隐式类型转换。即，调用 <code>format</code> 的时候格式字符串参数只要能隐式类型转换到 <code>basic_format_string</code> （注意要求编译期转换）就可以。这样我们就可以使用类似 <code>fmt::format("Hello {}", "world")</code> 这种写法。因为 <code>"Hello {}"</code> 是编译期常量。</p>
+<p>这里的重点就来了。我们能看到， <code>basic_format_string</code> 的构造函数加上了 <code>FMT_CONSTEVAL</code> ，其实就是 <code>consteval</code> 关键字。它的含义是可在编译期求值（注意和 <code>const</code> 关键字区分开来，一个函数和类型申明可以是 <code>consteval</code> 但不是 <code>const</code> 的）。再加上 <code>format</code> 接口的申明是 <code>format_string</code> （ 我们关注它是 <code>basic_format_string</code> 的情况。），所以它接受一次隐式类型转换。即，调用 <code>format</code> 的时候格式字符串参数只要能隐式类型转换到 <code>basic_format_string</code> （注意要求编译期转换）就可以。这样我们就可以使用类似 <code>fmt::format("Hello {}", "world")</code> 这种写法。因为 <code>"Hello {}"</code> 是编译期常量。</p>
 <p>但是在实际使用中，我们时而会对 <code>format</code> 接口包装一层，增加一下自己的处理。比如我们的日志接口：</p>
 <pre><code class=language-cpp>template &lt;class FMT, class... TARGS&gt;
 void format_log(const caller_info_t &amp;caller, FMT &amp;&amp;fmt_text, TARGS &amp;&amp;...args) {
