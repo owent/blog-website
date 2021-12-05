@@ -162,7 +162,7 @@ extern &quot;C&quot; {
   }
 }
 </code></pre>
-<p>这里就有两个对象，一个是value，保存到了*_on_disconnected_fn*，另一个是libatapp_c_on_disconnected_fn(即便他是静态函数也一样)保存到了*_on_disconnected_holder*。为啥有两个呢？回调函数不就一个嘛？这就是坑之一，我必须保存这个*libatapp_c_on_disconnected_fn*，否者这个函数会被.net GC回收掉，然后C API回调的时候**可能**会崩溃。之所以是**可能**是因为你不知道.net会什么时候释放掉它。</p>
+<p>这里就有两个对象，一个是value，保存到了*_on_disconnected_fn*，另一个是libatapp_c_on_disconnected_fn(即便他是静态函数也一样)保存到了*_on_disconnected_holder*。为啥有两个呢？回调函数不就一个嘛？这就是坑之一，我必须保存这个<em>libatapp_c_on_disconnected_fn</em>，否者这个函数会被.net GC回收掉，然后C API回调的时候<strong>可能</strong>会崩溃。之所以是<strong>可能</strong>是因为你不知道.net会什么时候释放掉它。</p>
 <p>这还引出一个问题就是这类的回调函数的数据组很多，也可能是我不太会用C#的泛型，导致这些API都是手写的。感觉写的时候很危险很容易出错啊。我最多就用到了这样:</p>
 <pre><code class=language-csharp>class EventCallbackRefGroup&lt;TC&gt; where TC: class {
   public TC native = null;

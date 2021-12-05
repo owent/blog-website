@@ -109,7 +109,7 @@
 <li>一个小tips，对于单个类型决定函数执行时可以用virtual继承，而多个类型决定执行的函数的话可以试试类似这种方式。double-dispatches => 两个single-dispatches</li>
 </ol>
 <blockquote>
-<p>比如两个对象A a和B b分别有虚函数<em>A::func1(Base</em> b) { b->func2(this); }<em>和</em>B::func2(A* a)…*，则调用*a->func1(b)*就完成了对两个类型相关函数的自动选择。需要仔细思考，或者《More Effective C++》的第31条有比较完整的例子。也比较好理解</p>
+<p>比如两个对象A a和B b分别有虚函数<em>A::func1(Base</em> b) { b->func2(this); }<em>和</em>B::func2(A* a)…<em>，则调用</em>a->func1(b)*就完成了对两个类型相关函数的自动选择。需要仔细思考，或者《More Effective C++》的第31条有比较完整的例子。也比较好理解</p>
 </blockquote>
 <p><strong>以下是另外的地方看到的附加坑</strong></p>
 <ol>

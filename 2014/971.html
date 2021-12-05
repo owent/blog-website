@@ -194,8 +194,8 @@ class _Bind&lt;_Functor(_Bound_args...)&gt;
 <p>以上代码摘自GCC 4.8.1，VC下也类似。</p>
 <p>以上代码摘自GCC 4.8.1，VC下也类似。
 正如这里面所看到的。bind的数据保存也用了tuple。但是这里有一个问题，<strong>执行时要把绑定时的list按顺序解引用</strong>。这怎么实现呢？
-可以看到上面代码里的__call函数，有没有注意到第二个参数是一个**_Indexes&mldr;**，而且上面有一个***typedef typename _Build_index_tuple&lt;sizeof…(_Bound_args)>::__type _Bound_indexes;***？没错秘诀就在这里。由于代码篇幅过长，这里不再贴出代码。
-它是怎么使**_Indexes…**的值是从0到tuple的最大值的呢？我们bind函数传入参数的时候并没有传入数字一类的东西。这里该type_traits出场了。
+可以看到上面代码里的__call函数，有没有注意到第二个参数是一个**_Indexes&mldr;<strong>，而且上面有一个</strong><em>typedef typename _Build_index_tuple&lt;sizeof…(_Bound_args)>::__type _Bound_indexes;</em><strong>？没错秘诀就在这里。由于代码篇幅过长，这里不再贴出代码。
+它是怎么使</strong>_Indexes…**的值是从0到tuple的最大值的呢？我们bind函数传入参数的时候并没有传入数字一类的东西。这里该type_traits出场了。
 我们把这其中的核心的部分提取一下。请看下面的代码：</p>
 <pre><code class=language-cpp>#include &lt;cstdio&gt;
 #include &lt;iostream&gt;

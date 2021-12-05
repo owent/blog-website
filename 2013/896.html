@@ -137,7 +137,7 @@ int main(int argc, char* argv[]) {
 <p>赋值的部分和单继承是一样的。</p>
 <p><img src=p896_img9.png alt></p>
 <p><em><strong>图九：VC多重继承的函数指针调用</strong></em></p>
-<p>调用的时候主要看(c.<em>vptr2)()的代码。因为</em>*(c.vptr1)()生成的和单继承一样**。而由于它们最终都转向vcall，所以vptr2的时候**调整了虚表指针为c的第二个虚表**。顺便**把this指针地址调整了**。</p>
+<p>调用的时候主要看(c.<em>vptr2)()的代码。因为</em>*(c.vptr1)()生成的和单继承一样**。而由于它们最终都转向vcall，所以vptr2的时候<strong>调整了虚表指针为c的第二个虚表</strong>。顺便<strong>把this指针地址调整了</strong>。</p>
 <p>但是在转入vcall之后的操作和单继承是一样的，都是跳转到 <strong>虚表+偏移</strong>地址 后执行。</p>
 <p>但是c的虚表内记得地址不是直接记得foo_c::info的地址，因为<strong>要把this指针由foo_b<em>转回foo_c</em></strong>。</p>
 <p><img src=p896_img10.png alt></p>

@@ -103,7 +103,7 @@ chmod +x /home/website/letsencrypt/renew.sh;
 <p>然后执行<em>crontab -e</em>，里面添加:</p>
 <pre><code>05 1 1,15 * * /home/website/letsencrypt/renew.sh
 </code></pre>
-<p><a href=https://letsencrypt.org/>letsencrypt</a>会把证书放在**/etc/letsencrypt/live/[域名]**里，我的证书都放在**/home/website/ssl/**中，所以我把它copy过去了，然后我的nginx的执行用户是nginx，所以改了下所有者，然后reload就好了。</p>
+<p><a href=https://letsencrypt.org/>letsencrypt</a>会把证书放在**/etc/letsencrypt/live/[域名]<strong>里，我的证书都放在</strong>/home/website/ssl/**中，所以我把它copy过去了，然后我的nginx的执行用户是nginx，所以改了下所有者，然后reload就好了。</p>
 <p>至此<a href=https://letsencrypt.org/>letsencrypt</a>接入完毕。还是比较简单的。</p>
 <h2 id=接入http2>接入HTTP/2</h2>
 <p>HTTP 2.0已经成为了标准，并且现在各大浏览器都已经支持了。再加上nginx的最新release版本已经移除了<a href=http://nginx.org/en/docs/http/ngx_http_spdy_module.html>ngx_http_spdy_module</a>模块，增加了<a href=http://nginx.org/en/docs/http/ngx_http_v2_module.html>ngx_http_v2_module</a>模块。然而我的nginx是直接用nginx的官方源装在了CentOS 7上，直接yum update的时候nginx被直接升到1.10版本了，而我原来配得都是SPDY的，这也是使得我不得不接入一下HTTP/2。</p>

@@ -69,7 +69,7 @@
     /*lua_pushcfunction(L,class_gc_event);*/
     lua_rawset(L,-3);
 </code></pre>
-<p>那么关键是这个**_G.tolua_gc_event**被设成了什么，在**tolua_open**函数里可以找到</p>
+<p>那么关键是这个**_G.tolua_gc_event<strong>被设成了什么，在</strong>tolua_open**函数里可以找到</p>
 <pre><code class=language-cpp>        /* create gc_event closure */
         lua_pushstring(L, &quot;tolua_gc_event&quot;);
         lua_pushstring(L, &quot;tolua_gc&quot;);
@@ -136,7 +136,7 @@ TOLUA_API int tolua_default_collect (lua_State* tolua_S)
 }
 </code></pre>
 <h2 id=这个很2b的坑>这个很2B的坑</h2>
-<p>这么搞问题就来了，默认tolua++是没有设置**.collector**函数的（new一个自定义class之后调用**push_collector**的传入了空指针），然后释放的时候就华丽丽free掉了，且不说标准C++并不保证new的分配内存和malloc一样（虽然现在大部分编译器的实现确实一样），它竟然**没调用析构函数**。这意味着如果类里面有使用stl或者其他依赖析构来释放资源的成员类对象的话，就华丽丽地内存泄露了。</p>
+<p>这么搞问题就来了，默认tolua++是没有设置**.collector<strong>函数的（new一个自定义class之后调用</strong>push_collector<strong>的传入了空指针），然后释放的时候就华丽丽free掉了，且不说标准C++并不保证new的分配内存和malloc一样（虽然现在大部分编译器的实现确实一样），它竟然</strong>没调用析构函数**。这意味着如果类里面有使用stl或者其他依赖析构来释放资源的成员类对象的话，就华丽丽地内存泄露了。</p>
 <p>另外，网上随便搜了一下，也找到其他人也有发现这个问题。http://www.cnblogs.com/egmkang/archive/2012/07/01/2572064.html</p>
 <p>无力吐槽了，让我晕一会&mldr;</p>
 <blockquote>

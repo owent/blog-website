@@ -75,7 +75,7 @@
 <li>Qt自定义了消息传递方式，<strong>信号（SIGNAL）<strong>和</strong>槽（SLOT）</strong>。</li>
 </ol>
 <blockquote>
-<p>需要支持信号和槽的类需要在**.h**文件的声明中添加 *Q_OBJECT*。这里要注意必须是**.h**文件。放在.cpp里是不行滴。在申明信号和槽的时候，槽需要自己实现，信号的代码将会由Qt的*mocker*工具生成。
+<p>需要支持信号和槽的类需要在**.h<strong>文件的声明中添加 <em>Q_OBJECT</em>。这里要注意必须是</strong>.h**文件。放在.cpp里是不行滴。在申明信号和槽的时候，槽需要自己实现，信号的代码将会由Qt的<em>mocker</em>工具生成。
 Qt的工具做得还挺上流的。</p>
 </blockquote>
 <ol start=3>
@@ -154,7 +154,7 @@ extern &quot;C&quot; {
 <p>这么一来可以写Web页来做客户端工具，比用C++方便多了。
 效果如下:
 <img src=cocos-qt-1.png alt=示例-1></p>
-<p>点击**“执行脚本”**就会执行上面注入的*debuger_invoke_run_code*函数。很Nice吧。</p>
+<p>点击**“执行脚本”**就会执行上面注入的<em>debuger_invoke_run_code</em>函数。很Nice吧。</p>
 <p>所有代码托管在：https://github.com/owent/client-debuger
 有兴趣的童鞋可自取</p>
 <blockquote>

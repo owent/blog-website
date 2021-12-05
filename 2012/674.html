@@ -258,8 +258,8 @@ bool operator()(Token const&amp; t) const
 </code></pre>
 <p>这样的操作符重载即可，在函数中，可以通过不同的ID区分匹配的内容，具体例程下面有</p>
 <p>或者，和Qi一样，<strong>可以使用扩展的Phoenix功能实现简单的动作器操作</strong></p>
-<p>同时，Lex支持命名模式，可以使用lex::lexer::self.add_pattern来<strong>创建命名模式</strong>和使用**{占位符名称}**来设置命名占位符的token定义
-另外，Lex还可以**和Qi结合使用**，无论是Lex的模式结构还是按自定义数据分段处理仿函数时使用的ID编号的方法，都有相应的方法让他依据Lex的规则分析，按Qi的动作处理函数处理</p>
+<p>同时，Lex支持命名模式，可以使用lex::lexer::self.add_pattern来<strong>创建命名模式</strong>和使用**{占位符名称}<strong>来设置命名占位符的token定义
+另外，Lex还可以</strong>和Qi结合使用**，无论是Lex的模式结构还是按自定义数据分段处理仿函数时使用的ID编号的方法，都有相应的方法让他依据Lex的规则分析，按Qi的动作处理函数处理</p>
 <p>Lex还有一个重要的部分，<strong>静态规则生成</strong>。
 静态规则生成比较特殊，首先，生成规则的写法和上面提到的一致，不同的地方有两点首先是lex::lexertl::lexer的使用要改成lex::lexertl::static_lexer
 第二处比较特别，就是需要使用lex::lexertl::generate_static_dfa函数，依据规则，生成代码。</p>
