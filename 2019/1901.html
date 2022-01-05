@@ -72,7 +72,7 @@ Dispatch-->鉴权;
 打包-->加密;
 加密-->二次打包;
 二次打包-->Response;
-</div><script type=text/javascript>jQuery(function(){var b="process_wxwork_robot",a=jQuery("#"+b),c={"text-align":"center"};a.css(c);try{mermaid.init(void 0,a,function(){console.log("done")})}catch(b){a.empty(),a.append($('<pre></pre>').css({"text-align":"left"}).html(b.message))}})</script>
+</div><script type=text/javascript>jQuery(function(){var b="process_wxwork_robot",a=jQuery("#"+b),c={"text-align":"center"};a.css(c);try{mermaid.init(void 0,a,function(){console.log("done")})}catch(c){a.empty();const b=document.createElement("pre");b.style.textAlign="left",b.innerText=c.message.toString(),a.append(b)}})</script>
 <p>这个流程。截至到我写这篇分享为止，回包还仅支持Markdown和Text两种。 先贴下成果吧： <a href=https://github.com/owent/wxwork_robotd>https://github.com/owent/wxwork_robotd</a></p>
 <h2 id=关于文献>关于文献</h2>
 <p><a href=https://rust-lang.org/>Rust</a> 官网改版了，之前的 <a href=https://kaisery.github.io/trpl-zh-cn/>《Rust 程序设计语言》</a> 变得很难找到了，这里记录下这本书的地址：</p>
@@ -107,7 +107,7 @@ URL查找项目-->项目...;
 准备执行环境-->执行内容;
 执行内容-->打包结果;
 打包结果-->构造回包;
-</div><script type=text/javascript>jQuery(function(){var b="dispatch_wxwork_robot",a=jQuery("#"+b),c={"text-align":"center"};a.css(c);try{mermaid.init(void 0,a,function(){console.log("done")})}catch(b){a.empty(),a.append($('<pre></pre>').css({"text-align":"left"}).html(b.message))}})</script>
+</div><script type=text/javascript>jQuery(function(){var b="dispatch_wxwork_robot",a=jQuery("#"+b),c={"text-align":"center"};a.css(c);try{mermaid.init(void 0,a,function(){console.log("done")})}catch(c){a.empty();const b=document.createElement("pre");b.style.textAlign="left",b.innerText=c.message.toString(),a.append(b)}})</script>
 <p>在第一阶段实现完成之后，企业微信又增加了分享机器人的功能。这样一个机器人的URL就可能对应多个群，我们原来有个脚本为了发送图片回去，是收到消息后启动一个后台脚本，执行完调用发消息的接口去发送结果的，而这么一来以后，原来的发布消息的接口变成了群发。 后来我看了下它也增加了个一个 <code>ChatId</code> 字段和 <code>GetChatInfoUrl</code> 字段。前面一个用于区分来源的群，收到消息以后。发消息接口附带这个参数就能实现仅回复来源的群，而后一个接口是用于拉取来源群的信息的。</p>
 <p>另外我们内网的地址和外部的机器人地址不一样，所以为了方便我也是提取出了机器人的KEY，以便后台任务执行完后通知的时候直接用转换后的地址。还有些零零碎碎的字段都在最开始贴的项目地址里了。</p>
 <h2 id=跨平台构建cross和自动release>跨平台构建cross和自动release</h2>
