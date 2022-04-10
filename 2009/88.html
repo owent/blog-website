@@ -1,62 +1,9 @@
-<!doctype html><html lang=zh-cn>
-<head>
-<meta charset=utf-8>
-<title>POJ 2606 Rabbit hunt 2780 Linearity 1118 Lining Up 解题报告|I'm OWenT</title>
-<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
-<link rel=canonical href=//owent.net/2009/88.html>
-<link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT">
-<link rel=icon href=../favicon.ico>
-<link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous>
-<link rel=stylesheet href=//owent.net/css/style.css>
-<script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
-<link rel=stylesheet href=//owent.net/css/syntax.css>
-</head>
-<body><div id=container><div id=wrap>
-<header id=header>
-<div id=banner></div>
-<div id=header-outer>
-<div id=header-title>
-<h1 id=site-title>
-<a href=//owent.net id=logo>I'm OWenT</a>
-</h1>
-<h2 id=site-description>Challenge Everything</h2>
-</div>
-<div id=header-inner>
-<nav id=main-nav class="navbar navbar-expand-md navbar-dark">
-<button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
-<span class=navbar-toggler-icon></span>
-</button>
-<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a>
-<div class="collapse navbar-collapse position-relative" id=main-nav-links>
-<ul class="navbar-nav mr-auto">
-<li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li>
-<li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li>
-<li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li>
-<li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li>
-</ul>
-<div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search>
-<input type=hidden name=q1 value=site:owent.net>
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>POJ 2606 Rabbit hunt 2780 Linearity 1118 Lining Up 解题报告|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2009/88.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
+<link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button>
-</form></div>
-</div>
-</nav>
-</div>
-</div>
-</header>
-<div id=main><section id=main-content>
-<div id=post-content><article id=post-d3995cec477639b01fd22d44d82cd212 class="article-panel article article-type-post" itemscope itemprop=blogPost>
-<div class="article-panel-inner article-inner">
-<div class=article-inner>
-<header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2009/88.html target=_blank itemprop=url>POJ 2606 Rabbit hunt 2780 Linearity 1118 Lining Up 解题报告</a></h1></header><hr>
-<div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav></div><br>
-<div class=article-entry itemprop=articleBody><p>POJ打破传统,以前是做一题送一题,现在是做一题送两题,那么我们就不用客气了</p>
-<p>言归正传 题号:<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=2606">2606 Rabbit hunt</a> <a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=2780">2780 Linearity</a> <a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=1118">1118 Lining Up</a></p>
-<p>大致题意是输入N个点.计算能穿过最多的点的直线,并输出最大点的个数</p>
-<p>最初的想法很简单</p>
-<p>枚举没两个点连成的直线,然后枚举每个点,计算通过这条直线的点的个数,但是这个方法的复杂度为O(n^3)</p>
-<p>例:(2606代码)</p>
-<pre><code class=language-cpp>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-d3995cec477639b01fd22d44d82cd212 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2009/88.html target=_blank itemprop=url>POJ 2606 Rabbit hunt 2780 Linearity 1118 Lining Up 解题报告</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav></div><br><div class=article-entry itemprop=articleBody><p>POJ打破传统,以前是做一题送一题,现在是做一题送两题,那么我们就不用客气了</p><p>言归正传 题号:<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=2606">2606 Rabbit hunt</a> <a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=2780">2780 Linearity</a> <a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=1118">1118 Lining Up</a></p><p>大致题意是输入N个点.计算能穿过最多的点的直线,并输出最大点的个数</p><p>最初的想法很简单</p><p>枚举没两个点连成的直线,然后枚举每个点,计算通过这条直线的点的个数,但是这个方法的复杂度为O(n^3)</p><p>例:(2606代码)</p><pre><code class=language-cpp>
 #include&lt;iostream&gt;
 using namespace std;
 long x[300],y[300];
@@ -145,71 +92,14 @@ int main()
     }
     return 0;
 }
-</code></pre>
-</div>
-<hr>
-<footer class=article-footer>
-<div class="article-panel-footer article-meta article-footer clearfix">
-<span class=article-meta-left>
-<ol>
-<li><a href=//owent.net/categories/article.html>Article</a></li>
-<li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li>
-</ol>
-</span>
-<span class=article-meta-right><time datetime=2009-07-20T14:50:15.000+00:00 itemprop=datePublished>2009-07-20</time></span>
-<span class=clearfix></span>
-</div>
-<div class=article-tags>
-<ul class=article-tag-list>
-<li class=article-tag-list-item><a href=//owent.net/tags/acm.html>acm</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/pku.html>pku</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/poj.html>poj</a></li>
-</ul>
-</div>
-</footer>
-</div>
-<hr>
-<nav id=article-nav>
-<ul class=pagination>
-<li class=page-item>
-<a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2009/87.html>
-上一篇<strong>打造最快的Hash表(转) [以暴雪的游戏的Hash为例]</strong>
-</a>
-</li>
-<li class=page-item>
-<a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2009/89.html>
-下一篇<strong>C/C++语言常用排序算法</strong>
-</a>
-</li>
-</ul>
-</nav>
-<hr>
-<section id=comments>
-<div id=disqus_thread></div>
-<script type=text/javascript>var disqus_config=function(){this.page.identifier='88'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script>
-<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
-</section>
-</div>
-</article></div>
-</section></div>
-<footer id=footer>
-<div class=outer>
-<div id=footer-info class="inner clearfix">
-<strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2009-07-20T14:50:15.000+00:00 itemprop=datePublished>2009-07-20</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/acm.html>acm</a></li><li class=article-tag-list-item><a href=//owent.net/tags/pku.html>pku</a></li><li class=article-tag-list-item><a href=//owent.net/tags/poj.html>poj</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2009/87.html>上一篇<strong>打造最快的Hash表(转) [以暴雪的游戏的Hash为例]</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2009/89.html>下一篇<strong>C/C++语言常用排序算法</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier="88"};(function(){var e=document,t=e.createElement("script");t.src="https://owent.disqus.com/embed.js",t.setAttribute("data-timestamp",+new Date),(e.head||e.body).appendChild(t)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
 2022
-OWenT
-</strong>
-<strong id=footer-right class="float-right float-end">
-<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+OWenT</strong>
+<strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
-主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
-</strong>
-<span class=clearfix></span>
-</div>
-</div>
-</footer>
-</div>
-<script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
 <script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script>
@@ -232,13 +122,8 @@ OWenT
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script>
-<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script>
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script>
-<script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery("pre\u003ecode").each(function(t,e){try{hljs.highlightBlock(e)}catch(e){window.console&&console.log(e.toString()+"\r\nMaybe can not detect the language")}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","UA-19298704-1")</script><script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
 <script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script>
-<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script>
-<script type=text/javascript src=//unpkg.com/chart.js@latest/dist/chart.min.js></script>
-<script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script>
-</div>
-</body></html>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=//unpkg.com/chart.js@latest/dist/chart.min.js></script>
+<script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script></div></body></html>

@@ -1,174 +1,16 @@
-<!doctype html><html lang=zh-cn>
-<head>
-<meta charset=utf-8>
-<title>libatbus 的大幅优化|I'm OWenT</title>
-<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
-<link rel=canonical href=//owent.net/2020/2003.html>
-<link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT">
-<link rel=icon href=../favicon.ico>
-<link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous>
-<link rel=stylesheet href=//owent.net/css/style.css>
-<script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
-<link rel=stylesheet href=//owent.net/css/syntax.css>
-</head>
-<body><div id=container><div id=wrap>
-<header id=header>
-<div id=banner></div>
-<div id=header-outer>
-<div id=header-title>
-<h1 id=site-title>
-<a href=//owent.net id=logo>I'm OWenT</a>
-</h1>
-<h2 id=site-description>Challenge Everything</h2>
-</div>
-<div id=header-inner>
-<nav id=main-nav class="navbar navbar-expand-md navbar-dark">
-<button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
-<span class=navbar-toggler-icon></span>
-</button>
-<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a>
-<div class="collapse navbar-collapse position-relative" id=main-nav-links>
-<ul class="navbar-nav mr-auto">
-<li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li>
-<li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li>
-<li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li>
-<li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li>
-</ul>
-<div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search>
-<input type=hidden name=q1 value=site:owent.net>
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>libatbus 的大幅优化|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2020/2003.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
+<link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button>
-</form></div>
-</div>
-</nav>
-</div>
-</div>
-</header>
-<div id=main><section id=main-content>
-<div id=post-content><article id=post-39a6b48ce6b08508a754f42fa6ebeed0 class="article-panel article article-type-post" itemscope itemprop=blogPost>
-<div class="article-panel-inner article-inner">
-<div class=article-inner>
-<header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2020/2003.html target=_blank itemprop=url>libatbus 的大幅优化</a></h1></header><hr>
-<div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents>
-<ul>
-<li><a href=#重构工程配置脚本>重构工程配置脚本</a></li>
-<li><a href=#符号隐藏和dll导出>符号隐藏和DLL导出</a></li>
-<li><a href=#移除msgpack7>移除<a href=https://msgpack.org/>msgpack</a></a></li>
-<li><a href=#支持使用字符串路径的共享内存通道>支持使用字符串路径的共享内存通道</a></li>
-<li><a href=#增加协议跨版本向前向后兼容管理增加简单的验证功能>增加协议跨版本向前向后兼容管理，增加简单的验证功能</a></li>
-<li><a href=#支持多个自定义子网>支持多个自定义子网</a></li>
-<li><a href=#其他细节优化>其他细节优化</a></li>
-<li><a href=#未来计划>未来计划</a></li>
-</ul>
-</nav></div><br>
-<div class=article-entry itemprop=articleBody><p>最近零碎的事太多了，拖了好久没写blog。一些小的碎片话的东西也不值得写，另一方面是这次大幅优化了 <a href=https://github.com/atframework/>atframework</a> 的一些流程细节，特别是针对我们这两年来业务的需求，对 <a href=https://github.com/atframework/libatbus>libatbus</a> 进行了一次大重构。这里记录一下重构的内容吧。</p>
-<h2 id=重构工程配置脚本>重构工程配置脚本</h2>
-<p>为了拥抱Modern CMake，我对 <a href=https://github.com/atframework/>atframework</a> 中所有的项目（当然也包含 <a href=https://github.com/atframework/libatbus>libatbus</a> ）进行了重构，主要是一方面重构整理最近几个项目编译和交叉编译 <a href=https://www.openssl.org/>openssl</a> , <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 等几个构建流程比较恶心的库的自动化构建流程和工具脚本。如果不追求全部功能的话，还可以用 <a href=https://www.libressl.org/>libressl</a> 来代替 <a href=https://www.openssl.org/>openssl</a> 。也合并适应了给客户端用的交叉编译iOS、Android、<a href=https://www.unrealengine.com>Unreal Engine</a>等平台使用的构建流程。</p>
-<p>另外<a href=https://github.com/atframework/>atframework</a> 中所有的C++项目都用cmake的export功能导出了，这样无论是作为某个工程的子项目，还是prebuilt之后直接可以使用Modern CMake推荐的find_package(MODULE)机制导入。</p>
-<h2 id=符号隐藏和dll导出>符号隐藏和DLL导出</h2>
-<p>之前写的时候没太注意跨平台符号这块，所以都是建议使用静态库。我们前段时间预研了一段时间的<a href=https://www.unrealengine.com>Unreal Engine</a>引擎，涉及一个问题就是把服务器通信组件集成到<a href=https://www.unrealengine.com>Unreal Engine</a>中，然后使用<a href=https://www.unrealengine.com>Unreal Engine</a>的Dedicated Server和我们自己的服务器通信。这时候就碰到了一些问题。首先<a href=https://www.unrealengine.com>Unreal Engine</a>官方提供的预编译包是不开RTTI和Exception的。而如果使用静态编译版本的 <a href=https://github.com/atframework/libatbus>libatbus</a> 得开启RTTI和Exception，这就导致得完全重编<a href=https://www.unrealengine.com>Unreal Engine</a>，这非常慢切很麻烦。所以这次重构也梳理了一遍符号导出问题。</p>
-<p>现在Linux和Windows下得符号导出和符号隐藏规则统一了，并且这样以后，对PE这种独立堆的ABI，也可以编译成dll使用了。这样也就可以编译成外部模块给<a href=https://www.unrealengine.com>Unreal Engine</a>使用。</p>
-<h2 id=移除msgpack7>移除<a href=https://msgpack.org/>msgpack</a></h2>
-<p>之前使用<a href=https://msgpack.org/>msgpack</a>是因为它宣称效率是<a href=https://www.openssl.org/>protobuf</a>的4倍。但是自从<a href=https://www.openssl.org/>protobuf</a> 3.0以后，可以使用Arena来减少碎片，我预估这个对性能的影响还挺明显的。反倒是我之前对<a href=https://msgpack.org/>msgpack</a>的时候也是暴力new/delete的。所以综合来说我觉得<a href=https://www.openssl.org/>protobuf</a> 3.0+更好一些。另外<a href=https://www.openssl.org/>protobuf</a>生成的接口和反射支持比<a href=https://msgpack.org/>msgpack</a>方便太多了。</p>
-<p>第二个原因也是和上面一条一样，想要支持关闭RTTI和异常。而<a href=https://msgpack.org/>msgpack</a>代码里写死的异常处理，而<a href=https://www.openssl.org/>protobuf</a>只要开一个编译宏就能完全关闭异常。</p>
-<p>新的替代品是 <a href=https://www.openssl.org/>protobuf</a> ，我用<a href=https://www.openssl.org/>protobuf</a>完全替换掉了原来<a href=https://msgpack.org/>msgpack</a>提供的功能。在切到<a href=https://www.openssl.org/>protobuf</a>之前，我还考虑过使用<a href=https://github.com/google/flatbuffers>flatbuffer</a>，写了个简单的对比，有兴趣的童鞋可以看看 <a href=https://owent.net/2019/1908.html>《protobuf、flatbuffer、msgpack 针对小数据包的简单对比》</a> 。 <a href=https://capnproto.org/>cap&rsquo;n proto</a> 和 <a href=https://github.com/google/flatbuffers>flatbuffer</a> 的原理一样我就没特意去再写一个测试了。简单的说就是我觉得<a href=https://github.com/google/flatbuffers>flatbuffer</a>对小包太不友好了，对向后兼容也不太友好，感觉可能还是只适合配置和数据转储。</p>
-<h2 id=支持使用字符串路径的共享内存通道>支持使用字符串路径的共享内存通道</h2>
-<p>现在支持字符串路径的共享内存(使用: <code>shm_open/ftruncate/mmap/munmap/shm_unlink/close/fstat</code> 来管理)，支持字符串命名的共享内存(长度限定为NAME_MAX(255))。但是posix标准里这个路径是不能有子目录的，所以新版本版本的glibc里也不允许（一些老版本的glibc允许）。另外linux下英文功能内存会放 tmpfs 的目录 /dev/shm 里，可以建立子目录。但是为了统一跨平台兼容性，我还是没有支持多级目录的。另外这个长度也受glibc库的限制，所以我设置了按NAME_MAX的长度。</p>
-<h2 id=增加协议跨版本向前向后兼容管理增加简单的验证功能>增加协议跨版本向前向后兼容管理，增加简单的验证功能</h2>
-<p>这主要是考虑到后续如果同时多个业务使用或者多个环境使用的时候可能更新有先后。然后如果又不兼容的版本，集群之间可以互相不主动连接，以防不断地尝试重连然后断开。另外增加共享内存通道的版本号检查和架构校验，也是防止共享内存通道如果版本不兼容，随意attach上去可能会破坏数据。atproxy已经接入了这个特性。</p>
-<p>额外增加了一个简单的验证功能，这是为了防止多个项目使用的时候误操作，发送了指令到别的业务（如果互通的话）。并不提供严谨的安全机制。</p>
-<h2 id=支持多个自定义子网>支持多个自定义子网</h2>
-<p>这是为了atproxy可以部署再自己的前缀分组里，然后管理其他前缀分组的子网。这是为了方便更灵活的运维层面的部署结构。这个改动也影响了协议层变化。不过反正都换<a href=https://www.openssl.org/>protobuf</a>了也是大换血了。</p>
-<h2 id=其他细节优化>其他细节优化</h2>
-<p>还有一些其他细节优化列举如下:</p>
-<ol>
-<li>增加连接层错误计数，超出容忍值直接断开连接</li>
-<li>增加大量错误流程的单元测试，优化Unix Sock的单元测试，以支持WSL2</li>
-<li>规范版本号规则：第一位变化表示有向前不兼容的变更；第二位表示有功能增加，向前兼容，第三位表示BUG修复和优化</li>
-<li>更换数据回包的回调名字。</li>
-</ol>
-<blockquote>
-<p>最早的想法是仅失败的时候回包通知，但是后来为了适应有些需求需要尽快知道是否发送成功，所以加了强制回包功能。所以现在的数据转发回包不仅仅是错误处理了，叫on_fail也不合适。所以改成了on_receive_response</p>
-</blockquote>
-<p>不打算支持 protobuf 2.X 了， protobuf 2.X 的最后一个版本到现在已经快5年了，而且proto3的支持现在也已经很完善了。所以我并没有测试protobuf 2.6的兼容性。</p>
-<h2 id=未来计划>未来计划</h2>
-<ol>
-<li>endpoint 离线后保留一段时间，如果期间重连成功了自动重发</li>
-<li>增加data sequence，事件去重和切换节点的sequence重置</li>
-<li>共享endpoint的写缓冲区（也许后面可以一句这个支持多路并行发包）</li>
-<li>重发消息的超时机制，增加不确定是否成功的错误码</li>
-<li>兄弟节点离线后自动重连几次</li>
-<li>增加endpoint尝试轮询连接数据通道，减少不必要的数据通道，仅保留最快的方式。</li>
-</ol>
-</div>
-<hr>
-<footer class=article-footer>
-<div class="article-panel-footer article-meta article-footer clearfix">
-<span class=article-meta-left>
-<ol>
-<li><a href=//owent.net/categories/article.html>Article</a></li>
-<li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li>
-</ol>
-</span>
-<span class=article-meta-right><time datetime=2020-04-16T20:51:58.000+00:00 itemprop=datePublished>2020-04-16</time></span>
-<span class=clearfix></span>
-</div>
-<div class=article-tags>
-<ul class=article-tag-list>
-<li class=article-tag-list-item><a href=//owent.net/tags/atframework.html>atframework</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/atbus.html>atbus</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/libatbus.html>libatbus</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/bus.html>bus</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/connection.html>connection</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/async.html>async</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/tree.html>tree</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/flatbuffers.html>flatbuffers</a></li>
-</ul>
-</div>
-</footer>
-</div>
-<hr>
-<nav id=article-nav>
-<ul class=pagination>
-<li class=page-item>
-<a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2020/2004.html>
-上一篇<strong>libcopp接入C++20 Coroutine和一些过渡期的设计</strong>
-</a>
-</li>
-<li class=page-item>
-<a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2020/2002.html>
-下一篇<strong>nftables初体验</strong>
-</a>
-</li>
-</ul>
-</nav>
-<hr>
-<section id=comments>
-<div id=disqus_thread></div>
-<script type=text/javascript>var disqus_config=function(){this.page.identifier='2003'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script>
-<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
-</section>
-</div>
-</article></div>
-</section></div>
-<footer id=footer>
-<div class=outer>
-<div id=footer-info class="inner clearfix">
-<strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-39a6b48ce6b08508a754f42fa6ebeed0 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2020/2003.html target=_blank itemprop=url>libatbus 的大幅优化</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#重构工程配置脚本>重构工程配置脚本</a></li><li><a href=#符号隐藏和dll导出>符号隐藏和DLL导出</a></li><li><a href=#移除msgpack7>移除<a href=https://msgpack.org/>msgpack</a></a></li><li><a href=#支持使用字符串路径的共享内存通道>支持使用字符串路径的共享内存通道</a></li><li><a href=#增加协议跨版本向前向后兼容管理增加简单的验证功能>增加协议跨版本向前向后兼容管理，增加简单的验证功能</a></li><li><a href=#支持多个自定义子网>支持多个自定义子网</a></li><li><a href=#其他细节优化>其他细节优化</a></li><li><a href=#未来计划>未来计划</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><p>最近零碎的事太多了，拖了好久没写blog。一些小的碎片话的东西也不值得写，另一方面是这次大幅优化了 <a href=https://github.com/atframework/>atframework</a> 的一些流程细节，特别是针对我们这两年来业务的需求，对 <a href=https://github.com/atframework/libatbus>libatbus</a> 进行了一次大重构。这里记录一下重构的内容吧。</p><h2 id=重构工程配置脚本>重构工程配置脚本</h2><p>为了拥抱Modern CMake，我对 <a href=https://github.com/atframework/>atframework</a> 中所有的项目（当然也包含 <a href=https://github.com/atframework/libatbus>libatbus</a> ）进行了重构，主要是一方面重构整理最近几个项目编译和交叉编译 <a href=https://www.openssl.org/>openssl</a> , <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 等几个构建流程比较恶心的库的自动化构建流程和工具脚本。如果不追求全部功能的话，还可以用 <a href=https://www.libressl.org/>libressl</a> 来代替 <a href=https://www.openssl.org/>openssl</a> 。也合并适应了给客户端用的交叉编译iOS、Android、<a href=https://www.unrealengine.com>Unreal Engine</a>等平台使用的构建流程。</p><p>另外<a href=https://github.com/atframework/>atframework</a> 中所有的C++项目都用cmake的export功能导出了，这样无论是作为某个工程的子项目，还是prebuilt之后直接可以使用Modern CMake推荐的find_package(MODULE)机制导入。</p><h2 id=符号隐藏和dll导出>符号隐藏和DLL导出</h2><p>之前写的时候没太注意跨平台符号这块，所以都是建议使用静态库。我们前段时间预研了一段时间的<a href=https://www.unrealengine.com>Unreal Engine</a>引擎，涉及一个问题就是把服务器通信组件集成到<a href=https://www.unrealengine.com>Unreal Engine</a>中，然后使用<a href=https://www.unrealengine.com>Unreal Engine</a>的Dedicated Server和我们自己的服务器通信。这时候就碰到了一些问题。首先<a href=https://www.unrealengine.com>Unreal Engine</a>官方提供的预编译包是不开RTTI和Exception的。而如果使用静态编译版本的 <a href=https://github.com/atframework/libatbus>libatbus</a> 得开启RTTI和Exception，这就导致得完全重编<a href=https://www.unrealengine.com>Unreal Engine</a>，这非常慢切很麻烦。所以这次重构也梳理了一遍符号导出问题。</p><p>现在Linux和Windows下得符号导出和符号隐藏规则统一了，并且这样以后，对PE这种独立堆的ABI，也可以编译成dll使用了。这样也就可以编译成外部模块给<a href=https://www.unrealengine.com>Unreal Engine</a>使用。</p><h2 id=移除msgpack7>移除<a href=https://msgpack.org/>msgpack</a></h2><p>之前使用<a href=https://msgpack.org/>msgpack</a>是因为它宣称效率是<a href=https://www.openssl.org/>protobuf</a>的4倍。但是自从<a href=https://www.openssl.org/>protobuf</a> 3.0以后，可以使用Arena来减少碎片，我预估这个对性能的影响还挺明显的。反倒是我之前对<a href=https://msgpack.org/>msgpack</a>的时候也是暴力new/delete的。所以综合来说我觉得<a href=https://www.openssl.org/>protobuf</a> 3.0+更好一些。另外<a href=https://www.openssl.org/>protobuf</a>生成的接口和反射支持比<a href=https://msgpack.org/>msgpack</a>方便太多了。</p><p>第二个原因也是和上面一条一样，想要支持关闭RTTI和异常。而<a href=https://msgpack.org/>msgpack</a>代码里写死的异常处理，而<a href=https://www.openssl.org/>protobuf</a>只要开一个编译宏就能完全关闭异常。</p><p>新的替代品是 <a href=https://www.openssl.org/>protobuf</a> ，我用<a href=https://www.openssl.org/>protobuf</a>完全替换掉了原来<a href=https://msgpack.org/>msgpack</a>提供的功能。在切到<a href=https://www.openssl.org/>protobuf</a>之前，我还考虑过使用<a href=https://github.com/google/flatbuffers>flatbuffer</a>，写了个简单的对比，有兴趣的童鞋可以看看 <a href=https://owent.net/2019/1908.html>《protobuf、flatbuffer、msgpack 针对小数据包的简单对比》</a> 。 <a href=https://capnproto.org/>cap&rsquo;n proto</a> 和 <a href=https://github.com/google/flatbuffers>flatbuffer</a> 的原理一样我就没特意去再写一个测试了。简单的说就是我觉得<a href=https://github.com/google/flatbuffers>flatbuffer</a>对小包太不友好了，对向后兼容也不太友好，感觉可能还是只适合配置和数据转储。</p><h2 id=支持使用字符串路径的共享内存通道>支持使用字符串路径的共享内存通道</h2><p>现在支持字符串路径的共享内存(使用: <code>shm_open/ftruncate/mmap/munmap/shm_unlink/close/fstat</code> 来管理)，支持字符串命名的共享内存(长度限定为NAME_MAX(255))。但是posix标准里这个路径是不能有子目录的，所以新版本版本的glibc里也不允许（一些老版本的glibc允许）。另外linux下英文功能内存会放 tmpfs 的目录 /dev/shm 里，可以建立子目录。但是为了统一跨平台兼容性，我还是没有支持多级目录的。另外这个长度也受glibc库的限制，所以我设置了按NAME_MAX的长度。</p><h2 id=增加协议跨版本向前向后兼容管理增加简单的验证功能>增加协议跨版本向前向后兼容管理，增加简单的验证功能</h2><p>这主要是考虑到后续如果同时多个业务使用或者多个环境使用的时候可能更新有先后。然后如果又不兼容的版本，集群之间可以互相不主动连接，以防不断地尝试重连然后断开。另外增加共享内存通道的版本号检查和架构校验，也是防止共享内存通道如果版本不兼容，随意attach上去可能会破坏数据。atproxy已经接入了这个特性。</p><p>额外增加了一个简单的验证功能，这是为了防止多个项目使用的时候误操作，发送了指令到别的业务（如果互通的话）。并不提供严谨的安全机制。</p><h2 id=支持多个自定义子网>支持多个自定义子网</h2><p>这是为了atproxy可以部署再自己的前缀分组里，然后管理其他前缀分组的子网。这是为了方便更灵活的运维层面的部署结构。这个改动也影响了协议层变化。不过反正都换<a href=https://www.openssl.org/>protobuf</a>了也是大换血了。</p><h2 id=其他细节优化>其他细节优化</h2><p>还有一些其他细节优化列举如下:</p><ol><li>增加连接层错误计数，超出容忍值直接断开连接</li><li>增加大量错误流程的单元测试，优化Unix Sock的单元测试，以支持WSL2</li><li>规范版本号规则：第一位变化表示有向前不兼容的变更；第二位表示有功能增加，向前兼容，第三位表示BUG修复和优化</li><li>更换数据回包的回调名字。</li></ol><blockquote><p>最早的想法是仅失败的时候回包通知，但是后来为了适应有些需求需要尽快知道是否发送成功，所以加了强制回包功能。所以现在的数据转发回包不仅仅是错误处理了，叫on_fail也不合适。所以改成了on_receive_response</p></blockquote><p>不打算支持 protobuf 2.X 了， protobuf 2.X 的最后一个版本到现在已经快5年了，而且proto3的支持现在也已经很完善了。所以我并没有测试protobuf 2.6的兼容性。</p><h2 id=未来计划>未来计划</h2><ol><li>endpoint 离线后保留一段时间，如果期间重连成功了自动重发</li><li>增加data sequence，事件去重和切换节点的sequence重置</li><li>共享endpoint的写缓冲区（也许后面可以一句这个支持多路并行发包）</li><li>重发消息的超时机制，增加不确定是否成功的错误码</li><li>兄弟节点离线后自动重连几次</li><li>增加endpoint尝试轮询连接数据通道，减少不必要的数据通道，仅保留最快的方式。</li></ol></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2020-04-16T20:51:58.000+00:00 itemprop=datePublished>2020-04-16</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/atframework.html>atframework</a></li><li class=article-tag-list-item><a href=//owent.net/tags/atbus.html>atbus</a></li><li class=article-tag-list-item><a href=//owent.net/tags/libatbus.html>libatbus</a></li><li class=article-tag-list-item><a href=//owent.net/tags/bus.html>bus</a></li><li class=article-tag-list-item><a href=//owent.net/tags/connection.html>connection</a></li><li class=article-tag-list-item><a href=//owent.net/tags/async.html>async</a></li><li class=article-tag-list-item><a href=//owent.net/tags/tree.html>tree</a></li><li class=article-tag-list-item><a href=//owent.net/tags/flatbuffers.html>flatbuffers</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2020/2004.html>上一篇<strong>libcopp接入C++20 Coroutine和一些过渡期的设计</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2020/2002.html>下一篇<strong>nftables初体验</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier="2003"};(function(){var e=document,t=e.createElement("script");t.src="https://owent.disqus.com/embed.js",t.setAttribute("data-timestamp",+new Date),(e.head||e.body).appendChild(t)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
 2022
-OWenT
-</strong>
-<strong id=footer-right class="float-right float-end">
-<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+OWenT</strong>
+<strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
-主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
-</strong>
-<span class=clearfix></span>
-</div>
-</div>
-</footer>
-</div>
-<script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
 <script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script>
@@ -191,13 +33,8 @@ OWenT
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script>
-<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script>
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script>
-<script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery("pre\u003ecode").each(function(t,e){try{hljs.highlightBlock(e)}catch(e){window.console&&console.log(e.toString()+"\r\nMaybe can not detect the language")}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","UA-19298704-1")</script><script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
 <script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script>
-<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script>
-<script type=text/javascript src=//unpkg.com/chart.js@latest/dist/chart.min.js></script>
-<script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script>
-</div>
-</body></html>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=//unpkg.com/chart.js@latest/dist/chart.min.js></script>
+<script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script></div></body></html>

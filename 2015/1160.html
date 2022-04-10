@@ -1,100 +1,17 @@
-<!doctype html><html lang=zh-cn>
-<head>
-<meta charset=utf-8>
-<title>关于firewalld和systemd的一些命令速记|I'm OWenT</title>
-<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
-<link rel=canonical href=//owent.net/2015/1160.html>
-<link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT">
-<link rel=icon href=../favicon.ico>
-<link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous>
-<link rel=stylesheet href=//owent.net/css/style.css>
-<script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
-<link rel=stylesheet href=//owent.net/css/syntax.css>
-</head>
-<body><div id=container><div id=wrap>
-<header id=header>
-<div id=banner></div>
-<div id=header-outer>
-<div id=header-title>
-<h1 id=site-title>
-<a href=//owent.net id=logo>I'm OWenT</a>
-</h1>
-<h2 id=site-description>Challenge Everything</h2>
-</div>
-<div id=header-inner>
-<nav id=main-nav class="navbar navbar-expand-md navbar-dark">
-<button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
-<span class=navbar-toggler-icon></span>
-</button>
-<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a>
-<div class="collapse navbar-collapse position-relative" id=main-nav-links>
-<ul class="navbar-nav mr-auto">
-<li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li>
-<li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li>
-<li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li>
-<li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li>
-</ul>
-<div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search>
-<input type=hidden name=q1 value=site:owent.net>
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>关于firewalld和systemd的一些命令速记|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2015/1160.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
+<link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button>
-</form></div>
-</div>
-</nav>
-</div>
-</div>
-</header>
-<div id=main><section id=main-content>
-<div id=post-content><article id=post-64d8a58306fe304b364b33cde4b90944 class="article-panel article article-type-post" itemscope itemprop=blogPost>
-<div class="article-panel-inner article-inner">
-<div class=article-inner>
-<header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2015/1160.html target=_blank itemprop=url>关于firewalld和systemd的一些命令速记</a></h1></header><hr>
-<div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents>
-<ul>
-<li><a href=#前言>前言</a></li>
-<li><a href=#firewalld>firewalld</a>
-<ul>
-<li><a href=#添加服务>添加服务</a></li>
-<li><a href=#添加区域规则>添加区域规则</a></li>
-<li><a href=#常用命令>常用命令</a></li>
-</ul>
-</li>
-<li><a href=#systemd>systemd</a>
-<ul>
-<li><a href=#添加服务-1>添加服务</a></li>
-<li><a href=#启动级别>启动级别</a></li>
-<li><a href=#常用命令-1>常用命令</a></li>
-</ul>
-</li>
-<li><a href=#顺带记一下怎么开启coredump>顺带记一下怎么开启coredump</a></li>
-</ul>
-</nav></div><br>
-<div class=article-entry itemprop=articleBody>
-<h2 id=前言>前言</h2>
-<p>CentOS 7 已经用firewalld替换掉了iptables并用systemd来管理启动服务（之前是chkconfig）。而且下一个Ubuntu的长期支持版也要这么干了。</p>
-<p>这两个工具在操作上和之前的系统有很多的变化，所以集中记录一下常用的命令，以免每次都要靠搜索引擎。</p>
-<h2 id=firewalld>firewalld</h2>
-<p>关于firewalld：http://fedoraproject.org/wiki/FirewallD/zh-cn</p>
-<p>图形化配置工具： firewall-config</p>
-<p>命令行工具：firewall-cmd</p>
-<p>默认配置位于： /usr/lib/firewalld</p>
-<p>用户配置位于： /etc/firewalld</p>
-<h3 id=添加服务>添加服务</h3>
-<p>在 /etc/firewalld/services 创建 [服务名称].xml
-格式如下:</p>
-<pre><code class=language-xml>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-64d8a58306fe304b364b33cde4b90944 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2015/1160.html target=_blank itemprop=url>关于firewalld和systemd的一些命令速记</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#前言>前言</a></li><li><a href=#firewalld>firewalld</a><ul><li><a href=#添加服务>添加服务</a></li><li><a href=#添加区域规则>添加区域规则</a></li><li><a href=#常用命令>常用命令</a></li></ul></li><li><a href=#systemd>systemd</a><ul><li><a href=#添加服务-1>添加服务</a></li><li><a href=#启动级别>启动级别</a></li><li><a href=#常用命令-1>常用命令</a></li></ul></li><li><a href=#顺带记一下怎么开启coredump>顺带记一下怎么开启coredump</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><h2 id=前言>前言</h2><p>CentOS 7 已经用firewalld替换掉了iptables并用systemd来管理启动服务（之前是chkconfig）。而且下一个Ubuntu的长期支持版也要这么干了。</p><p>这两个工具在操作上和之前的系统有很多的变化，所以集中记录一下常用的命令，以免每次都要靠搜索引擎。</p><h2 id=firewalld>firewalld</h2><p>关于firewalld：http://fedoraproject.org/wiki/FirewallD/zh-cn</p><p>图形化配置工具： firewall-config</p><p>命令行工具：firewall-cmd</p><p>默认配置位于： /usr/lib/firewalld</p><p>用户配置位于： /etc/firewalld</p><h3 id=添加服务>添加服务</h3><p>在 /etc/firewalld/services 创建 [服务名称].xml
+格式如下:</p><pre><code class=language-xml>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
 &lt;service&gt;
   &lt;short&gt;服务名称&lt;/short&gt;
   &lt;description&gt;服务名称 server port whitelist&lt;/description&gt;
   &lt;port protocol=&quot;协议&quot; port=&quot;端口&quot;/&gt;
   &lt;port protocol=&quot;tcp&quot; port=&quot;8001&quot;/&gt;
 &lt;/service&gt;
-</code></pre>
-<h3 id=添加区域规则>添加区域规则</h3>
-<p>和添加服务类似，可以从/usr/lib/firewalld/zones拷贝到/etc/firewalld/zones然后改。</p>
-<p>主要流程是控制某一个区域开启哪些服务或者端口</p>
-<h3 id=常用命令>常用命令</h3>
-<pre><code class=language-bash># 重载
+</code></pre><h3 id=添加区域规则>添加区域规则</h3><p>和添加服务类似，可以从/usr/lib/firewalld/zones拷贝到/etc/firewalld/zones然后改。</p><p>主要流程是控制某一个区域开启哪些服务或者端口</p><h3 id=常用命令>常用命令</h3><pre><code class=language-bash># 重载
 firewall-cmd --reload
 # 状态
 firewall-cmd --state
@@ -148,20 +65,8 @@ firewall-cmd --get-icmptypes
 
 # 获取已经启用的服务
 firewall-cmd [--zone=&lt;zone&gt;] --list-services
-</code></pre>
-<h2 id=systemd>systemd</h2>
-<p>关于systemd： <a href=https://wiki.archlinux.org/index.php/Systemd_%28%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87%29>https://wiki.archlinux.org/index.php/Systemd_%28%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87%29</a></p>
-<p>系统配置位置：/usr/lib/systemd/system/</p>
-<p>用户配置位置：/etc/systemd/system/</p>
-<p>其实systemd的enable操作就是把系统配置软链接到用户配置</p>
-<h3 id=添加服务-1>添加服务</h3>
-<p>具体文档可以 <em>man 5 systemd.unit</em> 和 <em>man 5 systemd.service</em></p>
-<p>直接在 /usr/lib/systemd/system或者/usr/lib/systemd/user里添加 &lt;单元>.service文件</p>
-<pre><code class=language-bash>systemctl enable &lt;单元&gt;.service
-</code></pre>
-<p>然后执行上面的命令即可</p>
-<p>文件内容示例：</p>
-<pre><code>[Unit]
+</code></pre><h2 id=systemd>systemd</h2><p>关于systemd： <a href=https://wiki.archlinux.org/index.php/Systemd_%28%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87%29>https://wiki.archlinux.org/index.php/Systemd_%28%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87%29</a></p><p>系统配置位置：/usr/lib/systemd/system/</p><p>用户配置位置：/etc/systemd/system/</p><p>其实systemd的enable操作就是把系统配置软链接到用户配置</p><h3 id=添加服务-1>添加服务</h3><p>具体文档可以 <em>man 5 systemd.unit</em> 和 <em>man 5 systemd.service</em></p><p>直接在 /usr/lib/systemd/system或者/usr/lib/systemd/user里添加 &lt;单元>.service文件</p><pre><code class=language-bash>systemctl enable &lt;单元&gt;.service
+</code></pre><p>然后执行上面的命令即可</p><p>文件内容示例：</p><pre><code>[Unit]
 Description=nginx - high performance web server
 Documentation=http://nginx.org/en/docs/
 After=network.target remote-fs.target nss-lookup.target
@@ -177,56 +82,7 @@ PrivateTmp=true
  
 [Install]
 WantedBy=multi-user.target
-</code></pre>
-<h3 id=启动级别>启动级别</h3>
-<table>
-<thead>
-<tr>
-<th>SysV 启动级别</th>
-<th>Systemd 目标</th>
-<th>注释</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>0</td>
-<td>runlevel0.target, poweroff.target</td>
-<td>中断系统（halt）</td>
-</tr>
-<tr>
-<td>1, s, single</td>
-<td>runlevel1.target, rescue.target</td>
-<td>单用户模式</td>
-</tr>
-<tr>
-<td>2, 4</td>
-<td>runlevel2.target, runlevel4.target, multi-user.target</td>
-<td>用户自定义启动级别，通常识别为级别3。</td>
-</tr>
-<tr>
-<td>3</td>
-<td>runlevel3.target, multi-user.target</td>
-<td>多用户，无图形界面。用户可以通过终端或网络登录。</td>
-</tr>
-<tr>
-<td>5</td>
-<td>runlevel5.target, graphical.target</td>
-<td>多用户，图形界面。继承级别3的服务，并启动图形界面服务。</td>
-</tr>
-<tr>
-<td>6</td>
-<td>runlevel6.target, reboot.target</td>
-<td>重启</td>
-</tr>
-<tr>
-<td>emergency</td>
-<td>emergency.target</td>
-<td>急救模式（Emergency shell）</td>
-</tr>
-</tbody>
-</table>
-<h3 id=常用命令-1>常用命令</h3>
-<pre><code class=language-bash># systemd 重载配置
+</code></pre><h3 id=启动级别>启动级别</h3><table><thead><tr><th>SysV 启动级别</th><th>Systemd 目标</th><th>注释</th></tr></thead><tbody><tr><td>0</td><td>runlevel0.target, poweroff.target</td><td>中断系统（halt）</td></tr><tr><td>1, s, single</td><td>runlevel1.target, rescue.target</td><td>单用户模式</td></tr><tr><td>2, 4</td><td>runlevel2.target, runlevel4.target, multi-user.target</td><td>用户自定义启动级别，通常识别为级别3。</td></tr><tr><td>3</td><td>runlevel3.target, multi-user.target</td><td>多用户，无图形界面。用户可以通过终端或网络登录。</td></tr><tr><td>5</td><td>runlevel5.target, graphical.target</td><td>多用户，图形界面。继承级别3的服务，并启动图形界面服务。</td></tr><tr><td>6</td><td>runlevel6.target, reboot.target</td><td>重启</td></tr><tr><td>emergency</td><td>emergency.target</td><td>急救模式（Emergency shell）</td></tr></tbody></table><h3 id=常用命令-1>常用命令</h3><pre><code class=language-bash># systemd 重载配置
 systemctl daemon-reload
 systemctl restart &lt;单元&gt;
 
@@ -247,9 +103,7 @@ systemctl poweroff
 
 # 重启
 systemctl reboot
-</code></pre>
-<h2 id=顺带记一下怎么开启coredump>顺带记一下怎么开启coredump</h2>
-<pre><code class=language-bash># 
+</code></pre><h2 id=顺带记一下怎么开启coredump>顺带记一下怎么开启coredump</h2><pre><code class=language-bash># 
 COREDUMP_DIR=/home/coredump
 
 # 配置资源限制 
@@ -273,75 +127,14 @@ cat /proc/sys/kernel/core_pattern ;
 # 资料 
 # http://man7.org/linux/man-pages/man5/core.5.html 
 # man 5 core 
-</code></pre>
-<blockquote>
-<p>Written with <a href=https://stackedit.io/>StackEdit</a>.</p>
-</blockquote>
-</div>
-<hr>
-<footer class=article-footer>
-<div class="article-panel-footer article-meta article-footer clearfix">
-<span class=article-meta-left>
-<ol>
-<li><a href=//owent.net/categories/article.html>Article</a></li>
-<li><a href=//owent.net/categories/work.html>Work</a></li>
-</ol>
-</span>
-<span class=article-meta-right><time datetime=2015-04-23T15:55:44.000+00:00 itemprop=datePublished>2015-04-23</time></span>
-<span class=clearfix></span>
-</div>
-<div class=article-tags>
-<ul class=article-tag-list>
-<li class=article-tag-list-item><a href=//owent.net/tags/firewall-cmd.html>firewall-cmd</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/firewalld.html>firewalld</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/systemctl.html>systemctl</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/systemd.html>systemd</a></li>
-</ul>
-</div>
-</footer>
-</div>
-<hr>
-<nav id=article-nav>
-<ul class=pagination>
-<li class=page-item>
-<a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2015/1170.html>
-上一篇<strong>Vim常用命令</strong>
-</a>
-</li>
-<li class=page-item>
-<a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2015/1157.html>
-下一篇<strong>Jenkins(hudson)插件记录</strong>
-</a>
-</li>
-</ul>
-</nav>
-<hr>
-<section id=comments>
-<div id=disqus_thread></div>
-<script type=text/javascript>var disqus_config=function(){this.page.identifier='1160'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script>
-<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
-</section>
-</div>
-</article></div>
-</section></div>
-<footer id=footer>
-<div class=outer>
-<div id=footer-info class="inner clearfix">
-<strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+</code></pre><blockquote><p>Written with <a href=https://stackedit.io/>StackEdit</a>.</p></blockquote></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/work.html>Work</a></li></ol></span><span class=article-meta-right><time datetime=2015-04-23T15:55:44.000+00:00 itemprop=datePublished>2015-04-23</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/firewall-cmd.html>firewall-cmd</a></li><li class=article-tag-list-item><a href=//owent.net/tags/firewalld.html>firewalld</a></li><li class=article-tag-list-item><a href=//owent.net/tags/systemctl.html>systemctl</a></li><li class=article-tag-list-item><a href=//owent.net/tags/systemd.html>systemd</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2015/1170.html>上一篇<strong>Vim常用命令</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2015/1157.html>下一篇<strong>Jenkins(hudson)插件记录</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier="1160"};(function(){var e=document,t=e.createElement("script");t.src="https://owent.disqus.com/embed.js",t.setAttribute("data-timestamp",+new Date),(e.head||e.body).appendChild(t)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
 2022
-OWenT
-</strong>
-<strong id=footer-right class="float-right float-end">
-<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+OWenT</strong>
+<strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
-主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
-</strong>
-<span class=clearfix></span>
-</div>
-</div>
-</footer>
-</div>
-<script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
 <script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script>
@@ -364,13 +157,8 @@ OWenT
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script>
-<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script>
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script>
-<script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery("pre\u003ecode").each(function(t,e){try{hljs.highlightBlock(e)}catch(e){window.console&&console.log(e.toString()+"\r\nMaybe can not detect the language")}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","UA-19298704-1")</script><script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
 <script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script>
-<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script>
-<script type=text/javascript src=//unpkg.com/chart.js@latest/dist/chart.min.js></script>
-<script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script>
-</div>
-</body></html>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=//unpkg.com/chart.js@latest/dist/chart.min.js></script>
+<script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script></div></body></html>

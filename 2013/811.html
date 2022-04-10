@@ -1,81 +1,10 @@
-<!doctype html><html lang=zh-cn>
-<head>
-<meta charset=utf-8>
-<title>试试Boost.Asio|I'm OWenT</title>
-<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
-<link rel=canonical href=//owent.net/2013/811.html>
-<link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT">
-<link rel=icon href=../favicon.ico>
-<link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous>
-<link rel=stylesheet href=//owent.net/css/style.css>
-<script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
-<link rel=stylesheet href=//owent.net/css/syntax.css>
-</head>
-<body><div id=container><div id=wrap>
-<header id=header>
-<div id=banner></div>
-<div id=header-outer>
-<div id=header-title>
-<h1 id=site-title>
-<a href=//owent.net id=logo>I'm OWenT</a>
-</h1>
-<h2 id=site-description>Challenge Everything</h2>
-</div>
-<div id=header-inner>
-<nav id=main-nav class="navbar navbar-expand-md navbar-dark">
-<button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
-<span class=navbar-toggler-icon></span>
-</button>
-<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a>
-<div class="collapse navbar-collapse position-relative" id=main-nav-links>
-<ul class="navbar-nav mr-auto">
-<li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li>
-<li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li>
-<li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li>
-<li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li>
-</ul>
-<div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search>
-<input type=hidden name=q1 value=site:owent.net>
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>试试Boost.Asio|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2013/811.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
+<link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button>
-</form></div>
-</div>
-</nav>
-</div>
-</div>
-</header>
-<div id=main><section id=main-content>
-<div id=post-content><article id=post-87ef00c90c9b873308afb0659f458ff1 class="article-panel article article-type-post" itemscope itemprop=blogPost>
-<div class="article-panel-inner article-inner">
-<div class=article-inner>
-<header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2013/811.html target=_blank itemprop=url>试试Boost.Asio</a></h1></header><hr>
-<div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents>
-<ul>
-<li><a href=#boostasio-依赖项>Boost.Asio 依赖项:</a></li>
-<li><a href=#先来个简单的系统信号量-signal控制>先来个简单的，系统信号量 Signal控制:</a></li>
-<li><a href=#第二个尝试网络io>第二个尝试，网络IO:</a></li>
-<li><a href=#小试牛的第三刀定时器timer>小试牛的第三刀，定时器Timer:</a></li>
-<li><a href=#额外功能>额外功能:</a>
-<ul>
-<li><a href=#设备文件支持>设备文件支持</a></li>
-<li><a href=#unix系统功能>Unix系统功能</a></li>
-</ul>
-</li>
-<li><a href=#ssl支持>SSL支持</a></li>
-<li><a href=#简要性能测试>简要性能测试</a></li>
-</ul>
-</nav></div><br>
-<div class=article-entry itemprop=articleBody><p>慢慢一点一点看看Boost，这段时间就Asio库吧。
-据说这货和libevent的效率差不多，但是Boost的平台兼容性，你懂得。还有它帮忙干掉了很多线程安全和线程分发的事情。</p>
-<h2 id=boostasio-依赖项>Boost.Asio 依赖项:</h2>
-<ol>
-<li>Boost.System (所以它必须链接boost_system)</li>
-<li>[可选] 如果使用read_until() or async_read_until() 函数，则依赖Boost.Regex(boost_regex)</li>
-<li>[可选] SSL功能依赖OpenSSL</li>
-</ol>
-<h2 id=先来个简单的系统信号量-signal控制>先来个简单的，系统信号量 Signal控制:</h2>
-<p>使用ASIO操作信号量有一个注意事项，不允许再使用其他库或工具管理信号量(如signal() 或 sigaction()函数)</p>
-<pre><code class=language-cpp>#include &lt;cstdio&gt;
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-87ef00c90c9b873308afb0659f458ff1 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2013/811.html target=_blank itemprop=url>试试Boost.Asio</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#boostasio-依赖项>Boost.Asio 依赖项:</a></li><li><a href=#先来个简单的系统信号量-signal控制>先来个简单的，系统信号量 Signal控制:</a></li><li><a href=#第二个尝试网络io>第二个尝试，网络IO:</a></li><li><a href=#小试牛的第三刀定时器timer>小试牛的第三刀，定时器Timer:</a></li><li><a href=#额外功能>额外功能:</a><ul><li><a href=#设备文件支持>设备文件支持</a></li><li><a href=#unix系统功能>Unix系统功能</a></li></ul></li><li><a href=#ssl支持>SSL支持</a></li><li><a href=#简要性能测试>简要性能测试</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><p>慢慢一点一点看看Boost，这段时间就Asio库吧。
+据说这货和libevent的效率差不多，但是Boost的平台兼容性，你懂得。还有它帮忙干掉了很多线程安全和线程分发的事情。</p><h2 id=boostasio-依赖项>Boost.Asio 依赖项:</h2><ol><li>Boost.System (所以它必须链接boost_system)</li><li>[可选] 如果使用read_until() or async_read_until() 函数，则依赖Boost.Regex(boost_regex)</li><li>[可选] SSL功能依赖OpenSSL</li></ol><h2 id=先来个简单的系统信号量-signal控制>先来个简单的，系统信号量 Signal控制:</h2><p>使用ASIO操作信号量有一个注意事项，不允许再使用其他库或工具管理信号量(如signal() 或 sigaction()函数)</p><pre><code class=language-cpp>#include &lt;cstdio&gt;
 #include &lt;iostream&gt;
 #include &lt;cstdlib&gt;
 #include &lt;stdint.h&gt;
@@ -131,19 +60,8 @@ int main(int argc, char* argv[]) {
  
     return 0;
 }
-</code></pre>
-<p>So easy吧，可以一次注册多个handler。
-需要注意的是每次触发signal的handler后，handler就被取消了，需要重新注册一次。否则下一次就不会跳到这个handler了</p>
-<h2 id=第二个尝试网络io>第二个尝试，网络IO:</h2>
-<p>按照文档描述，除非使用宏来禁止功能，<em><strong>网络IO在不同的环境下采用了不同的实现方式</strong></em>：</p>
-<ol>
-<li>Windows: IOCP</li>
-<li>Linux: epoll</li>
-<li>Mac OS X, FreeBSD, NetBSD, OpenBSD: kqueue</li>
-<li>Solaris: /dev/poll</li>
-</ol>
-<p>Boost.Asio的接口是仿IOCP的<strong>异步IO</strong>的形式的(参见：http://www.cnblogs.com/hello-leo/archive/2011/04/12/leo.html)，所以，其他环境下都是模拟的。</p>
-<pre><code class=language-cpp>#include &lt;cstdio&gt;
+</code></pre><p>So easy吧，可以一次注册多个handler。
+需要注意的是每次触发signal的handler后，handler就被取消了，需要重新注册一次。否则下一次就不会跳到这个handler了</p><h2 id=第二个尝试网络io>第二个尝试，网络IO:</h2><p>按照文档描述，除非使用宏来禁止功能，<em><strong>网络IO在不同的环境下采用了不同的实现方式</strong></em>：</p><ol><li>Windows: IOCP</li><li>Linux: epoll</li><li>Mac OS X, FreeBSD, NetBSD, OpenBSD: kqueue</li><li>Solaris: /dev/poll</li></ol><p>Boost.Asio的接口是仿IOCP的<strong>异步IO</strong>的形式的(参见：http://www.cnblogs.com/hello-leo/archive/2011/04/12/leo.html)，所以，其他环境下都是模拟的。</p><pre><code class=language-cpp>#include &lt;cstdio&gt;
 #include &lt;iostream&gt;
 #include &lt;cstdlib&gt;
 #include &lt;stdint.h&gt;
@@ -564,22 +482,11 @@ void print_asio_info()
         std::cout&lt;&lt; &quot;sigaction: disabled&quot;&lt;&lt; std::endl;
     #endif
 }
-</code></pre>
-<p>这个搞起来相当费劲，经常需要跳转到Boost的源码中，查看一些<strong>回调函数的定义式</strong>。
+</code></pre><p>这个搞起来相当费劲，经常需要跳转到Boost的源码中，查看一些<strong>回调函数的定义式</strong>。
 <em><strong>write和write_some函数在completion_condition返回0时才发送</strong></em>，否则将数据加入到发送窗口，并且没有发生数据拷贝，也就是说，如果是异步操作，<strong>开发者必须保证发送时数据有效</strong>。(这类函数默认的completion_condition是仿函数transfer_all，返回default_max_transfer_size: 65536)
 同样，<em><strong>read和read_some也是这样</strong></em>。
-Send和receive函数才是立即执行的（不推荐使用）。</p>
-<p>另外，streambuf流用于管理发送或接收缓冲，但是在发送或接收完后，<strong>要执行consume函数移出或commit移入缓冲区</strong>，否则数据不会被销毁。</p>
-<p>UDP和TCP的类似，我就不再多写一个demo了。
-以上sample的client和server的读数据采用了<strong>两种不同的方式</strong></p>
-<p>有一点比较爽，在多线程条件下 <strong>io_service的run函数是线程安全的</strong>，也就是说，多个线程调用同一个run的时候，就自动被加入工作线程池，在消息到来的时候io_service会找到一个可用的线程进行处理。</p>
-<blockquote>
-<p>注：以上代码Visual Studio中需要包含Boost的include目录和lib目录；GCC或Clang中需要加编译选项-I[BOOST_PREFIX目录]/include –L[BOOST_PREFIX目录]/lib -lboost_random -lboost_thread -lboost_system -lstdc++ -lrt -pthread -D_POSIX_MT_, 如果BOOST不在系统动态库查找目录中且同时存在Boost的动态和静态库则加上 -static 选项</p>
-</blockquote>
-<p>另外，这个demo代码包含一些功能检测的代码。</p>
-<h2 id=小试牛的第三刀定时器timer>小试牛的第三刀，定时器Timer:</h2>
-<p>还是喜欢上代码，so…</p>
-<pre><code class=language-cpp>#include &lt;cstdio&gt;
+Send和receive函数才是立即执行的（不推荐使用）。</p><p>另外，streambuf流用于管理发送或接收缓冲，但是在发送或接收完后，<strong>要执行consume函数移出或commit移入缓冲区</strong>，否则数据不会被销毁。</p><p>UDP和TCP的类似，我就不再多写一个demo了。
+以上sample的client和server的读数据采用了<strong>两种不同的方式</strong></p><p>有一点比较爽，在多线程条件下 <strong>io_service的run函数是线程安全的</strong>，也就是说，多个线程调用同一个run的时候，就自动被加入工作线程池，在消息到来的时候io_service会找到一个可用的线程进行处理。</p><blockquote><p>注：以上代码Visual Studio中需要包含Boost的include目录和lib目录；GCC或Clang中需要加编译选项-I[BOOST_PREFIX目录]/include –L[BOOST_PREFIX目录]/lib -lboost_random -lboost_thread -lboost_system -lstdc++ -lrt -pthread -D_POSIX_MT_, 如果BOOST不在系统动态库查找目录中且同时存在Boost的动态和静态库则加上 -static 选项</p></blockquote><p>另外，这个demo代码包含一些功能检测的代码。</p><h2 id=小试牛的第三刀定时器timer>小试牛的第三刀，定时器Timer:</h2><p>还是喜欢上代码，so…</p><pre><code class=language-cpp>#include &lt;cstdio&gt;
 #include &lt;iostream&gt;
 #include &lt;cstdlib&gt;
 #include &lt;stdint.h&gt;
@@ -682,16 +589,7 @@ int main(int argc, char* argv[]) {
  
     return 0;
 }
-</code></pre>
-<p>话说Boost.Asio每次异步wait回调之后还要重新wait一下挺麻烦的</p>
-<h2 id=额外功能>额外功能:</h2>
-<h3 id=设备文件支持>设备文件支持</h3>
-<p>boost::asio::serial_port 可以打开一个Unix设备文件，并作为输入输出流，然后可以用自由函数boost::asio::read(),boost::asio::async_read(),boost::asio::write(),boost::asio::async_write(),boost::asio::read_until() 和 boost::asio::async_read_until()操作这些文件</p>
-<p>在Windows上，需要系统支持I/O completion port时才能使用，可以通过BOOST_ASIO_HAS_SERIAL_PORTS 这个宏来检测是否可用这个功能（如果定义了则可用）。</p>
-<h3 id=unix系统功能>Unix系统功能</h3>
-<p>第一项是<strong>Unix Domain Sockets</strong></p>
-<p>这种socket可以通过</p>
-<pre><code class=language-cpp>local::datagram_protocol::socket socket1(my_io_service);
+</code></pre><p>话说Boost.Asio每次异步wait回调之后还要重新wait一下挺麻烦的</p><h2 id=额外功能>额外功能:</h2><h3 id=设备文件支持>设备文件支持</h3><p>boost::asio::serial_port 可以打开一个Unix设备文件，并作为输入输出流，然后可以用自由函数boost::asio::read(),boost::asio::async_read(),boost::asio::write(),boost::asio::async_write(),boost::asio::read_until() 和 boost::asio::async_read_until()操作这些文件</p><p>在Windows上，需要系统支持I/O completion port时才能使用，可以通过BOOST_ASIO_HAS_SERIAL_PORTS 这个宏来检测是否可用这个功能（如果定义了则可用）。</p><h3 id=unix系统功能>Unix系统功能</h3><p>第一项是<strong>Unix Domain Sockets</strong></p><p>这种socket可以通过</p><pre><code class=language-cpp>local::datagram_protocol::socket socket1(my_io_service);
 local::datagram_protocol::socket socket2(my_io_service);
 local::connect_pair(socket1, socket2);
 //或者
@@ -704,101 +602,17 @@ acceptor.accept(socket);
 local::stream_protocol::endpoint ep(&quot;/tmp/foobar&quot;);
 local::stream_protocol::socket socket(my_io_service);
 socket.connect(ep);
-</code></pre>
-<p>来使用，其他的部分和普通的Socket一样</p>
-<p>第二项是<strong>指向流的文件描述符</strong></p>
-<p>posix::stream_descriptor in(my_io_service, ::dup(STDIN_FILENO));
-posix::stream_descriptor out(my_io_service, ::dup(STDOUT_FILENO));</p>
-<p>创建出的descriptor可以用asio的自由函数的读写函数操作</p>
-<p>第三项是fork支持通过notify_fork函数来重建内部描述符</p>
-<h2 id=ssl支持>SSL支持</h2>
-<p>这部分依赖<strong>OpenSSL</strong>，简单的说，就是在socket外面包了一层，然后操作带ssl的socket。</p>
-<p>大概就是</p>
-<pre><code class=language-cpp>typedef ssl::stream&lt;tcp::socket&gt; ssl_socket;
-</code></pre>
-<p>然后用ssl_socket代替tcp::socket</p>
-<h2 id=简要性能测试>简要性能测试</h2>
-<ul>
-<li>测试机器: CPU Intel(R) Xeon(R) CPU X3440 @ 2.53GHz × 8 , 内存 8096MB</li>
-<li>测试环境: Linux 2.6.32.43， GCC 4.8.0， 编译优化配置 -O2 -g -ggdb</li>
-<li>程序配置: 16 工作进程，1主进程，主线程参与逻辑</li>
-<li>测试结果: 5000-8000连接，每秒收到约320K个报文，7MB流量，每秒发送约320K个报文，12MB流量， CPU 负载: 180%(5000连接) – 195% (8000连接)</li>
-</ul>
-<p>结论： 不知道为什么，压力再也上不去了， 我是把输出重定向到文件的，所以开始以为是磁盘IO爆了，写出日志次数太多，但是gperftools显示磁盘IO占用并不高，性能分布还是比较平均的。但是基本上就在16万个报文了(每个包有一次发送长度的包[4字节]和一次数据的send[不定长])</p>
-<p>测试代码地址： <a href=https://gist.github.com/owent/5660983>https://gist.github.com/owent/5660983</a>
-profile性能分析报告: <a href=http://api.owent.net/resource/doc/link/test.asio.pdf>http://api.owent.net/resource/doc/link/test.asio.pdf</a></p>
-<p>主要就是这个样子，一些更底层的东西比如srand可以以后再看( * ^ _ ^ * )</p>
-</div>
-<hr>
-<footer class=article-footer>
-<div class="article-panel-footer article-meta article-footer clearfix">
-<span class=article-meta-left>
-<ol>
-<li><a href=//owent.net/categories/article.html>Article</a></li>
-<li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li>
-</ol>
-</span>
-<span class=article-meta-right><time datetime=2013-05-23T18:13:58.000+00:00 itemprop=datePublished>2013-05-23</time></span>
-<span class=clearfix></span>
-</div>
-<div class=article-tags>
-<ul class=article-tag-list>
-<li class=article-tag-list-item><a href=//owent.net/tags/asio.html>asio</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/boost.html>BOOST</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/epoll.html>epoll</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/iocp.html>iocp</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/network.html>network</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/socket.html>socket</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/thread.html>thread</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B.html>多线程</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/%E5%BC%82%E6%AD%A5.html>异步</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/%E7%BD%91%E7%BB%9C.html>网络</a></li>
-</ul>
-</div>
-</footer>
-</div>
-<hr>
-<nav id=article-nav>
-<ul class=pagination>
-<li class=page-item>
-<a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2013/818.html>
-上一篇<strong>网络编程小结</strong>
-</a>
-</li>
-<li class=page-item>
-<a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2013/740.html>
-下一篇<strong>Lnmp yum 安装脚本 (for CentOS)</strong>
-</a>
-</li>
-</ul>
-</nav>
-<hr>
-<section id=comments>
-<div id=disqus_thread></div>
-<script type=text/javascript>var disqus_config=function(){this.page.identifier='811'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script>
-<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
-</section>
-</div>
-</article></div>
-</section></div>
-<footer id=footer>
-<div class=outer>
-<div id=footer-info class="inner clearfix">
-<strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+</code></pre><p>来使用，其他的部分和普通的Socket一样</p><p>第二项是<strong>指向流的文件描述符</strong></p><p>posix::stream_descriptor in(my_io_service, ::dup(STDIN_FILENO));
+posix::stream_descriptor out(my_io_service, ::dup(STDOUT_FILENO));</p><p>创建出的descriptor可以用asio的自由函数的读写函数操作</p><p>第三项是fork支持通过notify_fork函数来重建内部描述符</p><h2 id=ssl支持>SSL支持</h2><p>这部分依赖<strong>OpenSSL</strong>，简单的说，就是在socket外面包了一层，然后操作带ssl的socket。</p><p>大概就是</p><pre><code class=language-cpp>typedef ssl::stream&lt;tcp::socket&gt; ssl_socket;
+</code></pre><p>然后用ssl_socket代替tcp::socket</p><h2 id=简要性能测试>简要性能测试</h2><ul><li>测试机器: CPU Intel(R) Xeon(R) CPU X3440 @ 2.53GHz × 8 , 内存 8096MB</li><li>测试环境: Linux 2.6.32.43， GCC 4.8.0， 编译优化配置 -O2 -g -ggdb</li><li>程序配置: 16 工作进程，1主进程，主线程参与逻辑</li><li>测试结果: 5000-8000连接，每秒收到约320K个报文，7MB流量，每秒发送约320K个报文，12MB流量， CPU 负载: 180%(5000连接) – 195% (8000连接)</li></ul><p>结论： 不知道为什么，压力再也上不去了， 我是把输出重定向到文件的，所以开始以为是磁盘IO爆了，写出日志次数太多，但是gperftools显示磁盘IO占用并不高，性能分布还是比较平均的。但是基本上就在16万个报文了(每个包有一次发送长度的包[4字节]和一次数据的send[不定长])</p><p>测试代码地址： <a href=https://gist.github.com/owent/5660983>https://gist.github.com/owent/5660983</a>
+profile性能分析报告: <a href=http://api.owent.net/resource/doc/link/test.asio.pdf>http://api.owent.net/resource/doc/link/test.asio.pdf</a></p><p>主要就是这个样子，一些更底层的东西比如srand可以以后再看( * ^ _ ^ * )</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2013-05-23T18:13:58.000+00:00 itemprop=datePublished>2013-05-23</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/asio.html>asio</a></li><li class=article-tag-list-item><a href=//owent.net/tags/boost.html>BOOST</a></li><li class=article-tag-list-item><a href=//owent.net/tags/epoll.html>epoll</a></li><li class=article-tag-list-item><a href=//owent.net/tags/iocp.html>iocp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/network.html>network</a></li><li class=article-tag-list-item><a href=//owent.net/tags/socket.html>socket</a></li><li class=article-tag-list-item><a href=//owent.net/tags/thread.html>thread</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B.html>多线程</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E5%BC%82%E6%AD%A5.html>异步</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E7%BD%91%E7%BB%9C.html>网络</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2013/818.html>上一篇<strong>网络编程小结</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2013/740.html>下一篇<strong>Lnmp yum 安装脚本 (for CentOS)</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier="811"};(function(){var e=document,t=e.createElement("script");t.src="https://owent.disqus.com/embed.js",t.setAttribute("data-timestamp",+new Date),(e.head||e.body).appendChild(t)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
 2022
-OWenT
-</strong>
-<strong id=footer-right class="float-right float-end">
-<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+OWenT</strong>
+<strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
-主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
-</strong>
-<span class=clearfix></span>
-</div>
-</div>
-</footer>
-</div>
-<script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
 <script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script>
@@ -821,13 +635,8 @@ OWenT
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script>
-<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script>
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script>
-<script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery("pre\u003ecode").each(function(t,e){try{hljs.highlightBlock(e)}catch(e){window.console&&console.log(e.toString()+"\r\nMaybe can not detect the language")}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","UA-19298704-1")</script><script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
 <script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script>
-<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script>
-<script type=text/javascript src=//unpkg.com/chart.js@latest/dist/chart.min.js></script>
-<script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script>
-</div>
-</body></html>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=//unpkg.com/chart.js@latest/dist/chart.min.js></script>
+<script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script></div></body></html>

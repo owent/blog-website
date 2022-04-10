@@ -1,130 +1,12 @@
-<!doctype html><html lang=zh-cn>
-<head>
-<meta charset=utf-8>
-<title>测试现代化硬件C++浮点数性能和一致性|I'm OWenT</title>
-<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1">
-<link rel=canonical href=//owent.net/2022/2201.html>
-<link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT">
-<link rel=icon href=../favicon.ico>
-<link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous>
-<link rel=stylesheet href=//owent.net/css/style.css>
-<script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
-<link rel=stylesheet href=//owent.net/css/syntax.css>
-</head>
-<body><div id=container><div id=wrap>
-<header id=header>
-<div id=banner></div>
-<div id=header-outer>
-<div id=header-title>
-<h1 id=site-title>
-<a href=//owent.net id=logo>I'm OWenT</a>
-</h1>
-<h2 id=site-description>Challenge Everything</h2>
-</div>
-<div id=header-inner>
-<nav id=main-nav class="navbar navbar-expand-md navbar-dark">
-<button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
-<span class=navbar-toggler-icon></span>
-</button>
-<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a>
-<div class="collapse navbar-collapse position-relative" id=main-nav-links>
-<ul class="navbar-nav mr-auto">
-<li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li>
-<li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li>
-<li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li>
-<li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li>
-</ul>
-<div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search>
-<input type=hidden name=q1 value=site:owent.net>
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>测试现代化硬件C++浮点数性能和一致性|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2022/2201.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
+<link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button>
-</form></div>
-</div>
-</nav>
-</div>
-</div>
-</header>
-<div id=main><section id=main-content>
-<div id=post-content><article id=post-7d6ea6864a7265248d4b70b7e26dcdc9 class="article-panel article article-type-post" itemscope itemprop=blogPost>
-<div class="article-panel-inner article-inner">
-<div class=article-inner>
-<header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2022/2201.html target=_blank itemprop=url>测试现代化硬件C++浮点数性能和一致性</a></h1></header><hr>
-<div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents>
-<ul>
-<li><a href=#前言>前言</a></li>
-<li><a href=#关于一致性>关于一致性</a></li>
-<li><a href=#浮点数性能>浮点数性能</a></li>
-<li><a href=#windows-msvc-x64>Windows MSVC x64</a></li>
-<li><a href=#windows-msvc-x86>Windows MSVC x86</a></li>
-<li><a href=#linux-gcc-x86_64>Linux GCC x86_64</a></li>
-<li><a href=#linux-clang-x86_64>Linux Clang x86_64</a></li>
-<li><a href=#android-arm64>Android arm64</a>
-<ul>
-<li><a href=#骁龙835-mi-6>骁龙835 (MI 6)</a></li>
-<li><a href=#骁龙8-gen1-mi-12>骁龙8 Gen1 (MI 12)</a></li>
-</ul>
-</li>
-<li><a href=#测试代码>测试代码</a>
-<ul>
-<li><a href=#test_fpuh><code>test_fpu.h</code></a></li>
-<li><a href=#test_fpucpp><code>test_fpu.cpp</code></a></li>
-<li><a href=#maincpp><code>main.cpp</code></a></li>
-<li><a href=#cmakeliststxt><code>CMakeLists.txt</code></a></li>
-</ul>
-</li>
-<li><a href=#最后>最后</a></li>
-</ul>
-</nav></div><br>
-<div class=article-entry itemprop=articleBody><h2 id=前言>前言</h2>
-<p>很久很久以前，浮点数的性能和跨平台跨硬件架构一致性是无法获得保证的，所以我们一般在需要强一致性和高性能的游戏服务器中会禁用浮点数，转而使用自己实现的定点数。
-这么多年过去了，前段时间想看看现代化硬件下是否仍然有性能问题和是否能够保证一致性，做了些简单的测试，这里记录一下。</p>
-<h2 id=关于一致性>关于一致性</h2>
-<p>首先贴几个参考文档:</p>
-<ul>
-<li><a href=http://christian-seiler.de/projekte/fpmath/>http://christian-seiler.de/projekte/fpmath/</a></li>
-<li><a href=https://gafferongames.com/post/floating_point_determinism/>https://gafferongames.com/post/floating_point_determinism/</a></li>
-<li><a href=https://randomascii.wordpress.com/2013/07/16/floating-point-determinism/>https://randomascii.wordpress.com/2013/07/16/floating-point-determinism/</a></li>
-<li><a href="https://docs.microsoft.com/en-us/cpp/build/reference/fp-specify-floating-point-behavior?view=msvc-170">https://docs.microsoft.com/en-us/cpp/build/reference/fp-specify-floating-point-behavior?view=msvc-170</a></li>
-<li><a href=http://christian-seiler.de/projekte/fpmath/>http://christian-seiler.de/projekte/fpmath/</a></li>
-</ul>
-<p>按照这些材料的说法，影响浮点数计算结果的有几个因素。</p>
-<p>首先，<a href=https://en.cppreference.com/w/cpp/language/types#Floating-point_types>C/C++标准中的浮点数是IEEE 754标准</a>，但是不同的硬件体系下可能会有一些扩展。比如x86和x86_64大多数浮点寄存器扩展到了80bits，仅仅是输出到内存中按IEEE 754标准来。那么在有编译优化的情况下，如果调整了代码顺序就可能影响最终结果。比如对于 <code>A*C+B*C</code> 如果被优化成 <code>(A+B)*C</code> ，数学上是没错的但是可能因为精度的影响造成不同的结果，并且在这方面不同编译器的优化策略还有可能不同。所幸，主流编译器都有选项来关闭这个优化，比如MSVC的 <code>/fp:precise</code> 和 Clang/GCC 的 <code>-fno-fast-math</code> 。</p>
-<p>然后，有些平台有编译选项或者运行时库来设置硬件的浮点数控制字，可以用于统一浮点数运算器的行为。比如x86架构下Windows的 <a href="https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/controlfp-s?view=msvc-170"><code>_controlfp_s</code></a> 接口和 Linux 的</p>
-<pre><code class=language-cpp>fpu_control_t cw = (_FPU_DEFAULT &amp; ~_FPU_EXTENDED) | _FPU_RC_NEAREST | _FPU_SINGLE;
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-7d6ea6864a7265248d4b70b7e26dcdc9 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2022/2201.html target=_blank itemprop=url>测试现代化硬件C++浮点数性能和一致性</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#前言>前言</a></li><li><a href=#关于一致性>关于一致性</a></li><li><a href=#浮点数性能>浮点数性能</a></li><li><a href=#windows-msvc-x64>Windows MSVC x64</a></li><li><a href=#windows-msvc-x86>Windows MSVC x86</a></li><li><a href=#linux-gcc-x86_64>Linux GCC x86_64</a></li><li><a href=#linux-clang-x86_64>Linux Clang x86_64</a></li><li><a href=#android-arm64>Android arm64</a><ul><li><a href=#骁龙835-mi-6>骁龙835 (MI 6)</a></li><li><a href=#骁龙8-gen1-mi-12>骁龙8 Gen1 (MI 12)</a></li></ul></li><li><a href=#测试代码>测试代码</a><ul><li><a href=#test_fpuh><code>test_fpu.h</code></a></li><li><a href=#test_fpucpp><code>test_fpu.cpp</code></a></li><li><a href=#maincpp><code>main.cpp</code></a></li><li><a href=#cmakeliststxt><code>CMakeLists.txt</code></a></li></ul></li><li><a href=#最后>最后</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><h2 id=前言>前言</h2><p>很久很久以前，浮点数的性能和跨平台跨硬件架构一致性是无法获得保证的，所以我们一般在需要强一致性和高性能的游戏服务器中会禁用浮点数，转而使用自己实现的定点数。
+这么多年过去了，前段时间想看看现代化硬件下是否仍然有性能问题和是否能够保证一致性，做了些简单的测试，这里记录一下。</p><h2 id=关于一致性>关于一致性</h2><p>首先贴几个参考文档:</p><ul><li><a href=http://christian-seiler.de/projekte/fpmath/>http://christian-seiler.de/projekte/fpmath/</a></li><li><a href=https://gafferongames.com/post/floating_point_determinism/>https://gafferongames.com/post/floating_point_determinism/</a></li><li><a href=https://randomascii.wordpress.com/2013/07/16/floating-point-determinism/>https://randomascii.wordpress.com/2013/07/16/floating-point-determinism/</a></li><li><a href="https://docs.microsoft.com/en-us/cpp/build/reference/fp-specify-floating-point-behavior?view=msvc-170">https://docs.microsoft.com/en-us/cpp/build/reference/fp-specify-floating-point-behavior?view=msvc-170</a></li><li><a href=http://christian-seiler.de/projekte/fpmath/>http://christian-seiler.de/projekte/fpmath/</a></li></ul><p>按照这些材料的说法，影响浮点数计算结果的有几个因素。</p><p>首先，<a href=https://en.cppreference.com/w/cpp/language/types#Floating-point_types>C/C++标准中的浮点数是IEEE 754标准</a>，但是不同的硬件体系下可能会有一些扩展。比如x86和x86_64大多数浮点寄存器扩展到了80bits，仅仅是输出到内存中按IEEE 754标准来。那么在有编译优化的情况下，如果调整了代码顺序就可能影响最终结果。比如对于 <code>A*C+B*C</code> 如果被优化成 <code>(A+B)*C</code> ，数学上是没错的但是可能因为精度的影响造成不同的结果，并且在这方面不同编译器的优化策略还有可能不同。所幸，主流编译器都有选项来关闭这个优化，比如MSVC的 <code>/fp:precise</code> 和 Clang/GCC 的 <code>-fno-fast-math</code> 。</p><p>然后，有些平台有编译选项或者运行时库来设置硬件的浮点数控制字，可以用于统一浮点数运算器的行为。比如x86架构下Windows的 <a href="https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/controlfp-s?view=msvc-170"><code>_controlfp_s</code></a> 接口和 Linux 的</p><pre><code class=language-cpp>fpu_control_t cw = (_FPU_DEFAULT &amp; ~_FPU_EXTENDED) | _FPU_RC_NEAREST | _FPU_SINGLE;
 _FPU_SETCW(cw);
-</code></pre>
-<p>但是按照文档所说，这些控制字不影响 SSE 指令。而且非常令人沮丧的是，GCC和Clang的数学库都使用了SSE指令。另外在ARM架构中，没有浮点数的精度控制字，只能设置Round规则。</p>
-<blockquote>
-<p>ARM架构浮点数控制字文档:</p>
-<ul>
-<li>ARM - 32位
-<ul>
-<li>FPSCR: <a href=http://infocenter.arm.com/help/topic/com.arm.doc.100403_0200_00_en/lau1442504290459.html>http://infocenter.arm.com/help/topic/com.arm.doc.100403_0200_00_en/lau1442504290459.html</a></li>
-</ul>
-</li>
-<li>ARM - 64位
-<ul>
-<li>FPCR: <a href=http://infocenter.arm.com/help/topic/com.arm.doc.100403_0200_00_en/lau1442502503726.html>http://infocenter.arm.com/help/topic/com.arm.doc.100403_0200_00_en/lau1442502503726.html</a></li>
-<li>FPSR: <a href=http://infocenter.arm.com/help/topic/com.arm.doc.100403_0200_00_en/lau1442502526288.html>http://infocenter.arm.com/help/topic/com.arm.doc.100403_0200_00_en/lau1442502526288.html</a></li>
-</ul>
-</li>
-</ul>
-<p>还有个需要特别注意的是，有些协程组件没有保存浮点数控制字。如果系统中有使用协程，需要额外注意和确认这一点。</p>
-</blockquote>
-<p>最后，GCC还有一个编译选项 <code>-ffloat-store</code> 。默认情况下，gcc会尝试使用寄存器缓存浮点数计算的中间结果，因为x86架构下浮点数寄存器是80bits的，这也可能导致精度差异。这个选项则是强制中间结果也刷入内存，以便对齐到 IEEE 754 。但是同样令人沮丧的是Clang不支持改选项，加上这个选项Clang会报该选项会被忽略的Warning，并且实际测出来无论是否加改选项，性能也和GCC不开这个选项的结果一致。这也意味着macOS、iOS、Android上无法使用（最新的Android NDK已经移除GCC了）。</p>
-<p>在开启和处理了上述差异之后，我写的测试用例在各个平台下跑出的结果是一致的（x86,x86_64/armv7/arm64）。但是这也不排除我写的测试用例比较简单，有可能这在复杂的计算和涉及更复杂的编译优化的场景下才能触发。</p>
-<h2 id=浮点数性能>浮点数性能</h2>
-<p>在现代化的硬件体系下，浮点数性能已经相当不错了。如果允许寄存器缓存中间计算结果，浮点数的加减法性能已经与整数相差无异，乘法还是要比整数差一个数量级，除法有时候甚至比整数要快。</p>
-<p>我测试的设备为:</p>
-<ul>
-<li>Windows 11/CPU：Intel i7-8700 3.2GHZ/MEM: 48GB</li>
-<li>Linux CentOS 8/CPU: AMD EPYC 7K62 48-Core Processor 2.6GHz/MEM: 32GB</li>
-<li>小米6/CPU: 骁龙835</li>
-<li>小米12/CPU: 骁龙8 Gen1</li>
-</ul>
-<h2 id=windows-msvc-x64>Windows MSVC x64</h2>
-<p>编译选项: <code>/O2 /DNDEBUG /Z7 /nologo /DWIN32 /D_WINDOWS /utf-8 /MP /W4 /wd4100 /wd4125 /wd4566 /wd4127 /wd4512 /GR- /Gy- /Zc:__cplusplus /fp:precise</code></p>
-<pre><code>Default:
+</code></pre><p>但是按照文档所说，这些控制字不影响 SSE 指令。而且非常令人沮丧的是，GCC和Clang的数学库都使用了SSE指令。另外在ARM架构中，没有浮点数的精度控制字，只能设置Round规则。</p><blockquote><p>ARM架构浮点数控制字文档:</p><ul><li>ARM - 32位<ul><li>FPSCR: <a href=http://infocenter.arm.com/help/topic/com.arm.doc.100403_0200_00_en/lau1442504290459.html>http://infocenter.arm.com/help/topic/com.arm.doc.100403_0200_00_en/lau1442504290459.html</a></li></ul></li><li>ARM - 64位<ul><li>FPCR: <a href=http://infocenter.arm.com/help/topic/com.arm.doc.100403_0200_00_en/lau1442502503726.html>http://infocenter.arm.com/help/topic/com.arm.doc.100403_0200_00_en/lau1442502503726.html</a></li><li>FPSR: <a href=http://infocenter.arm.com/help/topic/com.arm.doc.100403_0200_00_en/lau1442502526288.html>http://infocenter.arm.com/help/topic/com.arm.doc.100403_0200_00_en/lau1442502526288.html</a></li></ul></li></ul><p>还有个需要特别注意的是，有些协程组件没有保存浮点数控制字。如果系统中有使用协程，需要额外注意和确认这一点。</p></blockquote><p>最后，GCC还有一个编译选项 <code>-ffloat-store</code> 。默认情况下，gcc会尝试使用寄存器缓存浮点数计算的中间结果，因为x86架构下浮点数寄存器是80bits的，这也可能导致精度差异。这个选项则是强制中间结果也刷入内存，以便对齐到 IEEE 754 。但是同样令人沮丧的是Clang不支持改选项，加上这个选项Clang会报该选项会被忽略的Warning，并且实际测出来无论是否加改选项，性能也和GCC不开这个选项的结果一致。这也意味着macOS、iOS、Android上无法使用（最新的Android NDK已经移除GCC了）。</p><p>在开启和处理了上述差异之后，我写的测试用例在各个平台下跑出的结果是一致的（x86,x86_64/armv7/arm64）。但是这也不排除我写的测试用例比较简单，有可能这在复杂的计算和涉及更复杂的编译优化的场景下才能触发。</p><h2 id=浮点数性能>浮点数性能</h2><p>在现代化的硬件体系下，浮点数性能已经相当不错了。如果允许寄存器缓存中间计算结果，浮点数的加减法性能已经与整数相差无异，乘法还是要比整数差一个数量级，除法有时候甚至比整数要快。</p><p>我测试的设备为:</p><ul><li>Windows 11/CPU：Intel i7-8700 3.2GHZ/MEM: 48GB</li><li>Linux CentOS 8/CPU: AMD EPYC 7K62 48-Core Processor 2.6GHz/MEM: 32GB</li><li>小米6/CPU: 骁龙835</li><li>小米12/CPU: 骁龙8 Gen1</li></ul><h2 id=windows-msvc-x64>Windows MSVC x64</h2><p>编译选项: <code>/O2 /DNDEBUG /Z7 /nologo /DWIN32 /D_WINDOWS /utf-8 /MP /W4 /wd4100 /wd4125 /wd4566 /wd4127 /wd4512 /GR- /Gy- /Zc:__cplusplus /fp:precise</code></p><pre><code>Default:
 Control word: 8001f
 0.1*0.1=0.01
 
@@ -156,10 +38,7 @@ Float sin:
          0 0.0922683  0.183749  0.273663  0.361241  0.445738  0.526432  0.602634  0.673695  0.739008  0.798017  0.850217  0.895163  0.932472  0.961825  0.982973
 Float cos:
          1  0.995734  0.982973  0.961826  0.932472  0.895163  0.850217  0.798018  0.739009  0.673696  0.602635  0.526433  0.445739  0.361243  0.273664  0.183751
-</code></pre>
-<h2 id=windows-msvc-x86>Windows MSVC x86</h2>
-<p>编译选项: <code>/O2 /DNDEBUG /Z7 /nologo /DWIN32 /D_WINDOWS /utf-8 /MP /W4 /wd4100 /wd4125 /wd4566 /wd4127 /wd4512 /GR- /Gy- /Zc:__cplusplus /fp:precise</code></p>
-<pre><code>Default:
+</code></pre><h2 id=windows-msvc-x86>Windows MSVC x86</h2><p>编译选项: <code>/O2 /DNDEBUG /Z7 /nologo /DWIN32 /D_WINDOWS /utf-8 /MP /W4 /wd4100 /wd4125 /wd4566 /wd4127 /wd4512 /GR- /Gy- /Zc:__cplusplus /fp:precise</code></p><pre><code>Default:
 Control word: 9001f
 0.1*0.1=0.01
 
@@ -191,27 +70,15 @@ Float sin:
          0 0.0922683  0.183749  0.273663  0.361241  0.445738  0.526432  0.602634  0.673695  0.739008  0.798017  0.850217  0.895163  0.932472  0.961825  0.982973
 Float cos:
          1  0.995734  0.982973  0.961826  0.932472  0.895163  0.850217  0.798018  0.739009  0.673696  0.602635  0.526433  0.445739  0.361243  0.273664  0.183751
-</code></pre>
-<h2 id=linux-gcc-x86_64>Linux GCC x86_64</h2>
-<p>编译选项: <code>-O2 -fno-rtti -fno-fast-math -ffp-contract=off -pthread -mieee-fp -ffloat-store</code></p>
-<p>编译选项 <code>-mpc32</code> 的作用和代码里写:</p>
-<pre><code class=language-cpp>fpu_control_t cw = (_FPU_DEFAULT &amp; ~_FPU_EXTENDED) | _FPU_RC_NEAREST | _FPU_SINGLE;
+</code></pre><h2 id=linux-gcc-x86_64>Linux GCC x86_64</h2><p>编译选项: <code>-O2 -fno-rtti -fno-fast-math -ffp-contract=off -pthread -mieee-fp -ffloat-store</code></p><p>编译选项 <code>-mpc32</code> 的作用和代码里写:</p><pre><code class=language-cpp>fpu_control_t cw = (_FPU_DEFAULT &amp; ~_FPU_EXTENDED) | _FPU_RC_NEAREST | _FPU_SINGLE;
 _FPU_SETCW(cw);
-</code></pre>
-<p>是一样的。</p>
-<p>数学库依赖 <strong>SSE指令</strong></p>
-<pre><code>/data/home/owent/workspace/test/test_fpu/test_fpu.cpp: In function ‘void {anonymous}::start_benchmark_worker(size_t, size_t, benchmark_thread_data&amp;, std::atomic&lt;long unsigned int&gt;&amp;, std::atomic&lt;long unsigned int&gt;&amp;)’:
+</code></pre><p>是一样的。</p><p>数学库依赖 <strong>SSE指令</strong></p><pre><code>/data/home/owent/workspace/test/test_fpu/test_fpu.cpp: In function ‘void {anonymous}::start_benchmark_worker(size_t, size_t, benchmark_thread_data&amp;, std::atomic&lt;long unsigned int&gt;&amp;, std::atomic&lt;long unsigned int&gt;&amp;)’:
 /data/home/owent/workspace/test/test_fpu/test_fpu.cpp:483:60: error: SSE register return with SSE disabled
   483 |       data.result.float_sin_final_result.push_back(std::sin(3.14159f / 34 * i));
       |                                                    ~~~~~~~~^~~~~~~~~~~~~~~~~~~
 gmake[2]: *** [CMakeFiles/clangconsole.dir/test_fpu.cpp.o] Error 1
-</code></pre>
-<blockquote>
-<p><code>-ffloat-store</code> 使得计算的中间结果不适用寄存器，x86架构的浮点寄存器是10字节，可能会影响最终结果。
-参见: <a href=https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html#Optimize-Options>https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html#Optimize-Options</a></p>
-</blockquote>
-<p>带 <code>-ffloat-store</code> 时：</p>
-<pre><code>Default:
+</code></pre><blockquote><p><code>-ffloat-store</code> 使得计算的中间结果不适用寄存器，x86架构的浮点寄存器是10字节，可能会影响最终结果。
+参见: <a href=https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html#Optimize-Options>https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html#Optimize-Options</a></p></blockquote><p>带 <code>-ffloat-store</code> 时：</p><pre><code>Default:
 Control word: 37f
 0.1*0.1=0.01
 
@@ -243,9 +110,7 @@ Float sin:
          0 0.0922683  0.183749  0.273663  0.361241  0.445738  0.526432  0.602634  0.673695  0.739008  0.798017  0.850217  0.895163  0.932472  0.961825  0.982973
 Float cos: 
          1  0.995734  0.982973  0.961826  0.932472  0.895163  0.850217  0.798018  0.739009  0.673696  0.602635  0.526433  0.445739  0.361243  0.273664  0.183751
-</code></pre>
-<p>不带 <code>-ffloat-store</code> 时：</p>
-<pre><code>Default:
+</code></pre><p>不带 <code>-ffloat-store</code> 时：</p><pre><code>Default:
 Control word: 37f
 0.1*0.1=0.01
 
@@ -277,22 +142,13 @@ Float sin:
          0 0.0922683  0.183749  0.273663  0.361241  0.445738  0.526432  0.602634  0.673695  0.739008  0.798017  0.850217  0.895163  0.932472  0.961825  0.982973
 Float cos: 
          1  0.995734  0.982973  0.961826  0.932472  0.895163  0.850217  0.798018  0.739009  0.673696  0.602635  0.526433  0.445739  0.361243  0.273664  0.183751
-</code></pre>
-<h2 id=linux-clang-x86_64>Linux Clang x86_64</h2>
-<p>编译选项: <code>-O2 -fno-rtti -fno-fast-math -ffp-contract=off -pthread -mieee-fp</code></p>
-<ul>
-<li>Clang目前不支持 <code>-ffloat-store</code> : <code>clang-13: warning: optimization flag '-ffloat-store' is not supported [-Wignored-optimization-argument]</code></li>
-<li>Clang目前不支持编译选项 <code>-mpc32</code> , 只能代码里写 <code>_FPU_SETCW(...)</code> 来控制</li>
-</ul>
-<p>数学库依赖 <strong>SSE指令</strong></p>
-<pre><code>In file included from /data/home/owent/workspace/test/test_fpu/test_fpu.cpp:18:
+</code></pre><h2 id=linux-clang-x86_64>Linux Clang x86_64</h2><p>编译选项: <code>-O2 -fno-rtti -fno-fast-math -ffp-contract=off -pthread -mieee-fp</code></p><ul><li>Clang目前不支持 <code>-ffloat-store</code> : <code>clang-13: warning: optimization flag '-ffloat-store' is not supported [-Wignored-optimization-argument]</code></li><li>Clang目前不支持编译选项 <code>-mpc32</code> , 只能代码里写 <code>_FPU_SETCW(...)</code> 来控制</li></ul><p>数学库依赖 <strong>SSE指令</strong></p><pre><code>In file included from /data/home/owent/workspace/test/test_fpu/test_fpu.cpp:18:
 In file included from /opt/llvm-13.0/bin/../include/c++/v1/cmath:308:
 /opt/llvm-13.0/bin/../include/c++/v1/math.h:946:107: error: SSE register return with SSE disabled
 inline _LIBCPP_INLINE_VISIBILITY float       frexp(float __lcpp_x, int* __lcpp_e) _NOEXCEPT       {return ::frexpf(__lcpp_x, __lcpp_e);}
                                                                                                           ^
 /opt/llvm-13.0/bin/../include/c++/v1/math.h:946:107: error: SSE register return with SSE disabled
-</code></pre>
-<pre><code>Default:
+</code></pre><pre><code>Default:
 Control word: 37f
 0.1*0.1=0.01
 
@@ -324,15 +180,7 @@ Float sin:
          0 0.0922683  0.183749  0.273663  0.361241  0.445738  0.526432  0.602634  0.673695  0.739008  0.798017  0.850217  0.895163  0.932472  0.961825  0.982973
 Float cos: 
          1  0.995734  0.982973  0.961826  0.932472  0.895163  0.850217  0.798018  0.739009  0.673696  0.602635  0.526433  0.445739  0.361243  0.273664  0.183751
-</code></pre>
-<h2 id=android-arm64>Android arm64</h2>
-<p>编译选项: <code>-O2 -fno-rtti -fno-fast-math -ffp-contract=off -pthread</code></p>
-<ul>
-<li>Clang目前不支持 <code>-ffloat-store</code></li>
-<li>ARM无法设置浮点数精度，取整规则和上面x86保持一致</li>
-</ul>
-<h3 id=骁龙835-mi-6>骁龙835 (MI 6)</h3>
-<pre><code>Default:
+</code></pre><h2 id=android-arm64>Android arm64</h2><p>编译选项: <code>-O2 -fno-rtti -fno-fast-math -ffp-contract=off -pthread</code></p><ul><li>Clang目前不支持 <code>-ffloat-store</code></li><li>ARM无法设置浮点数精度，取整规则和上面x86保持一致</li></ul><h3 id=骁龙835-mi-6>骁龙835 (MI 6)</h3><pre><code>Default:
 Rounding word: 0
 0.1*0.1=0.01
 
@@ -364,9 +212,7 @@ Float sin:
  0 0.0922683 0.183749 0.273663 0.361241 0.445738 0.526432 0.602634 0.673695 0.739008 0.798017 0.850217 0.895163 0.932472 0.961825 0.982973
 Float cos: 
  1 0.995734 0.982973 0.961826 0.932472 0.895163 0.850217 0.798018 0.739009 0.673696 0.602635 0.526433 0.445739 0.361243 0.273664 0.183751
-</code></pre>
-<h3 id=骁龙8-gen1-mi-12>骁龙8 Gen1 (MI 12)</h3>
-<pre><code>Default:
+</code></pre><h3 id=骁龙8-gen1-mi-12>骁龙8 Gen1 (MI 12)</h3><pre><code>Default:
 Rounding word: 0
 0.1*0.1=0.01
 
@@ -398,11 +244,7 @@ Float sin:
  0 0.0922683 0.183749 0.273663 0.361241 0.445738 0.526432 0.602634 0.673695 0.739008 0.798017 0.850217 0.895163 0.932472 0.961825 0.982973
 Float cos: 
  1 0.995734 0.982973 0.961826 0.932472 0.895163 0.850217 0.798018 0.739009 0.673696 0.602635 0.526433 0.445739 0.361243 0.273664 0.183751
-</code></pre>
-<h2 id=测试代码>测试代码</h2>
-<p>然后贴一下测试代码，主要三个代码文件和一个cmake工程文件。</p>
-<h3 id=test_fpuh><code>test_fpu.h</code></h3>
-<pre><code class=language-cpp>// Copyright 2022 Tencent
+</code></pre><h2 id=测试代码>测试代码</h2><p>然后贴一下测试代码，主要三个代码文件和一个cmake工程文件。</p><h3 id=test_fpuh><code>test_fpu.h</code></h3><pre><code class=language-cpp>// Copyright 2022 Tencent
 
 #pragma once
 
@@ -457,9 +299,7 @@ size_t get_benchmark_running_thread(const std::shared_ptr&lt;benchmark_handle&gt
 size_t get_benchmark_thread_count(const std::shared_ptr&lt;benchmark_handle&gt; &amp;handle);
 
 void pick_benchmark_result(const std::shared_ptr&lt;benchmark_handle&gt; &amp;handle, std::vector&lt;benchmark_result&gt; &amp;result);
-</code></pre>
-<h3 id=test_fpucpp><code>test_fpu.cpp</code></h3>
-<pre><code class=language-cpp>// Copyright 2022 Tencent
+</code></pre><h3 id=test_fpucpp><code>test_fpu.cpp</code></h3><pre><code class=language-cpp>// Copyright 2022 Tencent
 
 #include &quot;test_fpu.h&quot;
 
@@ -1053,9 +893,7 @@ void pick_benchmark_result(const std::shared_ptr&lt;benchmark_handle&gt; &amp;ha
     result.push_back(data.result);
   }
 }
-</code></pre>
-<h3 id=maincpp><code>main.cpp</code></h3>
-<pre><code class=language-cpp>// Copyright 2022 Tencent
+</code></pre><h3 id=maincpp><code>main.cpp</code></h3><pre><code class=language-cpp>// Copyright 2022 Tencent
 
 #include &lt;chrono&gt;
 #include &lt;cstring&gt;
@@ -1275,9 +1113,7 @@ int main(int argc, char* argv[]) {
   std::cout.flush();
   return 0;
 }
-</code></pre>
-<h3 id=cmakeliststxt><code>CMakeLists.txt</code></h3>
-<pre><code class=language-cmake>cmake_minimum_required(VERSION 3.16)
+</code></pre><h3 id=cmakeliststxt><code>CMakeLists.txt</code></h3><pre><code class=language-cmake>cmake_minimum_required(VERSION 3.16)
 project(testfpu)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -1362,74 +1198,15 @@ endif()
 set_source_files_properties(
   test_fpu.h test_fpu.cpp PROPERTIES COMPILE_OPTIONS
                                      &quot;${ADDITIONAL_COMPILE_OPTIONS}&quot;)
-</code></pre>
-<h2 id=最后>最后</h2>
-<p>个人的建议是如果只考虑性能，并且如果只是用于公式计算和存储等简单的算法，现在已经可以在游戏服务器中使用浮点数了。但是如果目标是保证跨平台一致性，或者需要复杂的乘法运算，还是要谨慎。
-欢迎有兴趣的小伙伴们交流分享，特别是如果具体的和一致性相关的测试代码欢迎补充。</p>
-</div>
-<hr>
-<footer class=article-footer>
-<div class="article-panel-footer article-meta article-footer clearfix">
-<span class=article-meta-left>
-<ol>
-<li><a href=//owent.net/categories/article.html>Article</a></li>
-<li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li>
-</ol>
-</span>
-<span class=article-meta-right><time datetime=2022-01-27T11:39:45.000+00:00 itemprop=datePublished>2022-01-27</time></span>
-<span class=clearfix></span>
-</div>
-<div class=article-tags>
-<ul class=article-tag-list>
-<li class=article-tag-list-item><a href=//owent.net/tags/float.html>float</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/cpp.html>cpp</a></li>
-<li class=article-tag-list-item><a href=//owent.net/tags/cxx.html>cxx</a></li>
-</ul>
-</div>
-</footer>
-</div>
-<hr>
-<nav id=article-nav>
-<ul class=pagination>
-<li class=page-item>
-<a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2022/2202.html>
-上一篇<strong>记录一些bazel适配用编译选项</strong>
-</a>
-</li>
-<li class=page-item>
-<a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2021/2110.html>
-下一篇<strong>适配Boringssl和OpenSSL 3.0</strong>
-</a>
-</li>
-</ul>
-</nav>
-<hr>
-<section id=comments>
-<div id=disqus_thread></div>
-<script type=text/javascript>var disqus_config=function(){this.page.identifier='2201'};(function(){var a=document,b=a.createElement('script');b.src='https://owent.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script>
-<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
-</section>
-</div>
-</article></div>
-</section></div>
-<footer id=footer>
-<div class=outer>
-<div id=footer-info class="inner clearfix">
-<strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+</code></pre><h2 id=最后>最后</h2><p>个人的建议是如果只考虑性能，并且如果只是用于公式计算和存储等简单的算法，现在已经可以在游戏服务器中使用浮点数了。但是如果目标是保证跨平台一致性，或者需要复杂的乘法运算，还是要谨慎。
+欢迎有兴趣的小伙伴们交流分享，特别是如果具体的和一致性相关的测试代码欢迎补充。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2022-01-27T11:39:45.000+00:00 itemprop=datePublished>2022-01-27</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/float.html>float</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cpp.html>cpp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cxx.html>cxx</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2022/2202.html>上一篇<strong>记录一些bazel适配用编译选项</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2021/2110.html>下一篇<strong>适配Boringssl和OpenSSL 3.0</strong></a></li></ul></nav><hr><section id=comments><div id=disqus_thread></div><script type=text/javascript>var disqus_config=function(){this.page.identifier="2201"};(function(){var e=document,t=e.createElement("script");t.src="https://owent.disqus.com/embed.js",t.setAttribute("data-timestamp",+new Date),(e.head||e.body).appendChild(t)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript></section></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
 2022
-OWenT
-</strong>
-<strong id=footer-right class="float-right float-end">
-<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+OWenT</strong>
+<strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
-主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
-</strong>
-<span class=clearfix></span>
-</div>
-</div>
-</footer>
-</div>
-<script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
 <script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script>
@@ -1452,13 +1229,8 @@ OWenT
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script>
-<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery('pre\u003ecode').each(function(b,a){try{hljs.highlightBlock(a)}catch(a){window.console&&console.log(a.toString()+"\r\nMaybe can not detect the language")}})})</script>
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-19298704-1')</script>
-<script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"languages":{},"tabreplace":"    ","usebr":false}')):hljs.configure(evel('{"languages":{},"tabreplace":"    ","usebr":false}')),jQuery("pre\u003ecode").each(function(t,e){try{hljs.highlightBlock(e)}catch(e){window.console&&console.log(e.toString()+"\r\nMaybe can not detect the language")}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","UA-19298704-1")</script><script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
 <script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script>
-<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:['script','noscript','style','textarea','pre','code']})})</script>
-<script type=text/javascript src=//unpkg.com/chart.js@latest/dist/chart.min.js></script>
-<script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script>
-</div>
-</body></html>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1}],ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=//unpkg.com/chart.js@latest/dist/chart.min.js></script>
+<script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.min.js></script></div></body></html>
