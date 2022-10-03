@@ -37,7 +37,7 @@ func setup(c *caddy.Controller) error {
   return nil
 }
 </code></pre><p><a href=https://coredns.io/>coredns</a> 的插件是静态的，就是增减插件都需要把插件名字和地址写进 <code>plugin.cfg</code> 里然后重新编译。而 <a href=https://coredns.io/>coredns</a> 的插件触发顺序是按 <code>plugin.cfg</code> 里的顺序，和用户写配置的顺序无关。
-实际上 <a href=https://coredns.io/>coredns</a> 会对每个Zone建立一个插件的链表，然后从尾部开始触发插件的 <code>setup</code> 接口。</p><p>比如，如果 <code>plugin.cfg</code> 里插件 <code>A</code> , <code>B</code> 的配置顺序是</p><pre><code class=language-conf>A
+实际上 <a href=https://coredns.io/>coredns</a> 会对每个Zone建立一个插件的链表，然后从尾部开始触发插件的 <code>setup</code> 接口。</p><p>比如，如果 <code>plugin.cfg</code> 里插件 <code>A</code> , <code>B</code> 的配置顺序是</p><pre><code>A
 B
 </code></pre><p>那么会先调用 <code>B</code> 的 <code>func(next plugin.Handler) plugin.Handler</code> ，然后在调用 <code>A</code> 的 <code>func(next plugin.Handler) plugin.Handler</code> 时候 <code>next</code> 传入 <code>B</code> 的返回值。</p><p>而执行的时候，几乎所有的插件都是使用 <code>plugin.NextOrFailure(m.Name(), m.Next, ctx, w, r)</code> 来先触发下一跳，通过协程的等待机制等下一跳完成在执行自己的逻辑。
 如果需要修改下一跳的返回结果，可以通过 <a href=https://coredns.io/>coredns</a> 提供的 <a href=github.com/coredns/coredns/plugin/pkg/nonwriter>nonwriter</a> 模块对插件链的解析结果进行劫持再重新写入。
@@ -50,7 +50,7 @@ sed -i.bak '/cache:.*/i nftables:github.com/owent/coredns-nftables' plugin.cfg
 go get github.com/owent/coredns-nftables
 
 go generate
-</code></pre><p>最终的配置结构如下:</p><pre><code class=language-conf>nftables [ip/ip6]... {
+</code></pre><p>最终的配置结构如下:</p><pre><code>nftables [ip/ip6]... {
   set add element &lt;TABLE_NAME&gt; &lt;SET_NAME&gt; [ip/ip6/auto] [interval] [timeout]
   [connection timeout &lt;timeout&gt;]
 }
@@ -61,10 +61,10 @@ nftables [inet/bridge/arp/netdev]... {
 }
 </code></pre><p>这里还利用了 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 的 set 自带的超时机制去设置定时淘汰。
 对于 <code>ip</code> 和 <code>ip6</code> 的 family 类型，可以设置 set 类型为 auto，这样就只会写入符合条件对的ip。
-而对于其他的 family 类型，就必须自己设置建立 set 时要使用哪种类型了。当然如果set本身就已存在会用已存在的set的类型。</p><h2 id=coredns-filter>coredns-filter</h2><p><a href=https://github.com/owent/coredns-filter>coredns-filter</a> 插件就更简单一些了。当然也是建议放在 <a href=https://coredns.io/plugins/cache/>cache</a> 和 <a href=https://github.com/owent/coredns-nftables>coredns-nftables</a> 插件后，但是应该在 <a href=https://coredns.io/explugins/finalize/>finalize</a> 前。这样能减少 <a href=https://github.com/owent/coredns-nftables>coredns-nftables</a> 不必要的开销。</p><p>整个配置的语法大概是:</p><pre><code class=language-conf>filter [command options...] {
+而对于其他的 family 类型，就必须自己设置建立 set 时要使用哪种类型了。当然如果set本身就已存在会用已存在的set的类型。</p><h2 id=coredns-filter>coredns-filter</h2><p><a href=https://github.com/owent/coredns-filter>coredns-filter</a> 插件就更简单一些了。当然也是建议放在 <a href=https://coredns.io/plugins/cache/>cache</a> 和 <a href=https://github.com/owent/coredns-nftables>coredns-nftables</a> 插件后，但是应该在 <a href=https://coredns.io/explugins/finalize/>finalize</a> 前。这样能减少 <a href=https://github.com/owent/coredns-nftables>coredns-nftables</a> 不必要的开销。</p><p>整个配置的语法大概是:</p><pre><code>filter [command options...] {
   [command options...]
 }
-</code></pre><p>然后这里的指令可以是:</p><ul><li><code>prefer &lt;none/ipv4/ipv6></code> : 不过滤/优先使用ipv4/优先使用ipv6</li><li><code>bogus-nxdomain [ip address/ip prefix...]</code> : 反污染的ip地址或前缀</li></ul><p>比如:</p><pre><code class=language-conf>example.org {
+</code></pre><p>然后这里的指令可以是:</p><ul><li><code>prefer &lt;none/ipv4/ipv6></code> : 不过滤/优先使用ipv4/优先使用ipv6</li><li><code>bogus-nxdomain [ip address/ip prefix...]</code> : 反污染的ip地址或前缀</li></ul><p>比如:</p><pre><code>example.org {
     whoami
     forward . 8.8.8.8
     filter prefer ipv4 {
@@ -72,7 +72,7 @@ nftables [inet/bridge/arp/netdev]... {
     }
 }
 </code></pre><p>当然ipv6也是可以的</p><h2 id=最后>最后</h2><p>以上两个插件我开源在了 <a href=https://github.com/owent/coredns-nftables>https://github.com/owent/coredns-nftables</a> 和 <a href=https://github.com/owent/coredns-filter>https://github.com/owent/coredns-filter</a> 。</p><p>另外我还做了个 <a href=https://coredns.io/>coredns</a> 的docker镜像放在了 <code>docker.io/owt5008137/coredns</code> 。
-每周三拉取最新版本的 <a href=https://coredns.io/>coredns</a> 代码并在 <a href=https://coredns.io/plugins/cache/>cache</a> 插件后面依次插入 <a href=https://github.com/owent/coredns-nftables>coredns-nftables</a> 、 <a href=https://github.com/owent/coredns-filter>coredns-filter</a> 和 <a href=https://coredns.io/explugins/finalize/>finalize</a> ，并在 <a href=https://coredns.io/plugins/forward/>forward</a> 插件前插入了 <a href=https://coredns.io/explugins/alternate/>alternate</a> 插件。<a href=https://coredns.io/explugins/alternate/>alternate</a> 相当于反向的 <code>bogus-nxdomain</code> 功能。</p><p>最终大概这个样子:</p><pre><code class=language-conf>cache
+每周三拉取最新版本的 <a href=https://coredns.io/>coredns</a> 代码并在 <a href=https://coredns.io/plugins/cache/>cache</a> 插件后面依次插入 <a href=https://github.com/owent/coredns-nftables>coredns-nftables</a> 、 <a href=https://github.com/owent/coredns-filter>coredns-filter</a> 和 <a href=https://coredns.io/explugins/finalize/>finalize</a> ，并在 <a href=https://coredns.io/plugins/forward/>forward</a> 插件前插入了 <a href=https://coredns.io/explugins/alternate/>alternate</a> 插件。<a href=https://coredns.io/explugins/alternate/>alternate</a> 相当于反向的 <code>bogus-nxdomain</code> 功能。</p><p>最终大概这个样子:</p><pre><code>cache
 nftables
 filter
 finalizer
@@ -89,16 +89,19 @@ OWenT</strong>
 <span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
 <script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/awk.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cpp.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/capnproto.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cmake.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/d.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/diff.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dockerfile.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dos.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/erlang.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/go.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/less.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/llvm.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/lua.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/php.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/powershell.min.js></script>
