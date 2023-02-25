@@ -1,9 +1,130 @@
-<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>Opentelemetry-cpp的Logs模块标准化改造|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2023/2302.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>Opentelemetry-cpp的Logs模块标准更新|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2023/2302.html><link href=//owent.net/index.xml rel=alternate type=application/rss+xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
 <link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
 <span class=navbar-toggler-icon></span></button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-302b695dbbcf3910b4f4815dd86cdad7 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2023/2302.html target=_blank itemprop=url>Opentelemetry-cpp的Logs模块标准化改造</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav></div><br><div class=article-entry itemprop=articleBody><ul><li>EmitLogRecord接口</li><li>Logger和EventLogger</li><li>type traits和属性</li><li>include_trace</li><li>Recordable和LogRecord</li><li>Break changes</li></ul></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2023-01-27T11:39:45.000+00:00 itemprop=datePublished>2023-01-27</time></span>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-302b695dbbcf3910b4f4815dd86cdad7 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2023/2302.html target=_blank itemprop=url>Opentelemetry-cpp的Logs模块标准更新</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#背景>背景</a></li><li><a href=#不兼容变更break-changes>不兼容变更（Break changes）</a><ul><li><a href=#命名变更>命名变更</a></li></ul></li><li><a href=#新增功能>新增功能</a></li><li><a href=#总结>总结</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><h2 id=背景>背景</h2><p><a href=https://github.com/open-telemetry/opentelemetry-cpp>Opentelemetry-cpp</a> 是可观测领域，<a href=https://opentelemetry.io/>opentelemetry</a> (CNCF基金会孵化项目)的<a href=https://github.com/open-telemetry/opentelemetry-cpp>C++ SDK接入层</a>。
+<a href=https://opentelemetry.io/>opentelemetry</a> 里面主要是分链路跟踪(Trace)、指标(Metrics)、日志(Logs)三大块。
+同时 <a href=https://opentelemetry.io/>opentelemetry</a> 有一个标准规范文档 <a href=https://github.com/open-telemetry/opentelemetry-specification>opentelemetry-specification</a> ，而SDK实现主要就是来对这个标准规范文档的特定语言实现。
+由于日志(Logs)这一块一直处于Experimental阶段，所以很长时间以来 <a href=https://github.com/open-telemetry/opentelemetry-cpp>C++ SDK接入层</a> 都没有及时更新跟进规范的变化。</p><p>去年底的时候，我也是抽时间来更新了一波规范实现。但是拖到今天才来写这篇分享( * T _ T * )，也是想着把一些向前不兼容的变化列举出来，方便可能有些同学升级的时候可能会碰到一些问题可以对照解决。</p><p>首先简单介绍一下 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 的内部模块结构，主要是三部分: API, SDK, Exporter 。然后还有其他一些扩展和辅助性功能。</p><ul><li>API模块: 主要用于各类组件接入创建链路跟踪(Trace)、指标(Metrics)、日志(Logs)，这部分必须是Head-Only的，ABI稳定的。</li><li>SDK模块: 主要用于应用框架层来接入如何实际产生和处理数据的实现层，和API模块搭配可以做出类似热插拔的效果。</li><li>Exporter模块: 决定如何导出数据，用什么协议导出。</li><li>其他: 包含HTTP封装，插件模块等周边支持组件</li></ul><h2 id=不兼容变更break-changes>不兼容变更（Break changes）</h2><p>在 <a href=https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/logs>Logs的规范</a> 层面，大部分的变化只是名称上的变化，还有少量的功能性增强和一些仍然处于非常早期的新功能草案。</p><h3 id=命名变更>命名变更</h3><p>首先，规范定义了一个 <code>LogRecord</code> 类型，并且要求在API组件中实现的导出接口全部以这个 <code>LogRecord</code> 为基准，<code>LogRecord</code> 要求实现所有字段的 setter 接口。
+同时，导出接口 从原来的 <code>Logger::Log(...)</code> 重命名为了 <code>Logger::EmitLogRecord(...)</code> ，并且在继承关系中，仅需要实现 <code>Logger::EmitLogRecord(nostd::unique_ptr&lt;LogRecord>)</code> 。</p><p>这部分的变化，由于原先的 SDK模块中也有个 <code>LogRecord</code> 结构，这里其实是不同含义，但是重名了。所以我们废弃了 SDK中的 <code>LogRecord</code> 。
+新的规范中在SDK里也加入了 <code>ReadableLogRecord</code> 和 <code>ReadWriteLogRecord</code> 两个接口，要求 <code>ReadableLogRecord</code> 必须实现 getter 接口，而 <code>ReadWriteLogRecord</code> setter 和 getter 都有。
+其实这里的 <code>ReadWriteLogRecord</code> 就很像之前 SDK 里的 <code>LogRecord</code> 。
+另外由于SDK里所有模块的数据传递都是通过各自内部的一个叫 <code>Recordable</code> 的对象，并且这个对象还会包含一些SDK内的独有的内容，比如Resource和InstrumentationScope。
+所以我们最终的继承关系改成了如下所示:</p><div id=otel_cpp_log_record>classDiagram
+LogRecord <|-- Recordable
+Recordable <|-- ReadableLogRecord
+Recordable <|-- 特定Exporter的Recordable
+ReadableLogRecord <|-- ReadWriteLogRecord
+LogRecord: +SetTimestamp()
+LogRecord: +SetObservedTimestamp()
+LogRecord: +SetSeverity()
+LogRecord: +SetBody()
+LogRecord: +SetAttribute()
+LogRecord: +SetTraceId()
+LogRecord: +SetSpanId()
+LogRecord: +SetTraceFlags()
+class Recordable {
++SetResource()
++SetInstrumentationScope()
+}
+class ReadableLogRecord {
+GetTimestamp()
+GetObservedTimestamp()
+GetSeverity()
+GetSeverityText()
+GetBody()
+GetTraceId()
+GetSpanId()
+GetTraceFlags()
+GetAttributes()
+GetResource()
+GetInstrumentationScope()
+}
+class 特定Exporter的Recordable {
+位于Exporter中，比如 OtlpLogRecordable
+}</div><script type=text/javascript>jQuery(function(){var t="otel_cpp_log_record",e=jQuery("#"+t),n={"text-align":"center"};e.css(n);try{mermaid.init(void 0,e,function(){console.log("done")})}catch(n){e.empty();const t=document.createElement("pre");t.style.textAlign="left",t.innerText=n.message.toString(),e.append(t)}})</script><p>另外所有的 Processor、Exporter、Factory的名字都由 <code>*Log*Processor</code> ， <code>*Log*Exporter</code> 和 <code>*Log*Factory</code> 变为了 <code>*LogRecord*Processor</code> ， <code>*LogRecord*Exporter</code> 和 <code>*LogRecord*Factory</code> 。
+对应的头文件的文件名也做了相应修改。</p><p>对于 Processor 接口， <code>OnReceive</code> 重命名为了 <code>OnEmit</code> 。</p><p>我们还移除了老 <code>Logger::Log(...)</code> 接口中的 <code>name</code> 字段。在非常古老的版本中，Logs的协议里有 <code>name</code> 字段，所以 <code>Logger::Log(...)</code> 接口里也有个 <code>name</code> 参数。
+但是实际上很早期的一次协议更新就已经移除这个字段了(从v1.4.0版本开始)，我们在接口层保留了相当长的时间，并且设置为了 deprecated 就是为了给用户一段时间去迁移。
+现在这次改造就顺带移除了这个废弃的接口，以防误用。</p><p>API接口中一些STL类型的接口换成了 <code>nostd</code> 的版本，比如 <code>std::unique_ptr</code> -> <code>nostd::unique_ptr</code> 。这部分主要是和其他模块保持一致，管理ABI兼容性。</p><h2 id=新增功能>新增功能</h2><p>规范变化也包含一些新功能，比如说，我们现在可以通过 <code>LoggerProvider::GetLogger()</code> 接口来设置自动从链路跟踪(Trace)模块的 <code>RuntimeContext</code> 中自动提取和关联当前的调用链路信息。
+这样可以把日志自动关联到链路上，当然这需要使用链路跟踪(Trace)模块的模块启用里面的 <code>Scope</code> 组件。我们仍然支持手动设置链路信息。</p><p>Logs的数据字段方面，增加了一个 <code>observed_timestamp</code> ，这个字段会默认填写为上报创建 <code>LogRecord</code> 时的时间。当然也是可以手动设置的。</p><p>我们现在也允许在 <code>LoggerProvider::GetLogger()</code> 创建Logger的时候指定InstrumentationScope的属性，不过目前的版本中只是接口合入了，下个Release才会真正进入到Exporter的数据中。
+详见: <a href=https://github.com/open-telemetry/opentelemetry-cpp/pull/2004>https://github.com/open-telemetry/opentelemetry-cpp/pull/2004</a> 这个PR的合入进展。</p><p>新的规范有一个还处于非常初期的 <code>EventLog</code> 的草案，主要是包装了一下普通版本的 <code>Logger</code> ，在要设置log的关联事件的时候规范化 <code>event.name</code> 和 <code>event.domain</code> 的使用。这个可能未来还会变化比较大，暂时不推荐使用。</p><p>由于新增了一些属性，Logs的一键调用接口（包括 <code>EmitLogRecord</code>, <code>Debug</code>, <code>Error</code>, <code>Info</code> 等）的参数越多了。并且大部分都是可选的，这对接口的维护带来了极大得不变。为了缓解这个问题，我用type traits的方式重构了这部分的重载。相当于把原来的按类型+参数顺序的重载改成了仅仅按类型的重载，无所谓传参的顺序。然后根据参数类型来决定如何填充字段。比如参考其中一个接口注释:</p><pre><code class=language-cpp>/**
+  * Emit a Log Record object with arguments
+  *
+  * @param log_record Log record
+  * @tparam args Arguments which can be used to set data of log record by type.
+  *  Severity                                -&gt; severity, severity_text
+  *  string_view                             -&gt; body
+  *  AttributeValue                          -&gt; body
+  *  SpanContext                             -&gt; span_id,tace_id and trace_flags
+  *  SpanId                                  -&gt; span_id
+  *  TraceId                                 -&gt; tace_id
+  *  TraceFlags                              -&gt; trace_flags
+  *  SystemTimestamp                         -&gt; timestamp
+  *  system_clock::time_point                -&gt; timestamp
+  *  KeyValueIterable                        -&gt; attributes
+  *  Key value iterable container            -&gt; attributes
+  *  span&lt;pair&lt;string_view, AttributeValue&gt;&gt; -&gt; attributes(return type of MakeAttributes)
+  */
+template &lt;class... ArgumentType&gt;
+void EmitLogRecord(nostd::unique_ptr&lt;LogRecord&gt; &amp;&amp;log_record, ArgumentType &amp;&amp;... args);
+</code></pre><p>这上面列出了如何按参数类型会影响哪些字段。那么如何实现呢？首先由于传入的参数 <code>ArgumentType</code> 是个通用引用，它既能匹配左值引用，又能匹配右值，还能匹配是否带 <code>const</code> 和 <code>violate</code> ，所以第一层模板类型提取我们可以用 <code>std::decay&lt;ArgumentType>::type</code> 来移除这些类型修饰。然后通过一个特殊类型的特化来实现不同的功能，参数传递走完美转发就可以了。比如:</p><pre><code class=language-cpp>template &lt;&gt;
+struct LogRecordSetterTrait&lt;trace::SpanContext&gt;
+{
+  template &lt;class ArgumentType&gt;
+  inline static LogRecord *Set(LogRecord *log_record, ArgumentType &amp;&amp;arg) noexcept
+  {
+    log_record-&gt;SetSpanId(arg.span_id());
+    log_record-&gt;SetTraceId(arg.trace_id());
+    log_record-&gt;SetTraceFlags(arg.trace_flags());
+
+    return log_record;
+  }
+};
+
+template &lt;&gt;
+struct LogRecordSetterTrait&lt;trace::SpanId&gt;
+{
+  template &lt;class ArgumentType&gt;
+  inline static LogRecord *Set(LogRecord *log_record, ArgumentType &amp;&amp;arg) noexcept
+  {
+    log_record-&gt;SetSpanId(std::forward&lt;ArgumentType&gt;(arg));
+
+    return log_record;
+  }
+};
+</code></pre><p>可以看到，如果参数类型是 <code>trace::SpanContext</code> 我们会同时设置 trace_id 、 span_id 和 trace_flags 。但是如果传入的是 <code>trace::SpanId</code> 我们就只会设置 <code>trace_id</code> 。</p><p>这里还有一处和之前不太兼容的特殊的地方，就是通用引用（Universal Reference），就是 <code>ArgumentType &&</code> 不能匹配 <code>std::initializer_list&lt;T></code> 。而我们之前是可以通过 <code>std::initializer_list&lt;std::pair&lt;nostd::string_view, common::AttributeValue>></code> 来传递attributes的。
+这里为了适配，我们提供了一组 <code>MakeAttributes(...)</code> 接口，通过重载来适配attributes的传递。整个实现大概是这样:</p><pre><code class=language-cpp>inline static nostd::span&lt;const std::pair&lt;nostd::string_view, common::AttributeValue&gt;&gt;
+MakeAttributes(std::initializer_list&lt;std::pair&lt;nostd::string_view, common::AttributeValue&gt;&gt;
+                   attributes) noexcept
+{
+  return nostd::span&lt;const std::pair&lt;nostd::string_view, common::AttributeValue&gt;&gt;{
+      attributes.begin(), attributes.end()};
+}
+
+inline static nostd::span&lt;const std::pair&lt;nostd::string_view, common::AttributeValue&gt;&gt;
+MakeAttributes(
+    nostd::span&lt;const std::pair&lt;nostd::string_view, common::AttributeValue&gt;&gt; attributes) noexcept
+{
+  return attributes;
+}
+
+inline static const common::KeyValueIterable &amp;MakeAttributes(
+    const common::KeyValueIterable &amp;attributes) noexcept
+{
+  return attributes;
+}
+
+template &lt;
+    class ArgumentType,
+    nostd::enable_if_t&lt;common::detail::is_key_value_iterable&lt;ArgumentType&gt;::value&gt; * = nullptr&gt;
+inline static common::KeyValueIterableView&lt;ArgumentType&gt; MakeAttributes(
+    const ArgumentType &amp;arg) noexcept
+{
+  return common::KeyValueIterableView&lt;ArgumentType&gt;(arg);
+}
+</code></pre><p>使用起来可以类似这种 <code>logger->EmitLogRecord(Severity::kError, MakeAttributes({{"key1", "value 1"}, {"key2", 2}}));</code> 或 <code>logger->Debug("Test log message", MakeAttributes(std::map&lt;std::string, std::string>()));</code> 。应该也不会造成太大困扰。</p><h2 id=总结>总结</h2><p>主要的改动也就这么多，也欢迎有兴趣的小伙伴们互相交流。
+如有遗漏，也欢迎小伙伴们指出和补充。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2023-02-25T11:39:45.000+00:00 itemprop=datePublished>2023-02-25</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/opentelemetry.html>opentelemetry</a></li><li class=article-tag-list-item><a href=//owent.net/tags/otel.html>otel</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cpp.html>cpp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/logs.html>logs</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2023/2301.html>下一篇<strong>给cmake-toolset和工具链加HTTP/2和HTTP/3支持</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
 2023
 OWenT</strong>
