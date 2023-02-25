@@ -11,39 +11,41 @@
 新的规范中在SDK里也加入了 <code>ReadableLogRecord</code> 和 <code>ReadWriteLogRecord</code> 两个接口，要求 <code>ReadableLogRecord</code> 必须实现 getter 接口，而 <code>ReadWriteLogRecord</code> setter 和 getter 都有。
 其实这里的 <code>ReadWriteLogRecord</code> 就很像之前 SDK 里的 <code>LogRecord</code> 。
 另外由于SDK里所有模块的数据传递都是通过各自内部的一个叫 <code>Recordable</code> 的对象，并且这个对象还会包含一些SDK内的独有的内容，比如Resource和InstrumentationScope。
-所以我们最终的继承关系改成了如下所示:</p><div id=otel_cpp_log_record>classDiagram
-LogRecord <|-- Recordable
-Recordable <|-- ReadableLogRecord
-Recordable <|-- 特定Exporter的Recordable
-ReadableLogRecord <|-- ReadWriteLogRecord
-LogRecord: +SetTimestamp()
-LogRecord: +SetObservedTimestamp()
-LogRecord: +SetSeverity()
-LogRecord: +SetBody()
-LogRecord: +SetAttribute()
-LogRecord: +SetTraceId()
-LogRecord: +SetSpanId()
-LogRecord: +SetTraceFlags()
-class Recordable {
-+SetResource()
-+SetInstrumentationScope()
-}
-class ReadableLogRecord {
-GetTimestamp()
-GetObservedTimestamp()
-GetSeverity()
-GetSeverityText()
-GetBody()
-GetTraceId()
-GetSpanId()
-GetTraceFlags()
-GetAttributes()
-GetResource()
-GetInstrumentationScope()
-}
-class 特定Exporter的Recordable {
-位于Exporter中，比如 OtlpLogRecordable
-}</div><script type=text/javascript>jQuery(function(){var t="otel_cpp_log_record",e=jQuery("#"+t),n={"text-align":"center"};e.css(n);try{mermaid.run({querySelector:"#"+t})}catch(n){e.empty();const t=document.createElement("pre");t.style.textAlign="left",t.innerText=n.message.toString(),e.append(t)}})</script><p>另外所有的 Processor、Exporter、Factory的名字都由 <code>*Log*Processor</code> ， <code>*Log*Exporter</code> 和 <code>*Log*Factory</code> 变为了 <code>*LogRecord*Processor</code> ， <code>*LogRecord*Exporter</code> 和 <code>*LogRecord*Factory</code> 。
+所以我们最终的继承关系改成了如下所示:</p><pre id=otel_cpp_log_record class=mermaid>
+classDiagram
+    LogRecord <|-- Recordable
+    Recordable <|-- ReadableLogRecord
+    Recordable <|-- 特定Exporter的Recordable
+    ReadableLogRecord <|-- ReadWriteLogRecord
+    LogRecord: +SetTimestamp()
+    LogRecord: +SetObservedTimestamp()
+    LogRecord: +SetSeverity()
+    LogRecord: +SetBody()
+    LogRecord: +SetAttribute()
+    LogRecord: +SetTraceId()
+    LogRecord: +SetSpanId()
+    LogRecord: +SetTraceFlags()
+    class Recordable {
+      +SetResource()
+      +SetInstrumentationScope()
+    }
+    class ReadableLogRecord {
+        GetTimestamp()
+        GetObservedTimestamp()
+        GetSeverity()
+        GetSeverityText()
+        GetBody()
+        GetTraceId()
+        GetSpanId()
+        GetTraceFlags()
+        GetAttributes()
+        GetResource()
+        GetInstrumentationScope()
+    }
+    class 特定Exporter的Recordable {
+        位于Exporter中，比如 OtlpLogRecordable
+    }
+</pre><p>另外所有的 Processor、Exporter、Factory的名字都由 <code>*Log*Processor</code> ， <code>*Log*Exporter</code> 和 <code>*Log*Factory</code> 变为了 <code>*LogRecord*Processor</code> ， <code>*LogRecord*Exporter</code> 和 <code>*LogRecord*Factory</code> 。
 对应的头文件的文件名也做了相应修改。</p><p>对于 Processor 接口， <code>OnReceive</code> 重命名为了 <code>OnEmit</code> 。</p><p>我们还移除了老 <code>Logger::Log(...)</code> 接口中的 <code>name</code> 字段。在非常古老的版本中，Logs的协议里有 <code>name</code> 字段，所以 <code>Logger::Log(...)</code> 接口里也有个 <code>name</code> 参数。
 但是实际上很早期的一次协议更新就已经移除这个字段了(从v1.4.0版本开始)，我们在接口层保留了相当长的时间，并且设置为了 deprecated 就是为了给用户一段时间去迁移。
 现在这次改造就顺带移除了这个废弃的接口，以防误用。</p><p>API接口中一些STL类型的接口换成了 <code>nostd</code> 的版本，比如 <code>std::unique_ptr</code> -> <code>nostd::unique_ptr</code> 。这部分主要是和其他模块保持一致，管理ABI兼容性。</p><h2 id=新增功能>新增功能</h2><p>规范变化也包含一些新功能，比如说，我们现在可以通过 <code>LoggerProvider::GetLogger()</code> 接口来设置自动从链路跟踪(Trace)模块的 <code>RuntimeContext</code> 中自动提取和关联当前的调用链路信息。
@@ -157,9 +159,21 @@ OWenT</strong>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script>
 <script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script>
-<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const e={};for(const t of hljs.listLanguages())e[t.toLowerCase()]=!0;jQuery("pre\u003ecode").each(function(e,t){try{if(t.className.match(/\bnohighlight\b/i))return;const e=t.className.match(/language-([^\s]+)/i);if(e&&e.length>=2&&hljs.getLanguage(e[1]))hljs.highlightElement(t);else{const e=jQuery(t),n=hljs.highlightAuto(e.text(),hljs.listLanguages());n&&n.value&&(e.html(n.value),e.addClass("hljs"))}}catch(e){window.console&&console.log(e.toString()+`
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const e={};for(const t of hljs.listLanguages())e[t.toLowerCase()]=!0;jQuery("pre\u003ecode").each(function(e,t){try{if(t.className.match(/\bnohighlight\b|\bmermaid\b/i))return;const e=t.className.match(/language-([^\s]+)/i);if(e&&e.length>=2&&hljs.getLanguage(e[1]))hljs.highlightElement(t);else{const e=jQuery(t),n=hljs.highlightAuto(e.text(),hljs.listLanguages());n&&n.value&&(e.html(n.value),e.addClass("hljs"))}}catch(e){window.console&&console.log(e.toString()+`
 Maybe can not detect the language`)}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","UA-19298704-1")</script><script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
 <script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script>
 <script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=//unpkg.com/chart.js@latest/dist/chart.umd.js></script>
-<script type=text/javascript src=//unpkg.com/mermaid@latest/dist/mermaid.esm.min.mjs></script></div></body></html>
+<script type=module>
+    import mermaid from "\/\/unpkg.com\/mermaid@latest\/dist\/mermaid.esm.min.mjs";
+    const config = {
+        theme: 'neutral',
+        logLevel: 'fatal',
+        securityLevel: 'loose', 
+        startOnLoad: true,
+        arrowMarkerAbsolute: false,
+        
+
+    };
+    mermaid.initialize(config);
+</script></div></body></html>
