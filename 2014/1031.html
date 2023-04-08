@@ -18,7 +18,7 @@ CASE_TEST(测试套件名称, 测试case名称) {
 的形式。类似Google的方法是没有主动调用add test suite或者add test case的
 所以在这个CASE_TEST的时候就需要把test suite和case放进测试池中。
 同时CASE_TEST的最后部分必须是函数申明，以便后续跟上测试代码块</p><p>如何完成这一点呢？
-我这里利用了全局变量会在程序进入man函数前初始化的特点。</p><ol><li>在申明CASE_TEST的时候，先作函数声明</li></ol><blockquote><p>static void function_name();</p></blockquote><ol start=2><li>然后后跟一个全局注册变量，把suite名称、case名称和函数指针传进来</li></ol><blockquote><p>test_case_base g_var(suite名称, case名称, &function_name);</p></blockquote><ol start=3><li>最后跟上函数定义</li></ol><blockquote><p>void function_name()</p></blockquote><p>这样后面就可以直接跟上测试代码块了。
+我这里利用了全局变量会在程序进入man函数前初始化的特点。</p><ol><li>在申明CASE_TEST的时候，先作函数声明</li></ol><blockquote><p>static void function_name();</p></blockquote><ol start=2><li>然后后跟一个全局注册变量，把suite名称、case名称和函数指针传进来</li></ol><blockquote><p>test_case_base g_var(suite名称, case名称, &amp;function_name);</p></blockquote><ol start=3><li>最后跟上函数定义</li></ol><blockquote><p>void function_name()</p></blockquote><p>这样后面就可以直接跟上测试代码块了。
 接下来需要做的就是在构造函数里把函数注册进suite和case对应的测试池中。</p><p>那么在CASE的CHECK过程中怎么知道它是属于哪一个suite和case呢？
 这里的做法是在test执行前，会在全局的位置标记一下，这样在Check成功或者失败的时候都可以知道是失败的位置了。</p><p>另外有一点<strong>需要注意</strong>的是，在Check宏的实现过程中只能有一次出现表达式求值的地方，不然表达式就会执行多次，这样会导致行为异常的
 因为表达式只能出现一次，所以暂时没有做临时的数据存储，就不会像GTest那样写出 expected is XXX real is XXX 的东西出来（这个以后有需要可以加）。</p><p>自此，一个简易地单元测试框架就完成了，再加上一些终端颜色的控制，就基本OK了。

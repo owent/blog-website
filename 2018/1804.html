@@ -13,7 +13,7 @@ match sender.send_message(&amp;message) {
         break;
     }
 }
-</code></pre><p>这里面其实是对<code>sender.send_message(&message)</code>的返回值做枚举判定，然后Ok的case绑定了一个空值，Err的case绑定了一个e，包含了错误信息。我认为这种方式比Exception机制要好得多得多得多。像C/C++之类得语言，会推荐返回错误码。但是这种错误码一般只有一个整数，能够提供得信息很少，而且如果被漏判了很难发现。而另一部分语言多使用异常机制，那么有个问题是你在使用的时候很容易忽略了他可能会抛个异常然后忘记了fallback。而这种机制兼顾解决了这两个问题。特别是不同的case绑定的数据类型可以不一样，这样为以后扩展和防止遗漏提供了最大的便利。比如我之前写的websoccket的小工具。</p><pre><code class=language-rust>match message {
+</code></pre><p>这里面其实是对<code>sender.send_message(&amp;message)</code>的返回值做枚举判定，然后Ok的case绑定了一个空值，Err的case绑定了一个e，包含了错误信息。我认为这种方式比Exception机制要好得多得多得多。像C/C++之类得语言，会推荐返回错误码。但是这种错误码一般只有一个整数，能够提供得信息很少，而且如果被漏判了很难发现。而另一部分语言多使用异常机制，那么有个问题是你在使用的时候很容易忽略了他可能会抛个异常然后忘记了fallback。而这种机制兼顾解决了这两个问题。特别是不同的case绑定的数据类型可以不一样，这样为以后扩展和防止遗漏提供了最大的便利。比如我之前写的websoccket的小工具。</p><pre><code class=language-rust>match message {
     OwnedMessage::Close(_) =&gt; {
         // Got a close message, so send a close message and return
         let _ = tx_1.send(OwnedMessage::Close(None));
@@ -149,7 +149,7 @@ impl AddAssign for Point {
 
 let mut point = Point { x: 1, y: 0 };
 point += Point { x: 2, y: 3 };
-</code></pre><p>唯一有点特别的是仿函数重载，分成了 <code>Fn</code>, <code>FnMut</code>, 和 <code>FnOnce</code> 三种，对应的第一个 <code>self</code> 参数分别是 <code>&self</code>, <code>&mut self</code> 和 <code>self</code>。这个主要还是和<a href=https://rust-lang.org/>Rust</a>的生命周期的编译期推断的设计模型有关。</p><h2 id=宏>宏</h2><p><a href=https://rust-lang.org/>Rust</a>有着极其难看懂但是究极变态得宏。</p><p><a href=https://rust-lang.org/>Rust</a>是可以禁用标准库的，然而像 <code>format!</code> 之类是标准库的内容，格式检查的traits也属于标准库。所以看上去感觉里面的内容检查之类不像是c++编译器那样的编译器hard code实现。我大致看了一下，<a href=https://rust-lang.org/>Rust</a>的宏大致是 <code>宏(参数) => 代码块</code> 的形式。但是这个参数是可以直接 <a href=https://doc.rust-lang.org/reference/macros-by-example.html>匹配和控制AST</a> 的。 而且由于后面那个跟的是代码块，所以可以更容易实现一些复杂的功能。</p><p>另外它的宏还支持自定义过程宏，像这种的：</p><pre><code class=language-rust>#[derive(Debug)]
+</code></pre><p>唯一有点特别的是仿函数重载，分成了 <code>Fn</code>, <code>FnMut</code>, 和 <code>FnOnce</code> 三种，对应的第一个 <code>self</code> 参数分别是 <code>&amp;self</code>, <code>&amp;mut self</code> 和 <code>self</code>。这个主要还是和<a href=https://rust-lang.org/>Rust</a>的生命周期的编译期推断的设计模型有关。</p><h2 id=宏>宏</h2><p><a href=https://rust-lang.org/>Rust</a>有着极其难看懂但是究极变态得宏。</p><p><a href=https://rust-lang.org/>Rust</a>是可以禁用标准库的，然而像 <code>format!</code> 之类是标准库的内容，格式检查的traits也属于标准库。所以看上去感觉里面的内容检查之类不像是c++编译器那样的编译器hard code实现。我大致看了一下，<a href=https://rust-lang.org/>Rust</a>的宏大致是 <code>宏(参数) => 代码块</code> 的形式。但是这个参数是可以直接 <a href=https://doc.rust-lang.org/reference/macros-by-example.html>匹配和控制AST</a> 的。 而且由于后面那个跟的是代码块，所以可以更容易实现一些复杂的功能。</p><p>另外它的宏还支持自定义过程宏，像这种的：</p><pre><code class=language-rust>#[derive(Debug)]
 struct Point {
     x: i32,
     y: i32,

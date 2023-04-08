@@ -132,7 +132,7 @@ a.act3()); // 再第三个
     self.p.add_arg(a.into());
     self
 }
-</code></pre><p>这种形式比第一个参数直接传入<code>&self</code>的好处是可以内部转移生命周期和执行生命周期推断和检查，也可以在内部分析是否有必要复制（如果要切换到多线程环境）。对于这种情况，有两种调用方法:</p><pre><code class=language-rust>// 连续调用
+</code></pre><p>这种形式比第一个参数直接传入<code>&amp;self</code>的好处是可以内部转移生命周期和执行生命周期推断和检查，也可以在内部分析是否有必要复制（如果要切换到多线程环境）。对于这种情况，有两种调用方法:</p><pre><code class=language-rust>// 连续调用
 a.act1()
  .act2()
  .act3();
