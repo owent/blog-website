@@ -1,0 +1,200 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>记录一些bazel适配用编译选项|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2022/2202.html><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
+<link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-1450f385707abf343e7aa4c65502f8c4 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2022/2202.html target=_blank itemprop=url>记录一些bazel适配用编译选项</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav></div><br><div class=article-entry itemprop=articleBody><p>之前搞 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 的时候接触了下 <a href=https://bazel.build/>bazel</a> 构建系统。这玩意儿用起来有一点坑，特别是使用自定义编译环境的时候。</p><p>在使用我自己编译的很新版本的 <a href=https://github.com/owent-utils/bash-shell/tree/main/GCC%20Installer>GCC</a> 和 <a href=https://github.com/owent-utils/bash-shell/tree/main/LLVM%26Clang%20Installer>clang+libc++</a> 的时候，涉及对libssp的检测和 <code>LD_LIBRARY_PATH</code> 环境变量在 <a href=https://bazel.build/>bazel</a> 中各个步骤中的传递，这里记录一下适配脚本。</p><pre><code class=language-bash>BAZEL_OPTIONS=&quot;--copt=-DENABLE_METRICS_PREVIEW --copt=-DENABLE_LOGS_PREVIEW&quot;
+BAZEL_TEST_OPTIONS=&quot;$BAZEL_OPTIONS --test_output=errors&quot;
+BAZEL_STARTUP_OPTIONS=&quot;--output_user_root=$HOME/.cache/bazel/$BK_CI_BUILD_ID&quot;
+
+# https://github.com/bazelbuild/bazel/issues/4341
+BAZEL_MACOS_OPTIONS=&quot;--features=-supports_dynamic_linker --linkopt -lpthread --linkopt -liconv --linkopt -lresolv --linkopt -ldl --linkopt -lm&quot;
+BAZEL_MACOS_OPTIONS=&quot;--host_linkopt -lpthread --host_linkopt -liconv --host_linkopt -lresolv --host_linkopt -ldl --host_linkopt -lm&quot;
+BAZEL_LINUX_GCC_OPTIONS=&quot;&quot;
+
+# Our gcc/llvm
+for EXTRA_LD_LIBRARY_PATH in $(echo &quot;$LD_LIBRARY_PATH&quot; | tr ':' ' '); do
+  BAZEL_LINUX_GCC_OPTIONS=&quot;$BAZEL_LINUX_GCC_OPTIONS --host_linkopt=-Wl,-rpath,$EXTRA_LD_LIBRARY_PATH --host_linkopt=-L$EXTRA_LD_LIBRARY_PATH --linkopt=-L$EXTRA_LD_LIBRARY_PATH&quot;
+done
+
+if [[ -z &quot;$USE_CC&quot; ]]; then
+  which clang &gt;/dev/null 2&gt;&amp;1
+  if [[ $? -eq 0 ]]; then
+    USE_CC=clang
+  else
+    USE_CC=gcc
+  fi
+fi
+
+
+USE_CC_BASENAME=&quot;$(basename &quot;$USE_CC&quot;)&quot;
+
+if [[ &quot;x${USE_CC_BASENAME:0:3}&quot; == &quot;xgcc&quot; ]]; then
+  USE_CC_FULLPATH=&quot;$(which &quot;$USE_CC&quot;)&quot;
+  for TEST_GCC_FLAGS in &quot;-Wno-unused-function&quot; &quot;-Wno-error=stringop-overflow&quot; &quot;-Wno-error=array-parameter&quot;; do
+    TEST_GCC_FLAGS_SUCCESS=1
+    echo &quot;&quot; | &quot;$USE_CC&quot; -E &quot;$TEST_GCC_FLAGS&quot; - &gt;/dev/null 2&gt;&amp;1 || TEST_GCC_FLAGS_SUCCESS=0
+    if [[ $TEST_GCC_FLAGS_SUCCESS -ne 0 ]]; then
+      BAZEL_LINUX_GCC_OPTIONS=&quot;$BAZEL_LINUX_GCC_OPTIONS --copt $TEST_GCC_FLAGS&quot;
+    fi
+  done
+  # Test libssp/-fstack-protector-strong/-fstack-protector-all
+  HAVE_LIBSSP=1
+  echo &quot;#include &lt;iostream&gt;
+  int main () { return 0; }
+  &quot; | &quot;${USE_CC/%gcc/g++}&quot; -x c++ -lssp -o run-test-gcc-with-ssp.exe - || HAVE_LIBSSP=0
+  if [[ $HAVE_LIBSSP -eq 1 ]]; then
+    BAZEL_LINUX_GCC_OPTIONS=&quot;$BAZEL_LINUX_GCC_OPTIONS --linkopt -lssp --host_linkopt -lssp&quot;
+    rm -f run-test-gcc-with-ssp.exe
+  fi
+  HAVE_FSTACK_PROTECTOR_STRONG=1
+  echo &quot;&quot; | &quot;$USE_CC&quot; -E &quot;-fstack-protector-strong&quot; - &gt;/dev/null 2&gt;&amp;1 || HAVE_FSTACK_PROTECTOR_STRONG=0
+  if [[ $HAVE_FSTACK_PROTECTOR_STRONG -eq 1 ]]; then
+    BAZEL_LINUX_GCC_OPTIONS=&quot;$BAZEL_LINUX_GCC_OPTIONS --copt -fstack-protector-strong --host_copt -fstack-protector-strong --linkopt -fstack-protector-strong --host_linkopt -fstack-protector-strong&quot;
+  else
+    BAZEL_LINUX_GCC_OPTIONS=&quot;$BAZEL_LINUX_GCC_OPTIONS --copt -fstack-protector-all --host_copt -fstack-protector-all --linkopt -fstack-protector-all --host_linkopt -fstack-protector-all&quot;
+  fi
+  BAZEL_OPTIONS=&quot;$BAZEL_OPTIONS $BAZEL_LINUX_GCC_OPTIONS&quot;
+  BAZEL_TEST_OPTIONS=&quot;$BAZEL_TEST_OPTIONS $BAZEL_LINUX_GCC_OPTIONS&quot;
+elif [[ &quot;x${USE_CC_BASENAME:0:5}&quot; == &quot;xclang&quot; ]]; then
+  USE_CC_FULLPATH=&quot;$(which &quot;$USE_CC&quot;)&quot;
+  if [[ &quot;x$GCC_HOME_DIR&quot; == &quot;x&quot; ]] || [[ ! -e &quot;$GCC_HOME_DIR&quot; ]]; then
+    GCC_HOME_DIR=&quot;/opt/gcc-latest&quot;;
+  fi
+  if [[ ! -e &quot;$GCC_HOME_DIR&quot; ]]; then
+    GCC_HOME_DIR=&quot;/usr/local/gcc-latest&quot;;
+  fi
+  if [[ -e &quot;$GCC_HOME_DIR&quot; ]] &amp;&amp; [[ &quot;${USE_CC_FULLPATH:0:10}&quot; == &quot;/opt/llvm-&quot; ]]; then
+    if [[ &quot;x$CXXFLAGS&quot; == &quot;x&quot; ]]; then
+      export CXXFLAGS=&quot;--gcc-toolchain=$GCC_HOME_DIR&quot;
+    else
+      export CXXFLAGS=&quot;$CXXFLAGS --gcc-toolchain=$GCC_HOME_DIR&quot;
+    fi
+    if [[ &quot;x$CFLAGS&quot; == &quot;x&quot; ]]; then
+      export CFLAGS=&quot;--gcc-toolchain=$GCC_HOME_DIR&quot;
+    else
+      export CFLAGS=&quot;$CFLAGS --gcc-toolchain=$GCC_HOME_DIR&quot;
+    fi
+    # BAZEL_LINUX_GCC_OPTIONS=&quot;$BAZEL_LINUX_GCC_OPTIONS --cxxopt -stdlib=libc++&quot;
+  fi
+
+  for TEST_GCC_FLAGS in &quot;-Wno-unused-function&quot; &quot;-Wno-error=unused-command-line-argument&quot;; do
+    TEST_GCC_FLAGS_SUCCESS=1
+    echo &quot;&quot; | &quot;$USE_CC&quot; -E &quot;$TEST_GCC_FLAGS&quot; - &gt;/dev/null 2&gt;&amp;1 || TEST_GCC_FLAGS_SUCCESS=0
+    if [[ $TEST_GCC_FLAGS_SUCCESS -ne 0 ]]; then
+      BAZEL_LINUX_GCC_OPTIONS=&quot;$BAZEL_LINUX_GCC_OPTIONS --copt $TEST_GCC_FLAGS&quot;
+    fi
+  done
+  BAZEL_OPTIONS=&quot;$BAZEL_OPTIONS $BAZEL_LINUX_GCC_OPTIONS&quot;
+  BAZEL_TEST_OPTIONS=&quot;$BAZEL_TEST_OPTIONS $BAZEL_LINUX_GCC_OPTIONS&quot;
+fi
+</code></pre><p>然后，就可以直接使用以下脚本启动 <a href=https://bazel.build/>bazel</a> :</p><pre><code class=language-bash># ============ build &amp; test ============
+if [[ &quot;x$USE_CC&quot; != &quot;x&quot; ]]; then
+  export CC=&quot;$USE_CC&quot;
+fi
+bazel fetch //...
+bazel $BAZEL_STARTUP_OPTIONS build $BAZEL_OPTIONS //...
+bazel $BAZEL_STARTUP_OPTIONS test $BAZEL_TEST_OPTIONS //...
+
+# ============ asan ============
+# See https://github.com/google/sanitizers/issues/764 when run under docker
+if [[ &quot;x$USE_CC&quot; != &quot;x&quot; ]]; then
+  export CC=&quot;$USE_CC&quot;
+fi
+bazel fetch //...
+bazel $BAZEL_STARTUP_OPTIONS test --config=asan $BAZEL_TEST_OPTIONS --linkopt -static-libasan //...
+if [[ $RETRY_CLEAN -eq 1 ]]; then
+  echo &quot;AddressSantinizer results:&quot;
+  (
+    cd bazel-out
+    find . -name test.log -exec bash -c 'echo &quot;============  $@ ============&quot;; cat $@; echo &quot;------------  $@ ------------&quot;' _ {} \;
+  )
+fi
+
+# ============ tsan ============
+if [[ &quot;x$USE_CC&quot; != &quot;x&quot; ]]; then
+  export CC=&quot;$USE_CC&quot;
+fi
+bazel fetch //...
+bazel $BAZEL_STARTUP_OPTIONS test --config=tsan $BAZEL_TEST_OPTIONS //...
+if [[ $RETRY_CLEAN -eq 1 ]]; then
+  echo &quot;ThreadSantinizer results:&quot;
+  (
+    cd bazel-out
+    find . -name test.log -exec bash -c 'echo &quot;============  $@ ============&quot;; cat $@; echo &quot;------------  $@ ------------&quot;' _ {} \;
+  )
+fi
+
+# ============ valgrind ============
+if [[ &quot;x$USE_CC&quot; != &quot;x&quot; ]]; then
+  export CC=&quot;$USE_CC&quot;
+fi
+bazel fetch //...
+bazel $BAZEL_STARTUP_OPTIONS build $BAZEL_OPTIONS //...
+bazel $BAZEL_STARTUP_OPTIONS test --run_under=&quot;/usr/bin/valgrind --leak-check=full --error-exitcode=1 --suppressions=\&quot;${PWD}/ci/valgrind-suppressions\&quot;&quot; $BAZEL_TEST_OPTIONS //...
+
+# ============ benchmark ============
+if [[ &quot;x$USE_CC&quot; != &quot;x&quot; ]]; then
+  export CC=&quot;$USE_CC&quot;
+fi
+[ -z &quot;${BENCHMARK_DIR}&quot; ] &amp;&amp; export BENCHMARK_DIR=$HOME/benchmark
+bazel fetch //...
+bazel $BAZEL_STARTUP_OPTIONS build $BAZEL_OPTIONS -c opt -- $(bazel query 'attr(&quot;tags&quot;, &quot;benchmark_result&quot;, ...)')
+echo &quot;Benchmark results in $BENCHMARK_DIR:&quot;
+(
+  cd bazel-bin
+  find . -name \*_result.txt -exec bash -c \
+    'echo &quot;$@&quot; &amp;&amp; mkdir -p &quot;$BENCHMARK_DIR/$(dirname &quot;$@&quot;)&quot; &amp;&amp; \
+      cp &quot;$@&quot; &quot;$BENCHMARK_DIR/$@&quot; &amp;&amp; chmod +w &quot;$BENCHMARK_DIR/$@&quot;' _ {} \;
+)
+</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2022-02-14T20:36:45.000+00:00 itemprop=datePublished>2022-02-14</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/bazel.html>bazel</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cpp.html>cpp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cxx.html>cxx</a></li><li class=article-tag-list-item><a href=//owent.net/tags/gcc.html>gcc</a></li><li class=article-tag-list-item><a href=//owent.net/tags/clang.html>clang</a></li><li class=article-tag-list-item><a href=//owent.net/tags/libc++.html>libc++</a></li><li class=article-tag-list-item><a href=//owent.net/tags/libcxx.html>libcxx</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2022/2203.html>上一篇<strong>游戏服务的分布式事务优化（一）- Write Ahead Log(WAL) 模块</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2022/2201.html>下一篇<strong>测试现代化硬件C++浮点数性能和一致性</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+2023
+owent</strong>
+<strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/awk.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cpp.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/capnproto.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cmake.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/d.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/diff.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dockerfile.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dos.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/erlang.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/go.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/less.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/llvm.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/lua.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/php.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/powershell.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/protobuf.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/python.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/profile.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/typescript.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const e={};for(const t of hljs.listLanguages())e[t.toLowerCase()]=!0;jQuery("pre>code").each(function(e,t){try{if(t.className.match(/\bnohighlight\b|\bmermaid\b/i))return;const e=t.className.match(/language-([^\s]+)/i);if(e&&e.length>=2&&hljs.getLanguage(e[1]))hljs.highlightElement(t);else{const e=jQuery(t),n=hljs.highlightAuto(e.text(),hljs.listLanguages());n&&n.value&&(e.html(n.value),e.addClass("hljs"))}}catch(e){window.console&&console.log(e.toString()+`
+Maybe can not detect the language`)}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","UA-19298704-1")</script><script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
+<script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=//unpkg.com/chart.js@latest/dist/chart.umd.js></script>
+<script type=module>
+    import mermaid from "\/\/unpkg.com\/mermaid@latest\/dist\/mermaid.esm.min.mjs";
+    const config = {
+        theme: 'neutral',
+        logLevel: 'fatal',
+        securityLevel: 'loose', 
+        startOnLoad: true,
+        arrowMarkerAbsolute: false,
+        
+
+    };
+    mermaid.initialize(config);
+</script></div></body></html>

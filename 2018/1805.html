@@ -1,0 +1,99 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>可执行文件压缩|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2018/1805.html><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
+<link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-c8a622b8addff5418392f7d13a34d42e class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2018/1805.html target=_blank itemprop=url>可执行文件压缩</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav></div><br><div class=article-entry itemprop=articleBody><h1 id=前言>前言</h1><p>最近看<a href=https://rust-lang.org/>Rust</a>相关东西的时候看到一篇关于压缩可执行文件的文章。压缩可执行文件对嵌入式开发特别有用，但是延伸一下用来减少我们游戏行业里预编译的工具二进制包大小和Android/iOS的库也是蛮有用的。</p><p>原文见这里： <a href=https://jamesmunns.com/blog/tinyrocket/>https://jamesmunns.com/blog/tinyrocket/</a></p><h1 id=基本流程>基本流程</h1><ol><li>Release编译，移除调试符号文件，开启最小化size优化(-Oz)</li><li>使用LLVM的全量LTO</li><li>使用xargo重新编译标准库(std)和核心库(core)（这个C/C++不容易模仿，而且编译选项十分难搞）</li><li>移除<a href=https://github.com/jemalloc/jemalloc>jemalloc</a>（服务器程序还是留着比较好，内置的malloc实现一般碎片比较厉害。虽然C/C++默认也不是<a href=https://github.com/jemalloc/jemalloc>jemalloc</a>，很多项目为了新能还是会用它）</li><li>移除panic的详情信息（这个仅适用于<a href=https://rust-lang.org/>Rust</a>）</li><li>strip（由GNU的<a href=https://www.gnu.org/software/binutils/>binutils</a>提供），参考命令: <code>strip [二进制]</code></li><li><a href=https://upx.github.io/>UPX</a>进一步压缩加壳</li></ol><h1 id=尝试改造优化>尝试改造优化</h1><p>然后尝试使用上面的流程改造我们的 <strong>gmtools-cli</strong> 。原先我是直接开LTO+Release编译的，编出的文件大小为4.4MB（4520728字节）。</p><ol><li>Release编译只要构建命令用 <code>cargo build --release</code> 就可以了，开size优化需要加个配置选项</li></ol><pre><code>[profile.release]
+opt-level = &quot;z&quot;
+
+[profile.dev]
+opt-level = &quot;z&quot;
+</code></pre><ol start=2><li>LTO加几个配置选项就行了</li></ol><pre><code>[profile.release]
+lto = true
+codegen-units = 1
+incremental = false
+
+[profile.dev]
+lto = true
+codegen-units = 1
+incremental = false
+</code></pre><ol start=3><li>重新编译标准库(std)和核心库(core)比较麻烦，而且我本地的环境报<code>could not find native static library `c`, perhaps an -L flag is missing?</code>。原文里自己编译这两个库反而体积变大了，我就先忽略这个了</li><li>这个要改源码和配置文件
+首先是 <strong>Cargo.toml</strong> 里要增加:</li></ol><pre><code>[features]
+system-alloc = []
+</code></pre><p>然后代码增加:</p><pre><code class=language-rust>#![feature(global_allocator)]
+#![feature(allocator_api)]
+// When the `system-alloc` feature is used, use the System Allocator
+#[cfg(feature = &quot;system-alloc&quot;)]
+mod allocator {
+    use std::heap::System;
+
+    #[global_allocator]
+    pub static mut THE_ALLOC: System = System;
+}
+
+// When the `system-alloc` feature is not used, do nothing,
+// retaining the default functionality (using jemalloc)
+#[cfg(not(feature = &quot;system-alloc&quot;))]
+mod allocator {
+    #[allow(dead_code)]
+    pub static THE_ALLOC: () = ();
+}
+
+#[allow(unused_imports)]
+use allocator::THE_ALLOC;
+</code></pre><p>最后构建命令加 <code>--features system-alloc</code></p><ol start=5><li>这个就是移除调试信息，把 <code>[profile.release]</code> 的配置 panic = &ldquo;abort&rdquo; 就可以了</li></ol><pre><code>[profile.release]
+panic = &quot;abort&quot;
+
+[profile.dev]
+panic = &quot;abort&quot;
+</code></pre><ol start=6><li>直接执行 <code>strip 二进制</code> 即可</li><li>参考命令 <code>upx --ultra-brute 二进制</code></li></ol><p>最后执行完，成果很惊人。压缩完后的大小是274K(280264字节)。</p><p>来个更直观的对比。</p><table><thead><tr><th>对比项</th><th>压缩前</th><th>压缩后</th></tr></thead><tbody><tr><td>编译选项</td><td>release,opt-level=3,lto=true,codegen-units=3,panic=&ldquo;unwind&rdquo;</td><td>release,opt-level=&ldquo;z&rdquo;,lto=true,codegen-units=1,panic=&ldquo;abort&rdquo;,strip</td></tr><tr><td>原始编译结果</td><td>4.4MB（4520728字节）</td><td>2.1MB(2187784字节) &ndash; 减少51.6%</td></tr><tr><td>仅执行strip</td><td>4.4MB（4520728字节）</td><td>844K(863312字节) &ndash; 减少80.9%</td></tr><tr><td>执行strip和upx</td><td>4.4MB（4520728字节）</td><td>274K(280264字节) &ndash; 减少93.8%</td></tr></tbody></table><h1 id=其他cc的压缩>其他C/C++的压缩</h1><p>其实上面效果最大的是Release编译移除调试符号、strip和upx，这三项都可以直接用再C/C++项目里的。唯一不同的就是可以编译的时候保留调试符号，然后用 <code>objcopy</code> 来代替 <code>strip</code> 把调试符号导出来并且移除了。</p><h1 id=关于upx和wsl和android>关于UPX和WSL和Android</h1><p><a href=https://upx.github.io/>UPX</a>的原理是压缩代码，然后加入一些初始化函数再运行时解压，以前被一些病毒拿来做加壳处理，所以可能有些杀毒软件会报。其实不用<a href=https://upx.github.io/>UPX</a>只<a href=https://www.gnu.org/software/binutils/>strip</a>也有不错的压缩率了。</p><p>在WSL环境下，现在的版本不支持<a href=https://upx.github.io/>UPX</a>压缩后的可执行程序，会报 <code>exec format error</code> ，但是马上要发布的春季更新后就支持了。 这里有个Issue说这个问题的 <a href=https://github.com/Microsoft/WSL/issues/330>https://github.com/Microsoft/WSL/issues/330</a> 。</p><p>Android下用<a href=https://upx.github.io/>UPX</a>看到说需要几个小patch（我没试，这里只是记录一下）:</p><ul><li><a href=https://upx.github.io/>UPX</a>需要二进制文件大于40K，如果不够大可以加个全局变量搞大这个.so。</li><li>在native代码中需要声明 <code>extern "C" {void _init(void){}}</code> 函数，用于在编译时生成 <strong>_init</strong> 段。（<a href=https://upx.github.io/>UPX</a>要求二进制文件必须存在init段，但是android的.so可能没有）<ul><li>或者也可以自定义初始化代码， <code>extern "C" {void my_init(void){}}</code> ，然后编译时在 <code>Android.mk</code> 里加入 <code>LOCAL_LDFLAGS += -Wl,-init=my_init</code> 。来指定自己的初始化加载函数</li></ul></li></ul></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2018-04-24T10:58:05.000+00:00 itemprop=datePublished>2018-04-24</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/rust.html>rust</a></li><li class=article-tag-list-item><a href=//owent.net/tags/c.html>c</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cxx.html>cxx</a></li><li class=article-tag-list-item><a href=//owent.net/tags/c++.html>c++</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%96%87%E4%BB%B6.html>可执行文件</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E5%8E%8B%E7%BC%A9.html>压缩</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E5%8A%A0%E5%A3%B3.html>加壳</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2018/1806.html>上一篇<strong>协程框架(libcopp)v2优化、自适应栈池和同类库的Benchmark对比</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2018/1804.html>下一篇<strong>初识Rust</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+2023
+owent</strong>
+<strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/awk.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cpp.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/capnproto.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cmake.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/d.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/diff.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dockerfile.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dos.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/erlang.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/go.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/less.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/llvm.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/lua.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/php.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/powershell.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/protobuf.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/python.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/profile.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/typescript.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const e={};for(const t of hljs.listLanguages())e[t.toLowerCase()]=!0;jQuery("pre>code").each(function(e,t){try{if(t.className.match(/\bnohighlight\b|\bmermaid\b/i))return;const e=t.className.match(/language-([^\s]+)/i);if(e&&e.length>=2&&hljs.getLanguage(e[1]))hljs.highlightElement(t);else{const e=jQuery(t),n=hljs.highlightAuto(e.text(),hljs.listLanguages());n&&n.value&&(e.html(n.value),e.addClass("hljs"))}}catch(e){window.console&&console.log(e.toString()+`
+Maybe can not detect the language`)}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","UA-19298704-1")</script><script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
+<script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=//unpkg.com/chart.js@latest/dist/chart.umd.js></script>
+<script type=module>
+    import mermaid from "\/\/unpkg.com\/mermaid@latest\/dist\/mermaid.esm.min.mjs";
+    const config = {
+        theme: 'neutral',
+        logLevel: 'fatal',
+        securityLevel: 'loose', 
+        startOnLoad: true,
+        arrowMarkerAbsolute: false,
+        
+
+    };
+    mermaid.initialize(config);
+</script></div></body></html>

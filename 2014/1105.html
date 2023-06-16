@@ -1,0 +1,218 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>近期研究VPN的一些记录(OpenVPN,pptp,l2tp)|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2014/1105.html><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
+<link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-b8a462bd7a4467ed0785571df3cdafa2 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2014/1105.html target=_blank itemprop=url>近期研究VPN的一些记录(OpenVPN,pptp,l2tp)</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#openvpn>OpenVPN</a></li><li><a href=#ppp和pptpd>PPP和PPTPD</a></li><li><a href=#ipsec和l2tp协议>IPSec和l2tp协议</a></li><li><a href=#简化vpn服务器安装softether-vpn>简化VPN服务器安装Softether VPN</a></li><li><a href=#通用要注意的地方>通用要注意的地方</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><p>近期由于一些需要（特别是上Google），研究了下在VPS上搭建VPN服务器的方法。其中遇到一些坑，顺带记下来以备下次使用。</p><p>其实在有VPS的情况下，还有另外一种替代方案。那就是在路由器上直接ssh隧道+sock5代理+使用<a href=http://www.harding.motd.ca/autossh/>autossh</a>自动重连+使用<a href=http://www.pps.univ-paris-diderot.fr/~jch/software/polipo/>polipo</a>作HTTP代理+<a href=https://calomel.org/proxy_auto_config.html>PAC文件</a>自动代理切换。实现，最终我在家里就是这么搞得，而且这样对网络结构没有其他影响。</p><p><a href=https://github.com/owent/blog/blob/master/Resource/2014/proxy.pac>我的PAC文件</a></p><hr><p>以上那些都不重要，话不多说直接开始VPN的部分吧</p><h2 id=openvpn>OpenVPN</h2><p>OpenVPN的话网上有很多教程啦，很容易配，过程挺繁琐。大致过程是</p><ol><li>如果使用tun（第三层协议）的话检查tun设备(/dev/net/tun)</li><li>生成CA证书、服务器证书、客户端证书。（可以用<strong>easy-rsa</strong>生成，比较简单点）</li><li>配置防火墙端口开放和<strong>路由转发</strong> （可以拷贝openvpn的sample里的<strong>firewall.sh</strong>来用，注意没有内网网络设备的话把eth1相关的东西注释掉）</li><li>OpenVPN配置</li></ol><p><strong>要注意的一点是其实OpenVPN示例里有很多配好的带注释的配置，不需要照很多教程里的完全自己写iptables和server配置的</strong></p><pre><code class=language-bash>#!/bin/sh
+# CentOS 6 x86_64 下的命令，其他系统类似
+
+# 检查tun （如果出错说内核不支持tun）
+modinfo tun;
+
+# EPEL源
+rpm -ivh &quot;http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm&quot;;
+
+# 安装软件包
+yum install -y easy-rsa openvpn;
+mkdir -p /etc/openvpn;
+cp -f /usr/share/doc/openvpn-*/sample/sample-config-files/* /etc/openvpn ;
+cp -rf /usr/share/easy-rsa /etc/openvpn/ ;
+
+# 手动生成证书 ...
+# 配置firewall.sh(防火墙和路由转发，注意不要把你开放了的端口又屏蔽了)
+# 配置openvpn-startup.sh里要启动的VPN配置文件（最后几行）
+
+# 启动openvpn
+cd /etc/openvpn &amp;&amp; ./openvpn-startup.sh
+# 关闭openvpn
+cd /etc/openvpn &amp;&amp; ./openvpn-shutdown.sh
+</code></pre><p><strong>建议尝试配置的过程中先使用虚拟机试一下</strong>，因为GFW灰常牛逼的可以按协议把握手包和丢掉。我就是卡在这非常久，UDP连接提示验证失败，TCP连接客户端和服务器都收到错误码为-1的断开连接报文。死活没连上，最后我换用国内的一个VPS同样的搭建方法就直接正常连上了。</p><h2 id=ppp和pptpd>PPP和PPTPD</h2><p>由于OpenVPN各种墙，所以我就想换一个支持度比较高的解决方案，使用pptp协议。CentOS 6 下大致过程如下：</p><pre><code class=language-bash>#!/bin/sh
+# 1. 安装软件包
+# EPEL源
+rpm -ivh &quot;http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm&quot;;
+yum install ppp pptp pptpd pptp-setup -y;
+
+# 2. 配置
+vim /etc/pptpd.conf;
+# 2.1.1 去除 localip 前注释
+# 2.1.2 去除 remoteip 前注释并把内容改为 192.168.10.100-200
+vim /etc/ppp/option.pptpd
+# 2.2 ms-dns 8.8.8.8 和 ms-dns 8.8.4.4
+# 2.3 配置账户 
+vim /etc/ppp/chap/secrets
+# 添加 [用户名] pptpd [密码] * （pptpd应该可以改成*，表示匹配所有名称，不过我没尝试过）
+
+# 3. 启动模块和添加初始化启动模块
+modprobe ppp_mppe
+modprobe ip_gre
+echo &quot;#!/bin/sh&quot; &gt; /etc/sysconfig/modules/pptpd.modules
+echo &quot;modprobe ppp_mppe&quot; &gt;&gt; /etc/sysconfig/modules/pptpd.modules
+echo &quot;modprobe ip_gre&quot; &gt;&gt; /etc/sysconfig/modules/pptpd.modules
+
+# 4. pptpd启动和开机启动
+service pptpd start
+chkconfig --add pptpd
+chkconfig --level 5 pptpd on
+chkconfig --level 6 pptpd on
+
+# 5. 开启防火墙策略
+iptables -A INPUT -p tcp --dport 1723 -j ACCEPT
+iptables -A INPUT -p tcp --dport 47 -j ACCEPT
+iptables -A INPUT -p gre -j ACCEPT
+iptables -A POSTROUTING -t nat -s 192.168.10.0/24 -o eth0 -j MASQUERADE
+iptables -A INPUT -p UDP --dport 53 -j ACCEPT
+iptables -A INPUT -p tcp --dport 53 -j ACCEPT
+service iptables save
+</code></pre><p>最后客户端连接的时候的配置里要注意</p><ol><li>关闭EAP</li><li>打开 使用点到点加密(MPPE)</li><li>放心地使用MS-Chapv2吧</li><li>另外貌似要内核支持某个功能，可以通过dkms提供（忘记哪个模块了但是我的VPS里自带）</li></ol><p>我按这个配置成功连上了，但是后来配置l2tp的时候给搞乱了配置，又不知道为什么连不上了，好麻烦。</p><h2 id=ipsec和l2tp协议>IPSec和l2tp协议</h2><p>这个协议最麻烦，而且我没连成功过。不过记录一下操作流程。</p><pre><code class=language-bash># 1. 安装 yum install openswan xl2tpd openswan-doc lsof libpcap-devel
+# 2. 配置
+vim  /etc/ipsec.conf
+# 编辑 dumpdir=/var/run/pluto/
+# 编辑 virtual_private=%v4:10.0.0.0/8,%v4:192.168.11.0/24,%v4:172.16.0.0/12,%v4:25.0.0.0/8,%v6:fd00::/8,%v6:fe80::/10
+
+# /etc/ipsec.d/xl2tpd.conf
+cat &gt; /etc/ipsec.d/xl2tpd.conf &lt;&lt;EOF
+# Add connections here
+
+# sample VPN connection
+# for more examples, see /etc/ipsec.d/examples/
+#conn sample
+#               # Left security gateway, subnet behind it, nexthop toward right.
+#               left=10.0.0.1
+#               leftsubnet=172.16.0.0/24
+#               leftnexthop=10.22.33.44
+#               # Right security gateway, subnet behind it, nexthop toward left.
+#               right=10.12.12.1
+#               rightsubnet=192.168.0.0/24
+#               rightnexthop=10.101.102.103
+#               # To authorize this connection, but not actually start it,
+#               # at startup, uncomment this.
+#               #auto=add
+
+conn L2TP-PSK-NAT
+    rightsubnet=vhost:%priv
+    also=L2TP-PSK-noNAT
+
+conn L2TP-PSK-noNAT
+    authby=secret
+    pfs=no
+    auto=add
+    keyingtries=3
+    rekey=no
+    ikelifetime=8h
+    keylife=1h
+    type=transport
+    left=[本机IP或域名] #这里写公网IP，没固定IP的就到花生壳弄个动态域名解析。
+    leftid=[本机IP或域名]
+    leftprotoport=17/1701
+    right=%any
+EOF;
+
+# 设置预共享密钥
+vim  /etc/ipsec.d/xl2tpd.secrets
+echo ': PSK &quot;l2tpd.owent.net&quot;' &gt; /etc/ipsec.d/xl2tpd.secrets;
+# 3. 网络设置
+sysctl -w net.ipv4.ip_forward=1
+sysctl -w net.ipv4.conf.default.rp_filter=0
+sysctl -w net.ipv4.conf.default.send_redirects=0
+sysctl -w net.ipv4.conf.default.accept_redirects=0
+# 建议把以上内容写进 /etc/sysctl.conf 后 执行 sysctl -p
+# 3. 启动和测试
+service ipsec start
+ipsec verify
+# 全部通过或N/A就可以了
+
+# 4. xl2tpd设置 
+vim /etc/ppp/options.xl2tpd
+# 去除require-mschap-v2前注释
+# name l2tpd
+vim /etc/xl2tpd/xl2tpd.conf
+# 改写以下内容
+# [global]
+# listen-addr = [服务器IP]
+# ipsec saref = yes # 如果 ipsec verify 返回 SAref kernel support                                  [N/A] 则改成 no
+# [lns default]
+# ip range = 192.168.11.128-192.168.11.254
+# local ip = 192.168.11.1
+# name = l2tpd
+vim /etc/ppp/chap-secrets 
+# 设置用户名密码 [用户名] l2tpd [密码] *
+
+# 5. iptables 规则
+iptables -A INPUT -p tcp --dport 1194 -j ACCEPT
+iptables -A INPUT -p udp --dport 1701 -j ACCEPT
+iptables -A INPUT -p udp --dport 500 -j ACCEPT
+iptables -A INPUT -p udp --dport 4500 -j ACCEPT
+iptables -t nat -A POSTROUTING -s 192.168.11.0/24 -o eth0 -j MASQUERADE 
+iptables -A FORWARD -s 192.168.11.0/24 -j ACCEPT
+iptables -A FORWARD -d 192.168.11.0/24 -j ACCEPT
+service iptables save
+# 6. 启动xl2tpd和自动运行
+chkconfig --level 2345 ipsec on
+chkconfig --level 2345 xl2tpd on
+</code></pre><p>不过这个我没连接成功过，不知道什么原因。
+另外据说也可以使用<a href=https://www.strongswan.org/><strong>strongswan</strong></a>取代openswan，而且strongswan还可以用来配置<strong>IKEv1和IKEv2</strong>协议。</p><h2 id=简化vpn服务器安装softether-vpn>简化VPN服务器安装Softether VPN</h2><p>痛苦了两周之后，发现其实有简单暴力的VPN方案，就是日本的开源软件<a href=https://www.softether.org/>Softether VPN</a></p><p>Source列表: <a href=https://www.softether.org/5-download/src>https://www.softether.org/5-download/src</a>
+Github地址: <a href=https://github.com/SoftEtherVPN/SoftEtherVPN/>https://github.com/SoftEtherVPN/SoftEtherVPN/</a>
+Google Code地址: <a href=https://code.google.com/p/softether/source/browse/>https://code.google.com/p/softether/source/browse/</a>
+Source Forge地址: <a href=http://sourceforge.net/p/softethervpn/code/ci/master/tree/src/>http://sourceforge.net/p/softethervpn/code/ci/master/tree/src/</a></p><p>这玩意简化了VPN配置，可以再Linux上部署，然后用Windows管理程序连上去管理。并且支持很多协议，OpenVPN,l2tp,IKEv1,IKEv2,IKEv3,sstp等。（不够我值尝试过openvpn和l2tp，很好用）</p><p>这货安装很简单，直接按官网的文档即可。使用上有几个注意点</p><ol><li>加密算法最好选RC4-SHA，选其他的我的Android设备都有很大概率连不上</li><li>需要开启虚拟HUB里的DHCP，否则不设置符合规范的地址会连不上</li><li>注意设置left地址和right的地址范围，默认好像是192.168.1.1，和默认局域网网段冲突</li><li>默认会监听443端口，建议关闭掉，否则和HTTPS冲突（我的VPS的Web服务器监听了443端口）。</li><li>建议换掉OPenVPN协议的默认端口1194，原因嘛，嘿嘿</li><li>需要开放使用的端口</li></ol><pre><code class=language-bash>#!/bin/sh
+# 我开放的端口如下
+iptables -A INPUT -p tcp --dport 47 -j ACCEPT
+iptables -A INPUT -p tcp --dport 53 -j ACCEPT
+iptables -A INPUT -p udp --dport 53 -j ACCEPT
+iptables -A INPUT -p tcp --dport 992 -j ACCEPT
+iptables -A INPUT -p udp --dport 992 -j ACCEPT
+iptables -A INPUT -p udp --dport 500 -j ACCEPT
+iptables -A INPUT -p tcp --dport 1723 -j ACCEPT
+iptables -A INPUT -p udp --dport 4500 -j ACCEPT
+iptables -A INPUT -p tcp --dport 5555 -j ACCEPT
+service iptables save
+</code></pre><h2 id=通用要注意的地方>通用要注意的地方</h2><ol><li>最后检查一下/etc/sysconfig/iptables里的重复项，去掉保存</li><li><strong>CentOS 7下默认使用firewall</strong>而不是iptables，需要相应地修改配置才行</li><li>一些系统，比如CentOS 7下默认<strong>使用systemd的systemctl命令</strong>而不是传统的chkconfig来控制服务，也要做相应得变更</li><li>注意CentOS里的selinux(可通过sestatus查看状态，建议关掉就好，没啥作用)</li><li>注意Ubuntu下的防火墙ufw</li></ol></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/work.html>Work</a></li></ol></span><span class=article-meta-right><time datetime=2014-09-28T20:36:46.000+00:00 itemprop=datePublished>2014-09-28</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/l2tp.html>l2tp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/openswan.html>openswan</a></li><li class=article-tag-list-item><a href=//owent.net/tags/openvpn.html>openvpn</a></li><li class=article-tag-list-item><a href=//owent.net/tags/packetix.html>PacketiX</a></li><li class=article-tag-list-item><a href=//owent.net/tags/pptp.html>pptp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/softether.html>softether</a></li><li class=article-tag-list-item><a href=//owent.net/tags/strongswan.html>strongswan</a></li><li class=article-tag-list-item><a href=//owent.net/tags/vpn.html>vpn</a></li><li class=article-tag-list-item><a href=//owent.net/tags/vpnc.html>vpnc</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2014/1110.html>上一篇<strong>Gitlab环境搭建小计</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2014/1101.html>下一篇<strong>LLVM + Clang + Libcxx + Libcxxabi 工具链编译</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+2023
+OWenT</strong>
+<strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/awk.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cpp.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/capnproto.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cmake.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/d.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/diff.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dockerfile.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dos.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/erlang.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/go.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/less.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/llvm.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/lua.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/php.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/powershell.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/protobuf.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/python.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/profile.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/typescript.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const e={};for(const t of hljs.listLanguages())e[t.toLowerCase()]=!0;jQuery("pre>code").each(function(e,t){try{if(t.className.match(/\bnohighlight\b|\bmermaid\b/i))return;const e=t.className.match(/language-([^\s]+)/i);if(e&&e.length>=2&&hljs.getLanguage(e[1]))hljs.highlightElement(t);else{const e=jQuery(t),n=hljs.highlightAuto(e.text(),hljs.listLanguages());n&&n.value&&(e.html(n.value),e.addClass("hljs"))}}catch(e){window.console&&console.log(e.toString()+`
+Maybe can not detect the language`)}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","UA-19298704-1")</script><script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
+<script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=//unpkg.com/chart.js@latest/dist/chart.umd.js></script>
+<script type=module>
+    import mermaid from "\/\/unpkg.com\/mermaid@latest\/dist\/mermaid.esm.min.mjs";
+    const config = {
+        theme: 'neutral',
+        logLevel: 'fatal',
+        securityLevel: 'loose', 
+        startOnLoad: true,
+        arrowMarkerAbsolute: false,
+        
+
+    };
+    mermaid.initialize(config);
+</script></div></body></html>

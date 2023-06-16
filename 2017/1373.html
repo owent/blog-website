@@ -1,0 +1,316 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>开源项目得一些小维护|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2017/1373.html><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
+<link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-05ca283bf28e32f8bd3aa945a670e71a class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2017/1373.html target=_blank itemprop=url>开源项目得一些小维护</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#wp-code-highlightjs1><a href=https://github.com/owent/WP-Code-Highlight.js>WP-Code-Highlight.js</a></a></li><li><a href=#hiredis-happ3><a href=https://github.com/owent/hiredis-happ>hiredis-happ</a></a></li><li><a href=#pbc分支4><a href=https://github.com/owent-contrib/pbc>pbc分支</a></a></li><li><a href=#unity-ios脚本化打包和自动构建>Unity-IOS脚本化打包和自动构建</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><p>其实我那几个特别是工具类得开源项目一致都有维护和更新，但是每次更新得量和要点并不怎么突出所以一致也没写点什么。但是偶尔吗也会碰到一些稍微值得记录的东西，但是又不多所以很多都遗漏掉了。</p><p>虽然漏掉得那些也补不回来，我还是对近期得一些维护稍微记录一下吧。虽然近期维护得内容稍微多一些，但是也只能靠记忆回忆一些了。</p><h2 id=wp-code-highlightjs1><a href=https://github.com/owent/WP-Code-Highlight.js>WP-Code-Highlight.js</a></h2><p>首先是这个Wordpress得插件项目，我收到一个<a href=https://github.com/owent/WP-Code-Highlight.js/pull/18>PR</a>。说是点击菜单会自动登出。但是我看了下PR中的内容，改的都是字符串文本，还有注释和i18n字典得key。这就相当奇怪了，看起来这些都不可能导致登出问题啊。所以这个问题复查也是蛮折腾得。</p><p>首先我这里完全不复现这个问题，然后提PR的人说是他的环境是PHP 7。所以我就得去构造环境，但是我构造出的PHP 7环境也不复现。然后提PR的人说dreamhost托管的wordpress能重现这个问题。于是我又去dreamhost折腾了一番。dreamhost的UE十分糟糕。很难弄清怎么使用，等我好不容易完成以后，发现还是不复现。再后来就是提PR得人提了一个缓存系统<a href=https://www.varnish-cache.org/>varnish</a>。然后我突然想到nginx得URL匹配有些人喜欢直接匹配后缀得，说不定这个也是，把.js结尾的文件全部识别为静态文件走缓存了。然后我们的<a href=https://github.com/owent/WP-Code-Highlight.js>WP-Code-Highlight.js</a>的配置页里，是一个php文件后面跟了一个参数，恰好是.js结束的。于是乎试了一下，提PR的人果然说解决了。</p><p>这个BUG其实不能算是我这个插件的问题，但是改掉主要是考虑到很多人写表达式都不会很严谨，估计犯这个错误得人不在少数，所以给他们把这个坑藏一藏吧。</p><p>唉这个坑浪费了我10块钱啊。还好现在云服务都是可以按小时计费的。</p><h2 id=hiredis-happ3><a href=https://github.com/owent/hiredis-happ>hiredis-happ</a></h2><p>这是线上有使用得一个redis cluster的C++接入层。并且做了自动重连和错误重试的功能。之前想到的是这种数据服务都是会防火墙只开放内网的嘛，所以并没有做认证的功能。但是后来看到了MangoDB爆发的大规模安全事件。唉，你挡不了使用得小白傻X啊是不？所以还是抽空加一下吧。</p><p>其实之前的版本也是可以认证的，就是在on connected得回调里直接发送AUTH命令就可以了。但是这样使用者得自己保证在AUTH前没有其他命令。但是其实这个使用者也保证不了，因为on connected是在成功连接之后触发的，但是在创建context成功后就可以加入命令排队，这样如果底层走重连得重发流程，就没法让用户排一个AUTH命令在新连接的最前面。</p><p>所以，我还是加了两个接口，用于在底层创建成功后直接发送AUTH命令。不过目前得实现也比较简单，只是基本能满足需要而已。另外，之所以是两个接口，一个是直接设置密码，另一个是如果在cluster里，可以支持不同的节点给不同得密码。</p><h2 id=pbc分支4><a href=https://github.com/owent-contrib/pbc>pbc分支</a></h2><p>pbc分支的一系列修改其实并不全是最近改得，不过之前提交的<a href=https://github.com/cloudwu/pbc/pull/80>RP</a>被merge进来了，这个<a href=https://github.com/cloudwu/pbc/pull/80>RP</a>主要是修复了默认table能被修改的问题。然而后来我又加了一些东东，似乎被一不小心一起merge进去了。大概的patch如下：</p><ol><li><a href=https://github.com/cloudwu/pbc/pull/80>RP #80</a> - 修复默认值的table能够被外部修改的问题</li><li>增加了 <a href=https://github.com/owent-contrib/pbc/blob/master/build_ios.sh>pbc的build_ios.sh</a> 脚本，用于集成pbc到IOS时，给IOS版本提供静态库</li></ol><blockquote><p>原本其实有个xcode工程可以直接做这件事的，但是那个工程里限定了编译的架构。在集成进项目工程时比较麻烦，而且得手动选一下编译目标架构。特别是OSX下的命令行控制xcode工程非常不便。现有的一些修改xcode工程文件的库（比如<a href=https://github.com/kronenthaler/mod-pbxproj>mod-xcodeproj</a>）很不稳定。我这里在OSX里的环境会崩溃，并不能成功修改工程。所以就提供一个脚本来直接生成各种架构的.a文件，这样就不用去改工程了，直接扔进去即可。</p></blockquote><ol start=3><li>增加了pbc的lua binding的build_ios.sh脚本，分为<a href=https://github.com/owent-contrib/pbc/blob/master/binding/lua/build_ios.sh>lua 5.1</a> 和<a href=https://github.com/owent-contrib/pbc/blob/master/binding/lua/build_ios.sh>lua 5.3</a>版本。目的和上面一样，并且lua binding原先并没有xcode工程可以用。然后提供参数可以把pbc和pbc得lua binding打包到一起。</li><li>在别人的解决方案的启发下接入了proto v3，放在新分支 <a href=https://github.com/owent-contrib/pbc/tree/proto_v3>https://github.com/owent-contrib/pbc/tree/proto_v3</a></li></ol><blockquote><p>主要是proto v3里所有的数字的repeated默认是packed的，然后要处理好显式配成packed=true和packed=false的情况。我参照的那个解决方案主要是这里有点问题，所以我自己写了。</p><p>另外似乎pb文件里并不能区分是proto v3还是v2生成的，所以两种方案没法兼容啊，所以新开个分支搞喽。</p></blockquote><h2 id=unity-ios脚本化打包和自动构建>Unity-IOS脚本化打包和自动构建</h2><p>这个也是蛮烦得，所以还是记一下吧，特别是以后涉及新配OSX的打包机的时候，有些坑可能还会踩。</p><p><strong>以下假定仓库clone的地址放在：$WORKSPACE/Client</strong></p><p>首先来一驼配置</p><pre><code class=language-bash># ======================== xcode配置和Unity配置 ========================
+PROVISIONING_PROFILE=&quot;iOS Team Provisioning Profile: com.xxxxx.yyyyy&quot;;  # 这个必需和Unity里得导出得PlayerSetting里得字段一致
+BUNDLE_IDENTIFIER=&quot;com.xxxxx.yyyyy&quot;; # 这个必需和Unity里得导出得PlayerSetting里得字段一致
+CODE_SIGN_IDENTITY=&quot;iPhone Developer: NAME (不知道什么ID)&quot;; # 这个配置其实没用到，不过万一那里需要用，就是这个样子得内容
+# @see below URL for team id
+# https://developer.apple.com/account/#/membership
+DEVELOPMENT_TEAM=&quot;XXXXXXXX&quot;; # TeamID， 上面得地址可以查，用来生成企业包时得签名
+UNITY_PATH=&quot;/Applications/Unity/Unity.app/Contents/MacOS/Unity&quot;; # osx 上默认得Unity地址时装在这里
+
+# 可用得开发者证书信息可以在 ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision 里找。
+
+# ======================== 工程配置 ========================
+PACKAGE_PUBLISH_URL_PREFIX=&quot;https://publish.domain/xxx&quot;; # 可访问得发布地址，必需https
+PROJECT_NAME=&quot;hello&quot;; # 用于后面生成发布包文件名
+</code></pre><p>然后执行Unity导出工程:</p><pre><code class=language-bash>XCODE_PORJECT_DIR=Unity导出得xcode工程目录，必需和实际导出得一致
+UNITY_PORJECT_DIR=Unity工程目录
+
+if [ -e &quot;$XCODE_PORJECT_DIR&quot; ]; then
+	rm -rf &quot;$XCODE_PORJECT_DIR&quot;;
+fi
+
+cd &quot;$UNITY_PORJECT_DIR&quot;;
+$UNITY_PATH -batchmode -quit -projectPath $WORKSPACE/Client/unity_project -executeMethod 执行命令的类名.执行命令的函数名
+</code></pre><p>上面得<strong>执行命令的类名.执行命令的函数名</strong>时自己写的Unity导出函数，这里给个我们ios版本的sample:</p><pre><code class=language-csharp>#region Build tools    
+    /// &lt;summary&gt;
+    /// 获取要输出的场景
+    /// &lt;/summary&gt;
+	static string[] GetBuildScenes() {
+        List&lt;string&gt; names = new List&lt;string&gt;();
+
+        foreach (EditorBuildSettingsScene e in EditorBuildSettings.scenes) {
+            if (e == null)
+                continue;
+
+            if (e.enabled)
+                names.Add(e.path);
+        }
+        return names.ToArray();
+    }
+
+	static string TryPatchEnvironment(string str, string envName) {
+        string val = Environment.GetEnvironmentVariable(envName);
+        if (null != val) {
+            val = val.Trim();
+            if (val.Length &gt; 0) {
+                Debug.Log(string.Format(&quot;[PatchEnvironment]: {0}={1}&quot;, envName, val));
+                return val;
+            }
+        }
+
+        return str;
+    }
+
+    static int TryPatchEnvironment(int ori, string envName) {
+        string val = Environment.GetEnvironmentVariable(envName);
+        if (null != val) {
+            val = val.Trim();
+            if (val.Length &gt; 0) {
+                Debug.Log(string.Format(&quot;[PatchEnvironment]: {0}={1}&quot;, envName, val));
+                return int.Parse(val);
+            }
+        }
+
+        return ori;
+    }
+
+    static Enum TryPatchEnvironment(Enum ori, string envName) {
+        string val = Environment.GetEnvironmentVariable(envName);
+        if (null != val) {
+            val = val.Trim();
+            if (Enum.IsDefined(ori.GetType(), val)) {
+                Debug.Log(string.Format(&quot;[PatchEnvironment]: {0}={1}&quot;, envName, val));
+                return (Enum)Enum.Parse(ori.GetType(), val);
+            } else {
+                Debug.Log(string.Format(&quot;Invalid value fot {0}: \&quot;{0}\&quot;&quot;, ori.GetType().Name, val));
+            }
+        }
+
+        return ori;
+    }
+
+    /// &lt;summary&gt;
+    /// 这个和上面的TryPatchEnvironment主要用于通过环境变量来修改一些打包得配置参数。可以用来控制日志级别、服务器环境等
+    /// &lt;/summary&gt;
+    static void PatchEnvironment() {
+        // server tag
+        {
+            string svrTag = Environment.GetEnvironmentVariable(&quot;PROJECT_SERVER_TAG&quot;);
+            if (null != svrTag) { 
+                foreach (var svr in Preference.servers) {
+                    if (svr.Name == svrTag) {
+                        PrivatePreference.currentServerTag = svrTag;
+                        Debug.Log(&quot;Server environment change into &quot; + svrTag);
+                        break;
+                    }
+                }
+            }
+        }
+
+        Preference.packageServer = TryPatchEnvironment(Preference.packageServer, &quot;PROJECT_CONFIG_PACKAGE_SERVER&quot;);
+        Preference.packagePort = TryPatchEnvironment(Preference.packagePort, &quot;PROJECT_CONFIG_PACKAGE_PORT&quot;);
+        Preference.exportMode = (Preference.ExportMode)TryPatchEnvironment(Preference.exportMode, &quot;PROJECT_CONFIG_EXPORT_MODE&quot;);
+
+        PrivatePreference.LogLevel = (Log.Level)TryPatchEnvironment(PrivatePreference.LogLevel, &quot;PROJECT_CONFIG_LOG_LEVEL&quot;);
+        GlobalConfig.LogLevel = (Log.Level)TryPatchEnvironment(GlobalConfig.LogLevel, &quot;PROJECT_CONFIG_LOG_LEVEL&quot;);
+        GlobalConfig.maxLogCount = TryPatchEnvironment(GlobalConfig.maxLogCount, &quot;PROJECT_CONFIG_LOG_MAX_COUNT&quot;);
+    }
+#region build for iOS
+    static string GetBuildPathiOS() {
+        string dirPath = Application.dataPath + &quot;/../../build/ios/&quot; + PlayerSettings.productName;
+        if (!System.IO.Directory.Exists(dirPath)) {
+            System.IO.Directory.CreateDirectory(dirPath);
+        }
+        return dirPath;
+    }
+
+	/// &lt;summary&gt;
+    /// 驱动XUPorter执行导出追加库和文件的流程，因为通过脚本执行得时候并不会触发XUPorter默认使用得编辑器钩子事件
+    /// &lt;/summary&gt;
+    static void PatchXCodeProject(BuildTarget target) {
+        // 来自 Assets/Lib/Editor/XUPorter/XCodePostProcess.cs
+#if UNITY_EDITOR
+        XCodePostProcess.OnPostProcessBuild(target, GetBuildPathiOS());
+#endif
+    }
+
+    [UnityEditor.MenuItem(&quot;Giu/Build/Build iOS&quot;)]
+    static void CommandLineBuildIOS() {
+        Debug.Log(&quot;Command line build iOS\n------------------\n------------------&quot;);
+        //GenerateData(false);
+
+        string[] scenes = GetBuildScenes();
+        string path = GetBuildPathiOS();
+        if (scenes == null || scenes.Length == 0 || path == null)
+            return;
+
+        Debug.Log(string.Format(&quot;Path: \&quot;{0}\&quot;&quot;, path));
+        for (int i = 0; i &lt; scenes.Length; ++i) {
+            Debug.Log(string.Format(&quot;Scene[{0}]: \&quot;{1}\&quot;&quot;, i, scenes[i]));
+        }
+      
+		 // 这里是从Standalone得配置里复制配置，因为我们不在OSX上开发，在OSX以外改不了配置，所以这里就在Windows上改了Standalone得配置，然后iOS工程直接复制过来就好了
+        string script_symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone);
+        PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.iOS, script_symbols);
+        PlayerSettings.bundleIdentifier = BUNDLE_IDENTIFIER;
+        PlayerSettings.showUnitySplashScreen = false;
+
+        // 读环境变量，改配置
+        PatchEnvironment();
+        Debug.Log(string.Format(&quot;Reset ScriptingDefineSymbols to {0}&quot;, script_symbols));
+        Debug.Log(&quot;Starting Build!&quot;);
+
+       // 执行完BuildPipeline.BuildPlayer后启动XUPorter
+#if UNITY_5
+        BuildPipeline.BuildPlayer(scenes, path, BuildTarget.iOS, BuildOptions.None);
+        PatchXCodeProject(BuildTarget.iOS);
+#else
+        BuildPipeline.BuildPlayer(scenes, path, BuildTarget.iPhone, BuildOptions.None);
+        PatchXCodeProject(BuildTarget.iPhone);
+#endif
+    }
+#endregion
+#endregion
+</code></pre><p>好。接下来时问题一：我们XUPorter导出来的xcode得工程里，有个流程里时候地址会出错，所以我写了个文本替换，如果XUPorter导出得文件路径错了就修复一下。</p><pre><code class=language-bash>perl -p -i -e &quot;s;[^\\s\\\&quot;\\\']*(\\.\\.\\/)*Lib/Editor/XUPorter/Mods;$WORKSPACE/Client/unity_project/Assets/Lib/Editor/XUPorter/Mods;g&quot; $XCODE_PROJECT_DIR/*.xcodeproj/project.pbxproj ;
+</code></pre><p>然后问题二：xcode的签名很恶心，有些地方会依赖交互式操作，所以要阻止这个。</p><pre><code class=language-bash># 先让钥匙串里信任打包用的用户，不需要二次确认。
+
+# 然后用指定密码解锁登入钥匙串，这个地方如果有问题，会出现各种奇怪得提示。并不会明确得告诉你是认证错误或者需要登入。总之十分得恶心切诡异
+# 并且不一定会报在code sign那里（虽然大部分情况会报在code sign那里）
+security -v unlock-keychain -p &quot;登入密码&quot; ~/Library/Keychains/login.keychain ;
+# 钥匙串得路径不一定是~/Library/Keychains/login.keychain，不过大部分情况下是这个。我这里得macmini就是~/Library/Keychains/login.keychain-db
+# 可以用 security list-keychains 这个命令查一下
+
+# 如果打包得时间很长，要设置一次认证有效期，防止过期。但是这个基本只要做一次就好了
+# security set-keychain-settings -t 3600 -l ~/Library/Keychains/login.keychain
+# security show-keychain-info ~/Library/Keychains/login.keychain
+
+</code></pre><p>然后就可以开始打包了</p><pre><code class=language-bash>cd &quot;$XCODE_PROJECT_DIR&quot;;
+
+# 打包xcarchive
+xcodebuild archive -project Unity-iPhone.xcodeproj -scheme Unity-iPhone -archivePath bin/Unity-iPhone.xcarchive -sdk iphoneos -verbose -configuration Release TEAM=&quot;$DEVELOPMENT_TEAM&quot; DEVELOPMENT_TEAM=&quot;$DEVELOPMENT_TEAM&quot;;
+
+# 这里找两个图片用于打包的时候填充displayImageURL和fullSizeImageURL字段
+DISPLAY_IMAGE_PATH=$(find bin/Unity-iPhone.xcarchive -name &quot;*.png&quot; | grep 'Icon' | head -n 1);
+FULL_SIZE_IMAGE_PATH=$(find bin/Unity-iPhone.xcarchive -name &quot;*.png&quot; | grep -v 'Icon' | GREP -v '[@#~]' | head -n 1);
+DISPLAY_IMAGE_NAME=$(basename $DISPLAY_IMAGE_PATH);
+FULL_SIZE_IMAGE_NAME=$(basename $FULL_SIZE_IMAGE_PATH);
+
+# generate plist for generate enterprise ipa
+echo '&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;!DOCTYPE plist PUBLIC &quot;-//Apple//DTD PLIST 1.0//EN&quot; &quot;http://www.apple.com/DTDs/PropertyList-1.0.dtd&quot;&gt;' &gt; exportOptions.plist ;
+echo &quot;&lt;plist version=\&quot;1.0\&quot;&gt;
+&lt;dict&gt;
+	&lt;key&gt;method&lt;/key&gt;
+	&lt;string&gt;enterprise&lt;/string&gt;
+	&lt;key&gt;teamID&lt;/key&gt;
+	&lt;string&gt;$DEVELOPMENT_TEAM&lt;/string&gt;
+	&lt;key&gt;manifest&lt;/key&gt;
+	&lt;dict&gt;
+		&lt;key&gt;appURL&lt;/key&gt;
+		&lt;string&gt;$PACKAGE_PUBLISH_URL_PREFIX/$PROJECT_NAME.ipa&lt;/string&gt;
+		&lt;key&gt;displayImageURL&lt;/key&gt;
+		&lt;string&gt;$PACKAGE_PUBLISH_URL_PREFIX/AppIcon57x57.png&lt;/string&gt;
+		&lt;key&gt;fullSizeImageURL&lt;/key&gt;
+		&lt;string&gt;$PACKAGE_PUBLISH_URL_PREFIX/LaunchImage.png&lt;/string&gt;
+	&lt;/dict&gt;
+&lt;/dict&gt;
+&lt;/plist&gt;&quot; &gt;&gt; exportOptions.plist ; # 这个是企业包得exportOptions.plist，其他类型得包把method得值改成其他得就行了
+
+# 导出并签名企业包。以前指定provisioning profile得方式已经被deprecated掉了。所以新的一律用exportOptions.plist
+xcodebuild -exportArchive -archivePath bin/Unity-iPhone.xcarchive/ -exportPath &quot;$PROJECT_NAME&quot; -exportOptionsPlist exportOptions.plist;
+
+# 生成一个html页面用于给safari里安装企业包用
+echo &quot;&lt;!DOCTYPE html&gt;
+&lt;html lang='zh-CN'&gt;
+&lt;head&gt;
+&lt;meta http-equiv='Content-Type' content='text/html; charset=UTF-8' /&gt;
+&lt;meta http-equiv='x-ua-compatible' content='IE=edge' /&gt;
+&lt;title&gt;Download $PROJECT_NAME&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+当前版本原始地址: &lt;a href='$PACKAGE_PUBLISH_URL_PREFIX'&gt;$PACKAGE_PUBLISH_URL_PREFIX&lt;/a&gt;&lt;br /&gt;&lt;hr /&gt;
+&lt;h1&gt;如果点击无法下载安装，请在safari中打开&lt;h1/&gt;
+&lt;h1&gt;&lt;a title='iPhone' href='itms-services://?action=download-manifest&amp;url=$PACKAGE_PUBLISH_URL_PREFIX/manifest.plist'&gt;
+Download ipa&lt;/a&gt;&lt;h1/&gt;
+&lt;/body&gt;
+&lt;/html&gt;&quot; &gt; download.html ;
+</code></pre><p>然后再把各种资源传到远程发布的web server就好了</p><pre><code class=language-bash>PACKAGE_PUBLISH_SSH_CERT=&quot;ssh 登入密钥地址&quot;;
+PACKAGE_PUBLISH_HOST=&quot;远程主机地址&quot;;
+PACKAGE_PUBLISH_DIR=&quot;对应$PACKAGE_PUBLISH_URL_PREFIX得发布目录&quot;;
+
+IPA_PATH=&quot;$PROJECT_NAME/Unity-iPhone.ipa&quot;;
+if [ ! -e &quot;$IPA_PATH&quot; ]; then
+	IPA_PATH=$(find &quot;$PROJECT_NAME&quot; -name &quot;*.ipa&quot;);
+fi
+
+if [ -e &quot;$IPA_PATH&quot; ]; then
+	scp -i $PACKAGE_PUBLISH_SSH_CERT &quot;$IPA_PATH&quot; &quot;$PACKAGE_PUBLISH_HOST:$PACKAGE_PUBLISH_DIR/$PROJECT_NAME.ipa&quot; ;
+    scp -i $PACKAGE_PUBLISH_SSH_CERT exportOptions.plist download.html &quot;$PROJECT_NAME/manifest.plist&quot; &quot;$PACKAGE_PUBLISH_HOST:$PACKAGE_PUBLISH_DIR/&quot; ;
+fi
+
+if [ -e bin/Unity-iPhone.xcarchive ]; then
+	if [ -e Unity-iPhone.xcarchive.7z ]; then
+    	rm -f Unity-iPhone.xcarchive.7z;
+    fi
+    # 7z可以通过brew install 7z安装。7z得压缩速度比较快（可以多线程压缩）而且压缩率也比较高
+    export PATH=$PATH:/usr/local/bin ;
+	7z a -r -y Unity-iPhone.xcarchive.7z bin/Unity-iPhone.xcarchive ;
+    scp -i $PACKAGE_PUBLISH_SSH_CERT Unity-iPhone.xcarchive.7z &quot;$PACKAGE_PUBLISH_HOST:$PACKAGE_PUBLISH_DIR&quot; ;
+fi
+
+# copy images
+if [ -e &quot;$DISPLAY_IMAGE_PATH&quot; ]; then
+    scp -i $PACKAGE_PUBLISH_SSH_CERT &quot;$DISPLAY_IMAGE_PATH&quot; &quot;$PACKAGE_PUBLISH_HOST:$PACKAGE_PUBLISH_DIR/$DISPLAY_IMAGE_NAME&quot; ;
+fi
+
+if [ -e &quot;$FULL_SIZE_IMAGE_PATH&quot; ]; then
+    scp -i $PACKAGE_PUBLISH_SSH_CERT &quot;$FULL_SIZE_IMAGE_PATH&quot; &quot;$PACKAGE_PUBLISH_HOST:$PACKAGE_PUBLISH_DIR/$FULL_SIZE_IMAGE_NAME&quot; ;
+fi
+
+ssh -i $PACKAGE_PUBLISH_SSH_CERT &quot;$PACKAGE_PUBLISH_HOST&quot; &quot;chmod 777 $PACKAGE_PUBLISH_DIR/*&quot; ;
+</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/work.html>Work</a></li></ol></span><span class=article-meta-right><time datetime=2017-03-03T18:20:31.000+00:00 itemprop=datePublished>2017-03-03</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/cs.html>cs</a></li><li class=article-tag-list-item><a href=//owent.net/tags/csharp.html>csharp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/ha.html>ha</a></li><li class=article-tag-list-item><a href=//owent.net/tags/highlight.html>highlight</a></li><li class=article-tag-list-item><a href=//owent.net/tags/hudson.html>hudson</a></li><li class=article-tag-list-item><a href=//owent.net/tags/jenkins.html>jenkins</a></li><li class=article-tag-list-item><a href=//owent.net/tags/js.html>js</a></li><li class=article-tag-list-item><a href=//owent.net/tags/pbc.html>pbc</a></li><li class=article-tag-list-item><a href=//owent.net/tags/redis.html>redis</a></li><li class=article-tag-list-item><a href=//owent.net/tags/sign.html>sign</a></li><li class=article-tag-list-item><a href=//owent.net/tags/unity.html>unity</a></li><li class=article-tag-list-item><a href=//owent.net/tags/xcode.html>xcode</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E8%84%9A%E6%9C%AC.html>脚本</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E8%87%AA%E5%8A%A8.html>自动</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2017/1405.html>上一篇<strong>用cmake交叉编译到iOS和Android</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2017/1367.html>下一篇<strong>atapp的c binding和c#适配</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+2023
+OWenT</strong>
+<strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/awk.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cpp.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/capnproto.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cmake.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/d.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/diff.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dockerfile.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dos.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/erlang.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/go.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/less.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/llvm.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/lua.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/php.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/powershell.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/protobuf.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/python.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/profile.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/typescript.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const e={};for(const t of hljs.listLanguages())e[t.toLowerCase()]=!0;jQuery("pre>code").each(function(e,t){try{if(t.className.match(/\bnohighlight\b|\bmermaid\b/i))return;const e=t.className.match(/language-([^\s]+)/i);if(e&&e.length>=2&&hljs.getLanguage(e[1]))hljs.highlightElement(t);else{const e=jQuery(t),n=hljs.highlightAuto(e.text(),hljs.listLanguages());n&&n.value&&(e.html(n.value),e.addClass("hljs"))}}catch(e){window.console&&console.log(e.toString()+`
+Maybe can not detect the language`)}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","UA-19298704-1")</script><script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
+<script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=//unpkg.com/chart.js@latest/dist/chart.umd.js></script>
+<script type=module>
+    import mermaid from "\/\/unpkg.com\/mermaid@latest\/dist\/mermaid.esm.min.mjs";
+    const config = {
+        theme: 'neutral',
+        logLevel: 'fatal',
+        securityLevel: 'loose', 
+        startOnLoad: true,
+        arrowMarkerAbsolute: false,
+        
+
+    };
+    mermaid.initialize(config);
+</script></div></body></html>

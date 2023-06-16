@@ -1,0 +1,249 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>libcopp对C++20协程的接入和接口设计|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2022/2206.html><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
+<link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-8ed0f5da17ceff387ccd3f9bb1d604e0 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2022/2206.html target=_blank itemprop=url>libcopp对C++20协程的接入和接口设计</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#前言>前言</a></li><li><a href=#c20-coroutine-伪代码>C++20 Coroutine 伪代码</a></li><li><a href=#使用场景分析>使用场景分析</a></li><li><a href=#c20协程接入的设计模型>C++20协程接入的设计模型</a></li><li><a href=#设计模式适配>设计模式适配</a><ul><li><a href=#task_manager><code>task_manager</code></a></li><li><a href=#task_futurethen><code>task_future::then</code></a></li><li><a href=#some-any-和-all><code>some()</code>, <code>any()</code> 和 <code>all()</code></a></li></ul></li><li><a href=#杂项优化>杂项优化</a></li><li><a href=#benchmark>Benchmark</a></li><li><a href=#接入过程中的易踩坑点>接入过程中的易踩坑点</a></li><li><a href=#从有栈协程迁移>从有栈协程迁移</a></li><li><a href=#压力测试>压力测试</a></li><li><a href=#未来优化方向>未来优化方向</a></li><li><a href=#最后>最后</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><h2 id=前言>前言</h2><p>最近开的坑有点多。有点忙不过来了所以好久没写Blog了。这个C++20的协程接入一直在改造计划中，但是一直没抽出时间来正式实施。
+在之前，我写过一个初版的C++20协程接入 <a href=https://owent.net/2020/2004.html>《libcopp接入C++20 Coroutine和一些过渡期的设计》</a> 。当时主要是考虑到 Rust也有和C++类似的历史包袱问题，所以参考了一些Rust协程改造过程中的设计。
+但是后来尝试在项目中使用的时候发现还是有一些问题。首先C++20的协程并不是零开销抽象，所以强行用Rust的模式反而带来了一定开销和理解上的难度。其次原先的设计中 generator 是按类型去实现外部接入的。但是实际接入SDK的过程中我们有相当一部分类型相同但是接入流程不同的情况，再加上现在各大编译器也都已经让C++20协程的特性脱离 experimental 阶段了，有一些细节有所变化。所以干脆根据我们实际的使用场景，重新设计了下组织结构。</p><p>我们整个服务器框架的和协程相关的改造分为两部分，第一部分是 <a href=https://github.com/owent/libcopp>libcopp</a> 这个库的底层支持，另一个就是现有业务流程的改造过程。我先完成了 <a href=https://github.com/owent/libcopp>libcopp</a> 对C++20协程适配支持，这也是本篇分享的主要内容。</p><h2 id=c20-coroutine-伪代码>C++20 Coroutine 伪代码</h2><p>为了方便查阅和理解，还是先贴一下 C++20 Coroutine 基本原理的伪代码。</p><pre><code class=language-cpp>template&lt;class... TARGS&gt;
+COROUTINE_OBJECT func(TARGS&amp;&amp;... args) {
+  try {
+    P p(std::forward&lt;TARGS&gt;(args)...);
+    // 这个P是自己定义的 using P = COROUTINE_OBJECT::promise_type;
+    // 文档上说promise_constructor_arguments 是空或者函数的参数的左值传入 args... ，但是目前版本的MSVC还仅支持空参数列表
+
+    // ISO规范规定 get_return_object 在 initial_suspend 前，但是某些版本的Clang实现中 get_return_object 在 initial_suspend 后
+    COROUTINE_OBJECT r = p.get_return_object();
+    co_await p.initial_suspend();
+
+    try {
+      // 原函数体 ...
+      p.return_void() or p.return_value(RET) // 取决于函数体里有没有 co_return RET
+    } catch(...) {
+      p.unhandled_exception();    // 未捕获的异常接口
+    }
+
+  final_suspend:
+    co_await p.final_suspend();     // final suspend point
+
+    return r;
+  } catch(...) {
+    return COROUTINE_OBJECT::promise_type::get_return_object_on_allocation_failure(); // noexcept
+  }
+}
+</code></pre><h2 id=使用场景分析>使用场景分析</h2><p>我们来看一下协程的使用场景。首先从使用者的角色上，主要是有3类。</p><ul><li>业务层: 由于有栈协程比如是侵入式的，那么业务调用的时候其实上下文关系是需要层层透传的。</li><li>调度层: 在框架层，我们要能总控和调度资源，控制生命周期。</li><li>接入层: 一般用于各类SDK接入、event loop接入或者其他事件机制接入。用来把各类平台服务或者功能库抽象成统一的协程模型。</li></ul><p>我们在新的协程模型中，针对这三种场景设计了三个不同的工具类。在我们之前的工程实践中，采用 <a href=https://github.com/owent/libcopp>libcopp</a> 的有栈协程也是有这些角色分工的，做一个简单的映射关系就是:</p><table><thead><tr><th>功能点</th><th><code>cotask::task&lt;T></code></th><th><code>C++20 coroutine</code></th><th>附注</th></tr></thead><tbody><tr><td>调度层 - 任务管理</td><td><code>cotask::task&lt;T></code></td><td><code>task_future&lt;TRETURN, TPRIVATE></code></td><td>前者的私有数据分配在栈上，通过接口获取。后者的私有数据就是 <code>TPRIVATE</code></td></tr><tr><td>接入层 - 延时操作</td><td><code>task::resume(void*)</code></td><td><code>generator_future&lt;TRETURN></code></td><td>前者通过参数 <code>void*</code> 指向自定义类型，需要外部额外检查数据有效性，后者内置 <code>set_value</code> 接口，自动管理有效性</td></tr><tr><td>业务层 - 组合</td><td><code>task::yield(void*)</code></td><td><code>callable_future&lt;TRETURN></code></td><td>前者通过参数 <code>void*</code> 指向自定义类型来接收数据，后者通过 <code>co_await</code> 的返回</td></tr><tr><td>返回值类型</td><td><code>int</code></td><td><code>自定义</code></td><td></td></tr></tbody></table><p>C++20协程其实是对称协程的设计，即不区分主调和被调。虽然对称协程在逻辑耦合上比非对称协程更低，且开销更低。但是在实际应用场景中，还是非对称更实用一些，导致我们使用的时候很自然地就会封装成非对称的调用方式。试想这种场景：</p><pre><code class=language-cpp>
+callable_future&lt;int&gt; bar();
+
+callable_future&lt;int&gt; foo() {
+  // some codes
+  co_await bar(); // IO operation
+  // other codes
+  co_return 0;
+}
+</code></pre><p>如果 <code>bar()</code> 是一个IO操作，比如保存数据到数据库，显然我们希望 <code>foo()</code> 在 <code>bar();</code> 执行结束后继续，这里就需要建立主调和被掉关系了。而实际上，C++20协程是可以做到 <code>bar();</code> 执行结束前或者执行结束后过一段时间再回到 <code>co_await bar();</code> 执行后面的代码的。</p><p><code>generator_future</code> 只需要维护 awaitable，不需要创建协程对象，用于尽可能轻量级地允许接入层接入到协程体系中来。 而 <code>callable_future&lt;TRETURN></code> 和 <code>task_future&lt;TRETURN, TPRIVATE></code> 的相似度比较高，都会管理协程的promise，那么我们为什么要把他们拆分成两个接口呢？这是因为 <code>task_future</code> 还附带了一些管理行为，并且主调和被掉直接没有直接联系。比如事件 <code>A</code> 可能触发一系列操作 <code>B</code>, <code>C</code> 等，并且不关心它们的结果，就可以用 <code>task_future</code> 。</p><p>对于 <code>callable_future</code> ， 我们假定它的使用场景为协程的嵌套调用，为了方便业务层使用已有的协程或者 <code>generator_future</code> 组装出满足自己业务需要的协程流程。这个时候，我们可以假定大多数情况下它是会被一个caller <code>co_await</code> ，且上下文数据不会被转移。然后可以简化内部的数据结构，降低大多数使用场景下不必要的开销。</p><p>另外还有一种使用场景是在 <strong>调度层</strong> 我们需要控制协程任务的生命周期，如果它超时或者被 <code>kill</code> 了。都需要层层传递通知内部正在等待的协程强行终止，这样即便内部wait for ever了，我们仍然能够强制释放资源，而不会发生泄露。这里我们需要对协程的主调、被调关系进行管理。同时一个协程还可能被多个其他协程所 <code>co_await</code> ，resume行为可能由用户或者接入层触发，也可能由析构或者调度层管理的时候触发，所以我们还需要管理好生命周期。</p><h2 id=c20协程接入的设计模型>C++20协程接入的设计模型</h2><p>除了上述使用场景以外，不同编译器对C++20协程的实现也有些差异。虽然都是符合标准的，但是某些接口的调用先后顺序和析构（特别是临时对象）的先后顺序是有差异的。显然我们 <a href=https://github.com/owent/libcopp>libcopp</a> 一个非常重要的要求就是抹平这些差异。以此为目的，我们设计的几个组件的主要流程和调用关系如下:</p><table><thead><tr><th>模块</th><th><code>callable_future</code> - 业务层</th><th><code>task_future</code> - 调度层（框架）</th><th><code>generator_future</code> - 接入层（扩展）</th><th></th></tr></thead><tbody><tr><td><code>promise_type</code></td><td><code>data:waiting,callers,status,DATA</code></td><td><code>data:waiting,callers,status,context</code></td><td>-</td><td></td></tr><tr><td><code>promise_type:unhandled_exception</code></td><td>不捕获</td><td><code>start/resume</code> 接口后 <code>rethrow</code></td><td>-</td><td></td></tr><tr><td><code>promise_type:生命周期</code></td><td>托管到 <code>future</code></td><td>关联到 <code>context</code> , 析构时取消关联</td><td>-</td><td></td></tr><tr><td><code>promise_type:Execution</code></td><td>首次被 <code>co_await</code> 时开始执行,未被 <code>co_await</code> 则视为放弃执行</td><td>首次调用 <code>start/resume</code> 接口后开始执行</td><td>-</td><td></td></tr><tr><td><code>promise_type:final_suspend</code></td><td>所有 <code>callers</code> 调用 <code>resume()</code></td><td>所有 <code>callers</code> 调用 <code>resume()</code></td><td>-</td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr><tr><td><code>context</code></td><td>-</td><td><code>data:task_id,handle,unhandle_exception</code></td><td><code>data:caller</code></td><td></td></tr><tr><td><code>context:析构/set_value</code></td><td>-</td><td><code>handle.promise().waiting.resume()</code></td><td><code>caller.resume()</code></td><td></td></tr><tr><td></td><td>-</td><td><code>handle.promise().resume()</code></td><td></td><td></td></tr><tr><td></td><td>-</td><td><code>handle.promise().destroy()</code></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr><tr><td><code>future</code></td><td><code>data:handle</code></td><td><code>data:context</code></td><td><code>data:context</code></td><td></td></tr><tr><td><code>future:析构</code></td><td><code>handle.promise().resume()</code></td><td></td><td></td><td></td></tr><tr><td></td><td><code>handle.promise().destroy()</code></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr><tr><td><code>awaitable</code></td><td><code>data:caller,callee</code></td><td><code>data:caller,context(raw ptr)</code></td><td><code>data:caller,context(raw ptr)</code></td><td></td></tr><tr><td><code>awaitable:析构</code></td><td>由 <code>promise_type:final_suspend</code> 保证有效性,无需额外处理</td><td><code>detach()</code></td><td><code>detach()</code></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr><tr><td><code>awaitable:detach</code></td><td><code>callee.promise().remove_caller(caller)</code></td><td><code>context->handle.promise().remove_caller(caller)</code></td><td><code>context->remove_caller(caller)</code></td><td></td></tr><tr><td></td><td><code>caller.waiting = nullptr</code></td><td><code>caller.waiting = nullptr</code></td><td><code>context->caller = nullptr</code></td><td></td></tr><tr><td></td><td>故障处理:状态传递( <code>callee.status = caller.status</code> )</td><td>故障处理(exiting):依据 <code>context->handle.promise().status</code></td><td></td><td></td></tr><tr><td></td><td></td><td>故障处理:依据 <code>caller.status</code></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr><tr><td><code>awaitable:await_suspend</code></td><td><code>caller.promise().waiting = callee</code></td><td><code>caller.promise().waiting = callee</code></td><td><code>this->caller = caller</code></td><td></td></tr><tr><td></td><td><code>callee.promise().add_caller(caller)</code></td><td><code>context->handle.promise().add_caller(caller)</code></td><td><code>context->add_caller(caller)</code></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr><tr><td><code>awaitable:await_resume</code></td><td><code>detach()</code></td><td><code>detach()</code></td><td><code>detach()</code></td><td></td></tr><tr><td></td><td><code>callee.promise().waiting.resume()</code></td><td>转移数据(返回 <code>context->handle.promise().status</code>)</td><td>转移数据(ready/依据 <code>caller.status</code> )</td><td></td></tr><tr><td></td><td>转移数据(强制进入ready/依据 <code>caller.status</code>)</td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td><td></td></tr></tbody></table><p>除了这些以外，和 <a href=https://github.com/owent/libcopp>libcopp</a> 内的有栈协程一样，我们提供了一些特殊的错误流程， <strong>超时</strong> 、 <strong>取消</strong> 和 <strong>Killed</strong> 。所以，如果 <code>TRETURN</code> 不是整数类型，我们就要求用户要提供 <code>copp::promise_error_transform&lt;TRETURN></code> 的特化，接受 <code>promise_status</code> 类型，返回 <code>TRETURN</code> 类型或者可以隐式转换到 <code>TRETURN</code> 的类型。</p><p>这几个组件其实是有一部分公共的部分的，对于这部分我们可以抽离出来，另外再结合前面提到的生命周期管理的一些要点，我简单总结了一下如下:</p><ul><li>公共逻辑<ul><li><code>promise_error_transform&lt;T>::operator()(promise_status) const noexcept</code> : 故障转换 <code>cancle/timeout/kill</code></li><li><code>promise_type</code> 的公共数据<ul><li>正在等待的对象(用于传递 <code>cancle/timeout/kill</code> ): <code>waiting：coroutine_handle&lt;std_coroutine_promise_base></code></li><li>状态: <code>status：created/running/done/cancle/kill/timeout</code></li></ul></li><li><code>awaitable</code> 的公共数据<ul><li><strong>生命周期从属于调用方的 <code>promise_type</code>，且在 <code>co_await</code> 完成前被析构，此时被等待方的handle可能已经失效</strong><ul><li>析构时: <code>caller</code> 有效，<code>callee</code> 可能无效</li><li><code>await_ready/await_suspend</code> 时: <code>caller</code> 有效，<code>callee/generator_context</code> 有效<blockquote><p><strong>注意：在多线程模式下，<code>await_suspend</code> 由发起 <code>co_await</code> 的线程在挂起协程后执行，如果这时候handle被传递到其他线程且被resume了。</strong>
+<strong>这时候当前的awaitable对象会被析构，且 <code>await_suspend</code> 未执行完，这里需要额外的同步机制或者在 <code>await_suspend</code> 中传出handle后不再使用成员。</strong>
+<em>See <a href=https://en.cppreference.com/w/cpp/language/coroutines#co_await>Coroutines (C++20) - cppreference.com</a></em></p></blockquote></li><li><code>await_resume</code> 时: caller有效，<code>callee/generator</code> 可能无效<ul><li><strong>通过callee在 <code>final_suspend</code> 时强制触发caller的resume，来保证callee此时有效</strong></li><li><strong>generator的 <code>context</code> 在析构时，也需要强制触发resume，来保证 <code>context</code> 此时有效</strong></li><li>但是第一次调用调用 <code>resume()</code> 后仍然可能导致 <code>callee/generator_context</code> 被释放，此时需要 <code>await_suspend</code> 配置</li></ul></li></ul></li><li>调用者: <code>caller：promise_base_type:handle_delegate</code></li></ul></li><li>通过 <code>callable_promise/callable_context</code> 链式传递关系<ul><li>out of control: resume后需要检查状态，如果被kill，需要尽可能执行到结束</li></ul></li></ul></li><li><code>generator_future</code><ul><li>生命周期安全（调度层发起和恢复，内部调用）<ul><li><code>context</code> 析构前要把关联的 <code>handle</code> 直接 <code>resume</code> 掉（可能转为cancle状态）</li><li>调用者被上层强制 <code>resume</code> 时，不能影响 <code>generator_future</code> 的生命周期。调用关系要自动解绑。</li><li>Wake重入保护+单元测试(主要是在各类主动和被动的kill,析构极其嵌套调用时的内存访问安全)</li><li>generator_context未被续期要自动被killed且释放(以防使用者有BUG导致资源泄露)</li></ul></li><li>数据完成接口: <code>context:set_value</code></li><li>事件转换（事件回调）<ul><li>挂起等待回调: <code>await_suspend_callback(shared_ptr&lt;generator_context>)</code> -> 允许续期 context</li><li>恢复回调: <code>await_resume_callback(const generator_context&)</code> -> context 可能正在析构，不允许续期</li></ul></li></ul></li><li><code>task_future</code><ul><li>生命周期安全（业务层发起，调度层发起，框架层管理，内部调用）<ul><li>单向引用关系:<ul><li><code>task_future</code> 对 <code>context</code> 强引用</li><li><code>promise_type</code> 对 <code>context</code> 弱引用,最后一个 <code>task_future</code> 析构时要强制kill掉</li><li><code>context</code> 对 <code>promise_type</code> 弱引用(通过 <code>handle_delegate</code> )</li></ul></li><li><code>context</code> 析构(最后一个 <code>task_future</code> 释放)前要把关联的 <code>handle</code> 一直 <code>resume</code> 到 <code>done</code> 为止</li><li><code>return_void()/return_value()</code> 时不能 <code>resume_callers()</code> , 应该在 <code>final_suspend()</code> 中执行。否则会导致栈上部分对象倍重复析构。(GCC)</li><li><code>unbind_from_manager()</code> 时是最后一个task也应该是内存安全的</li></ul></li><li><code>then</code> 接口，用于简化流程操作</li><li>上层主动 <code>kill</code></li><li>任务管理: <code>task_manager</code><ul><li>超时管理</li></ul></li></ul></li><li><code>callable_future</code><ul><li>可移动，不可复制（仅内部调用）</li><li>管理handle生命周期(否则awaitable和promise的释放顺序是UB)</li><li>传递失败状态</li></ul></li><li>特殊的<code>callable_future</code><ul><li>any( <code>callable_future/generator_future/task_future</code> )</li><li>all( <code>callable_future/generator_future/task_future</code> )</li><li>some( <code>callable_future/generator_future/task_future</code> )</li></ul></li></ul><h2 id=设计模式适配>设计模式适配</h2><p>为了方便迁移和处理一些设计模式相关流程，我给 <a href=https://github.com/owent/libcopp>libcopp</a> 对新的协程接入也加入了一些辅助性的功能。</p><h3 id=task_manager><code>task_manager</code></h3><p>首先这个 <code>task_manager</code> 的主要功能和之前有栈协程的一样，仅包含超时管理、和基本的容器管理。
+新的 <code>task_manager</code> 实现改成了特化实现，对老的有栈协程和新的 <code>task_future</code> 仅仅是task的部分类型不同。
+这样逻辑能保持一致后面迁移起来方便一些。</p><h3 id=task_futurethen><code>task_future::then</code></h3><p><code>then</code> 接口也是原来有栈协程的 <code>cotask::task</code> 就有的功能，都是为了简化一些有先后顺序逻的辑关系的流程。
+原来的有栈协程的 <code>then</code> 仅仅是复用了已有协程的栈分配器等一些设置（这样使用stack_pool的task，通过 <code>then</code> 创建的协程也是使用相同的 stack_pool ）。
+在新的C++20协程的 <code>task_future</code> 的 <code>then</code> 中我对它做了更多的扩展。
+首先，我们的 <code>then</code> 接口的返回值类型既支持返回 <code>callable_future</code> ，也支持返回 <code>task_future</code> 。两者的区别是前者更轻量级一些且不带私有数据，后者相反。那么很显然，我们可以用单参数的 <code>then</code> 来返回 <code>callable_future</code>， 用两个参数的 <code>then</code> 来返回 <code>task_future</code> 。其中第二个参数用于构造私有数据。可以用第二个参数传 <code>nullptr</code> 表示要创建的 <code>task_future</code> 的私有数据类型是 <code>void</code> 。
+首先因为 <code>then</code> 接口里其实是需要上一步的返回值的，而返回类型是可以自定义的，并且可以是 <code>void</code> 。这里使用了特化来处理 <code>void</code> 这种特殊情况。
+于是，我们就可以这么使用 <code>then</code> 接口。</p><pre><code class=language-cpp>cotask::task_future&lt;int, void&gt; t = task_func_await_int_simple();
+auto f = t.then(
+  [](task_future_int_type::context_pointer_type, task_future_int_type::value_type value) {
+    std::cout &lt;&lt; &quot;The first thenable got &quot;&lt;&lt; value &lt;&lt;&quot; and return int&quot; &lt;&lt; std::endl;
+    return value;
+  },
+  3000)
+  .then(
+      [](cotask::task_future&lt;int, int&gt;::context_pointer_type ctx, task_future_int_type::value_type value) {
+        std::cout &lt;&lt; &quot;The second thenable got &quot;&lt;&lt; value &lt;&lt;&quot; and return void&quot; &lt;&lt; std::endl;
+      },
+      nullptr);
+  .then(
+      [](cotask::task_future&lt;void, int&gt;::context_pointer_type ctx) {
+        std::cout &lt;&lt; &quot;The second thenable got void and return int again&quot; &lt;&lt; std::endl;
+        return 0;
+      },
+      nullptr);
+</code></pre><p>还有一种情况，有时候我们可能希望在 <code>then</code> 的回调里运行时返回一个新的协程，相当于运行时把某些流程插在静态的 <strong>thenable</strong> 调用链中间（类似Rust里的 <code>Future</code> 的回调里返回另一个 <code>Future</code>）。
+举个例子:</p><pre><code class=language-cpp>cotask::task_future&lt;int, void&gt; t = task_func_await_int_simple();
+auto f = t.then(
+    [](task_future_int_type::context_pointer_type &amp;&amp;,
+        task_future_int_type::value_type value) -&gt; copp::callable_future&lt;int&gt; {
+      std::cout &lt;&lt; &quot;The thenable return callable_future&lt;int&gt;&quot; &lt;&lt; std::endl;
+      co_return value;
+    },
+    3000)
+    .then(
+        [](cotask::task_future&lt;int, int&gt;::context_pointer_type ctx, task_future_int_type::value_type value) {
+          std::cout &lt;&lt; &quot;The second thenable await first thenable and the returned callable_future&lt;int&gt;&quot; &lt;&lt; std::endl;
+          return value + ctx-&gt;get_private_data();
+        },
+        nullptr);
+</code></pre><p>当然返回 <code>task_future</code> 也是可以的。</p><pre><code class=language-cpp>cotask::task_future&lt;int, void&gt; t = task_func_await_int_simple();
+auto f = t.then(
+  [](task_future_int_type::context_pointer_type,
+      task_future_int_type::value_type value) -&gt; cotask::task_future&lt;int, void&gt; {
+    std::cout &lt;&lt; &quot;The first thenable return task_future&lt;int&gt;&quot; &lt;&lt; std::endl;
+    co_return value;
+  },
+  3000)
+  .then(
+      [](cotask::task_future&lt;int, int&gt;::context_pointer_type ctx, task_future_int_type::value_type value) {
+        std::cout &lt;&lt; &quot;The second thenable await first thenable and the returned task_future&lt;int&gt;&quot; &lt;&lt; std::endl;
+        return value + ctx-&gt;get_private_data();
+      },
+      nullptr);
+</code></pre><p>以上的实现方式同样也是针对传入callable object的返回值类型做了特化实现的，目前仅仅针对我的 <a href=https://github.com/owent/libcopp>libcopp</a> 内部提供的类型做了特殊处理。检测callable object的返回值类型属于 type_traits 的范畴这里不再展开。当然理论上是可以对所有协程做特化处理的，但是检测是否符合所有协程要求的 <code>promise_type</code> 的 traits 实现起来会比较麻烦，所以暂未提供，以后有需要可能可以加吧。</p><h3 id=some-any-和-all><code>some()</code>, <code>any()</code> 和 <code>all()</code></h3><p>在某些场景中，我们需要使用到 <code>some()</code>, <code>any()</code> 和 <code>all()</code> 的功能。比如在批量保存场景中，我们可以起一批保存任务，然后 <code>co_await all(tasks...);</code> 。又或者在我们服务器的分布式事务系统中，实现了 <a href=http://www.dbms2.com/2010/05/01/ryw-read-your-writes-consistency/>Read Your Writes</a> 一致性模型，在这个模型中假设有 <strong>N</strong> 个副本，只要读副本数 <strong>R</strong> + 写成功副本数 <strong>W</strong> > <strong>N</strong> 时，即可认为事务成功。那么我们发起 <strong>N</strong> 个写请求是不需要等待它们全部完成的，只需要等待 <strong>W</strong> 个成功就行了，这时候我们可以用 <code>co_await some(W, tasks[N]);</code> 。</p><p>实际上 <code>any()</code> 和 <code>all()</code> 都是特殊形式的 <code>some()</code> ，前者相当于只要等待1个，后者则是需要等待全部。所以这两个的实现比较简单:</p><pre><code class=language-cpp>template &lt;class TREADY_CONTAINER, class TWAITING_CONTAINER&gt;
+    LIBCOPP_COPP_API_HEAD_ONLY inline callable_future&lt;promise_status&gt; any(TREADY_CONTAINER&amp;&amp;ready_futures,
+                                                                          TWAITING_CONTAINER&amp;&amp;pending_futures)
+        requires SomeContainerConvertible&lt;
+          typename some_ready_container&lt;TREADY_CONTAINER&gt;::value_type,
+          typename some_waiting_container_traits&lt;TWAITING_CONTAINER&gt;::value_type
+        &gt;
+{
+  return some_delegate&lt;typename some_ready_container&lt;TREADY_CONTAINER&gt;::value_type&gt;::template run(
+      std::forward&lt;TREADY_CONTAINER&gt;(ready_futures), 1, &amp;pending_futures);
+}
+
+template &lt;class TREADY_CONTAINER, class TWAITING_CONTAINER&gt;
+    LIBCOPP_COPP_API_HEAD_ONLY inline callable_future&lt;promise_status&gt; all(TREADY_CONTAINER&amp;&amp;ready_futures,
+                                                                          TWAITING_CONTAINER&amp;&amp;pending_futures)
+        requires SomeContainerConvertible&lt;
+          typename some_ready_container&lt;TREADY_CONTAINER&gt;::value_type,
+          typename some_waiting_container_traits&lt;TWAITING_CONTAINER&gt;::value_type
+#  endif
+{
+  return some_delegate&lt;typename some_ready_container&lt;TREADY_CONTAINER&gt;::value_type&gt;::template run(
+      std::forward&lt;TREADY_CONTAINER&gt;(ready_futures), gsl::size(pending_futures), &amp;pending_futures);
+}
+</code></pre><p>而对于 <code>some()</code> , 最简单的方式就是在一个 <code>while</code> 循环中等待我们要关注的对象。主循环如下:</p><pre><code class=language-cpp>promise_type some_promise{&amp;context};
+while (context.status &lt; promise_status::kDone) {
+  // Killed by caller
+  auto current_status = co_yield callable_future&lt;promise_status&gt;::yield_status();
+  if (current_status &gt;= promise_status::kDone) {
+    context.status = current_status;
+    break;
+  }
+
+  co_await some_promise;
+}
+
+// destroy promise object and detach handles
+</code></pre><p>这时候我们还需要侵入 <code>callable_future</code>, <code>generator_future</code> 和 <code>task_future</code> 的内部实现（访问一下私有成员）。因为对创建这些对象的地方并不知道这些 future 是否要被 <code>some()</code> 等待。对创建者而言，他们还是正常调用 <code>set_value()</code> 或者 <code>kill()</code> 之类。显然我们并不希望每次有唤醒都去检查一次哪些任务完成了，哪些仍然要等待，这不但会有惊群效应，还会有很多冗余的重置 <code>caller</code> 和重新设置 <code>caller</code> 的行为。那么我这里最终的做法就是加个计数器，当要等待的对象resume的次数到了我们要等待的对象数量了再扫描。</p><pre><code class=language-cpp>void await_resume() {
+  // caller maybe null if the callable is already ready when co_await
+  auto caller = get_caller();
+  if (caller) {
+    if (nullptr != caller.promise) {
+      caller.promise-&gt;set_flag(promise_flag::kInternalWaitting, false);
+    }
+    set_caller(nullptr);
+  }
+
+  if (nullptr == context_) {
+    return;
+  }
+
+  ++context_-&gt;scan_bound;
+  if (context_-&gt;scan_bound &gt;= context_-&gt;ready_bound) {
+    scan_ready(*context_);
+    context_-&gt;scan_bound = context_-&gt;ready.size();
+
+    if (context_-&gt;scan_bound &gt;= context_-&gt;ready_bound &amp;&amp; context_-&gt;status &lt; promise_status::kDone) {
+      context_-&gt;status = promise_status::kDone;
+    }
+  }
+}
+</code></pre><p>最后，我贴一个单元测试的代码来暂时一下使用示例吧:</p><pre><code class=language-cpp>static copp::callable_future&lt;int&gt; callable_func_some_callable_in_initialize_list(size_t expect_ready_count,
+                                                                                 copp::promise_status expect_status) {
+  size_t resume_ready_count = 0;
+
+  copp::callable_future&lt;int&gt; callable1 = callable_func_some_any_all_callable_suspend(471);
+  copp::callable_future&lt;int&gt; callable2 = callable_func_some_any_all_callable_suspend(473);
+  copp::callable_future&lt;int&gt; callable3 = callable_func_some_any_all_callable_suspend(477);
+
+  copp::some_ready&lt;copp::callable_future&lt;int&gt;&gt;::type readys;
+  // 这里是单独变量转span，直接用容器(比如vector)包callable也是可以的
+  std::reference_wrapper&lt;copp::callable_future&lt;int&gt;&gt; pending[] = {callable1, callable2, callable3};
+  auto some_result = co_await copp::some(readys, 2, copp::gsl::make_span(pending));
+  CASE_EXPECT_EQ(static_cast&lt;int&gt;(expect_status), static_cast&lt;int&gt;(some_result));
+
+  int result = 1;
+  for (auto &amp;ready_callable : readys) {
+    if (ready_callable-&gt;is_ready()) {
+      result += ready_callable-&gt;get_internal_promise().data();
+      ++resume_ready_count;
+    }
+  }
+
+  CASE_EXPECT_EQ(expect_ready_count, resume_ready_count);
+
+  co_return result;
+}
+</code></pre><h2 id=杂项优化>杂项优化</h2><ul><li>小对象优化: 对于 <code>generator_future</code> 和 <code>task_future</code> 的返回类型，我都采用了小对象优化。即，对于 <code>trivally_copyable</code> 且size小的类型，使用 <code>memcpy</code> 来传递 <code>return_value</code> 和外部传入的数据到 <code>co_await</code> 的返回值，否则使用 <code>unique_ptr</code> 来转移数据。而对于 <code>callable_future</code>，我希望更加精简，所有总是转移右值。</li><li>Module和 <code>enable_if</code> : 有些编译器已经支持 Module 了，我再编译时会尝试检测编译器特性，如果支持的话就使用 Module 来限定模板类型，对编译期的压力也会降低。不支持的话就fallback到 <code>enable_if</code> 的 type_traits。</li></ul><h2 id=benchmark>Benchmark</h2><p>压力测试仍然是分为trivial类型返回和非trivial类型返回两部分。非trivial类型因为有构造和析构函数，是会影响编译优化的效果的。</p><p>目前看起来 ，在高并发场景下 task 的创建CPU开销和原来有栈协程带栈池的开销降低了约 25%，切换开销降低了约 65%。低并发场景下切换开销降低了约 25%。如果复用 <code>copp::generator_future</code> , 切换的CPU开销还能再降低40%左右。其实这个CPU开销对于业务逻辑来说占比非常低了，C++20更大的优势在于内存管理。</p><p>按 <a href=https://en.cppreference.com/w/cpp/language/coroutines#Heap_allocation>https://en.cppreference.com/w/cpp/language/coroutines#Heap_allocation</a> 的描述，某些场景下C++20协程是可以把promise的分配优化掉的。那么在高性能的接口层 （ <code>callable_future</code> ） 我们当然也想尽可能利用好编译器的特性。在 <a href=https://github.com/owent/libcopp/actions>单元测试</a> 里 <code>libcopp_sample_benchmark_std_couroutine_callable_recursive</code> 相关的项目中。可以看到 create 时间很长，但是 resume 时间为0，这估计就是触发这个优化+尾调用优化了，直接创建协程的时候就把后面的跑完了。</p><h2 id=接入过程中的易踩坑点>接入过程中的易踩坑点</h2><p>首先，在 <a href=https://owent.net/2020/2004.html>《libcopp接入C++20 Coroutine和一些过渡期的设计》</a> 里提到的 GCC <a href=https://owent.net/2020/2004.html#%E7%AC%A6%E5%8F%B7%E9%97%AE%E9%A2%98>在MinGW环境下的链接符号问题</a> 在当前的 GCC 12 中已经修复了， GCC 11 我没有测试。</p><p>第二个坑，是临时对象的析构顺序，如果 <code>co_await</code> 一个 <code>future</code> 对象，返回 <code>awaitable</code> 用于协程切出和恢复，在GCC 10的某些版本中，这个 <code>future</code> 对象析构会在 <code>await_suspend</code> 的之前完成（ 10.3 以前的版本）。这里如果有资源引用可能主要注意一下生命周期。具体可以看一下 <a href=https://godbolt.org/z/dbrxns66b>https://godbolt.org/z/dbrxns66b</a> 这里的sample。</p><p>第三个易踩坑点是关于协程内 <code>promise_type</code> 类型的。由于带类型的 <code>coroutine_handle&lt;Promise></code> 有个接口 <code>coroutine_handle&lt;Promise>::promise()</code> 可以获取内部的 promise 类型。并且有个接口 <code>std::coroutine_handle&lt;Promise>::from_promise</code> 可以从某个 promise 构造handle。我们可能很自然地会想到可以用一个 promise 基类来实现一下公共的功能，然后模块直接传递基类的 <code>coroutine_handle&lt;Promise></code> 。但是这是行不通的，我们来看看 <code>from_promise</code> 的实现:</p><p>MSVC的实现:</p><pre><code class=language-cpp>static const size_t _ALIGNED_SIZE = is_empty_v&lt;_PromiseT&gt; ? 0 : ((sizeof(_PromiseT) + _ALIGN_REQ - 1) &amp; ~(_ALIGN_REQ - 1));
+static coroutine_handle from_promise(_PromiseT&amp; _Prom) noexcept {
+  auto _FramePtr = reinterpret_cast&lt;char*&gt;(_STD addressof(_Prom)) + _ALIGNED_SIZE;
+  coroutine_handle&lt;_PromiseT&gt; _Result;
+  _Result._Ptr = reinterpret_cast&lt;_Resumable_frame_prefix*&gt;(_FramePtr);
+  return _Result;
+}
+</code></pre><p>GCC实现:</p><pre><code class=language-cpp>static coroutine_handle from_promise(_Promise&amp; __p) {
+  coroutine_handle __self;
+  __self._M_fr_ptr = __builtin_coro_promise((char*) &amp;__p, __alignof(_Promise), true);
+  return __self;
+}
+</code></pre><p>可以看到，handle的地址和promise的对齐大小强相关，所以即便promise有继承关系，如果对齐长度不一致会导致互相转换之后地址错误。
+简单地说，假设 <code>struct PromiseA : public PromiseB</code> , 有 <code>coroutine_handle&lt;PromiseB> b;</code> ，不允许使用, <code>coroutine_handle&lt;PromiseA>::from_address(b.address())</code> 或 <code>coroutine_handle&lt;PromiseA>::from_promise(b.promise())</code> 。</p><p>我们实现了一个 <code>handle_delegate</code> 来保存基类地址来解决这个问题。</p><p>第四个坑是在 <code>return_value()/return_void()</code> 里不能 <code>handle.destroy()</code> ，否则GCC的实现中会执行部分协程栈变量的析构函数。这里不同编译器地行为也不完全一样，但是这个应该本身就是UB。</p><blockquote><p>有些时候我们会采用引用计数来记录资源，那么在协程执行结束后的 <code>return_value()/return_void()</code> 里有可能会引起引用解绑。如果这时候是最后一个引用被移除的时候可能会触发回收的机制，调用 <code>handle.destroy()</code> 来释放协程，这时候会就产生问题。在 <a href=https://github.com/owent/libcopp>libcopp</a> 的 <code>task_future</code> 中就有类似问题。 <code>task_future</code> 通过对 <code>task_context</code> 的引用计数来管理生命周期，如果这时候释放了最后一个 <code>task_context</code> 就会产生问题。所以我这里的做法是把这个数据的释放放在了 <code>final_suspend()</code> 中。</p></blockquote><h2 id=从有栈协程迁移>从有栈协程迁移</h2><p>我们之前的有栈协程提供了一个带超时管理的 <code>task_manager</code> ，为了方便迁移。对于 <code>task_future</code> 我也提供了一个特化实现的 <code>task_manager</code> 提供相同的功能。当然，超时错误的错误返回不能像之前一样使用特定错误码。而是要走错误状态转换的 <code>copp::promise_error_transform&lt;TRETURN></code> ，并接受 <code>kCancle/kKilled/kTimeout</code> 作为参数。</p><p>其他的迁移出钱前文提到的 <code>some()</code>, <code>any()</code> 和 <code>all()</code> 之外，都和项目中具体的使用方式与新老协程在接口形式上的约束有关了。我后面全部完成完整版本后会再专门开一篇分享在实际项目中各种应用场景下的的迁移过程。</p><h2 id=压力测试>压力测试</h2><p>补充一个简单的压力测试: (带jemalloc 5.3.0)</p><ul><li>CPU: AMD EPYC 7K62 48-Core Processor(2.6GHz)</li><li>Memory: 32GB</li><li>GCC Version: 12.2.0</li><li>Clang Version: 15.0.1</li></ul><canvas id=charjs-chart-0>Chart 0</canvas>
+<script type=text/javascript>jQuery(function(){var e="charjs-chart-0";new Chart(document.getElementById(e),{type:"bar",data:{labels:["协程数:1,栈大小16KB","协程数:1000,栈大小2MB","协程数:30000,栈大小64KB"],datasets:[{label:"libcopp+动态栈池 切换耗时",borderColor:"rgba(139, 0, 0, 1)",fill:!1,yAxisID:"y-axis-2",data:[32,77,213],type:"line"},{label:"libcopp+libcotask+动态栈池 切换耗时",borderColor:"rgba(0, 0, 139, 1)",fill:!1,yAxisID:"y-axis-2",data:[49,134,371],type:"line"},{label:"libcopp generator - GCC 切换耗时",borderColor:"rgba(139, 0, 139, 1)",fill:!1,yAxisID:"y-axis-2",data:[29,29,31],type:"line"},{label:"libcopp generator(no trivial) - GCC 切换耗时",borderColor:"rgba(0, 139, 139, 1)",fill:!1,yAxisID:"y-axis-2",data:[38,38,39],type:"line"},{label:"libcopp callable - GCC 切换耗时",borderColor:"rgba(153, 50, 204, 1)",fill:!1,yAxisID:"y-axis-2",data:[null,null,46],type:"line"},{label:"libcopp generator - Clang 切换耗时",borderColor:"rgba(233, 150, 122, 1)",fill:!1,yAxisID:"y-axis-2",data:[39,39,40],type:"line"},{label:"libcopp generator(no trivial) - Clang 切换耗时",borderColor:"rgba(143, 188, 143, 1)",fill:!1,yAxisID:"y-axis-2",data:[43,43,46],type:"line"},{label:"libcopp callable - Clang 切换耗时",borderColor:"rgba(72, 61, 139, 1)",fill:!1,yAxisID:"y-axis-2",data:[null,null,30],type:"line"},{label:"libcopp+动态栈池 创建耗时",backgroundColor:"rgba(128, 0, 0, 1)",yAxisID:"y-axis-1",data:[null,96,212]},{label:"libcopp+libcotask+动态栈池 创建耗时",backgroundColor:"rgba(255, 0, 0, 1)",yAxisID:"y-axis-1",data:[null,134,256]},{label:"libcopp generator - GCC 创建耗时",backgroundColor:"rgba(0, 0, 255, 1)",yAxisID:"y-axis-1",data:[null,65,67]},{label:"libcopp generator(no trivial) - GCC 创建耗时",backgroundColor:"rgba(128, 128, 0, 1)",yAxisID:"y-axis-1",data:[null,73,120]},{label:"libcopp callable - GCC 创建耗时",backgroundColor:"rgba(218, 112, 214, 1)",yAxisID:"y-axis-1",data:[null,null,111]},{label:" libcopp generator - Clang 创建耗时",backgroundColor:"rgba(250, 128, 114, 1)",yAxisID:"y-axis-1",data:[null,83,86]},{label:"libcopp generator(no trivial) - Clang 创建耗时",backgroundColor:"rgba(46, 139, 87, 1)",yAxisID:"y-axis-1",data:[null,83,100]},{label:"libcopp callable - Clang 创建耗时",backgroundColor:"rgba(112, 128, 144, 1)",yAxisID:"y-axis-1",data:[null,null,99]}]},options:{title:{display:!0,text:"切换/创建耗时（越小越好）"},scales:{yAxes:[{type:"linear",display:!0,scaleLabel:{display:!0,labelString:"切换耗时（单位：纳秒）"},position:"left",id:"y-axis-2",gridLines:{drawOnChartArea:!1},ticks:{callback:function(e){return e+" ns"}}},{type:"logarithmic",display:!0,scaleLabel:{display:!0,labelString:"创建耗时（单位：纳秒）"},ticks:{autoSkip:!0,callback:function(e,t,n){for(o in n){var o,s=n[o];if(s<e&&Math.floor(Math.log(e))==Math.floor(Math.log(s)))return null}return e+" ns"}},position:"right",id:"y-axis-1"}]}}})})</script><h2 id=未来优化方向>未来优化方向</h2><p>现在唤醒caller和等待协程数据释放时通过 <code>final_suspend()</code> 返回一个 <code>final_awaitable</code> 里然后在 <code>final_awaitable::await_suspend</code> 里执行相应逻辑。或许可以把这些操作直接放在放在 <code>final_suspend()</code> 中，这样能简化协程的整个执行流。</p><p>未来可以还实现一个不带atomic非线程安全的 <code>shared_ptr</code> ，很多线程内部流程需要引用计数，但是其实不需要atomic操作。这会导致额外的CPU Cache失效。(特别是 <code>task_future</code> 和 <code>generator_future</code> 里 awaitable和promise对象之间交互时对 <code>context</code> 的传递，一定是在单线程内的。)</p><p>当前版本的 <code>generator_future</code> 开销也还比较大，最初我对回调函数都是采用复制的方式。由于 <code>std::function</code> 复制还是有一定开销的，但是构建 <code>generator_future</code> 和 <code>co_await generator_future</code> 又处于两个阶段，需要续期这个回调接口。所以我中途换了一种实现，加个了不带atomic的侵入式智能指针的 <code>vtable</code> 对象。因为构建 <code>generator_future</code> 和 <code>co_await generator_future</code> 基本再同线程。不过令人沮丧的是性能反而下降了。这一块后面也需要看看如何优化。</p><p><code>callable_future</code> 的创建开销虽然基本低于原先的协程系统。但是再原先的协程中，函数嵌套调用并不需要层层创建协程。但是在 C++20 的无栈协程中，需要层层传递，层层创建。我预估整体开销应该是比之前使用有栈协程的方案高的。前面提到的编译器优化可以优化掉堆分配，但是协程本身的开销并没有省去。这个组件的接入是用于用户层传递协程任务状态的，传递层次会比较深，这里后续也可以想办法优化下。</p><h2 id=最后>最后</h2><p>代码开源的主仓库是 <a href=https://github.com/owent/libcopp>https://github.com/owent/libcopp</a> ，欢迎有兴趣的小伙伴交流分享。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2022-07-23T20:50:45.000+00:00 itemprop=datePublished>2022-07-23</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/libcopp.html>libcopp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/coroutine.html>coroutine</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E5%8D%8F%E7%A8%8B.html>协程</a></li><li class=article-tag-list-item><a href=//owent.net/tags/c++20.html>C++20</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2022/2207.html>上一篇<strong>集成 upb 和 lua binding 的踩坑小记</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2022/2205.html>下一篇<strong>再度优化GCC、LLVM、Clang、libc++、libc++abi等套件的构建脚本</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+2023
+owent</strong>
+<strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/awk.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cpp.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/capnproto.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cmake.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/d.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/diff.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dockerfile.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dos.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/erlang.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/go.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/less.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/llvm.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/lua.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/php.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/powershell.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/protobuf.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/python.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/profile.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/typescript.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const e={};for(const t of hljs.listLanguages())e[t.toLowerCase()]=!0;jQuery("pre>code").each(function(e,t){try{if(t.className.match(/\bnohighlight\b|\bmermaid\b/i))return;const e=t.className.match(/language-([^\s]+)/i);if(e&&e.length>=2&&hljs.getLanguage(e[1]))hljs.highlightElement(t);else{const e=jQuery(t),n=hljs.highlightAuto(e.text(),hljs.listLanguages());n&&n.value&&(e.html(n.value),e.addClass("hljs"))}}catch(e){window.console&&console.log(e.toString()+`
+Maybe can not detect the language`)}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","UA-19298704-1")</script><script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
+<script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=//unpkg.com/chart.js@latest/dist/chart.umd.js></script>
+<script type=module>
+    import mermaid from "\/\/unpkg.com\/mermaid@latest\/dist\/mermaid.esm.min.mjs";
+    const config = {
+        theme: 'neutral',
+        logLevel: 'fatal',
+        securityLevel: 'loose', 
+        startOnLoad: true,
+        arrowMarkerAbsolute: false,
+        
+
+    };
+    mermaid.initialize(config);
+</script></div></body></html>

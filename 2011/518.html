@@ -1,0 +1,131 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>C++ 新特性学习（二） -- Array、Tuple和Hash库|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2011/518.html><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
+<link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-5c293765e3c6bdc9099bc48792930076 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2011/518.html target=_blank itemprop=url>C++ 新特性学习（二） -- Array、Tuple和Hash库</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav></div><br><div class=article-entry itemprop=articleBody><p>这回的两个库没怎么用过，这里的记录就用VC++写了，使用G++和BOOST的时候和智能指针类似。</p><p>首先是<strong>Tuple</strong>库</p><p>要注意的是这里G++，VC++和BOOST库的函数不太一样，所以使用的时候要注意没有使用到编译器和编译器相关的函数（特别是IDE的弹窗的方法要注意）。</p><p>比如VC++和G++里的tuple对象没有get方法，而boost里有，所以获取数据智能用get(tuple&)语句。</p><p>这是个多元数组，最多有10个元素，用于方便定义复杂逻辑结构。例如std::pair就是一个2元tuple 使用tuple要求指定的类型支持默认构造方法</p><pre><code class=language-cpp>#include &lt;cstdio&gt;
+#include &lt;string&gt;
+#include &lt;tuple&gt;
+#include &lt;iostream&gt;
+
+struct foo {
+    int m;
+    friend bool operator&lt; (const foo&amp; l, const foo&amp; r) {
+        return l.m &lt; r.m;
+    }
+    friend bool operator==(const foo&amp; l, const foo&amp; r) {
+        return l.m == r.m;
+    }
+};
+
+int main() {
+    std::tuple&lt;int, std::string, double, foo&gt; tup0,
+        tup1 = std::tuple&lt;int, std::string, double, foo&gt;(2, &quot;2&quot;, 1.0, foo());
+    tup0 = std::make_tuple(1, &quot;2&quot;, 3.0, foo());
+
+    // 比较操作符是从左向右比较的，但是要求所有元素支持比较操作
+    std::cout&lt;&lt; (tup0 &lt; tup1)&lt;&lt; std::endl;
+    // 对其中元素的操作比较特别
+    std::get&lt;3&gt;(tup1).m = std::get&lt;3&gt;(tup0).m = 1;
+    std::get&lt;0&gt;(tup1) = 1;
+    std::get&lt;2&gt;(tup1) = 3.0;
+    // 相等比较符也一样
+    std::cout&lt;&lt; (tup0 == tup1)&lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre><p>功能是比较强大，但是为什么我觉得用处不大呢？</p><p>另一个库是<strong>Array</strong>库</p><p>这个东西就如其名，就是一个数组。普通数组不支持STL，而当std::vector效率不满足需求的时候array的力量就出来了，使用不是一般的简单。</p><pre><code class=language-cpp>std::array&lt;int&gt; arr = {0, 1, 2, 3, 4, 5, 6};
+
+for(std::array&lt;int&gt;::size_type i = 0; i &lt; arr.size(); i ++)
+    std::cout&lt;&lt; arr[i]&lt;&lt; &quot; = &quot; &lt;&lt; arr.at(i)&lt;&lt; std::endl;
+</code></pre><p>最后一个啦，<strong>hash</strong>库</p><p>主要是用来计算hash值的，采用FNV哈希算法，还可以用于管理数据结构（如tr1里的std::unordered_set）。默认支持的计算散列值的对象是整型、小数、指针和字符串，其他的结构需要自己定制HASH函数，按照boost的文档指定hash函数的方法很简单，就是重写std::size_t hash_value(T const&)方法或函数，我使用boost库正常，但是VC++下用tr1编译错误，错误在自定义hash函数上，但没看懂报错的原因，也没有详细的例子或文档。另外貌似重载==操作符也是必须的</p><pre><code class=language-cpp>#include &lt;cstdio&gt;
+#include &lt;string&gt;
+#include &lt;functional&gt;
+#include &lt;unordered_set&gt;
+#include &lt;array&gt;
+#include &lt;iostream&gt;
+#include &lt;assert.h&gt;
+#include &lt;boost/functional/hash.hpp&gt;
+using namespace std;
+
+struct foo {
+    int id;
+    int m;
+    foo(int _id): id(_id){}
+    void print(void*) {
+        printf(&quot;%d\n&quot;, m);
+    }
+    friend bool operator == (const foo&amp; l, const foo&amp; r) {
+        return l.id == r.id;
+    }
+};
+
+std::size_t hash_value(const foo&amp; f) {
+    return boost::hash&lt;int&gt;()(f.id);
+}
+
+int main() {
+    std::hash&lt;std::string&gt; str_hash;
+    std::hash&lt;int&gt; int_hash;
+    std::cout&lt;&lt; str_hash(&quot;OWenT&quot;)&lt;&lt; std::endl;
+    std::cout&lt;&lt; int_hash(3)&lt;&lt; std::endl; // 输出不是3哦
+
+
+    std::unordered_set&lt;foo, boost::hash&lt;foo&gt; &gt; s;
+    foo f(3);
+    s.insert(f);
+    assert(s.find(foo(3)) != s.end());
+
+    return 0;
+}
+</code></pre><p>这个以后等需要用的时候再继续研究吧</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2011-10-14T12:17:17.000+00:00 itemprop=datePublished>2011-10-14</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/array.html>array</a></li><li class=article-tag-list-item><a href=//owent.net/tags/boost.html>BOOST</a></li><li class=article-tag-list-item><a href=//owent.net/tags/c.html>c</a></li><li class=article-tag-list-item><a href=//owent.net/tags/c++0x/11.html>c++0x/11</a></li><li class=article-tag-list-item><a href=//owent.net/tags/c++11.html>c++11</a></li><li class=article-tag-list-item><a href=//owent.net/tags/hash.html>HASH</a></li><li class=article-tag-list-item><a href=//owent.net/tags/stl.html>STL</a></li><li class=article-tag-list-item><a href=//owent.net/tags/tr1.html>tr1</a></li><li class=article-tag-list-item><a href=//owent.net/tags/tuple.html>tuple</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2011/534.html>上一篇<strong>C++ 新特性学习（三） — Regex库</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2011/508.html>下一篇<strong>C++ 新特性学习（一） -- 概述+智能指针（smart_ptr）</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+2023
+OWenT</strong>
+<strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/awk.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cpp.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/capnproto.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cmake.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/d.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/diff.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dockerfile.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dos.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/erlang.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/go.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/less.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/llvm.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/lua.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/php.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/powershell.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/protobuf.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/python.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/profile.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/typescript.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const e={};for(const t of hljs.listLanguages())e[t.toLowerCase()]=!0;jQuery("pre>code").each(function(e,t){try{if(t.className.match(/\bnohighlight\b|\bmermaid\b/i))return;const e=t.className.match(/language-([^\s]+)/i);if(e&&e.length>=2&&hljs.getLanguage(e[1]))hljs.highlightElement(t);else{const e=jQuery(t),n=hljs.highlightAuto(e.text(),hljs.listLanguages());n&&n.value&&(e.html(n.value),e.addClass("hljs"))}}catch(e){window.console&&console.log(e.toString()+`
+Maybe can not detect the language`)}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","UA-19298704-1")</script><script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
+<script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=//unpkg.com/chart.js@latest/dist/chart.umd.js></script>
+<script type=module>
+    import mermaid from "\/\/unpkg.com\/mermaid@latest\/dist\/mermaid.esm.min.mjs";
+    const config = {
+        theme: 'neutral',
+        logLevel: 'fatal',
+        securityLevel: 'loose', 
+        startOnLoad: true,
+        arrowMarkerAbsolute: false,
+        
+
+    };
+    mermaid.initialize(config);
+</script></div></body></html>

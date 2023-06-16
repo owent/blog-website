@@ -1,0 +1,299 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>ECUST 09年 校赛个人训练赛第五场总结|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2009/79.html><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net/css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script>
+<link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span></button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=utf-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-50a935a85433c2fdbe95edc3d1ee5a79 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2009/79.html target=_blank itemprop=url>ECUST 09年 校赛个人训练赛第五场总结</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#a-coming-near>A Coming Near</a></li><li><a href=#b-love-letter>B Love Letter</a></li><li><a href=#c-change-base>C Change Base</a></li><li><a href=#d-equation>D Equation</a></li><li><a href=#g-fermat-square-prime>G Fermat square prime</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><h1 id=校赛个人训练赛第五场报告>校赛个人训练赛第五场报告</h1><p>今天战绩还行，AC了5题，今天总体没有太复杂的算法题，不过测试数据强度比之前有所增加
+我的钱四题很早就过了，但是第五题很晚才出主要是代码写得太混乱，思路也错了两次
+我过的题有五道，分别是ABCDG</p><h2 id=a-coming-near>A Coming Near</h2><p>A题是计算两个多边形的最近距离</p><p>由于数据量不是很大，所以O（n^2）的算法就能过,也就是枚举,每一个用例的最坏情况是3<em>1000</em>1000</p><p>具体是先枚举每两个点的距离,记录最小值</p><p>再枚举每个点到另一个多边形上每条直线的距离,记录最小值即可</p><p>不过lpld的因为越界导致的WA问题值得借鉴(及时把long型转为double型)</p><pre><code class=language-cpp>#include&lt;iostream&gt;
+#include&lt;cmath&gt;
+using namespace std;
+struct vertex
+{
+    long x,y;
+};
+
+vertex prisonA[1000],prisonB[1000];
+
+double disBetweenAB(int posA,int posB)
+{
+    double tmp1 = prisonA[posA].x - prisonB[posB].x;
+    double tmp2 = prisonA[posA].y - prisonB[posB].y;
+    return sqrt(tmp1 * tmp1 + tmp2 * tmp2);
+}
+double disBetweenPointAndLine(long x0,long y0,long x1,long y1,long x2,long y2)
+{
+    double a = y1-y2;
+    double b = x2-x1;
+    double c = x1*y2-x2*y1;
+    double d = (a*x0+b*y0+c)/sqrt(a*a+b*b);
+    double xp = (b*b*x0-a*b*y0-a*c)/(a*a+b*b);
+    double yp = (-a*b*x0+a*a*y0-b*c)/(a*a+b*b);
+    double xb = (x1&gt;x2)?x1:x2;
+    double yb = (y1&gt;y2)?y1:y2;
+    double xs = x1+x2-xb;
+    double ys = y1+y2-yb;
+    if(xp &gt; xb || xp &lt; xs || yp &gt; yb || yp &lt; ys)
+        return 50000000;
+    else
+        return fabs(d);
+}
+
+int main()
+{
+    int m,n;
+    while(scanf(&quot;%d %d&quot;,&amp;n,&amp;m),n || m)
+    {
+        int i,j;
+        for(i = 0 ; i &lt; n ; i ++)
+            scanf(&quot;%ld %ld&quot;,&amp;prisonA[i].x,&amp;prisonA[i].y);
+        for(i = 0 ; i &lt; m ; i ++)
+            scanf(&quot;%ld %ld&quot;,&amp;prisonB[i].x,&amp;prisonB[i].y);
+        double tmpDouble = disBetweenAB(0,0);
+        for(i = 0 ; i &lt; n ; i ++)
+            for(j = 0 ; j &lt; m ; j ++)
+                if(disBetweenAB(i,j) &lt; tmpDouble)
+                    tmpDouble = disBetweenAB(i,j);
+        for(i = 0 ; i &lt; n ; i ++)
+            for(j = 0 ; j &lt; m ; j ++)
+            {
+                double tmpDouble2 = disBetweenPointAndLine(prisonA[i].x,prisonA[i].y
+                    ,prisonB[j].x,prisonB[j].y,prisonB[(j+1)%m].x,prisonB[(j+1)%m].y);
+                if(tmpDouble2 &lt; tmpDouble)
+                    tmpDouble = tmpDouble2;
+            };
+
+        for(i = 0 ; i &lt; m ; i ++)
+            for(j = 0 ; j &lt; n ; j ++)
+            {
+                double tmpDouble2 = disBetweenPointAndLine(prisonB[i].x,prisonB[i].y
+                    ,prisonA[j].x,prisonA[j].y,prisonA[(j+1)%n].x,prisonA[(j+1)%n].y);
+                if(tmpDouble2 &lt; tmpDouble)
+                    tmpDouble = tmpDouble2;
+            };
+
+        printf(&quot;%.2lf\n&quot;,tmpDouble);
+    }
+    return 0;
+}
+</code></pre><h2 id=b-love-letter>B Love Letter</h2><p>B题是要求重新排列单词,使之成为字典里的单词,以此读懂别人打乱加密的Love Letter</p><p>这题很简单,直接一个一个单词查找就行了,不过要注意一下换行的位置,因为题目要求输出和输入一样</p><p>继续贴代码:</p><pre><code class=language-cpp>#include&lt;iostream&gt;
+#include&lt;cstring&gt;
+using namespace std;
+char dir[101][25];
+int dirCharNum[101][26] = {0};
+int lenDir[101];
+char tmpChar[50];
+void check(char c[],int n)
+{
+    char cN[26] = {0};
+    for(int i = 0 ; i &lt; n ; i ++)
+    {
+        int len = strlen(c);
+        if(len != lenDir[i] || c[0] != dir[i][0] || c[len - 1] != dir[i][lenDir[i] - 1])
+            continue;
+
+        memset(cN,0,sizeof(cN));
+        for(int j = 0 ; j &lt; len ; j ++)
+            cN[c[j] - 'a'] ++;
+        int isMatch = 1;
+        for(int k = 0 ; k &lt; len ; k ++)
+            if(cN[k] != dirCharNum[i][k])
+            {
+                isMatch = 0;
+                break;
+            };
+
+        if(isMatch)
+        {
+            printf(&quot;%s&quot;,dir[i]);
+            break;
+        }
+    }
+}
+int main()
+{
+    int n;
+    cin&gt;&gt;n;
+    int i,j;
+    for(i = 0 ; i &lt; n ; i ++)
+    {
+        scanf(&quot;%s&quot;,dir[i]);
+        lenDir[i] = strlen(dir[i]);
+        for(j = 0 ; j &lt; lenDir[i] ; j ++)
+            dirCharNum[i][dir[i][j] - 'a'] ++;
+    }
+
+    while(scanf(&quot;%s&quot;,tmpChar) != EOF)
+    {
+        check(tmpChar,n);
+        if(getchar() == '\n')
+            printf(&quot;\n&quot;);
+        else
+            printf(&quot; &quot;);
+    }
+    return 0;
+}
+</code></pre><h2 id=c-change-base>C Change Base</h2><p>C题是一道进制转换题,稍微思考一下就能推出公式了,然后每次处理mod一个10007就行</p><p>(注: a % c + b % c = ( a + b ) % c ( a * b ) % c = ( a % c * b % c ) % c )</p><p>代码：</p><pre><code class=language-cpp>#include&lt;iostream&gt;
+#include&lt;cstring&gt;
+using namespace std;
+char input[1002];
+
+
+long TypeTo10(char c[],int m,int mod)
+{
+    int tmpInt = 0;
+    int len = strlen(c);
+
+    for(int i = 0 ; i &lt; len ; i ++)
+        tmpInt = (tmpInt * m + c[i] - '0') % mod;
+
+    return tmpInt;
+}
+int main()
+{
+    int t,m;
+    cin&gt;&gt;t;
+    while(t --)
+    {
+        cin&gt;&gt;m&gt;&gt;input;
+        cout&lt;&lt;TypeTo10(input,m,10007)&lt;&lt;endl;
+    }
+    return 0;
+}
+</code></pre><h2 id=d-equation>D Equation</h2><p>D题要用Hash的思想,但是因为是long型的数据而且数据量不大(1000*1000),可以不写哈希函数,直接映射</p><p>我的代码如下:</p><pre><code class=language-cpp>#include&lt;iostream&gt;
+using namespace std;
+
+long hash[2000001];
+long ro[3000001] = {0};
+long f2[1001];
+int main()
+{
+    int t;
+    long r;
+    for(r = 0 ; r &lt;= 1000 ; r ++)
+        f2[r] = r * r;
+    cin&gt;&gt;t;
+    while(t --)
+    {
+        scanf(&quot;%ld&quot;,&amp;r);
+        if(ro[r])
+        {
+            printf(&quot;%ld\n&quot;,ro[r]);
+            continue;
+        }
+        memset(hash,0,sizeof(hash));
+
+        long i,j;
+        for(i = 0 ; f2[i] &lt;= r &amp;&amp; i &lt;= 1000 ; i ++)
+            for(j = 0 ; j &lt;= i; j ++)
+                if(j == i)
+                    hash[f2[i] + f2[j]] ++;
+                else
+                    hash[f2[i] + f2[j]] += 2;
+
+        long tmpInt = 0;
+
+        for(i = 0 ; f2[i] &lt;= r &amp;&amp; i &lt;= 1000 ; i ++)
+            if(r - f2[i] &lt;= 2000000)
+                tmpInt += hash[r - f2[i]];
+
+        printf(&quot;%ld\n&quot;,tmpInt);
+        ro[r] = tmpInt;
+    }
+    return 0;
+}
+</code></pre><h2 id=g-fermat-square-prime>G Fermat square prime</h2><p>G题是计算能用a^2+b^2表示的素数(a,b为素数)</p><p>我的大体思路是先筛出素数表,再把素数依次组合,算出所有能这么表示的数</p><p>最后再读入数据,判断读入的数据是否是能以a^2+b^2的素数</p><p>代码如下:</p><pre><code class=language-cpp>#include&lt;iostream&gt;
+using namespace std;
+#define MAXN 1000001
+long prime[MAXN],numPrime = 0;
+int a[MAXN] = {0};
+int isFQSP[MAXN] = {0};
+long f2[1000] = {0};
+int main()
+{
+    //线性筛素数复杂度O(n)这个很重要，由于数据量小，可以打表
+    long i,j,k;
+    for(i = 2 ; i &lt; 1000 ; i ++)
+    {
+        if(!a[i])
+            prime[numPrime ++] = i;
+        for(j = 0 ; j &lt; numPrime &amp;&amp; prime[j] * i &lt;MAXN ; j ++)
+        {
+            a[prime[j] * i] ++;
+            if(i % prime[j] == 0)
+                break;
+        }
+    }
+
+    for(i = 0 ; i &lt; numPrime &amp;&amp; prime[i] &lt; 1000; i ++)
+        f2[prime[i]] = prime[i] * prime[i];
+
+    for(i = 0 ; i &lt; numPrime &amp;&amp; prime[i] &lt; 1000; i ++)
+        for(j = 0 ; j &lt;= i ; j ++)
+            if(f2[prime[i]] + f2[prime[j]] &lt; MAXN &amp;&amp; !a[f2[prime[i]] + f2[prime[j]]])
+                isFQSP[f2[prime[i]] + f2[prime[j]]] ++;
+
+    int t;
+    scanf(&quot;%d&quot;,&amp;t);
+    while(t --)
+    {
+        scanf(&quot;%ld&quot;,&amp;k);
+        if(isFQSP[k])
+            printf(&quot;yes\n&quot;);
+        else
+            printf(&quot;no\n&quot;);
+    }
+    return 0;
+}
+</code></pre><p>这次总体感觉前期不错，后期就一直卡住了，想到的算法错误浪费了我很多时间
+最后一题的思路错误导致一直WA，以后需要注意，思路清晰很重要。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2009-08-14T11:40:56.000+00:00 itemprop=datePublished>2009-08-14</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/acm.html>acm</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2009/78.html>上一篇<strong>ECUST 09年 校赛个人赛第八场（最后一场）总结</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2009/80.html>下一篇<strong>点到直线距离 和 线段间最短距离 (OWenT 模板)</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+2023
+OWenT</strong>
+<strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a></strong>
+<span class=clearfix></span></div></div></footer></div><script type=text/javascript src=//unpkg.com/@popperjs/core@latest/dist/umd/popper.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/bootstrap@latest/dist/js/bootstrap.min.js crossorigin=anonymous></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/awk.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cpp.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/capnproto.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cmake.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/d.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/diff.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dockerfile.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dos.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/erlang.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/go.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/less.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/llvm.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/lua.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/php.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/powershell.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/protobuf.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/python.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/profile.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/typescript.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script>
+<script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css" />'),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const e={};for(const t of hljs.listLanguages())e[t.toLowerCase()]=!0;jQuery("pre>code").each(function(e,t){try{if(t.className.match(/\bnohighlight\b|\bmermaid\b/i))return;const e=t.className.match(/language-([^\s]+)/i);if(e&&e.length>=2&&hljs.getLanguage(e[1]))hljs.highlightElement(t);else{const e=jQuery(t),n=hljs.highlightAuto(e.text(),hljs.listLanguages());n&&n.value&&(e.html(n.value),e.addClass("hljs"))}}catch(e){window.console&&console.log(e.toString()+`
+Maybe can not detect the language`)}})})</script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-19298704-1"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","UA-19298704-1")</script><script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script>
+<script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script>
+<script type=text/javascript>jQuery(function(){jQuery("head").append('<link rel="stylesheet" href="//unpkg.com/katex@latest/dist/katex.min.css" />'),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=//unpkg.com/chart.js@latest/dist/chart.umd.js></script>
+<script type=module>
+    import mermaid from "\/\/unpkg.com\/mermaid@latest\/dist\/mermaid.esm.min.mjs";
+    const config = {
+        theme: 'neutral',
+        logLevel: 'fatal',
+        securityLevel: 'loose', 
+        startOnLoad: true,
+        arrowMarkerAbsolute: false,
+        
+
+    };
+    mermaid.initialize(config);
+</script></div></body></html>
