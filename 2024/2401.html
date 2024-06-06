@@ -4,7 +4,7 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-01a4aa2caa2ce9a35716c0ba9c7b4f13 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2024/2401.html target=_blank itemprop=url>GCC 14的一个warning to error BUG</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#背景>背景</a></li><li><a href=#分析>分析</a></li><li><a href=#解决>解决</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><h2 id=背景>背景</h2><p>早先社区报过 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 在GCC 14中编译不通过的问题。最近我也是先升级我们项目组的工具链，主要也是把GCC升级到GCC 14，这时候发现有些第三方工具构建失败。
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-01a4aa2caa2ce9a35716c0ba9c7b4f13 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2024/2401.html target=_blank itemprop=url>GCC 14的一个warning to error BUG</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#背景>背景</a></li><li><a href=#分析>分析</a></li><li><a href=#另一个阻塞问题>另一个阻塞问题</a></li><li><a href=#解决>解决</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><h2 id=背景>背景</h2><p>早先社区报过 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 在GCC 14中编译不通过的问题。最近我也是先升级我们项目组的工具链，主要也是把GCC升级到GCC 14，这时候发现有些第三方工具构建失败。
 这里记录一下以防后续其他人碰到参考。</p><h2 id=分析>分析</h2><p>我们在使用新版本GCC 14编译zsh的时候，报 <code>boolcodes</code> 和定义冲突。</p><p>分析下来发现是在 <code>./configure</code> 阶段， <code>boolcodes</code> 这个接口的时候不通过。</p><p>从 <code>./configure</code> 里提取出来的，测试代码如下:</p><pre><code class=language-cpp>#include &lt;curses.h&gt;
 #include &lt;term.h&gt;
 int
@@ -22,8 +22,48 @@ test-source.c:6:15: error: initialization of ‘char **’ from incompatible poi
 test-source.c:6:15: warning: initialization of ‘char **’ from incompatible pointer type ‘const char * const*’ [-Wincompatible-pointer-types]
     6 | char **test = boolcodes; puts(*test);
       |               ^~~~~~~~~
-</code></pre><h2 id=解决>解决</h2><p>最后，我给工具链脚本加了个编译选项检测来解决这类问题。</p><pre><code class=language-bash># Patch for gcc 14
-for TEST_CFLAG in &quot;-Wno-error=incompatible-pointer-types&quot; &quot;-Wno-error&quot;; do
+</code></pre><h2 id=另一个阻塞问题>另一个阻塞问题</h2><p>编译玩以后，我们会发现zsh启动的时候卡在了 <code>waitforpid</code> 调用上，我们看这个函数的代码:</p><pre><code class=language-c>/**/
+int
+waitforpid(pid_t pid, int wait_cmd)
+{
+    int first = 1, q = queue_signal_level();
+
+    /* child_block() around this loop in case #ifndef WNOHANG */
+    dont_queue_signals();
+    child_block();		/* unblocked in signal_suspend() */
+    queue_traps(wait_cmd);
+
+    /* This function should never be called with a pid that is not a
+     * child of the current shell.  Consequently, if kill(0, pid)
+     * fails here with ESRCH, the child has already been reaped.  In
+     * the loop body, we expect this to happen in signal_suspend()
+     * via zhandler(), after which this test terminates the loop.
+     */
+    while (!errflag &amp;&amp; (kill(pid, 0) &gt;= 0 || errno != ESRCH)) {
+	if (first)
+	    first = 0;
+	else if (!wait_cmd)
+	    kill(pid, SIGCONT);
+
+	last_signal = -1;
+	signal_suspend(SIGCHLD, wait_cmd);
+	if (last_signal != SIGCHLD &amp;&amp; wait_cmd &amp;&amp; last_signal &gt;= 0 &amp;&amp;
+	    (sigtrapped[last_signal] &amp; ZSIG_TRAPPED)) {
+	    /* wait command interrupted, but no error: return */
+	    restore_queue_signals(q);
+	    return 128 + last_signal;
+	}
+	child_block();
+    }
+    unqueue_traps();
+    child_unblock();
+    restore_queue_signals(q);
+
+    return 0;
+}
+</code></pre><p>乍看是没什么问题的，深入到 config.log 我们会发现它在测试 <code>ESRCH</code> 的时候失败了，然后再失败的时候会把 <code>ESRCH</code> 定义成 <code>EINVAL</code> 。
+测试 <code>ESRCH</code> 失败的原因其实和上面的问题一样，也是仅有 <code>-Wimplicit-int</code> 的时候触发了 <code>error</code> 。所以解决方法也是加 <code>-Wno-error=implicit-int</code> 。</p><h2 id=解决>解决</h2><p>最后，我给工具链脚本加了个编译选项检测来解决这类问题。</p><pre><code class=language-bash># Patch for gcc 14
+for TEST_CFLAG in &quot;-Wno-error=incompatible-pointer-types&quot; &quot;-Wno-error=implicit-int&quot; &quot;-Wno-error&quot;; do
   echo &quot;Test CFLAG: $TEST_CFLAG&quot;
   (gcc $TEST_CFLAG -x c - -o /dev/null &lt;&lt;&lt;'int main() { return 0; }' &amp;&amp; echo &quot;Test CFLAG: $TEST_CFLAG success&quot; &amp;&amp; ALL_CFLAGS=&quot;$ALL_CFLAGS $TEST_CFLAG&quot;) || echo &quot;Test CFLAG: $TEST_CFLAG failed&quot;
 done
