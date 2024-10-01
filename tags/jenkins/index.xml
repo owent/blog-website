@@ -1,1 +1,33 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Jenkins on I'm OWenT</title><link>//owent.net/tags/jenkins.html</link><description>Recent content in Jenkins on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md">&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" />&lt;/a></copyright><lastBuildDate>Fri, 03 Mar 2017 18:20:31 +0000</lastBuildDate><atom:link href="//owent.net/tags/jenkins/index.xml" rel="self" type="application/rss+xml"/><item><title>开源项目得一些小维护</title><link>//owent.net/2017/1373.html</link><pubDate>Fri, 03 Mar 2017 18:20:31 +0000</pubDate><guid>//owent.net/2017/1373.html</guid><description>其实我那几个特别是工具类得开源项目一致都有维护和更新，但是每次更新得量和要点并不怎么突出所以一致也没写点什么。但是偶尔吗也会碰到一些稍微值得</description></item><item><title>Jenkins(hudson)插件记录</title><link>//owent.net/2015/1157.html</link><pubDate>Tue, 21 Apr 2015 11:22:59 +0000</pubDate><guid>//owent.net/2015/1157.html</guid><description>前言 搭建自动化构建（jenkins）的过程中碰到了挺多问题，需要装各种插件解决。为了方便下次部署，这里先记录一下用到的插件及用途 Jenkin</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Jenkins on I'm OWenT</title><link>//owent.net/tags/jenkins.html</link><description>Recent content in Jenkins on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md">&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" />&lt;/a></copyright><lastBuildDate>Fri, 03 Mar 2017 18:20:31 +0000</lastBuildDate><atom:link href="//owent.net/tags/jenkins/index.xml" rel="self" type="application/rss+xml"/><item><title>开源项目得一些小维护</title><link>//owent.net/2017/1373.html</link><pubDate>Fri, 03 Mar 2017 18:20:31 +0000</pubDate><guid>//owent.net/2017/1373.html</guid><description>&lt;!-- raw HTML omitted -->
+&lt;p>其实我那几个特别是工具类得开源项目一致都有维护和更新，但是每次更新得量和要点并不怎么突出所以一致也没写点什么。但是偶尔吗也会碰到一些稍微值得记录的东西，但是又不多所以很多都遗漏掉了。&lt;/p></description></item><item><title>Jenkins(hudson)插件记录</title><link>//owent.net/2015/1157.html</link><pubDate>Tue, 21 Apr 2015 11:22:59 +0000</pubDate><guid>//owent.net/2015/1157.html</guid><description>&lt;!-- raw HTML omitted -->
+&lt;h2 id="前言">前言&lt;/h2>
+&lt;p>搭建自动化构建（jenkins）的过程中碰到了挺多问题，需要装各种插件解决。为了方便下次部署，这里先记录一下用到的插件及用途&lt;/p>
+&lt;h2 id="jenkins插件">Jenkins插件&lt;/h2>
+&lt;ol>
+&lt;li>&lt;a href="http://wiki.jenkins-ci.org/display/JENKINS/Ant+Plugin">Ant Plugin&lt;/a> java打包工具&lt;/li>
+&lt;li>&lt;a href="https://wiki.jenkins-ci.org/display/JENKINS/Authorize+Project+plugin">Authorize Project&lt;/a> 项目权限管理&lt;/li>
+&lt;li>&lt;a href="http://wiki.jenkins-ci.org/display/JENKINS/Clang+Scan-Build+Plugin">Clang Scan-Build Plugin&lt;/a> clang静态分析（尚未使用）&lt;/li>
+&lt;li>&lt;a href="http://wiki.jenkins-ci.org/display/JENKINS/Cppcheck+Plugin">Cppcheck Plug-in&lt;/a> cppcheck静态代码分析&lt;/li>
+&lt;li>&lt;a href="http://wiki.jenkins-ci.org/display/JENKINS/Credentials+Plugin">Credentials Plugin&lt;/a> 登入凭据管理&lt;/li>
+&lt;li>&lt;a href="http://wiki.jenkins-ci.org/display/JENKINS/Dashboard+View">Dashboard View&lt;/a> 总览&lt;/li>
+&lt;li>&lt;a href="http://wiki.jenkins-ci.org/display/JENKINS/Disk+Usage+Plugin">disk-usage plugin&lt;/a> 磁盘使用量统计&lt;/li>
+&lt;li>&lt;a href="http://wiki.jenkins-ci.org/display/JENKINS/Doxygen+Plugin">Doxygen Plug-in&lt;/a> doxygen插件（没使用成功，我还是自己命令行生成的）&lt;/li>
+&lt;li>&lt;a href="http://wiki.jenkins-ci.org/display/JENKINS/Email-ext+plugin">Email Extension Plugin&lt;/a> 定制化邮件&lt;/li>
+&lt;li>&lt;a href="https://wiki.jenkins-ci.org/display/JENKINS/Embeddable+Build+Status+Plugin">embeddable-build-status&lt;/a> 提供接口嵌入构建状态到外部系统&lt;/li>
+&lt;li>&lt;a href="https://wiki.jenkins-ci.org/display/JENKINS/EnvInject+Plugin">Environment Injector Plugin&lt;/a> 把参数化构建的参数导入到环境变量&lt;/li>
+&lt;li>&lt;a href="http://wiki.jenkins-ci.org/display/JENKINS/Git+Client+Plugin">GIT client plugin&lt;/a> 和&lt;a href="http://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin">GIT plugin&lt;/a>&lt;/li>
+&lt;li>Github和Gitlab集成插件&lt;/li>
+&lt;li>Gravatar插件&lt;/li>
+&lt;li>&lt;a href="http://wiki.jenkins-ci.org/display/JENKINS/Matrix+Authorization+Strategy+Plugin">Matrix Authorization Strategy Plugin&lt;/a>和&lt;a href="https://wiki.jenkins-ci.org/display/JENKINS/Matrix+Project+Plugin">Matrix Project Plugin&lt;/a> 项目矩阵授权策略&lt;/li>
+&lt;li>&lt;a href="http://wiki.jenkins-ci.org/display/JENKINS/Maven+Project+Plugin">Maven Integration plugin&lt;/a> 更高级的java构建工具&lt;/li>
+&lt;li>openid和OpenID4Java API&lt;/li>
+&lt;li>Publish Over SSH&lt;/li>
+&lt;li>Release Plugin&lt;/li>
+&lt;li>&lt;a href="http://wiki.jenkins-ci.org/display/JENKINS/Slave+Setup+Plugin">Slave SetupPlugin&lt;/a> 、&lt;a href="http://wiki.jenkins-ci.org/display/JENKINS/slave-status">slave-status&lt;/a>、&lt;a href="http://wiki.jenkins-ci.org/display/JENKINS/SSH+Slaves+plugin">SSH Slaves plugin&lt;/a>、&lt;a href="http://wiki.jenkins-ci.org/display/JENKINS/Windows+Slaves+Plugin">Windows Slaves Plugin&lt;/a>&lt;/li>
+&lt;li>&lt;a href="http://wiki.jenkins-ci.org/display/JENKINS/SSH+Agent+Plugin">SSH Agent Plugin&lt;/a>、&lt;a href="http://wiki.jenkins-ci.org/display/JENKINS/SSH+Credentials+Plugin">SSH Credentials Plugin&lt;/a>&lt;/li>
+&lt;li>&lt;a href="http://wiki.jenkins-ci.org/x/CwDgAQ">Static Analysis Utilities&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://wiki.jenkins-ci.org/display/JENKINS/Xcode+Plugin">Xcode integration&lt;/a> 用于集成xcode工程文件
+上面没有链接的插件属于我没有主动去使用（自动开启或者装了没用过的）的。没写注解的是反正一看就知道什么意思。&lt;/li>
+&lt;/ol>
+&lt;blockquote>
+&lt;p>Written with &lt;a href="https://stackedit.io/">StackEdit&lt;/a>.&lt;/p></description></item></channel></rss>

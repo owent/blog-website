@@ -1,10 +1,245 @@
-<!doctype html><html lang=zh-cn><head><meta name=generator content="Hugo 0.133.0"><meta charset=utf-8><title>I'm OWenT|I'm OWenT</title>
+<!doctype html><html lang=zh-cn><head><meta name=generator content="Hugo 0.135.0"><meta charset=utf-8><title>I'm OWenT|I'm OWenT</title>
 <meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/><link rel=alternate type=application/rss+xml href=//owent.net/index.xml title="I'm OWenT"><link rel=icon href=../favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net//css/style.css><script type=text/javascript src=//unpkg.com/jquery@latest/dist/jquery.slim.min.js crossorigin=anonymous></script><link rel=stylesheet href=//owent.net/css/syntax.css></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net/ id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-toggle=collapse data-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
 <span class=navbar-toggler-icon></span>
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=index-content><article class="article-panel archive-article archive-type-879"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/879.html target=_blank itemprop=url>一个C++关于成员变量偏移地址的小Trick</a></h1></header><div class=article-excerpt>今天看到一个小例子，发现了一个小trick。见代码： #include &lt;cstdio> #include &lt;cstdlib> class base_1 { public: int a; }; class base_2 { public: int b; }; class base_3: public base_1, public base_2 { public: int c; }; int main(int argc, char* argv[]) { printf("&amp;base_1::a = %p\n", &amp;base_1::a); printf("&amp;base_2::b = %p\n", &amp;base_2::b); printf("&amp;base_3::a</div><div class=article-more><a href=//owent.net/2013/879.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-08-26T14:16:37.000+00:00 itemprop=datePublished>2013-08-26</time></div></div></article><article class="article-panel archive-article archive-type-867"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/867.html target=_blank itemprop=url>ptmalloc,tcmalloc和jemalloc内存分配策略研究</a></h1></header><div class=article-excerpt>最近看了glibc的ptmaoolc，Goolge的tcmalloc和jemalloc，顺便做了一点记录。可能有些地方理解地不太对，如有发现</div><div class=article-more><a href=//owent.net/2013/867.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-07-31T13:02:53.000+00:00 itemprop=datePublished>2013-07-31</time></div></div></article><article class="article-panel archive-article archive-type-861"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/861.html target=_blank itemprop=url>POJ 2192 Zipper HDU 2059 龟兔赛跑</a></h1></header><div class=article-excerpt>今天心情好，刷了两到ACM水题，思路很简单都在注释里，所以直接贴代码: /** * @file 龟兔赛跑.cpp * @brief 龟兔赛跑 AC代码 (DP) * DP方程式: [到第i的充</div><div class=article-more><a href=//owent.net/2013/861.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-07-15T18:39:41.000+00:00 itemprop=datePublished>2013-07-15</time></div></div></article><article class="article-panel archive-article archive-type-851"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/851.html target=_blank itemprop=url>从Javascript到Typescript到Node.js</a></h1></header><div class=article-excerpt>最近看了点typescript的东西，加上以前看过的一点点Node.js，所以就想把他们系统地整理一下。 Javascript 这玩意搞过Web开发的应该都知道吧</div><div class=article-more><a href=//owent.net/2013/851.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-07-10T20:19:39.000+00:00 itemprop=datePublished>2013-07-10</time></div></div></article><article class="article-panel archive-article archive-type-818"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/818.html target=_blank itemprop=url>网络编程小结</a></h1></header><div class=article-excerpt>写这个小结主要是因为之前研究Boost.Asio的时候，其内部使用了很多不同的方法来实现异步网络编程 然后就顺便把一些高级的玩意看了一下，也顺</div><div class=article-more><a href=//owent.net/2013/818.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-05-30T14:31:09.000+00:00 itemprop=datePublished>2013-05-30</time></div></div></article><article class="article-panel archive-article archive-type-811"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/811.html target=_blank itemprop=url>试试Boost.Asio</a></h1></header><div class=article-excerpt>慢慢一点一点看看Boost，这段时间就Asio库吧。 据说这货和libevent的效率差不多，但是Boost的平台兼容性，你懂得。还有它帮忙干</div><div class=article-more><a href=//owent.net/2013/811.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-05-23T18:13:58.000+00:00 itemprop=datePublished>2013-05-23</time></div></div></article><article class="article-panel archive-article archive-type-740"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/740.html target=_blank itemprop=url>Lnmp yum 安装脚本 (for CentOS)</a></h1></header><div class=article-excerpt>心情大好，给VPS升级了一下系统，然后自己配了LNMP安装脚本，用yum源安装的话更新比较方便点哈 ​​这个过程挺麻烦啊，所以果断要记下来，以</div><div class=article-more><a href=//owent.net/2013/740.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-04-15T09:50:29.000+00:00 itemprop=datePublished>2013-04-15</time></div></div></article><article class="article-panel archive-article archive-type-738"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/738.html target=_blank itemprop=url>ARM 交叉编译环境搭建</a></h1></header><div class=article-excerpt>最近研究了一下ARM的交叉编译环境搭建，太麻烦了必须作一下记录啊。 前两个方法比较简单一点，关键是淫家Google帮你弄好了大部分功能 方案一：</div><div class=article-more><a href=//owent.net/2013/738.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-04-11T17:55:04.000+00:00 itemprop=datePublished>2013-04-11</time></div></div></article><article class="article-panel archive-article archive-type-730"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/730.html target=_blank itemprop=url>Linux 编译安装 GCC 4.8</a></h1></header><div class=article-excerpt>Linux 编译安装 GCC 4.8 详见: Linux 编译安装 GCC 4.8 GCC4.8发布啦，这个脚本在之前4.7的基础上做了点改进，移除一些过时的组件,增加了检测不到时自动下载源</div><div class=article-more><a href=//owent.net/2013/730.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-03-26T10:01:33.000+00:00 itemprop=datePublished>2013-03-26</time></div></div></article><article class="article-panel archive-article archive-type-722"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/722.html target=_blank itemprop=url>[记录]虚拟硬盘的压缩|磁盘写零</a></h1></header><div class=article-excerpt>用虚拟机软件虚拟出来的硬盘文件会随着使用而变大，因为磁盘碎片的产生，这个文件里也有很多的没用的空闲空间，为了节省空间，可以对虚拟硬盘文件进行</div><div class=article-more><a href=//owent.net/2013/722.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-02-26T15:19:20.000+00:00 itemprop=datePublished>2013-02-26</time></div></div></article><article class="article-panel archive-article archive-type-674"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/674.html target=_blank itemprop=url>Boost.Spirit 初体验</a></h1></header><div class=article-excerpt>使用代码生成代码是一件十分美妙的事情，于是有了各种代码生成器。但是生成代码，意味着要有对生成规则的分析和处理。 Boost.Spirit 就是这么一个语法分析工具，它</div><div class=article-more><a href=//owent.net/2012/674.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-11-08T18:57:34.000+00:00 itemprop=datePublished>2012-11-08</time></div></div></article><article class="article-panel archive-article archive-type-662"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/662.html target=_blank itemprop=url>“C++的90个坑”-阅读笔记</a></h1></header><div class=article-excerpt>前言 C++确实是一门复杂的语言。包括之前查看了一些C++11的文档和做了一些实践和总结，越来越觉得C++是门神奇的语言，也是个陷阱多多的语言</div><div class=article-more><a href=//owent.net/2012/662.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-10-22T23:04:53.000+00:00 itemprop=datePublished>2012-10-22</time></div></div></article><article class="article-panel archive-article archive-type-652"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/652.html target=_blank itemprop=url>AC自动机</a></h1></header><div class=article-excerpt>某个课程的作业，促使我来看看这玩意。 整个程序的算法思想是看别人的ACM的blog看懂的，感觉确实和KMP很像。但是代码呢就比较工程化一点。顺</div><div class=article-more><a href=//owent.net/2012/652.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-08-28T20:10:27.000+00:00 itemprop=datePublished>2012-08-28</time></div></div></article><article class="article-panel archive-article archive-type-643"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/643.html target=_blank itemprop=url>C++ 标准过渡期</a></h1></header><div class=article-excerpt>C++11的新标准已经出台，各个编译器已经开始陆续支持。 主流编译器支持程度见(VC++, gcc, clang, intel c++等)：http://en.cpprefe</div><div class=article-more><a href=//owent.net/2012/643.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-08-23T06:05:20.000+00:00 itemprop=datePublished>2012-08-23</time></div></div></article><article class="article-panel archive-article archive-type-635"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/635.html target=_blank itemprop=url>程序员修炼之道 -- 阅读笔记</a></h1></header><div class=article-excerpt>终于要离开学校了，终于有时间可以静下来看看之前导师推荐的书籍。之前有看到说《程序员修炼之道》是对程序员影响最为深刻的书， 就从它开始吧。用这个</div><div class=article-more><a href=//owent.net/2012/635.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-08-05T03:23:32.000+00:00 itemprop=datePublished>2012-08-05</time></div></div></article><article class="article-panel archive-article archive-type-633"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/633.html target=_blank itemprop=url>[转载]狼与哈士奇</a></h1></header><div class=article-excerpt>原文地址：http://www.cnblogs.com/MeteorSeed/archive/2012/08/04/2621993.html</div><div class=article-more><a href=//owent.net/2012/633.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-08-04T15:57:36.000+00:00 itemprop=datePublished>2012-08-04</time></div></div></article><article class="article-panel archive-article archive-type-611"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/611.html target=_blank itemprop=url>C++ 新特性学习（八） — 原子操作和多线程库[多工内存模型]</a></h1></header><div class=article-excerpt>这是我对C++新特性系统学习的最后一部分，之后就靠实践中再来看新标准的新特性啦。 在之前，我对这部分没太在意，直到看到了一篇文章 [http://blog.csdn.net/pongba/article/details/1659952](http://blog.csdn.net/pongba/article/details/1659952) 才意识到，C</div><div class=article-more><a href=//owent.net/2012/611.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-06-12T08:58:09.000+00:00 itemprop=datePublished>2012-06-12</time></div></div></article><article class="article-panel archive-article archive-type-603"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/603.html target=_blank itemprop=url>C++ 新特性学习（七） — 右值引用</a></h1></header><div class=article-excerpt>C++在效率上有个硬伤。我们知道C#和Java对于类传递都是以引用的方式，而C++默认都是传值。在传值过程中就经常会进行复制构造，这完全没必</div><div class=article-more><a href=//owent.net/2012/603.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-05-31T04:50:21.000+00:00 itemprop=datePublished>2012-05-31</time></div></div></article><article class="article-panel archive-article archive-type-595"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/595.html target=_blank itemprop=url>理解Protobuf的数据编码规则</a></h1></header><div class=article-excerpt>之前用Google的Protobuf感觉真是个很好用的东西，于是抽时间研究了下他的数据的存储方式，以后可以扩展其他语言的解析器。其实与其说是</div><div class=article-more><a href=//owent.net/2012/595.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-05-31T02:18:17.000+00:00 itemprop=datePublished>2012-05-31</time></div></div></article><article class="article-panel archive-article archive-type-587"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/587.html target=_blank itemprop=url>忆往昔ECUST的ACM时代</a></h1></header><div class=article-excerpt>最初是接受了lpld的邀请来写这篇大总结。我没有LHH华丽的文笔，就只能随便写写了。回想起来，ACM应该是我在大学期间参加的最有意义并且收获</div><div class=article-more><a href=//owent.net/2012/587.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-04-07T10:37:44.000+00:00 itemprop=datePublished>2012-04-07</time></div></div></article></div><hr><nav id=page-nav><ul class=pagination><li class=page-item><a class=page-link href=../page/7.html>&#171;上一页</a></li><li class=page-item><a class=page-link href=../>1</a></li><li class=page-item><a class=page-link href=../page/2.html>2</a></li><li class=page-item><a class=page-link href=../page/3.html>3</a></li><li class=page-item><a class=page-link href=../page/4.html>4</a></li><li class=page-item><a class=page-link href=../page/5.html>5</a></li><li class=page-item><a class=page-link href=../page/6.html>6</a></li><li class=page-item><a class=page-link href=../page/7.html>7</a></li><li class='page-item disabled'><a class=page-link href=../page/8.html>8</a><span class=sr-only>(current)</span></li><li class=page-item><a class=page-link href=../page/9.html>9</a></li><li class=page-item><a class=page-link href=../page/10.html>10</a></li><li class=page-item><a class=page-link href=../page/11.html>11</a></li><li class=page-item><a class=page-link href=../page/12.html>12</a></li><li class=page-item><a class=page-link href=../page/13.html>13</a></li><li class=page-item><a class=page-link href=../page/9.html>下一页&#187;</a></li></ul></nav></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=index-content><article class="article-panel archive-article archive-type-879"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/879.html target=_blank itemprop=url>一个C++关于成员变量偏移地址的小Trick</a></h1></header><div class=article-excerpt><p>今天看到一个小例子，发现了一个小trick。见代码：</p><pre><code class=language-cpp>#include &lt;cstdio&gt;
+#include &lt;cstdlib&gt;
+
+class base_1
+{
+public:
+    int a;
+};
+
+class base_2
+{
+public:
+    int b;
+};
+
+class base_3: public base_1, public base_2
+{
+public:
+    int c;
+};
+
+int main(int argc, char* argv[]) {
+
+    printf(&quot;&amp;base_1::a = %p\n&quot;, &amp;base_1::a);
+    printf(&quot;&amp;base_2::b = %p\n&quot;, &amp;base_2::b);
+    printf(&quot;&amp;base_3::a = %p\n&quot;, &amp;base_3::a);
+    printf(&quot;&amp;base_3::b = %p\n&quot;, &amp;base_3::b);
+    printf(&quot;&amp;base_3::c = %p\n&quot;, &amp;base_3::c);
+
+
+    base_3 t;
+    t.a = 1;
+    t.b = 2;
+    t.c = 3;
+
+    typedef int (base_3::*tip);
+    tip pm = NULL;
+
+    printf(&quot;base_3::a = %d\n&quot;, t.base_3::a);
+    printf(&quot;base_3::b = %d\n&quot;, t.base_3::b);
+    printf(&quot;base_3::c = %d\n&quot;, t.base_3::c);
+
+    pm = &amp;base_3::a;
+    printf(&quot;base_3::a(%p) = %d(ptr)\n&quot;, pm, t.*pm);
+    pm = &amp;base_3::b;
+    printf(&quot;base_3::b(%p) = %d(ptr)\n&quot;, pm, t.*pm);
+    pm = &amp;base_3::c;
+    printf(&quot;base_3::c(%p) = %d(ptr)\n&quot;, pm, t.*pm);
+
+    return 0;
+}
+</code></pre><p>猜猜看这个代码输出什么？
+答案是：</p></div><div class=article-more><a href=//owent.net/2013/879.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-08-26T14:16:37.000+00:00 itemprop=datePublished>2013-08-26</time></div></div></article><article class="article-panel archive-article archive-type-867"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/867.html target=_blank itemprop=url>ptmalloc,tcmalloc和jemalloc内存分配策略研究</a></h1></header><div class=article-excerpt><p>最近看了glibc的ptmaoolc，Goolge的tcmalloc和jemalloc，顺便做了一点记录。可能有些地方理解地不太对，如有发现还请大神指出。</p></div><div class=article-more><a href=//owent.net/2013/867.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-07-31T13:02:53.000+00:00 itemprop=datePublished>2013-07-31</time></div></div></article><article class="article-panel archive-article archive-type-861"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/861.html target=_blank itemprop=url>POJ 2192 Zipper HDU 2059 龟兔赛跑</a></h1></header><div class=article-excerpt><p>今天心情好，刷了两到ACM水题，思路很简单都在注释里，所以直接贴代码:</p><pre><code class=language-cpp>/**
+ * @file 龟兔赛跑.cpp
+ * @brief 龟兔赛跑 AC代码 (DP)
+ * DP方程式: [到第i的充电站的最短时间] = [到最后一个冲了电的充电站的最短时间] + [那个充电站到第i个充电站的时间]
+ *
+ * @link http://acm.hdu.edu.cn/showproblem.php?pid=2059
+ * @version 1.0
+ * @author OWenT
+ * @date 2013.07.15
+ *
+ * @history
+ *
+ *
+ */
+
+#include &lt;cstdio&gt;
+#include &lt;iostream&gt;
+#include &lt;cstring&gt;
+#include &lt;algorithm&gt;
+#include &lt;set&gt;
+#include &lt;numeric&gt;
+
+int pn[128];
+double dp[128]; /** dp[i] 表示 到第i个充电站的最小时间(0为开始位置，n+1为终点) **/
+
+double calc_charge_time(int dis, int v1, int v2, int c) {
+    if (dis &lt;= c)
+        return 1.0 * dis / v1;
+
+    return 1.0 * c / v1 + 1.0 * (dis - c) / v2;
+}
+
+int main(int argc, char* argv[]) {
+    using namespace std;
+
+    double eps = std::numeric_limits&lt;double&gt;::epsilon();
+    int l, n, c, t, vr, v1, v2;
+
+    while(cin&gt;&gt; l) {
+        cin &gt;&gt; n&gt;&gt; c&gt;&gt; t&gt;&gt; vr&gt;&gt; v1&gt;&gt; v2;
+
+        pn[0] = 0; /** 0为起点 **/
+        for (int i = 1; i &lt;= n; ++ i) {
+            cin&gt;&gt; pn[i];
+        }
+        pn[n + 1] = l; /** n+1为终点 **/
+
+        memset(dp, 0, sizeof(dp));
+        for(int i = 0; i &lt;= n + 1; ++ i) {
+            dp[i] = calc_charge_time(pn[i] - pn[0], v1, v2, c);
+        }
+
+        for(int i = 1; i &lt;= n + 1; ++ i) {
+            for(int j = 0; j &lt; i; ++ j) {
+                double tc = calc_charge_time(pn[i] - pn[j], v1, v2, c) + t + dp[j];
+                dp[i] = std::min(tc, dp[i]);
+            }
+            
+        }
+
+        double rt = 1.0 * l / vr, tt = dp[n + 1];
+
+        if (tt &lt; rt)
+            puts(&quot;What a pity rabbit!&quot;);
+        else
+            puts(&quot;Good job,rabbit!&quot;);
+    }
+
+    return 0;
+}
+
+/**
+ * @file Zipper.cpp
+ * @brief Zipper AC代码 (DP)
+ * @link http://poj.org/problem?id=2192
+ * DP方程式: [A串消耗个数i][B串消耗个数j] = min{[A串消耗个数i - 1][B串消耗个数j]|[A串消耗个数i][B串消耗个数j + 1]}
+ * 以上分支选取条件是 A或B的新选用字符和C串新字符匹配
+ *
+ * @version 1.0
+ * @author OWenT
+ * @date 2013.07.15
+ *
+ * @history
+ *
+ *
+ */
+
+#include &lt;cstdio&gt;
+#include &lt;cstring&gt;
+#include &lt;algorithm&gt;
+#include &lt;set&gt;
+#include &lt;numeric&gt;
+
+
+char strA[256], strB[256], strC[512];
+int dp[256][256]; /** dp[i][j] = k 表示A消耗了i个字符，B消耗了j个字符，拼成的C串消耗了k个字符（其实就是i+j） **/
+
+int main(int argc, char* argv[]) {
+    using namespace std;
+    int s, n;
+
+    scanf(&quot;%d&quot;, &amp;n);
+    for( s = 0; s &lt; n; ++ s) {
+        scanf(&quot;%s %s %s&quot;, strA, strB, strC);
+        int lenA = strlen(strA);
+        int lenB = strlen(strB);
+        int lenC = strlen(strC);
+        bool bFlag = false;
+
+        if ( lenC != lenA + lenB ) {
+            printf(&quot;Data set %d: no\n&quot;, s + 1);
+            continue;
+        }
+
+        memset(dp, 0, sizeof(dp));
+
+        if (strA[0] == strC[0])
+            dp[1][0] = 1;
+        if (strB[0] == strC[0])
+            dp[0][1] = 1;
+
+        for (int i = 0; i &lt;= lenA; ++ i) {
+            for (int j = 0; j &lt;= lenB; ++ j) {
+                if (0 == dp[i][j])
+                    continue;
+
+                int ri = i + 1, rj = j + 1;
+
+                if (strA[i] == strC[dp[i][j]]) {
+                    dp[ri][j] = dp[i][j] + 1;
+                    if (ri + j == lenC)
+                        bFlag = true;
+                }
+
+                if (strB[j] == strC[dp[i][j]]) {
+                    dp[i][rj] = dp[i][j] + 1;
+                    if (i + rj == lenC)
+                        bFlag = true;
+                }
+            }
+        }
+
+        printf(&quot;Data set %d: %s\n&quot;, s + 1, bFlag? &quot;yes&quot;: &quot;no&quot;);
+    }
+
+    return 0;
+}
+
+</code></pre></div><div class=article-more><a href=//owent.net/2013/861.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-07-15T18:39:41.000+00:00 itemprop=datePublished>2013-07-15</time></div></div></article><article class="article-panel archive-article archive-type-851"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/851.html target=_blank itemprop=url>从Javascript到Typescript到Node.js</a></h1></header><div class=article-excerpt><p>最近看了点typescript的东西，加上以前看过的一点点Node.js，所以就想把他们系统地整理一下。</p><h2 id=javascript>Javascript</h2><p>这玩意搞过Web开发的应该都知道吧，Javascript的语法我就不废话了，挺简单的。这里总结几个Javascript的核心机制部分吧。</p></div><div class=article-more><a href=//owent.net/2013/851.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-07-10T20:19:39.000+00:00 itemprop=datePublished>2013-07-10</time></div></div></article><article class="article-panel archive-article archive-type-818"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/818.html target=_blank itemprop=url>网络编程小结</a></h1></header><div class=article-excerpt><p>写这个小结主要是因为之前研究Boost.Asio的时候，其内部使用了很多不同的方法来实现异步网络编程
+然后就顺便把一些高级的玩意看了一下，也顺便把以前低级的玩意放到一起，哇哈哈。很多东西只是个人的理解，不一定正确</p></div><div class=article-more><a href=//owent.net/2013/818.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-05-30T14:31:09.000+00:00 itemprop=datePublished>2013-05-30</time></div></div></article><article class="article-panel archive-article archive-type-811"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/811.html target=_blank itemprop=url>试试Boost.Asio</a></h1></header><div class=article-excerpt><p>慢慢一点一点看看Boost，这段时间就Asio库吧。
+据说这货和libevent的效率差不多，但是Boost的平台兼容性，你懂得。还有它帮忙干掉了很多线程安全和线程分发的事情。</p></div><div class=article-more><a href=//owent.net/2013/811.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-05-23T18:13:58.000+00:00 itemprop=datePublished>2013-05-23</time></div></div></article><article class="article-panel archive-article archive-type-740"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/740.html target=_blank itemprop=url>Lnmp yum 安装脚本 (for CentOS)</a></h1></header><div class=article-excerpt><p>心情大好，给VPS升级了一下系统，然后自己配了LNMP安装脚本，用yum源安装的话更新比较方便点哈
+​​这个过程挺麻烦啊，所以果断要记下来，以防以后要用到
+如果是其他系统的话，几个配置路径和软件源地址还有yum指令替换掉，应该就可以了</p></div><div class=article-more><a href=//owent.net/2013/740.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-04-15T09:50:29.000+00:00 itemprop=datePublished>2013-04-15</time></div></div></article><article class="article-panel archive-article archive-type-738"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/738.html target=_blank itemprop=url>ARM 交叉编译环境搭建</a></h1></header><div class=article-excerpt><p>最近研究了一下ARM的交叉编译环境搭建，太麻烦了必须作一下记录啊。
+前两个方法比较简单一点，关键是淫家Google帮你弄好了大部分功能</p><h2 id=方案一利用android-ndk--jni>方案一：（利用Android ndk + jni）</h2><p>使用Android NDK的第一步当然是下载Android NDK啦。
+<a href=http://developer.android.com/tools/sdk/ndk/index.html>http://developer.android.com/tools/sdk/ndk/index.html</a>
+使用jni的话，还必须下载相应的Android SDK
+<a href=http://developer.android.com/sdk/index.html>http://developer.android.com/sdk/index.html</a>
+下载完后可以使用 $ANDROID_SDK_ROOT/sdk/tools/android update sdk –no-ui 来更新SDK包
+附注：ANDROID_SDK_ROOT指代Android SDK根目录，NDK_ROOT指代Android NDK根目录。下同。
+为了方便可以把$ANDROID_SDK_ROOT/sdk/tools:$ANDROID_SDK_ROOT/sdk/platform-tools:$NDK_ROOT 加到环境变量PATH里去
+另外,Android 如果要命令行编译，需要ant和ant扩展，需要安装 Android 依赖的32位库
+大致上是 glibc.i686 libzip.i686 libzip-devel.i686 libstdc++.i686 ant ant-* jdk
+其中 libc.i686 libzip.i686 libzip-devel.i686 libstdc++.i686 ant ant-* 可以用 yum install或apt-get install 安装
+jdk最好是官网下一个rpm包安装 rpm -ivh *.rpm</p></div><div class=article-more><a href=//owent.net/2013/738.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-04-11T17:55:04.000+00:00 itemprop=datePublished>2013-04-11</time></div></div></article><article class="article-panel archive-article archive-type-730"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/730.html target=_blank itemprop=url>Linux 编译安装 GCC 4.8</a></h1></header><div class=article-excerpt><h1 id=linux-编译安装-gcc-48>Linux 编译安装 GCC 4.8</h1><p>详见: <a href=https://www.owent.net/2013/730.html>Linux 编译安装 GCC 4.8</a></p><p>GCC4.8发布啦，这个脚本在之前4.7的基础上做了点改进，移除一些过时的组件,增加了检测不到时自动下载源码包</p></div><div class=article-more><a href=//owent.net/2013/730.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-03-26T10:01:33.000+00:00 itemprop=datePublished>2013-03-26</time></div></div></article><article class="article-panel archive-article archive-type-722"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/722.html target=_blank itemprop=url>[记录]虚拟硬盘的压缩|磁盘写零</a></h1></header><div class=article-excerpt><p>用虚拟机软件虚拟出来的硬盘文件会随着使用而变大，因为磁盘碎片的产生，这个文件里也有很多的没用的空闲空间，为了节省空间，可以对虚拟硬盘文件进行压缩。</p></div><div class=article-more><a href=//owent.net/2013/722.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-02-26T15:19:20.000+00:00 itemprop=datePublished>2013-02-26</time></div></div></article><article class="article-panel archive-article archive-type-674"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/674.html target=_blank itemprop=url>Boost.Spirit 初体验</a></h1></header><div class=article-excerpt><p>使用代码生成代码是一件十分美妙的事情，于是有了各种代码生成器。但是生成代码，意味着要有对生成规则的分析和处理。
+Boost.Spirit 就是这么一个语法分析工具，它实现了对<strong>上下文无关文法的LL分析</strong>。支持<strong>EBNF(扩展巴科斯范式)</strong>。
+Boost.Spirit 的使用真的是把模板嵌套用到了极致。确实这么做造成了非常强的扩展性，生成的代码也非常高效，但是嵌套的太复杂了，对于初学者而言真心难看懂。
+你能想象在学习阶段一个不是太明白的错误导致编译器报出的几十层模板嵌套错误信息的感受吗？而且，这么复杂的模板嵌套还直接导致了编译速度的巨慢无比。
+其实在之前，我已经使用过Spirit的Classic版本，即1.X版本，但是过多的复制操作让我觉得当时用得很低效，还好分析的内容并不复杂所以没。体现出来
+这回就来研究下功能更强劲的2.X 版本。</p></div><div class=article-more><a href=//owent.net/2012/674.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-11-08T18:57:34.000+00:00 itemprop=datePublished>2012-11-08</time></div></div></article><article class="article-panel archive-article archive-type-662"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/662.html target=_blank itemprop=url>“C++的90个坑”-阅读笔记</a></h1></header><div class=article-excerpt><h2 id=前言>前言</h2><p>C++确实是一门复杂的语言。包括之前查看了一些C++11的文档和做了一些实践和总结，越来越觉得C++是门神奇的语言，也是个陷阱多多的语言。
+我现在开发过程中最主要使用的语言就是C++，所以了解C++的一些细节和问题非常重要，后来看到某大神的一篇文章<a href=http://coolshell.cn/articles/7992.html>《C++的坑多吗？》</a>，激起了我专门去看一看关于C++的一些常见的设计方法和问题的书。就是刚才提到的文章里有说的《Effecitve C++》和《More Effecitve C++》
+共90个条款，所以说是90个坑。</p></div><div class=article-more><a href=//owent.net/2012/662.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-10-22T23:04:53.000+00:00 itemprop=datePublished>2012-10-22</time></div></div></article><article class="article-panel archive-article archive-type-652"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/652.html target=_blank itemprop=url>AC自动机</a></h1></header><div class=article-excerpt><p>某个课程的作业，促使我来看看这玩意。</p><p>整个程序的算法思想是看别人的ACM的blog看懂的，感觉确实和KMP很像。但是代码呢就比较工程化一点。顺便回忆了一把ACM的感觉。</p></div><div class=article-more><a href=//owent.net/2012/652.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-08-28T20:10:27.000+00:00 itemprop=datePublished>2012-08-28</time></div></div></article><article class="article-panel archive-article archive-type-643"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/643.html target=_blank itemprop=url>C++ 标准过渡期</a></h1></header><div class=article-excerpt><p>C++11的新标准已经出台，各个编译器已经开始陆续支持。
+主流编译器支持程度见(VC++, gcc, clang, intel c++等)：<a href=http://en.cppreference.com/w/cpp/compiler_support>http://en.cppreference.com/w/cpp/compiler_support</a></p><p>但是要让C++11应用与生产环境还需时日，所以就在这里记录一下在过渡时期可能用到的一些重要功能</p></div><div class=article-more><a href=//owent.net/2012/643.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-08-23T06:05:20.000+00:00 itemprop=datePublished>2012-08-23</time></div></div></article><article class="article-panel archive-article archive-type-635"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/635.html target=_blank itemprop=url>程序员修炼之道 -- 阅读笔记</a></h1></header><div class=article-excerpt><p>终于要离开学校了，终于有时间可以静下来看看之前导师推荐的书籍。之前有看到说《程序员修炼之道》是对程序员影响最为深刻的书，
+就从它开始吧。用这个还算可以的音响听着音乐，看书很惬意啊。
+顺便吐槽下京东，我买了本地有货的三本书，三天了我还没见到。这效率实在是fuck。
+第一本书的第一章是电子版上看的，还好我有kindle。这里基本上说的是沟通方面的。我发现我的沟通确实有点问题，不太主动，表达含糊。之前只和ultramanhu交流比较多，可能是多年的默契吧，表达清楚意思不怎么费劲。现在的一起合租的xboy（和qboy很像啊），和他交流经常文不对题，开始我总以为他习惯岔开话题，但是后来发现在其他有些人身上也出现过这种问题。看来我的表达力确实有问题，一直说ben大神的表达力低下，其实他只是我这种更恶化一些罢了。不管怎么说，之前看到过个视频，我觉得很有道理，对世界的理解应该是 “知其然 — 知其所以然 – 知其知其所以然 – 知其知其所以然所以然”。别人也是属于世界的一部分，了解别人看待事物和自己不一样、了解别人看待事物的角度、了解别人为什么和自己看待事物的和自己不一样，都是自身对这个世界的理解。同样，自己要表述的意思让各种各种各样的人有理解并且有兴趣听也是自身表达能力的一种体现。Maybe，这就是我大学生活孑然一身（不完整啊）的原因吧。T_T
+<strong>“注重实效的哲学”</strong>，其中最重要的部分当属那个WISDOM离合诗了吧。</p></div><div class=article-more><a href=//owent.net/2012/635.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-08-05T03:23:32.000+00:00 itemprop=datePublished>2012-08-05</time></div></div></article><article class="article-panel archive-article archive-type-633"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/633.html target=_blank itemprop=url>[转载]狼与哈士奇</a></h1></header><div class=article-excerpt><p>原文地址：<a href=http://www.cnblogs.com/MeteorSeed/archive/2012/08/04/2621993.html>http://www.cnblogs.com/MeteorSeed/archive/2012/08/04/2621993.html</a></p><p>　　狼是自然界中真正的掠食者，而哈士奇不过是人类的玩物。两者长得确实很像，就如同IT界的Programer和Coder。如果用狼和哈士奇来隐喻这两种职业，Programer无疑是软件业真正的狼。</p></div><div class=article-more><a href=//owent.net/2012/633.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-08-04T15:57:36.000+00:00 itemprop=datePublished>2012-08-04</time></div></div></article><article class="article-panel archive-article archive-type-611"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/611.html target=_blank itemprop=url>C++ 新特性学习（八） — 原子操作和多线程库[多工内存模型]</a></h1></header><div class=article-excerpt><p>这是我对C++新特性系统学习的最后一部分，之后就靠实践中再来看新标准的新特性啦。</p><pre><code>在之前，我对这部分没太在意，直到看到了一篇文章 [http://blog.csdn.net/pongba/article/details/1659952](http://blog.csdn.net/pongba/article/details/1659952) 才意识到，C++的多线程操作也是个麻烦的问题。
+
+简而言之，C++编译器在进行编译优化的时候，认为当前是单进程的，并且遵循**可观察行为**（Observable Behavior）不变的原则。就是说在可观察行为不变的情况下，操作是可以被改变顺序的，而单进程可观察行为不变，不代表在多进程的情况下仍然不变。还是上大牛的例子：
+
+_**例子一：**_
+</code></pre><p>完全可以优化成</p></div><div class=article-more><a href=//owent.net/2012/611.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-06-12T08:58:09.000+00:00 itemprop=datePublished>2012-06-12</time></div></div></article><article class="article-panel archive-article archive-type-603"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/603.html target=_blank itemprop=url>C++ 新特性学习（七） — 右值引用</a></h1></header><div class=article-excerpt><p>C++在效率上有个硬伤。我们知道C#和Java对于类传递都是以引用的方式，而C++默认都是传值。在传值过程中就经常会进行复制构造，这完全没必要而且浪费CPU，为了解决这种问题，于是乎C++11 增加了一个新的非常数引用（reference）类型，称为右值引用（R-value reference）。我就专门看了一下关于右值引用的东西。
+右值引用在GCC 4.3之后开始支持，VS 2010（VC 10.0）已经支持，再前一点的VC版本没试过所以不知道。
+右值引用的申明标记为T &&，主要用于处理临时变量，比如函数返回的变量（暂时想不出其他例子，忽略返回值优化吧，(命名)返回值优化参见http://efnetcpp.org/wiki/Return_value_optimization，再说返回值优化能力有限是吧，比要求如单返回语句、不能使用异常等等），避免复制构造。同时在析构的时候就不会析构这个临时变量，从而提升效率。
+上代码：</p></div><div class=article-more><a href=//owent.net/2012/603.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-05-31T04:50:21.000+00:00 itemprop=datePublished>2012-05-31</time></div></div></article><article class="article-panel archive-article archive-type-595"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/595.html target=_blank itemprop=url>理解Protobuf的数据编码规则</a></h1></header><div class=article-excerpt><p>之前用Google的Protobuf感觉真是个很好用的东西，于是抽时间研究了下他的数据的存储方式，以后可以扩展其他语言的解析器。其实与其说是研究，不如说是翻译。这些文档里都有，可能有些地方理解的不太对，还请见谅。</p></div><div class=article-more><a href=//owent.net/2012/595.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-05-31T02:18:17.000+00:00 itemprop=datePublished>2012-05-31</time></div></div></article><article class="article-panel archive-article archive-type-587"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/587.html target=_blank itemprop=url>忆往昔ECUST的ACM时代</a></h1></header><div class=article-excerpt><p><strong>最初是接受了lpld的邀请来写这篇大总结。我没有LHH华丽的文笔，就只能随便写写了。回想起来，ACM应该是我在大学期间参加的最有意义并且收获最大的活动了。</strong></p></div><div class=article-more><a href=//owent.net/2012/587.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-04-07T10:37:44.000+00:00 itemprop=datePublished>2012-04-07</time></div></div></article></div><hr><nav id=page-nav><ul class=pagination><li class=page-item><a class=page-link href=../page/7.html>&#171;上一页</a></li><li class=page-item><a class=page-link href=../>1</a></li><li class=page-item><a class=page-link href=../page/2.html>2</a></li><li class=page-item><a class=page-link href=../page/3.html>3</a></li><li class=page-item><a class=page-link href=../page/4.html>4</a></li><li class=page-item><a class=page-link href=../page/5.html>5</a></li><li class=page-item><a class=page-link href=../page/6.html>6</a></li><li class=page-item><a class=page-link href=../page/7.html>7</a></li><li class='page-item disabled'><a class=page-link href=../page/8.html>8</a><span class=sr-only>(current)</span></li><li class=page-item><a class=page-link href=../page/9.html>9</a></li><li class=page-item><a class=page-link href=../page/10.html>10</a></li><li class=page-item><a class=page-link href=../page/11.html>11</a></li><li class=page-item><a class=page-link href=../page/12.html>12</a></li><li class=page-item><a class=page-link href=../page/13.html>13</a></li><li class=page-item><a class=page-link href=../page/9.html>下一页&#187;</a></li></ul></nav></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
 2024
 OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,

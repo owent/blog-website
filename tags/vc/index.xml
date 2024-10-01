@@ -1,1 +1,174 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Vc on I'm OWenT</title><link>//owent.net/tags/vc.html</link><description>Recent content in Vc on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md">&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" />&lt;/a></copyright><lastBuildDate>Mon, 08 Jan 2018 17:55:00 +0000</lastBuildDate><atom:link href="//owent.net/tags/vc/index.xml" rel="self" type="application/rss+xml"/><item><title>C++的backtrace</title><link>//owent.net/2018/1801.html</link><pubDate>Mon, 08 Jan 2018 17:55:00 +0000</pubDate><guid>//owent.net/2018/1801.html</guid><description>开始之前 很多语言的log模块都有一个功能，就是在打log的时候能够追溯调用栈，有的时候对查bug能有点帮助。之前我也想过给我们的log模块加</description></item><item><title>libatbus基本功能及单元测试终于写完啦</title><link>//owent.net/2016/1214.html</link><pubDate>Fri, 19 Feb 2016 12:44:53 +0000</pubDate><guid>//owent.net/2016/1214.html</guid><description>libatbus 经过茫茫长时间的编写+过年在家无聊补充和修正单元测试，再加上这两天的整理，终于把以前的这个关于服务器通信中间件的基本功能和相应的单元测试完</description></item><item><title>[libiniloader] Project</title><link>//owent.net/2014/1081.html</link><pubDate>Mon, 14 Jul 2014 19:28:49 +0000</pubDate><guid>//owent.net/2014/1081.html</guid><description>INI 配置读取库发布 Github地址: https://github.com/owent/libiniloader OSChina镜像: http://git.oschina.net/owent/libiniloader 项目中经常会碰到需要读取配置的情况，而用ini配置最大的优势就是简单易懂。 但是现在</description></item><item><title>捣鼓一个协程库</title><link>//owent.net/2014/1000.html</link><pubDate>Wed, 05 Mar 2014 21:52:49 +0000</pubDate><guid>//owent.net/2014/1000.html</guid><description>今年准备安安心心写一个协程库。一方面是觉得协程挺有意思，另一方面也是因为C/C++在这方面没有一个非常权威的解决方案。 按照我自己风格还是喜欢</description></item><item><title>C++11动态模板参数和type_traits</title><link>//owent.net/2014/971.html</link><pubDate>Mon, 27 Jan 2014 16:27:46 +0000</pubDate><guid>//owent.net/2014/971.html</guid><description>C++11标准里有动态模板参数已经是众所周知的事儿了。但是当时还有个主流编译器还不支持。 但是现在，主要的编译器。VC(Windows),GC</description></item><item><title>VC和GCC成员函数指针实现的研究(三)</title><link>//owent.net/2013/902.html</link><pubDate>Wed, 11 Sep 2013 14:57:15 +0000</pubDate><guid>//owent.net/2013/902.html</guid><description>接上一篇 VC和GCC内成员函数指针实现的研究(二) 虚继承 终于到最后的虚继承了。 测试代码如下: #include &amp;lt;ctime&amp;gt; #include &amp;lt;vector&amp;gt; #include &amp;lt;algorithm&amp;gt; #include &amp;lt;cstdio&amp;gt; #include &amp;lt;stdint.h&amp;gt; #include &amp;lt;cstddef&amp;gt; #include &amp;lt;string&amp;gt; class foo_a { public: virtual ~foo_a(){} virtual void info() {</description></item><item><title>VC和GCC成员函数指针实现的研究(二)</title><link>//owent.net/2013/896.html</link><pubDate>Wed, 11 Sep 2013 14:44:06 +0000</pubDate><guid>//owent.net/2013/896.html</guid><description>接上一篇 VC和GCC内成员函数指针实现的研究(一) 接下来是多重继承，用到的测试代码如下所示: #include &amp;lt;ctime&amp;gt; #include &amp;lt;vector&amp;gt; #include &amp;lt;algorithm&amp;gt; #include &amp;lt;cstdio&amp;gt; #include &amp;lt;stdint.h&amp;gt; #include &amp;lt;cstddef&amp;gt; #include &amp;lt;string&amp;gt; class foo_a { public: virtual ~foo_a(){} virtual void info() {</description></item><item><title>VC和GCC内成员函数指针实现的研究(一)</title><link>//owent.net/2013/890.html</link><pubDate>Fri, 06 Sep 2013 12:55:58 +0000</pubDate><guid>//owent.net/2013/890.html</guid><description>最近在《C++对象模型》一书里说到的virtual的成员函数指针，低于128的被cfront编译器认为是虚表偏移量（支持子类对父类函数的覆盖</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Vc on I'm OWenT</title><link>//owent.net/tags/vc.html</link><description>Recent content in Vc on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md">&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" />&lt;/a></copyright><lastBuildDate>Mon, 08 Jan 2018 17:55:00 +0000</lastBuildDate><atom:link href="//owent.net/tags/vc/index.xml" rel="self" type="application/rss+xml"/><item><title>C++的backtrace</title><link>//owent.net/2018/1801.html</link><pubDate>Mon, 08 Jan 2018 17:55:00 +0000</pubDate><guid>//owent.net/2018/1801.html</guid><description>&lt;h1 id="开始之前">开始之前&lt;/h1>
+&lt;p>很多语言的log模块都有一个功能，就是在打log的时候能够追溯调用栈，有的时候对查bug能有点帮助。之前我也想过给我们的log模块加上C++的backtrace的功能，迟迟一直没有做主要是两个原因：一是C++的backtrace在各个平台和编译器上都不太一样，比较冗杂；二是C/C++在编译优化之后，调用行之类的信息和甚至一些函数可能就被优化没了。所以能提供的信息就相当有限。前两天刚好有朋友问有没有提供这个，所以就花了点时间整理了下适配方案。&lt;/p></description></item><item><title>libatbus基本功能及单元测试终于写完啦</title><link>//owent.net/2016/1214.html</link><pubDate>Fri, 19 Feb 2016 12:44:53 +0000</pubDate><guid>//owent.net/2016/1214.html</guid><description>&lt;h2 id="libatbushttpsgithubcomatframeworklibatbus">&lt;a href="https://github.com/atframework/libatbus">libatbus&lt;/a>&lt;/h2>
+&lt;p>经过茫茫长时间的编写+过年在家无聊补充和修正单元测试，再加上这两天的整理，终于把以前的这个关于服务器通信中间件的基本功能和相应的单元测试完成啦。还是可以热烈庆祝一下的。&lt;/p></description></item><item><title>[libiniloader] Project</title><link>//owent.net/2014/1081.html</link><pubDate>Mon, 14 Jul 2014 19:28:49 +0000</pubDate><guid>//owent.net/2014/1081.html</guid><description>&lt;h2 id="ini-配置读取库发布">INI 配置读取库发布&lt;/h2>
+&lt;p>Github地址: &lt;a href="https://github.com/owent/libiniloader">https://github.com/owent/libiniloader&lt;/a>&lt;/p>
+&lt;p>OSChina镜像: &lt;a href="http://git.oschina.net/owent/libiniloader">http://git.oschina.net/owent/libiniloader&lt;/a>&lt;/p>
+&lt;p>项目中经常会碰到需要读取配置的情况，而用ini配置最大的优势就是简单易懂。
+但是现在很多的配置读取库都过于庞大了，比如Boost.PropertyTree，功能很强大，但是基本不会用到里面所有的东西。
+另外微软的INI读取，功能不是很强不说，还限制在Windows上，更重要的是API设计得实在不优雅。
+于是libiniloader就诞生啦。&lt;/p></description></item><item><title>捣鼓一个协程库</title><link>//owent.net/2014/1000.html</link><pubDate>Wed, 05 Mar 2014 21:52:49 +0000</pubDate><guid>//owent.net/2014/1000.html</guid><description>&lt;p>今年准备安安心心写一个协程库。一方面是觉得协程挺有意思，另一方面也是因为C/C++在这方面没有一个非常权威的解决方案。
+按照我自己风格还是喜欢C++，所以协程库定名为 libcopp 。
+源码托管在 github: &lt;a href="https://github.com/owent/libcopp">https://github.com/owent/libcopp&lt;/a>
+镜像托管 &lt;a href="http://git.oschina.net/owent/distinctionpp">http://git.oschina.net/owent/distinctionpp&lt;/a>&lt;/p></description></item><item><title>C++11动态模板参数和type_traits</title><link>//owent.net/2014/971.html</link><pubDate>Mon, 27 Jan 2014 16:27:46 +0000</pubDate><guid>//owent.net/2014/971.html</guid><description>&lt;p>C++11标准里有动态模板参数已经是众所周知的事儿了。但是当时还有个主流编译器还不支持。
+但是现在，主要的编译器。VC(Windows),GCC(Windows,Linux),Clang(Mac,IOS)都已经支持了。所以就可以准备用于生产环境了。
+type_traits没啥好说的。主要是一些静态检测。主要还是要看动态模板参数和他们两的结合使用上。
+动态模版参数标准文档见:
+&lt;a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2242.pdf">http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2242.pdf&lt;/a>
+和
+&lt;a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf">http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf&lt;/a>
+虽然贴出来了。估计是没人看得。所以就直接说重点。&lt;/p></description></item><item><title>VC和GCC成员函数指针实现的研究(三)</title><link>//owent.net/2013/902.html</link><pubDate>Wed, 11 Sep 2013 14:57:15 +0000</pubDate><guid>//owent.net/2013/902.html</guid><description>&lt;p>接上一篇 &lt;a href="https://www.owent.net/2013/896.html">VC和GCC内成员函数指针实现的研究(二)&lt;/a>&lt;/p>
+&lt;h2 id="虚继承">虚继承&lt;/h2>
+&lt;p>终于到最后的虚继承了。&lt;/p>
+&lt;p>测试代码如下:&lt;/p>
+&lt;pre>&lt;code class="language-cpp">#include &amp;lt;ctime&amp;gt;
+#include &amp;lt;vector&amp;gt;
+#include &amp;lt;algorithm&amp;gt;
+#include &amp;lt;cstdio&amp;gt;
+#include &amp;lt;stdint.h&amp;gt;
+#include &amp;lt;cstddef&amp;gt;
+#include &amp;lt;string&amp;gt;
+
+class foo_a
+{
+public:
+ virtual ~foo_a(){}
+ virtual void info() {
+ printf(&amp;quot;%s:%d\n&amp;quot;, __FUNCTION__, __LINE__);
+ }
+
+ void print(){
+ printf(&amp;quot;%s:%d\n&amp;quot;, __FUNCTION__, __LINE__);
+ }
+};
+
+class foo_l
+{
+public:
+ int l;
+ foo_l(): l(1){}
+
+ virtual void info() {
+ printf(&amp;quot;%s:%d\n&amp;quot;, __FUNCTION__, __LINE__);
+ }
+};
+
+class foo_r: virtual public foo_a
+{
+public:
+ int r;
+ foo_r(): r(2){}
+};
+
+class foo_c: virtual public foo_l, public foo_r
+{
+public:
+ virtual void info() {
+ printf(&amp;quot;%d,%d. %s:%d\n&amp;quot;, l, r, __FUNCTION__, __LINE__);
+ }
+};
+
+
+int main(int argc, char* argv[]) {
+ void (foo_a::*vptr1)() = &amp;amp;foo_a::info;
+ void (foo_l::*vptr2)() = &amp;amp;foo_l::info;
+ void (foo_a::*ptr)() = &amp;amp;foo_a::print;
+
+ foo_c c;
+ foo_r r;
+ foo_a a;
+
+ printf(&amp;quot;pword size = %d\n&amp;quot;, (int)(sizeof(size_t)));
+ printf(&amp;quot;address of &amp;amp;foo_a::info = 0x%llxH\n&amp;quot;, &amp;amp;foo_a::info);
+ printf(&amp;quot;pointer to &amp;amp;foo_a::info = 0x%llxH\n&amp;quot;, vptr1);
+ printf(&amp;quot;sizeof vptr = %d\n&amp;quot;, (int)(sizeof(vptr1)));
+
+ (a.*vptr1)();
+ (r.*vptr1)();
+ (c.*vptr1)();
+ (c.*vptr2)();
+ c.info();
+
+ (c.*ptr)();
+
+ return 0;
+}
+&lt;/code>&lt;/pre>
+&lt;h2 id="vc虚继承成员函数指针实现">VC虚继承成员函数指针实现&lt;/h2>
+&lt;p>因为是兼容虚继承和非虚继承的，所以赋值的部分的汇编是一样的。这里就不贴了。关键在于执行期它是怎么找到虚基类的。请往下看：&lt;/p></description></item><item><title>VC和GCC成员函数指针实现的研究(二)</title><link>//owent.net/2013/896.html</link><pubDate>Wed, 11 Sep 2013 14:44:06 +0000</pubDate><guid>//owent.net/2013/896.html</guid><description>&lt;p>接上一篇 &lt;a href="https://www.owent.net/2013/890.html">VC和GCC内成员函数指针实现的研究(一)&lt;/a>&lt;/p>
+&lt;p>接下来是多重继承，用到的测试代码如下所示:&lt;/p>
+&lt;pre>&lt;code class="language-cpp">#include &amp;lt;ctime&amp;gt;
+#include &amp;lt;vector&amp;gt;
+#include &amp;lt;algorithm&amp;gt;
+#include &amp;lt;cstdio&amp;gt;
+#include &amp;lt;stdint.h&amp;gt;
+#include &amp;lt;cstddef&amp;gt;
+#include &amp;lt;string&amp;gt;
+
+class foo_a
+{
+public:
+ virtual ~foo_a(){}
+ virtual void info() {
+ printf(&amp;quot;%s:%d\n&amp;quot;, __FUNCTION__, __LINE__);
+ }
+};
+
+class foo_b
+{
+public:
+ virtual ~foo_b(){}
+
+ // 这个函数用于试foo_b的结构与foo_a不同
+ // 以防止VC对foo_a和foo_b的`vcall'{8}'的代码合并
+ virtual void inspect() { 
+ printf(&amp;quot;%s:%d\n&amp;quot;, __FUNCTION__, __LINE__);
+ } 
+
+ virtual void info() {
+ printf(&amp;quot;%s:%d\n&amp;quot;, __FUNCTION__, __LINE__);
+ }
+
+ void print() {
+ printf(&amp;quot;%s:%d\n&amp;quot;, __FUNCTION__, __LINE__);
+ }
+};
+
+
+class foo_c: public foo_a, public foo_b
+{
+public:
+ virtual void info() {
+ printf(&amp;quot;%s:%d\n&amp;quot;, __FUNCTION__, __LINE__);
+ }
+};
+
+
+int main(int argc, char* argv[]) {
+ void (foo_a::*vptr1)() = &amp;amp;foo_a::info;
+ void (foo_b::*vptr2)() = &amp;amp;foo_b::info;
+ void (foo_b::*ptr)() = &amp;amp;foo_b::print;
+
+ foo_c c;
+ foo_b b;
+ foo_a a;
+
+ 
+ printf(&amp;quot;word size = %d\n&amp;quot;, (int)(sizeof(size_t)));
+ printf(&amp;quot;address of &amp;amp;foo_a::info = 0x%llxH\n&amp;quot;, &amp;amp;foo_a::info);
+ printf(&amp;quot;pointer to &amp;amp;foo_a::info = 0x%llxH\n&amp;quot;, vptr1);
+ printf(&amp;quot;address of &amp;amp;foo_b::info = 0x%llxH\n&amp;quot;, &amp;amp;foo_b::info);
+ printf(&amp;quot;pointer to &amp;amp;foo_b::info = 0x%llxH\n&amp;quot;, vptr2);
+ printf(&amp;quot;sizeof vptr = %d\n&amp;quot;, (int)(sizeof(vptr1)));
+
+ (a.*vptr1)();
+ (b.*vptr2)();
+ (c.*vptr1)();
+ (c.*vptr2)();
+
+ (c.*ptr)();
+
+ return 0;
+}
+&lt;/code>&lt;/pre>
+&lt;h2 id="vc多重继承成员函数指针实现">VC多重继承成员函数指针实现&lt;/h2>
+&lt;p>&lt;img src="p896_img8.png" alt="">&lt;/p></description></item><item><title>VC和GCC内成员函数指针实现的研究(一)</title><link>//owent.net/2013/890.html</link><pubDate>Fri, 06 Sep 2013 12:55:58 +0000</pubDate><guid>//owent.net/2013/890.html</guid><description>&lt;p>最近在《C++对象模型》一书里说到的virtual的成员函数指针，低于128的被cfront编译器认为是虚表偏移量（支持子类对父类函数的覆盖）。VC只是提了下单继承、多继承和虚继承的实现方案不同，GCC没有提及，所以就专门稍微深入分析研究下他们的实现机制。&lt;/p></description></item></channel></rss>

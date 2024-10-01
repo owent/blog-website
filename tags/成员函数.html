@@ -4,7 +4,152 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/tags/%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-902"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/902.html target=_blank itemprop=url>VC和GCC成员函数指针实现的研究(三)</a></h1></header><div class=article-excerpt>接上一篇 VC和GCC内成员函数指针实现的研究(二) 虚继承 终于到最后的虚继承了。 测试代码如下: #include &lt;ctime> #include &lt;vector> #include &lt;algorithm> #include &lt;cstdio> #include &lt;stdint.h> #include &lt;cstddef> #include &lt;string> class foo_a { public: virtual ~foo_a(){} virtual void info() {</div><div class=article-more><a href=//owent.net/2013/902.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-11T14:57:15.000+00:00 itemprop=datePublished>2013-09-11</time></div></div></article><article class="article-panel archive-article archive-type-896"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/896.html target=_blank itemprop=url>VC和GCC成员函数指针实现的研究(二)</a></h1></header><div class=article-excerpt>接上一篇 VC和GCC内成员函数指针实现的研究(一) 接下来是多重继承，用到的测试代码如下所示: #include &lt;ctime> #include &lt;vector> #include &lt;algorithm> #include &lt;cstdio> #include &lt;stdint.h> #include &lt;cstddef> #include &lt;string> class foo_a { public: virtual ~foo_a(){} virtual void info() {</div><div class=article-more><a href=//owent.net/2013/896.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-11T14:44:06.000+00:00 itemprop=datePublished>2013-09-11</time></div></div></article><article class="article-panel archive-article archive-type-890"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/890.html target=_blank itemprop=url>VC和GCC内成员函数指针实现的研究(一)</a></h1></header><div class=article-excerpt>最近在《C++对象模型》一书里说到的virtual的成员函数指针，低于128的被cfront编译器认为是虚表偏移量（支持子类对父类函数的覆盖</div><div class=article-more><a href=//owent.net/2013/890.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-06T12:55:58.000+00:00 itemprop=datePublished>2013-09-06</time></div></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-902"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/902.html target=_blank itemprop=url>VC和GCC成员函数指针实现的研究(三)</a></h1></header><div class=article-excerpt><p>接上一篇 <a href=https://www.owent.net/2013/896.html>VC和GCC内成员函数指针实现的研究(二)</a></p><h2 id=虚继承>虚继承</h2><p>终于到最后的虚继承了。</p><p>测试代码如下:</p><pre><code class=language-cpp>#include &lt;ctime&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstdio&gt;
+#include &lt;stdint.h&gt;
+#include &lt;cstddef&gt;
+#include &lt;string&gt;
+
+class foo_a
+{
+public:
+    virtual ~foo_a(){}
+    virtual void info() {
+        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+    }
+
+    void print(){
+        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+    }
+};
+
+class foo_l
+{
+public:
+    int l;
+    foo_l(): l(1){}
+
+    virtual void info() {
+        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+    }
+};
+
+class foo_r: virtual public foo_a
+{
+public:
+    int r;
+    foo_r(): r(2){}
+};
+
+class foo_c: virtual public foo_l, public foo_r
+{
+public:
+    virtual void info() {
+        printf(&quot;%d,%d. %s:%d\n&quot;, l, r, __FUNCTION__, __LINE__);
+    }
+};
+
+
+int main(int argc, char* argv[]) {
+    void (foo_a::*vptr1)() = &amp;foo_a::info;
+    void (foo_l::*vptr2)() = &amp;foo_l::info;
+    void (foo_a::*ptr)() = &amp;foo_a::print;
+
+    foo_c c;
+    foo_r r;
+    foo_a a;
+
+    printf(&quot;pword size = %d\n&quot;, (int)(sizeof(size_t)));
+    printf(&quot;address of &amp;foo_a::info = 0x%llxH\n&quot;, &amp;foo_a::info);
+    printf(&quot;pointer to &amp;foo_a::info = 0x%llxH\n&quot;, vptr1);
+    printf(&quot;sizeof vptr = %d\n&quot;, (int)(sizeof(vptr1)));
+
+    (a.*vptr1)();
+    (r.*vptr1)();
+    (c.*vptr1)();
+    (c.*vptr2)();
+    c.info();
+
+    (c.*ptr)();
+
+    return 0;
+}
+</code></pre><h2 id=vc虚继承成员函数指针实现>VC虚继承成员函数指针实现</h2><p>因为是兼容虚继承和非虚继承的，所以赋值的部分的汇编是一样的。这里就不贴了。关键在于执行期它是怎么找到虚基类的。请往下看：</p></div><div class=article-more><a href=//owent.net/2013/902.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-11T14:57:15.000+00:00 itemprop=datePublished>2013-09-11</time></div></div></article><article class="article-panel archive-article archive-type-896"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/896.html target=_blank itemprop=url>VC和GCC成员函数指针实现的研究(二)</a></h1></header><div class=article-excerpt><p>接上一篇 <a href=https://www.owent.net/2013/890.html>VC和GCC内成员函数指针实现的研究(一)</a></p><p>接下来是多重继承，用到的测试代码如下所示:</p><pre><code class=language-cpp>#include &lt;ctime&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstdio&gt;
+#include &lt;stdint.h&gt;
+#include &lt;cstddef&gt;
+#include &lt;string&gt;
+
+class foo_a
+{
+public:
+    virtual ~foo_a(){}
+    virtual void info() {
+        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+    }
+};
+
+class foo_b
+{
+public:
+    virtual ~foo_b(){}
+
+    // 这个函数用于试foo_b的结构与foo_a不同
+    // 以防止VC对foo_a和foo_b的`vcall'{8}'的代码合并
+    virtual void inspect() { 
+        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+    } 
+
+    virtual void info() {
+        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+    }
+
+    void print() {
+        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+    }
+};
+
+
+class foo_c: public foo_a, public foo_b
+{
+public:
+    virtual void info() {
+        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+    }
+};
+
+
+int main(int argc, char* argv[]) {
+    void (foo_a::*vptr1)() = &amp;foo_a::info;
+    void (foo_b::*vptr2)() = &amp;foo_b::info;
+    void (foo_b::*ptr)() = &amp;foo_b::print;
+
+    foo_c c;
+    foo_b b;
+    foo_a a;
+
+    
+    printf(&quot;word size = %d\n&quot;, (int)(sizeof(size_t)));
+    printf(&quot;address of &amp;foo_a::info = 0x%llxH\n&quot;, &amp;foo_a::info);
+    printf(&quot;pointer to &amp;foo_a::info = 0x%llxH\n&quot;, vptr1);
+    printf(&quot;address of &amp;foo_b::info = 0x%llxH\n&quot;, &amp;foo_b::info);
+    printf(&quot;pointer to &amp;foo_b::info = 0x%llxH\n&quot;, vptr2);
+    printf(&quot;sizeof vptr = %d\n&quot;, (int)(sizeof(vptr1)));
+
+    (a.*vptr1)();
+    (b.*vptr2)();
+    (c.*vptr1)();
+    (c.*vptr2)();
+
+    (c.*ptr)();
+
+    return 0;
+}
+</code></pre><h2 id=vc多重继承成员函数指针实现>VC多重继承成员函数指针实现</h2><p><img src=p896_img8.png alt></p></div><div class=article-more><a href=//owent.net/2013/896.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-11T14:44:06.000+00:00 itemprop=datePublished>2013-09-11</time></div></div></article><article class="article-panel archive-article archive-type-890"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/890.html target=_blank itemprop=url>VC和GCC内成员函数指针实现的研究(一)</a></h1></header><div class=article-excerpt><p>最近在《C++对象模型》一书里说到的virtual的成员函数指针，低于128的被cfront编译器认为是虚表偏移量（支持子类对父类函数的覆盖）。VC只是提了下单继承、多继承和虚继承的实现方案不同，GCC没有提及，所以就专门稍微深入分析研究下他们的实现机制。</p></div><div class=article-more><a href=//owent.net/2013/890.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-06T12:55:58.000+00:00 itemprop=datePublished>2013-09-06</time></div></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
 2024
 OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,

@@ -4,7 +4,71 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/tags/%E6%8F%92%E4%BB%B6/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-1054"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2014/1054.html target=_blank itemprop=url>基于Chrome插件的开发工具链</a></h1></header><div class=article-excerpt>在项目开发过程中，时不时会碰上需要使用一些工具来做一些自动操作或者附加功能。特别是有一些外部组件只会提供Web工具，或者如果产品会发布在We</div><div class=article-more><a href=//owent.net/2014/1054.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2014-05-06T21:51:58.000+00:00 itemprop=datePublished>2014-05-06</time></div></div></article><article class="article-panel archive-article archive-type-128"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/128.html target=_blank itemprop=url>JQuery扩展插件--提示信息</a></h1></header><div class=article-excerpt>学校做项目顺便写的，还是有点用的。 /*** * JQuery扩展插件--提示信息 * * 本函数用于创建提示信息 * * Example * &lt;code> * var t = $.noticeMessage(msg, a, b); * &lt;/code> * * * function noticeMessage([msg, a,b]) * @Param</div><div class=article-more><a href=//owent.net/2010/128.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-11-19T15:20:12.000+00:00 itemprop=datePublished>2010-11-19</time></div></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-1054"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2014/1054.html target=_blank itemprop=url>基于Chrome插件的开发工具链</a></h1></header><div class=article-excerpt><p>在项目开发过程中，时不时会碰上需要使用一些工具来做一些自动操作或者附加功能。特别是有一些外部组件只会提供Web工具，或者如果产品会发布在Web上的时候，在线上的产品中加调试指令显然是不安全的（前段时间刚好有携程线上服务器暴露的调试接口，导致用户信息泄露的事故）。这时候我们就可以借助Chrome来制作一些特别的小工具。 使用Chrome来自作工具有几个好处：其一是对熟悉Web开发的人而言，它用得全是Javascript(当然你也可以用Go语言)和HTML，没有太多额外的学习成本，而且现在的Chrome对HTML5标准支持得也比较好，基本的功能都可以实现；其二是不需要花多少时间在UI方面（作为一个后台开发表示The easier the better）；其三是在需要的时候，还能开发为App，直接运行（另外还有一个项目叫<a href=https://github.com/rogerwang/node-webkit/>Nodejs-webkit</a>，提供了打包成不依赖Chrome本地应用的功能，而且底层用了nodejs，提供了更加强大的系统资源访问的功能)。总而言之，作为开发工具而言已经绰绰有余了。</p></div><div class=article-more><a href=//owent.net/2014/1054.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2014-05-06T21:51:58.000+00:00 itemprop=datePublished>2014-05-06</time></div></div></article><article class="article-panel archive-article archive-type-128"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/128.html target=_blank itemprop=url>JQuery扩展插件--提示信息</a></h1></header><div class=article-excerpt><p>学校做项目顺便写的，还是有点用的。</p><pre><code class=language-js>/***
+ * JQuery扩展插件--提示信息
+ *
+ * 本函数用于创建提示信息
+ *
+ * Example
+ * &lt;code&gt;
+ *      var t = $.noticeMessage(msg, a, b);
+ * &lt;/code&gt;
+ *
+ *
+ * function noticeMessage([msg, a,b])
+ * @Param  {
+ *      msg:    信息内容(默认: Notice Message!)
+ *      a:      配置选项({expire: 过期时间（默认5秒）, time: 过渡时间, from: {起始CSS样式}, to:{最终CSS样式}})
+ *      b:      回调函数
+ * }
+ * @Return {jQuery(msgDiv): 产生的信息DOM组件的jQuery容器}
+ *
+ *
+ * Example:
+ * &lt;code&gt;
+ *      var t = $.noticeMessage(&quot;Hello World!&quot;);
+ * &lt;/code&gt;
+ *
+ *
+ * @Author      OWenT
+ * @Version     1.0
+ * @Link        http://www.owent.net
+ */
+jQuery.extend({
+    noticeMessage: function (msg, a, b) {
+        msg = msg || &quot;Notice Message!&quot;;
+        var option = { &quot;expire&quot;: 5000, &quot;time&quot;: 500,
+            &quot;from&quot;: { &quot;background-color&quot;: &quot;LightGreen&quot;, &quot;opacity&quot;: &quot;0&quot;, &quot;position&quot;: &quot;fixed&quot;, &quot;bottom&quot;: &quot;0px&quot;, &quot;z-index&quot;: &quot;1000&quot;,
+                &quot;font-size&quot;: &quot;24px&quot;, &quot;color&quot;: &quot;DarkGreen&quot;, &quot;padding&quot;: &quot;3px&quot;, &quot;font-weight&quot;: &quot;bold&quot;
+            },
+            &quot;to&quot;: { &quot;opacity&quot;: &quot;1&quot;, &quot;bottom&quot;: &quot;+5px&quot; }
+        };
+        var callback = function () { };
+        if (a &amp;&amp; jQuery.isFunction(a))
+            callback = a;
+        else {
+            a = a || {};
+            jQuery.extend(option, a);
+            callback = b || function () { };
+        }
+
+        var msgDiv = document.createElement(&quot;div&quot;);
+
+        jQuery(msgDiv).css(option.from).html(msg);
+        jQuery(document.body).append(msgDiv);
+        jQuery(msgDiv).stop().animate(option.to, option.time, callback);
+        if (option.expire &gt; 0) {
+            setTimeout(function () {
+                if (msgDiv) {
+                    jQuery(msgDiv).stop().animate({ &quot;opacity&quot;: &quot;0&quot;, &quot;bottom&quot;: &quot;-5px&quot; }, option.time,
+                        function () { callback(); jQuery(this).remove(); });
+                }
+            }, option.expire);
+        }
+        return jQuery(msgDiv);
+    }
+});
+</code></pre><p>写在最后补充一下，这个动机基本没什么用了</p></div><div class=article-more><a href=//owent.net/2010/128.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-11-19T15:20:12.000+00:00 itemprop=datePublished>2010-11-19</time></div></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
 2024
 OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
