@@ -4,7 +4,40 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=../../../ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=../../../archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=../../../about.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/categories/article/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-2 position-absolute end-0"><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-76"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/76.html target=_blank itemprop=url>矩阵相关 (增强中)</a></h1></header><div class=article-excerpt><pre><code class=language-cpp>//MULDATATYPE为矩阵元素类型,MAXMAT为最大矩阵大小
+<button class="btn btn-outline-secondary my-2 my-sm-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-75"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/75.html target=_blank itemprop=url>Prime最小生成树(个人模板)</a></h1></header><div class=article-excerpt><pre><code class=language-cpp>//Prime连通路模块
+#define N 1000         //最大数据规模
+#define MAXNUM 3000000   //最大路径长度
+typedef double PrimeType;//路径类型
+
+PrimeType PrimeRecord[N];
+PrimeType dis[N][N];
+int isLined[N] = {1,0};
+
+PrimeType GetPrimeLength(const long n)
+{
+    PrimeType tmpLen = MAXNUM;
+    long tmpPos = 0,left = n - 1;
+    PrimeType sumLen = 0;
+
+    for(long i = 1 ; i &lt; n ; i ++)
+        PrimeRecord[i] = dis[0][i];
+    while(left --)
+    {
+        tmpLen = MAXNUM;
+        for(long i = 1 ; i &lt; n ; i ++)
+            if(!isLined[i] &amp;&amp; PrimeRecord[i] &lt; tmpLen)
+                tmpPos = i,tmpLen = PrimeRecord[i];
+
+        sumLen += tmpLen;
+        isLined[tmpPos] ++;
+        for(long i = 1 ; i &lt; n ; i ++)
+            if(dis[tmpPos][i] &lt; PrimeRecord[i])
+                PrimeRecord[i] = dis[tmpPos][i];
+    }
+
+    return sumLen;
+}
+</code></pre></div><div class=article-more><a href=//owent.net/2009/75.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2009-09-15T16:43:29.000+00:00 itemprop=datePublished>2009-09-15</time></div></div></article><article class="article-panel archive-article archive-type-76"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/76.html target=_blank itemprop=url>矩阵相关 (增强中)</a></h1></header><div class=article-excerpt><pre><code class=language-cpp>//MULDATATYPE为矩阵元素类型,MAXMAT为最大矩阵大小
 
 typedef long MULDATATYPE;
 #define MAXMAT 100
