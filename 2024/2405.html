@@ -315,7 +315,148 @@ struct LIBATFRAME_UTILS_API_HEAD_ONLY compat_strong_ptr_type_trait {
 
 }  // namespace memory
 LIBATFRAME_UTILS_NAMESPACE_END
-</code></pre><h3 id=算法和容器基础组件适配>算法和容器基础组件适配</h3><p>有了上面的一键切换traits，其他的组件切换也就比较简单了。</p><p>首先在 <a href=https://github.com/owent/atframe_utils>atframe_utils</a> 内部分组件接入了一件切换。</p><ul><li>时间轮定时器实现 <a href=https://github.com/owent/atframe_utils/blob/main/include/time/jiffies_timer.h>jeffies_timer</a> 使用了 <code>shared_ptr</code> 和 <code>weak_ptr</code> 来保证递归调用和移除时生命周期的有效性。</li><li>LRU算法容器 <a href=https://github.com/owent/atframe_utils/blob/main/include/memory/lru_map.h>lru_map</a> 里为了方便管理也使用了 <code>shared_ptr</code> 管理引用关系。</li><li>分布式系统和分布式事务的 <a href=https://github.com/owent/atframe_utils/tree/main/include/distributed_system>WAL模块</a> 内涉及大量的Event Log的管理和订阅关系管理，也采用 <code>shared_ptr</code> 管理。</li></ul><p>这些都可以直接替换成新模块。</p><p>还有一部分是我们工程里有很多读取策划通过配置Excel转出的数据，这部分访问量也很大。所以我对这个生成读表代码的模板系统 <a href=https://github.com/owent/xres-code-generator>xres-code-generator</a> 也做了改造支持。</p><h2 id=效果>效果</h2><p>其实在完成之前，其实我们也不确定到底能带来多大的提升。简单的循环benchmark其实也没啥意义，因为和实际使用场景的访问情况相差太远了。</p><p>我们在完成之后对我们实际项目路14-16个静态索引的交易行上下架请求和搜索的场景做了对比（不包含Excel读表改造），大概比 <code>std::shared_ptr</code> 提升了10%-16%的综合性能，这里面其实附带了其他的一些视图和索引的比较操作和其他RPC的操作。所以单单这个智能指针的部分提升应该是更大的。</p><h2 id=未来规划>未来规划</h2><p>之前实现 <a href=https://github.com/owent/libcopp>libcopp</a> 对C++20协程支持的时候也有几处内部生命周期引用的地方是计划中后续改成无Cache Miss的版本的，后续看有空也改造一下吧。也是能减少一些不必要的内部开销。</p><p>我们也在继续逐渐把一些本来也不是线程安全的模块都换成新智能指针，欢迎有兴趣的小伙伴互相交流研究。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2024-10-08T20:45:45.000+00:00 itemprop=datePublished>2024-10-08</time></span>
+</code></pre><h3 id=算法和容器基础组件适配>算法和容器基础组件适配</h3><p>有了上面的一键切换traits，其他的组件切换也就比较简单了。</p><p>首先在 <a href=https://github.com/owent/atframe_utils>atframe_utils</a> 内部分组件接入了一件切换。</p><p>时间轮定时器实现 <a href=https://github.com/owent/atframe_utils/blob/main/include/time/jiffies_timer.h>jeffies_timer</a> 使用了 <code>shared_ptr</code> 和 <code>weak_ptr</code> 来保证递归调用和移除时生命周期的有效性。
+这里通过增加模板参数实现切换支持。</p><pre><code class=language-cpp>template &lt;time_t LVL_BITS = 6, time_t LVL_CLK_SHIFT = 3, size_t LVL_DEPTH = 8,
+          memory::compat_strong_ptr_mode PTR_MODE = memory::compat_strong_ptr_mode::kStl&gt;
+class jiffies_timer {
+  //...
+};
+</code></pre><p>LRU算法容器 <a href=https://github.com/owent/atframe_utils/blob/main/include/memory/lru_map.h>lru_map</a> 里为了方便管理也使用了 <code>shared_ptr</code> 管理引用关系。
+这个容器为了简化使用，除了在最后面加模板参数外，也加了个简化一点的别名。这样可以不用显示指定hash函数，等于判定，内存分配器的情况下定制智能指针选项。</p><pre><code class=language-cpp>template &lt;class TKEY, class TVALUE, class THasher = std::hash&lt;TKEY&gt;, class TKeyEQ = std::equal_to&lt;TKEY&gt;,
+          class TOption = lru_map_option&lt;compat_strong_ptr_mode::kStl&gt;,
+          class TAlloc = std::allocator&lt;std::pair&lt;const TKEY, typename lru_map_type_traits&lt;TKEY, TVALUE, TOption&gt;::iterator&gt;&gt;&gt;
+class lru_map {
+  // ...
+};
+
+template &lt;class TKEY, class TVALUE, class TOption, class THasher = std::hash&lt;TKEY&gt;, class TKeyEQ = std::equal_to&lt;TKEY&gt;,
+          class TAlloc = std::allocator&lt;std::pair&lt;const TKEY, typename lru_map_type_traits&lt;TKEY, TVALUE, TOption&gt;::iterator&gt;&gt;&gt;
+using lru_map_with_option = lru_map&lt;TKEY, TVALUE, THasher, TOption, TAlloc&gt;;
+</code></pre><p>分布式系统和分布式事务的 <a href=https://github.com/owent/atframe_utils/tree/main/include/distributed_system>WAL模块</a> 内涉及大量的Event Log的管理和订阅关系管理，也采用 <code>shared_ptr</code> 管理。
+这个模块结构比较复杂切涉及多个组件保持一致，所以另外加了一层traits来实现。</p><pre><code class=language-cpp>
+enum class wal_mt_mode : int8_t {
+  kSingleThread = 0,
+  kMultiThread = 1,
+};
+
+template &lt;class T, wal_mt_mode MTMode&gt;
+struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_data_trait;
+
+template &lt;wal_mt_mode MTMode&gt;
+struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait;
+
+template &lt;class T&gt;
+struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_data_trait&lt;T, wal_mt_mode::kSingleThread&gt; {
+  using strong_ptr = memory::strong_rc_ptr&lt;T&gt;;
+  using weak_ptr = memory::weak_rc_ptr&lt;T&gt;;
+};
+
+template &lt;class T&gt;
+struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_data_trait&lt;T, wal_mt_mode::kMultiThread&gt; {
+  using strong_ptr = std::shared_ptr&lt;T&gt;;
+  using weak_ptr = std::weak_ptr&lt;T&gt;;
+};
+
+template &lt;&gt;
+struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait&lt;wal_mt_mode::kSingleThread&gt; {
+  template &lt;class Y&gt;
+  using enable_shared_from_this = memory::enable_shared_rc_from_this&lt;Y&gt;;
+
+  template &lt;class Y, class Alloc, class... ArgsT&gt;
+  static inline memory::strong_rc_ptr&lt;Y&gt; allocate_strong(const Alloc&amp; alloc, ArgsT&amp;&amp;... args) {
+    return memory::allocate_strong_rc&lt;Y&gt;(alloc, std::forward&lt;ArgsT&gt;(args)...);
+  }
+
+  template &lt;class Y, class F&gt;
+  static inline memory::strong_rc_ptr&lt;Y&gt; static_pointer_cast(F&amp;&amp; f) {
+    return memory::static_pointer_cast&lt;Y&gt;(std::forward&lt;F&gt;(f));
+  }
+
+  template &lt;class Y, class F&gt;
+  static inline memory::strong_rc_ptr&lt;Y&gt; const_pointer_cast(F&amp;&amp; f) {
+    return memory::const_pointer_cast&lt;Y&gt;(std::forward&lt;F&gt;(f));
+  }
+
+#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) &amp;&amp; LIBATFRAME_UTILS_ENABLE_RTTI
+  template &lt;class Y, class F&gt;
+  static inline memory::strong_rc_ptr&lt;Y&gt; dynamic_pointer_cast(F&amp;&amp; f) {
+    return memory::dynamic_pointer_cast&lt;Y&gt;(std::forward&lt;F&gt;(f));
+  }
+#endif
+};
+
+template &lt;&gt;
+struct LIBATFRAME_UTILS_API_HEAD_ONLY wal_mt_mode_func_trait&lt;wal_mt_mode::kMultiThread&gt; {
+  template &lt;class Y&gt;
+  using enable_shared_from_this = std::enable_shared_from_this&lt;Y&gt;;
+
+  template &lt;class Y, class Alloc, class... ArgsT&gt;
+  static inline std::shared_ptr&lt;Y&gt; allocate_strong(const Alloc&amp; alloc, ArgsT&amp;&amp;... args) {
+    return std::allocate_shared&lt;Y&gt;(alloc, std::forward&lt;ArgsT&gt;(args)...);
+  }
+
+  template &lt;class Y, class F&gt;
+  static inline std::shared_ptr&lt;Y&gt; static_pointer_cast(F&amp;&amp; f) {
+    return std::static_pointer_cast&lt;Y&gt;(std::forward&lt;F&gt;(f));
+  }
+
+  template &lt;class Y, class F&gt;
+  static inline std::shared_ptr&lt;Y&gt; const_pointer_cast(F&amp;&amp; f) {
+    return std::const_pointer_cast&lt;Y&gt;(std::forward&lt;F&gt;(f));
+  }
+
+#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) &amp;&amp; LIBATFRAME_UTILS_ENABLE_RTTI
+  template &lt;class Y, class F&gt;
+  static inline std::shared_ptr&lt;Y&gt; dynamic_pointer_cast(F&amp;&amp; f) {
+    return std::dynamic_pointer_cast&lt;Y&gt;(std::forward&lt;F&gt;(f));
+  }
+#endif
+};
+</code></pre><p>然后把这些类型放进用于统一管理的 <code>wal_log_operator</code> 里。</p><pre><code class=language-cpp>template &lt;class LogKeyT, class LogT, class ActionGetter, class CompareLogKeyT = std::less&lt;LogKeyT&gt;,
+          class HashActionCaseT = std::hash&lt;typename wal_log_action_getter_trait&lt;LogT, ActionGetter&gt;::type&gt;,
+          class EqualActionCaseT = std::equal_to&lt;typename wal_log_action_getter_trait&lt;LogT, ActionGetter&gt;::type&gt;,
+          class Allocator = std::allocator&lt;LogT&gt;, wal_mt_mode MTMode = wal_mt_mode::kMultiThread&gt;
+class wal_log_operator {
+  // ...
+  static constexpr const wal_mt_mode mt_mode = MTMode;
+
+template &lt;class Y, class... ArgsT&gt;
+  static inline typename wal_mt_mode_data_trait&lt;Y, mt_mode&gt;::strong_ptr make_strong(ArgsT&amp;&amp;... args) {
+    using alloc_type = typename std::allocator_traits&lt;log_allocator&gt;::template rebind_alloc&lt;Y&gt;;
+    return wal_mt_mode_func_trait&lt;mt_mode&gt;::template allocate_strong&lt;Y&gt;(alloc_type(), std::forward&lt;ArgsT&gt;(args)...);
+  }
+
+  template &lt;class Y, class Alloc, class... ArgsT&gt;
+  static inline typename wal_mt_mode_data_trait&lt;Y, mt_mode&gt;::strong_ptr allocate_strong(const Alloc&amp; alloc,
+                                                                                        ArgsT&amp;&amp;... args) {
+    return wal_mt_mode_func_trait&lt;mt_mode&gt;::template allocate_strong&lt;Y&gt;(alloc, std::forward&lt;ArgsT&gt;(args)...);
+  }
+
+  template &lt;class Y, class F&gt;
+  static inline typename wal_mt_mode_data_trait&lt;Y, mt_mode&gt;::strong_ptr static_pointer_cast(F&amp;&amp; f) {
+    return wal_mt_mode_func_trait&lt;mt_mode&gt;::template static_pointer_cast&lt;Y&gt;(std::forward&lt;F&gt;(f));
+  }
+
+  template &lt;class Y, class F&gt;
+  static inline typename wal_mt_mode_data_trait&lt;Y, mt_mode&gt;::strong_ptr const_pointer_cast(F&amp;&amp; f) {
+    return wal_mt_mode_func_trait&lt;mt_mode&gt;::template const_pointer_cast&lt;Y&gt;(std::forward&lt;F&gt;(f));
+  }
+
+#if defined(LIBATFRAME_UTILS_ENABLE_RTTI) &amp;&amp; LIBATFRAME_UTILS_ENABLE_RTTI
+  template &lt;class Y, class F&gt;
+  static inline typename wal_mt_mode_data_trait&lt;Y, mt_mode&gt;::strong_ptr dynamic_pointer_cast(F&amp;&amp; f) {
+    return wal_mt_mode_func_trait&lt;mt_mode&gt;::template dynamic_pointer_cast&lt;Y&gt;(std::forward&lt;F&gt;(f));
+  }
+#endif
+
+  template &lt;class Y&gt;
+  using strong_ptr = typename wal_mt_mode_data_trait&lt;Y, mt_mode&gt;::strong_ptr;
+  template &lt;class Y&gt;
+  using weak_ptr = typename wal_mt_mode_data_trait&lt;Y, mt_mode&gt;::weak_ptr;
+  template &lt;class Y&gt;
+  using enable_shared_from_this = typename wal_mt_mode_func_trait&lt;mt_mode&gt;::template enable_shared_from_this&lt;Y&gt;;
+};
+</code></pre><p>还有一部分是我们工程里有很多读取策划通过配置Excel转出的数据，这部分访问量也很大。所以我对这个生成读表代码的模板系统 <a href=https://github.com/owent/xres-code-generator>xres-code-generator</a> 也做了改造支持。</p><p>其他业务相关的只能一个一个模块去替换了，我们也在持续替换中。</p><h2 id=效果>效果</h2><p>其实在完成之前，其实我们也不确定到底能带来多大的提升。简单的循环benchmark其实也没啥意义，因为和实际使用场景的访问情况相差太远了。</p><p>我们在完成之后对我们实际项目路14-16个静态索引的交易行上下架请求和搜索的场景做了对比（不包含Excel读表改造），大概比 <code>std::shared_ptr</code> 提升了10%-16%的综合性能，这里面其实附带了其他的一些视图和索引的比较操作和其他RPC的操作。所以单单这个智能指针的部分提升应该是更大的。</p><h2 id=未来规划>未来规划</h2><p>之前实现 <a href=https://github.com/owent/libcopp>libcopp</a> 对C++20协程支持的时候也有几处内部生命周期引用的地方是计划中后续改成无Cache Miss的版本的，后续看有空也改造一下吧。也是能减少一些不必要的内部开销。</p><p>我们也在继续逐渐把一些本来也不是线程安全的模块都换成新智能指针，欢迎有兴趣的小伙伴互相交流研究。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2024-10-08T20:45:45.000+00:00 itemprop=datePublished>2024-10-08</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/c++.html>c++</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cpp.html>cpp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cxx.html>cxx</a></li><li class=article-tag-list-item><a href=//owent.net/tags/shared_ptr.html>shared_ptr</a></li><li class=article-tag-list-item><a href=//owent.net/tags/smart_ptr.html>smart_ptr</a></li><li class=article-tag-list-item><a href=//owent.net/tags/strong_rc_ptr.html>strong_rc_ptr</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2024/2404.html>下一篇<strong>手夯一个STL allocator和对象内存分析组件</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
 2024
 owent
