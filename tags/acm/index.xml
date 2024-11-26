@@ -170,7 +170,8 @@ int main(int argc, char* argv[]) {
 我把我所有的手机电池都带上了，路上听歌，顺便看看北方的WCDMA怎么样。
 按照计划我们是明天中午到，然后去报到，然后去宾馆，然后去买天津到北京的车票，然后吃晚饭，然后没有然后了。
 今天中午和杨老师一起去吃饭了，按他的说法，下午3:30就要去南站了，看来我们需要等火车等2个多小时啦。
-今天下午就出发了，祝愿我们有个好成绩吧。&lt;/code>&lt;/pre></description></item><item><title>线段树相关问题 (引用 PKU POJ题目) 整理</title><link>//owent.net/2010/8.html</link><pubDate>Tue, 12 Oct 2010 16:45:11 +0000</pubDate><guid>//owent.net/2010/8.html</guid><description>&lt;h2 id="1rangeminimummaximum-query问题计算单调区间内出现最多少的次数">1.RangeMinimum、Maximum Query问题（计算单调区间内出现最多（少）的次数）&lt;/h2>
+今天下午就出发了，祝愿我们有个好成绩吧。
+&lt;/code>&lt;/pre></description></item><item><title>线段树相关问题 (引用 PKU POJ题目) 整理</title><link>//owent.net/2010/8.html</link><pubDate>Tue, 12 Oct 2010 16:45:11 +0000</pubDate><guid>//owent.net/2010/8.html</guid><description>&lt;h2 id="1rangeminimummaximum-query问题计算单调区间内出现最多少的次数">1.RangeMinimum、Maximum Query问题（计算单调区间内出现最多（少）的次数）&lt;/h2>
 &lt;p>对元素的起点做离散化，再把离散化后的位置作为线段树的[l, r),记录次数为t.&lt;/p>
 &lt;p>对输入区间a, b:&lt;/p></description></item><item><title>POJ PKU 1474 Video Surveillance 解题报告</title><link>//owent.net/2010/10.html</link><pubDate>Mon, 04 Oct 2010 11:49:56 +0000</pubDate><guid>//owent.net/2010/10.html</guid><description>&lt;p>题目链接：&lt;a href="http://poj.org/problem?id=1474">http://poj.org/problem?id=1474&lt;/a>&lt;/p>
 &lt;p>写这题的目的是看完了zzy的论文，写了半平面交，验证一下正确性，结果发现我写的问题还是很多的。&lt;/p>
