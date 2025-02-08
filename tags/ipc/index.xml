@@ -1,19 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Ipc on I'm OWenT</title><link>//owent.net/tags/ipc.html</link><description>Recent content in Ipc on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md">&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" />&lt;/a></copyright><lastBuildDate>Sat, 09 Jul 2016 14:16:41 +0000</lastBuildDate><atom:link href="//owent.net/tags/ipc/index.xml" rel="self" type="application/rss+xml"/><item><title>对atbus的小数据包的优化</title><link>//owent.net/2016/1286.html</link><pubDate>Sat, 09 Jul 2016 14:16:41 +0000</pubDate><guid>//owent.net/2016/1286.html</guid><description>&lt;p>atbus是我按之前的思路写得服务器消息通信中间件，目标是简化服务器通信的流程，能够自动选择最优路线，自动的断线重连和通信通道维护。能够&lt;strong>跨平台&lt;/strong>并且&lt;strong>高效&lt;/strong>。&lt;/p></description></item><item><title>关于BUS通信系统的一些思考（三）</title><link>//owent.net/2015/1201.html</link><pubDate>Sun, 08 Nov 2015 17:17:05 +0000</pubDate><guid>//owent.net/2015/1201.html</guid><description>&lt;blockquote>
 &lt;p>&lt;a href="//www.owent.net/2014/1099.html">接上文关于bus通信系统的一些思考（二）&lt;/a>&lt;/p>
-&lt;p>之前的文章内容应该要有修订，但是并没有更新到blog里，而是直接写在了&lt;a href="https://github.com/atframework/libatbus">libatbus&lt;/a>的文档里&lt;/p>
-&lt;/blockquote>
+&lt;p>之前的文章内容应该要有修订，但是并没有更新到blog里，而是直接写在了&lt;a href="https://github.com/atframework/libatbus">libatbus&lt;/a>的文档里&lt;/p>&lt;/blockquote>
 &lt;h2 id="目录">目录&lt;/h2>
-&lt;!-- raw HTML omitted -->
 &lt;h2 id="前言">前言&lt;/h2>
 &lt;p>好久没写总结啦，最近一段时间比较忙，抽出的空闲时间都在不断完善之前提到的一个进程间通信lib的想法和实现（&lt;a href="https://github.com/atframework/libatbus">libatbus&lt;/a>）。&lt;/p></description></item><item><title>关于BUS通信系统的一些思考（二）</title><link>//owent.net/2014/1099.html</link><pubDate>Tue, 05 Aug 2014 14:08:20 +0000</pubDate><guid>//owent.net/2014/1099.html</guid><description>&lt;blockquote>
-&lt;p>接上文&lt;/p>
-&lt;/blockquote>
+&lt;p>接上文&lt;/p>&lt;/blockquote>
 &lt;h2 id="目录">目录&lt;/h2>
-&lt;!-- raw HTML omitted -->
 &lt;h2 id="bus系统的设计思路">BUS系统的设计思路&lt;/h2>
 &lt;p>虽然我很不愿意再设计一套BUS系统，但是现有的一些确实都没有特别符合我的口味的。所以还是尝试设计一个出来。&lt;/p>
 &lt;h3 id="结构设计">结构设计&lt;/h3>
 &lt;p>简单来说，我希望BUS系统可以简单、高效、稳定。&lt;/p></description></item><item><title>关于BUS通信系统的一些思考（一）</title><link>//owent.net/2014/1090.html</link><pubDate>Fri, 01 Aug 2014 14:21:53 +0000</pubDate><guid>//owent.net/2014/1090.html</guid><description>&lt;h2 id="目录">目录&lt;/h2>
-&lt;!-- raw HTML omitted -->
 &lt;h2 id="概述">概述&lt;/h2>
 &lt;p>如何保证一个进程或线程能安全稳定地把一段消息发送到另一个进程和线程，甚至是另一台机器的进程或线程，再或是要通过代理转发到另一个进程或线程，一直是一个比较麻烦的问题。&lt;/p></description></item></channel></rss>
