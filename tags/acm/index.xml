@@ -1999,9 +1999,9 @@ int main()
  }
  return 0;
 }
-&lt;/code>&lt;/pre></description></item><item><title>09年8月9日 ECUST ACM 练习赛总结</title><link>//owent.net/2009/82.html</link><pubDate>Mon, 10 Aug 2009 16:14:16 +0000</pubDate><guid>//owent.net/2009/82.html</guid><description>&lt;h2 id="problem-ahttpacmhdueducndiycontest_showproblemphppid1001ampcid3627amphide1ampproblemproblem2020a">&lt;a href="http://acm.hdu.edu.cn/diy/contest_showproblem.php?pid=1001&amp;amp;cid=3627&amp;amp;hide=1&amp;amp;problem=Problem%20%20A">Problem A&lt;/a>&lt;/h2>
+&lt;/code>&lt;/pre></description></item><item><title>09年8月9日 ECUST ACM 练习赛总结</title><link>//owent.net/2009/82.html</link><pubDate>Mon, 10 Aug 2009 16:14:16 +0000</pubDate><guid>//owent.net/2009/82.html</guid><description>&lt;h2 id="problem-a">&lt;a href="http://acm.hdu.edu.cn/diy/contest_showproblem.php?pid=1001&amp;amp;cid=3627&amp;amp;hide=1&amp;amp;problem=Problem%20%20A">Problem A&lt;/a>&lt;/h2>
 &lt;p>我没看题,队友很快AC我就没花时间看&lt;/p>
-&lt;h2 id="problem-bhttpacmhdueducndiycontest_showproblemphppid1002ampcid3627amphide1ampproblemproblem2020b">&lt;a href="http://acm.hdu.edu.cn/diy/contest_showproblem.php?pid=1002&amp;amp;cid=3627&amp;amp;hide=1&amp;amp;problem=Problem%20%20B">Problem B&lt;/a>&lt;/h2>
+&lt;h2 id="problem-b">&lt;a href="http://acm.hdu.edu.cn/diy/contest_showproblem.php?pid=1002&amp;amp;cid=3627&amp;amp;hide=1&amp;amp;problem=Problem%20%20B">Problem B&lt;/a>&lt;/h2>
 &lt;p>DP题,但是我们确实都没想到方法,实在是我们的经验不足&lt;/p>
 &lt;p>B题补充:
 B题的DP方法比较诡异(起码我理解了很久)

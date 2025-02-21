@@ -10,7 +10,7 @@
 &lt;p>最近的新闻里 C++20 已经确认的内容里已经有了协程组件，之前都是粗略看过这个协程草案。最近抽时间更加系统性的看了下接入和实现细节。&lt;/p>
 &lt;p>我的测试代码都是在MSVC下开启 &lt;code>/await&lt;/code> 选项后测试的，在我本地的Linux clang环境中，可以通过 &lt;code>$LLVM_CLANG_PREFIX/bin/clang++ -std=c++2a -O0 -g -ggdb -stdlib=libc++ -fcoroutines-ts -lc++ -lc++abi -Wl,-rpath=$LLVM_CLANG_PREFIX/lib/ test.cpp&lt;/code> 编译和运行。&lt;/p></description></item><item><title>GCC 7和LLVM+Clang+libc++abi 4.0的构建脚本</title><link>//owent.net/2017/1431.html</link><pubDate>Tue, 09 May 2017 11:17:55 +0000</pubDate><guid>//owent.net/2017/1431.html</guid><description>&lt;p>之前的版本发完，有空来更新一下之前的gcc和llvm+clang工具链的编译脚本了。其实GCC 7是才release没多久但是llvm 4.0发布其实有一段时间了。&lt;/p></description></item><item><title>重写了llvm+clang+libc++和libc++abi的构建脚本</title><link>//owent.net/2016/1309.html</link><pubDate>Sat, 19 Nov 2016 15:42:21 +0000</pubDate><guid>//owent.net/2016/1309.html</guid><description>&lt;p>由于之前整理的服务器框架已经完成了，就需要用各种静态分析工具跑一遍。原来的llvm+clang的编译脚本是从GCC那个脚本copy过来然后改的，使用的时候各种问题。所以干醋重新折腾一遍，重写了。&lt;/p></description></item><item><title>LLVM+Clang+Libcxx+Libcxxabi（3.6）工具链编译（完成自举编译）</title><link>//owent.net/2015/1149.html</link><pubDate>Wed, 08 Apr 2015 17:41:02 +0000</pubDate><guid>//owent.net/2015/1149.html</guid><description>&lt;p>LLVM和Clang工具链的生成配置文件写得比较搓，所以略微麻烦，另外这个脚本没有经过多环境测试，不保证在其他Linux发行版里正常使用。&lt;/p>
 &lt;h3 id="change">CHANGE&lt;/h3>
-&lt;h4 id="相对于上一个版本linux-编译安装-llvm--clang-3535的变化">相对于上一个版本&lt;a href="../3.5">Linux 编译安装 LLVM + Clang 3.5&lt;/a>的变化：&lt;/h4>
+&lt;h4 id="相对于上一个版本linux-编译安装-llvm--clang-35的变化">相对于上一个版本&lt;a href="../3.5">Linux 编译安装 LLVM + Clang 3.5&lt;/a>的变化：&lt;/h4>
 &lt;ol>
 &lt;li>这个版本llvm的源码修复了一个会导致开启exception功能之后的编译bug，所以编译脚本不再会修改llvm的源代码&lt;/li>
 &lt;li>编译过程改成了两次编译&lt;/li>
