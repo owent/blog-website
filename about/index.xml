@@ -1,1 +1,119 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>About on I'm OWenT</title><link>//owent.net/about.html</link><description>Recent content in About on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md">&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" />&lt;/a></copyright><lastBuildDate/><atom:link href="//owent.net/about/index.xml" rel="self" type="application/rss+xml"/></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>About on I'm OWenT</title><link>//owent.net/about.html</link><description>Recent content in About on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md">&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" />&lt;/a></copyright><lastBuildDate>Wed, 01 Jan 2025 00:00:00 +0000</lastBuildDate><atom:link href="//owent.net/about/index.xml" rel="self" type="application/rss+xml"/><item><title>About</title><link>//owent.net/about/resume.html</link><pubDate>Wed, 01 Jan 2025 00:00:00 +0000</pubDate><guid>//owent.net/about/resume.html</guid><description>&lt;table>
+ &lt;thead>
+ &lt;tr>
+ &lt;th>欧文韬&lt;/th>
+ &lt;th>TEL. 18601690140&lt;/th>
+ &lt;/tr>
+ &lt;/thead>
+ &lt;tbody>
+ &lt;tr>
+ &lt;td>性别： 男&lt;/td>
+ &lt;td>E-Mail(主): &lt;a href="mailto:admin@owent.net">admin@owent.net&lt;/a>&lt;/td>
+ &lt;/tr>
+ &lt;tr>
+ &lt;td>Blog: &lt;a href="https://owent.net">https://owent.net&lt;/a>&lt;/td>
+ &lt;td>E-Mail(备): &lt;a href="mailto:owt5008137@live.com">owt5008137@live.com&lt;/a>&lt;/td>
+ &lt;/tr>
+ &lt;/tbody>
+&lt;/table>
+&lt;h1 id="工作学习经历">工作学习经历&lt;/h1>
+&lt;ul>
+&lt;li>2017.09-至今: 腾讯科技(上海)有限公司 - 北极光工作室后台组&lt;/li>
+&lt;li>2016.10-2017.07: 上海格奕网络科技有限公司 - 后端技术负责人&lt;/li>
+&lt;li>2014.10-2016.10: 上海莫游网络科技有限公司 - 联合创始人、CTO&lt;/li>
+&lt;li>2012.06-2014.10: 腾讯科技(上海)有限公司 - 北极光工作室后台组&lt;/li>
+&lt;li>2011.06-2012.06: 腾讯科技(上海)有限公司 - 北极光工作室后台组 - 实习&lt;/li>
+&lt;li>2008.09-2012.06: 华东理工大学 - 计算机科学与技术 - 本科&lt;/li>
+&lt;/ul>
+&lt;h1 id="主要开源活动">主要开源活动&lt;/h1>
+&lt;ul>
+&lt;li>Github-主站: &lt;a href="https://github.com/owent">https://github.com/owent&lt;/a>&lt;/li>
+&lt;li>Github-【CNCF云原生计算基金会-可观测性领域-opentelemetry-cpp核心贡献者】: &lt;a href="https://github.com/open-telemetry/opentelemetry-cpp">https://github.com/open-telemetry/opentelemetry-cpp&lt;/a>&lt;/li>
+&lt;li>Excel转表工具集（Excel -&amp;gt; Protobuf、Lua、Msgpack、Json、Xml\Javascript、UnrealEngine DataTable）: &lt;a href="https://github.com/xresloader">https://github.com/xresloader&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;blockquote>
+&lt;ol>
+&lt;li>文档: &lt;a href="https://xresloader.atframe.work">https://xresloader.atframe.work&lt;/a>&lt;/li>
+&lt;li>转表核心引擎: &lt;a href="https://github.com/xresloader/xresloader">xresloader&lt;/a>&lt;/li>
+&lt;li>批量转表规范: &lt;a href="https://github.com/xresloader/xresconv-conf">xresconv-conf&lt;/a>&lt;/li>
+&lt;li>跨平台批量转表CLI工具: &lt;a href="https://github.com/xresloader/xresconv-cli">xresconv-cli&lt;/a>&lt;/li>
+&lt;li>跨平台批量转表GUI工具: &lt;a href="https://github.com/xresloader/xresconv-gui">xresconv-gui&lt;/a>&lt;/li>
+&lt;li>读表代码生成器: &lt;a href="https://github.com/xresloader/xres-code-generator">xres-code-generator&lt;/a>&lt;/li>
+&lt;/ol>
+&lt;ul>
+&lt;li>支持 C++ 、Lua（裸Lua,lua-protobuf,upb-lua,pbc-lua）、C#(Unity)&lt;/li>
+&lt;li>支持多版本并存、多级索引、多重索引&lt;/li>
+&lt;/ul>
+&lt;ol start="8">
+&lt;li>二进制Dump工具: &lt;a href="https://github.com/xresloader/xresloader-dump-bin">xresloader-dump-bin&lt;/a>&lt;/li>
+&lt;/ol>&lt;/blockquote>
+&lt;ul>
+&lt;li>高性能、全异步、跨平台、去中心化游戏服务器框架(&lt;a href="https://atframe.work/">atframework&lt;/a>): &lt;a href="https://github.com/atframework">https://github.com/atframework&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;blockquote>
+&lt;ul>
+&lt;li>&lt;a href="https://github.com/atframework/atframe_utils">Utility库&lt;/a>
+&lt;ul>
+&lt;li>单元测试框架&lt;/li>
+&lt;li>C++17、20、23、26部分能力适配下放&lt;/li>
+&lt;li>常见容器和算法：jiffies_timer、LRUMap、混合LRU资源池、AC自动机、CLI和命令行工具、字符串算法、随机数算法、状态机、无锁容器、内存管理模块、通用WAL模块等等&lt;/li>
+&lt;li>常见开源库跨版本适配封装: 加密和Hash算法类（openssl,libressl,mbedtls,libsodiom）、网络类（curl，query string标准算法）、protobuf适配层、GSL适配等&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;a href="https://github.com/atframework/libatbus">libatbus - 高性能进程间通信和管理&lt;/a>
+&lt;ul>
+&lt;li>单进程单线程+TCP通道: 2800+K/QPS和600+MB/s吞吐量&lt;/li>
+&lt;li>单进程单线程+共享内存通道: 5000+K/QPS和1.5+GB/s吞吐量&lt;/li>
+&lt;li>无锁队列支持多（进程/线程）写单（线程）读&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;a href="https://github.com/atframework/libatapp">libatapp - 服务器应用框架&lt;/a>
+&lt;ul>
+&lt;li>动态Worker（线程）池&lt;/li>
+&lt;li>服务发现，基于标签集合的策略路由（类似K8S微服务框架流量治理，支持一致性Hash、RoundRobin、随机、顺序等）&lt;/li>
+&lt;li>端点管理、IO能力抽象。支持自定义协议IO层。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;a href="https://github.com/atframework/atsf4g-co">atsf4g-co - 完整游戏服务器解决方案&lt;/a>
+&lt;ul>
+&lt;li>包含服务器代理进程atproxy（使用etcd实现去中心化）&lt;/li>
+&lt;li>包含客户端网关层进程atgateway
+&lt;ul>
+&lt;li>自有协议、动态密钥加密、断线重连管理、网络优化、资源控制、纯C客户端API&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>示例的echosvr、loginsvr、gamesvr、分布式事务解决方案、异步队列（一致性问题）方案等&lt;/li>
+&lt;li>示例的协程RPC框架和任务管理&lt;/li>
+&lt;li>可观测性接入，通用动态策略能力&lt;/li>
+&lt;li>基于指标的适用于所有长状态、短状态和无状态服务的HPA能力支持和云原生支持&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;a href="https://github.com/atframework/cmake-toolset">cmake-toolset - 跨平台构建系统&lt;/a>
+&lt;ul>
+&lt;li>支持 Windows,Linux,macOS,Android,iOS&lt;/li>
+&lt;li>适配 UnrealEngine UBT 和 Unity 支持&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;a href="https://github.com/atframework/AtgwInnerCli-CSharp">AtgwInnerCli-CSharp - atgateway的C#适配&lt;/a>（纯C客户端API的包装，可用于Unity 3D）&lt;/li>
+&lt;/ul>&lt;/blockquote>
+&lt;ul>
+&lt;li>Redis高可用解决方案: &lt;a href="https://github.com/owent/hiredis-happ">hiredis-happ&lt;/a>(首先支持redis cluster集群，支持自动重试、断线重连、按需连接)&lt;/li>
+&lt;li>高性能、跨平台C++协程框架: &lt;a href="https://github.com/owent/libcopp">libcopp&lt;/a>
+&lt;ul>
+&lt;li>跨平台支持 Windows,macOS,Linux&lt;/li>
+&lt;li>多种栈管理方式（malloc,mmap,VirtualAlloc,动态分割栈）、自适应动态栈池等&lt;/li>
+&lt;li>C++20协程支持&lt;/li>
+&lt;li>支持任务编排，channel组件等&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Github release集成工具: &lt;a href="https://github.com/xresloader/upload-to-github-release">Upload To Github Release&lt;/a> , 商店地址: &lt;a href="https://github.com/marketplace/actions/upload-to-github-release">https://github.com/marketplace/actions/upload-to-github-release&lt;/a>&lt;/li>
+&lt;li>DDNS工具(Rust lang): &lt;a href="https://github.com/owent/ddns-cli">ddns-cli&lt;/a>&lt;/li>
+&lt;li>企业微信机器人服务(Rust lang): &lt;a href="https://github.com/owent/wxwork_robotd">wxwork_robotd&lt;/a>&lt;/li>
+&lt;li>coredns插件-返回记录过滤(golang): &lt;a href="https://github.com/owent/coredns-filter">coredns-filter&lt;/a>&lt;/li>
+&lt;li>coredns插件-nftables集成(golang): &lt;a href="https://github.com/owent/coredns-nftables">coredns-nftables&lt;/a>&lt;/li>
+&lt;li>Github-个人Utility工具集: &lt;a href="https://github.com/owent-utils">https://github.com/owent-utils&lt;/a>&lt;/li>
+&lt;li>编译器构建脚本(最新版本 &lt;a href="https://github.com/owent/bash-shell/tree/main/GCC%20Installer">GCC&lt;/a>和&lt;a href="https://github.com/owent/bash-shell/tree/main/LLVM%26Clang%20Installer">Clang+LLVM+Libc++&lt;/a>)&lt;/li>
+&lt;li>WordPress代码高亮插件: &lt;a href="https://wordpress.org/plugins/wp-code-highlightjs/">WP-Code-Highlight.js&lt;/a>&lt;/li>
+&lt;li>静态化博客系统主题 &lt;a href="https://github.com/owent/hexo-theme-distinctionpp">hexo-theme-distinctionpp&lt;/a>、&lt;a href="https://github.com/owent/hugo-theme-distinctionpp">hugo-theme-distinctionpp&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;p>生命不息，折腾不止，平常写的小玩具和小工具就不列举了。&lt;/p></description></item></channel></rss>
