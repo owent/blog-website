@@ -480,7 +480,7 @@ rpc::telemetry::opentelemetry_utility::add_global_metics_observable_int64(
     metrics_data.second_max_io_count.store(metrics_data.second_current_max_io_count, std::memory_order_release);
     rpc::telemetry::opentelemetry_utility::global_metics_observe_record(result, value);
     });
-</code></pre><p><img src=2503-02.png alt=2503-02.png></p><p>再展示个更复杂的动态多层级指标:</p><pre><code class=language-cpp>// 更新视图索引索引CPU消耗
+</code></pre><p>再展示个更复杂的动态多层级指标:</p><pre><code class=language-cpp>// 更新视图索引索引CPU消耗
 rpc::telemetry::opentelemetry_utility::add_global_metics_observable_int64(
     rpc::telemetry::metrics_observable_type::kGauge, &quot;trade_order&quot;, {&quot;trade_order_slot_distribution&quot;, &quot;&quot;, &quot;&quot;},
     [](rpc::telemetry::opentelemetry_utility::metrics_observer&amp; result) {
