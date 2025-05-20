@@ -1,0 +1,537 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>指标上报的多线程优化和多拉取源点优化|I'm OWenT</title>
+<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2025/2503.html><link rel=icon href=/favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net//css/style.css><link rel=stylesheet href=//owent.net/css/syntax.css><script type=importmap>
+{
+  "imports": {
+    "react": "//unpkg.com/react@latest",
+    "react-bootstrap": "//unpkg.com/react-bootstrap@latest",
+    "mermaid": "//unpkg.com/mermaid@latest/dist/mermaid.esm.min.mjs",
+    "bootstrap": "//unpkg.com/bootstrap@latest/dist/js/bootstrap.esm.min.js",
+    "@popperjs/core": "//unpkg.com/@popperjs/core@latest/dist/esm/popper.js"
+  }
+}
+</script><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8180054975285991" crossorigin=anonymous></script><meta content="codeva-4M5iohb9TW" name=baidu-site-verification></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net/ id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-bs-toggle=collapse data-bs-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/ title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-c11be26fee23494de13a592d5db78bed class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2025/2503.html target=_blank itemprop=url>指标上报的多线程优化和多拉取源点优化</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#前言>前言</a></li><li><a href=#性能和易用性问题>性能和易用性问题</a></li><li><a href=#自动重注册>自动重注册</a></li><li><a href=#上报数据转换>上报数据转换</a></li><li><a href=#基础的部分采样方案>基础的部分采样方案</a></li><li><a href=#最后>最后</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><h2 id=前言>前言</h2><p>我给我们的服务器框架深度集成了一些可观测性的能力。使用 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 作为接入层。
+在指标方面，我们允许业务层自由地定制化指标上报和拉取，并以此实现策略控制。上报的时候有Pull模式接口（异步接口），也有Push模式接口（同步接口）。
+为了减少 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 内部的视图合并开销，性能最佳，我们尽量使用异步接口。
+但是这种情况下由于 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 内部存在后台Processor线程、Exporter线程等，指标的采集往往需要跨线程操作。
+这就要求我们上报代码逻辑需要保证线程安全。</p><p>而要求所有逻辑代码保证线程安全，一方面对于深层次有复杂关系的数据，代码复杂度比较高，很容易出错；另一方面如果过多无脑加锁也会一种开销和资源浪费。
+所以我尝试抽象了一组接口来屏蔽这个细节，让业务层可以无脑接入。</p><h2 id=性能和易用性问题>性能和易用性问题</h2><p>最早我们使用 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 比较粗暴，直接调用同步接口。在上报量稍微大点的时候，因为频繁触发视图的属性比较和Merge计算，导致某些场景的CPU开销能占到 10%。
+所以后来进行了一系列优化，第一步骤就是通过一些预统计，减少属性集比较和视图合并。然后采用异步接口上报。</p><p>大致的采集流程如下：</p><pre><code class=language-{mermaid}>flowchart LR
+ subgraph PullExporter[&quot;Pull模式驱动器&quot;]
+    direction LR
+        PPull(&quot;Prometheus Pull Exporter
+            (MetricReader)
+            【fa:fa-globe 外部请求触发】&quot;)
+        PEMR(&quot;PeriodicExportingMetricReader
+            【fa:fa-clock 定时器触发】&quot;)
+  end
+ subgraph PrometheusExporter[&quot;Prometheus和其他&quot;]
+    direction LR
+        PPush(&quot;fa:fa-file-export Prometheus Push Exporter&quot;)
+        PFile(&quot;fa:fa-file-export Prometheus File Exporter&quot;)
+        OtherPushExporter(&quot;fa:fa-file-export 其他Push模式Exporter...&quot;)
+  end
+ subgraph OTLPExporter[&quot;OTLP&quot;]
+    direction LR
+        OTLPGRPC(&quot;fa:fa-file-export OTLP gRPC Exporter&quot;)
+        OTLPHTTP(&quot;fa:fa-file-export OTLP HTTP Exporter&quot;)
+        OTLPFile(&quot;fa:fa-file-export OTLP File Exporter&quot;)
+  end
+ subgraph PushExporter[&quot;Push模式输出&quot;]
+    direction TB
+        PrometheusExporter
+        OTLPExporter
+  end
+ subgraph Meters[&quot;多个指标&quot;]
+    direction LR
+        Meter1(&quot;Meter 1&quot;)
+        Meter2(&quot;Meter 2&quot;)
+        Meter3(&quot;Meter 3&quot;)
+        Meter4(&quot;Meter ...&quot;)
+  end
+ classDef callback stroke:#f00
+ subgraph MeterCallbacks[&quot;指标回调(每个指标)&quot;]
+    direction TB
+        Callback[&quot;Callback&quot;]:::callback
+        ObservableRegistry[&quot;ObservableRegistry&quot;]       
+  end
+ subgraph SyncMeterAPI[&quot;同步指标接口(每个指标)&quot;]
+    direction LR
+        Counter[&quot;fa:fa-paper-plane Counter&quot;]
+        Gauge[&quot;fa:fa-paper-plane Gauge&quot;]
+        Histogram[&quot;fa:fa-paper-plane Histogram&quot;]
+  end
+ subgraph MetricStorageLayer[&quot;存储层(每个视图)&quot;]
+    direction TB
+        SyncMetricStorage[&quot;fa:fa-layer-group 同步存储层&quot;]
+        AsyncMetricStorage[&quot;fa:fa-layer-group 异步存储层&quot;]
+  end
+ subgraph MeterCollect[&quot;采集层&quot;]
+        MC(&quot;MetricCollector&quot;)
+        MetricProducer(&quot;MetricProducer&quot;)
+        Meters
+        MeterCallbacks
+        SyncMeterAPI
+        MetricStorageLayer
+  end
+    PullExporter -- 驱动触发采集 --&gt; MetricProducer
+    MetricProducer --&gt; MC
+    MC --&gt; Meters
+    ObservableRegistry --&gt; Callback
+    Meters --&gt; MeterCallbacks
+    SyncMeterAPI --&gt; MetricStorageLayer
+    MeterCallbacks --&gt; MetricStorageLayer
+    MetricStorageLayer -- 通知指标提取 --&gt; Meters
+    Meters -- Collect获取结果后 --&gt; PushExporter
+    SyncMetricStorage@{ shape: lin-cyl}
+    AsyncMetricStorage@{ shape: lin-cyl}
+</code></pre><p>但是异步接口调用有一定复杂度，一个最简单的注册指标的流程如下:</p><pre><code class=language-cpp>using otel_observer_result_int64 = opentelemetry::metrics::ObserverResultT&lt;int64_t&gt;;
+using otel_observer_result_double = opentelemetry::metrics::ObserverResultT&lt;double&gt;;
+
+auto meter = provider-&gt;GetMeter(&quot;meter name&quot;);
+auto instrument = meter-&gt;CreateInt64ObservableGauge(&quot;instrument name&quot;, &quot;instrument description&quot;, &quot;instrument unit&quot;);
+
+instrument-&gt;AddCallback([](opentelemetry::metrics::ObserverResult result, void* /*private_data*/) {
+    if (opentelemetry::nostd::holds_alternative&lt;opentelemetry::nostd::shared_ptr&lt;otel_observer_result_int64&gt;&gt;(result)) {
+        auto type_result = opentelemetry::nostd::get&lt;opentelemetry::nostd::shared_ptr&lt;otel_observer_result_int64&gt;&gt;(result);
+        if (type_result) {
+            type_result-&gt;Observe(static_cast&lt;int64_t&gt;(get_result_value()), {} /* attributes */);
+        }
+    } else if (opentelemetry::nostd::holds_alternative&lt;opentelemetry::nostd::shared_ptr&lt;otel_observer_result_double&gt;&gt;(result)) {
+        auto type_result = opentelemetry::nostd::get&lt;opentelemetry::nostd::shared_ptr&lt;otel_observer_result_double&gt;&gt;(result);
+        type_result-&gt;Observe(static_cast&lt;double&gt;(result_value), {} /* attributes */);
+    }
+} /*, void* private_data*/);
+</code></pre><p>这个接口有几个需要注意的地方:</p><ul><li>上报一个指标，有meter和instrument的概念。目前v1版本是不支持删除callback、instrument和meter的。目前即便v2版本也删不干净。所以如果reload，最好是重新创建provider，那么这里这个meter、instrument和callback都要重新创建和注册。</li></ul><blockquote><p>由于最后一个Provider引用释放的时候，otel-cpp会自动调用一次Flush吧所有已经导出的数据强制刷出。这会导致线程Block，所以为了不影响业务主线程。这里还要处理一次Reload的时候另起线程来执行Flush。</p></blockquote><ul><li>指标类型和调用Observe的传入类型要匹配，如果涉及浮点和整数转换的话，还要考虑 <a href=https://en.cppreference.com/w/cpp/types/numeric_limits/epsilon>epsilon</a> 。</li><li>回调函数的签名是 <code>using ObservableCallbackPtr = void (*)(ObserverResult, void *);</code> 只能透传一个 <code>void*</code> ，如果要包装更复杂的数据透传需要自己封装。</li><li>回调执行会跨线程，所以数据上报要保证线程安全。</li><li>多源拉取时可能会反复触发回调，所以不能简单地根据回调时间差来计算增量部分，否则可能导致误差。</li></ul><p>我们通过抽象了一层来一次性解决这些问题。每次业务层采集从缓存里读数据，并且底层直接处理掉类型转换。比如:</p><pre><code class=language-cpp>for (auto&amp; record : metrics_item-&gt;collected_records) {
+    if (!record) {
+    continue;
+    }
+    ++export_record_count;
+
+    if (opentelemetry::nostd::holds_alternative&lt;
+            opentelemetry::nostd::shared_ptr&lt;opentelemetry::metrics::ObserverResultT&lt;int64_t&gt;&gt;&gt;(result)) {
+    auto real_observer = opentelemetry::nostd::get&lt;
+        opentelemetry::nostd::shared_ptr&lt;opentelemetry::metrics::ObserverResultT&lt;int64_t&gt;&gt;&gt;(result);
+    if (real_observer) {
+        real_observer-&gt;Observe(get_opentelemetry_utility_metrics_record_value_as_int64(record-&gt;value),
+                                opentelemetry_utility::get_attributes(record-&gt;attributes));
+    }
+    } else if (opentelemetry::nostd::holds_alternative&lt;
+                    opentelemetry::nostd::shared_ptr&lt;opentelemetry::metrics::ObserverResultT&lt;double&gt;&gt;&gt;(result)) {
+    auto real_observer = opentelemetry::nostd::get&lt;
+        opentelemetry::nostd::shared_ptr&lt;opentelemetry::metrics::ObserverResultT&lt;double&gt;&gt;&gt;(result);
+    if (real_observer) {
+        real_observer-&gt;Observe(get_opentelemetry_utility_metrics_record_value_as_double(record-&gt;value),
+                                opentelemetry_utility::get_attributes(record-&gt;attributes));
+    }
+    }
+}
+</code></pre><p>这里 <code>metrics_item->collected_records</code> 什么时候刷新呢？每次触发采集的时候，我们会检查采集版本号，当超出采集周期的时候会自增需要采集的版本号。</p><pre><code class=language-cpp>if (now - metrics_item-&gt;collected_timepoint &gt; metrics_item-&gt;collect_interval) {
+  metrics_item-&gt;export_version.store(metrics_item-&gt;collect_version.load(std::memory_order_acquire),
+                                     std::memory_order_release);
+  callback_data_set.second.collecting_version.fetch_add(1, std::memory_order_release);
+  metrics_item-&gt;collected_timepoint = now;
+  std::lock_guard&lt;std::recursive_mutex&gt; collected_lock_guard{metrics_item-&gt;collected_lock};
+  metrics_item-&gt;collected_records.clear();
+} else if (now &lt; metrics_item-&gt;collected_timepoint) {
+  metrics_item-&gt;collected_timepoint = now;
+}
+</code></pre><p>然后外部Tick的时候，发现这个collecting_version大于导出数据版本的时候，才去触发用户层采集接口。
+在多源抓取的时候，可能在一个采集周期内多次触发采集回调。这时候就能直接命中缓存，直接返回。</p><p>这里有个小细节是因为指标数量可能比较多，如果一帧里全量采集可能会导致卡顿。所以有必要在一次采集消耗过高时分针增量采集。
+我们现在是以一个指标为单位，比如有2000个指标，采集200个就话费了比较长时间了，就让出时间片，下一个Tick从第201个开始。
+这里也要限制每个Tick的采集量，尽可能公平调度，防止引起其他功能模块饥饿。</p><p>由于希望业务层不要关心线程安全的复杂性，所以我们的OTEL层采集在专门的采集线程上，但是业务层的采集总是在主线程执行。中间用无锁队列串起来，大致结构如下:</p><p><img src=2503-01.png alt=2503-01.png></p><h2 id=自动重注册>自动重注册</h2><p>在Reload的时候，我们需要支持重新加载所有的配置资源、processor、exporter等组件。但是整个OTEL SDK里是没有移除接口的。整个处理组件和IO组件一旦搭配好就处于immutable状态。
+那么为了实现Reload，最简单的方式就是从最上游开始，也就是从Provider层开始整个重建。这里涉及两个问题。</p><p>问题一：在创建完新Provider后，销毁前一个Provider时，会触发对正在导出的数据的Flush操作。这有可能是个延迟操作，会阻塞调用方。显然我们不能接受足额阻塞我们业务线程。
+所以这里的解决方法就是创建一个专门的销毁线程。</p><pre><code class=language-cpp>std::shared_ptr&lt;global_service_data_type&gt; current_service_cache = get_global_service_data();
+if (!current_service_cache) {
+    return;
+}
+
+// 我们的系统存在多分组，所以要处理一下默认分组和命名分组
+std::shared_ptr&lt;group_type&gt; previous_group = group;
+if (group-&gt;group_name.empty()) {
+    current_service_cache-&gt;default_group.swap(previous_group);
+} else {
+    current_service_cache-&gt;named_groups[group-&gt;group_name].swap(previous_group);
+}
+
+// Shutdown in another thread to avoid blocking
+do {
+    if (!previous_group || previous_group == group) {
+        break;
+    }
+    // 这里引用provider是为了续上provider的生命周期传给自线程内执行Flush，否则最后一个引用计数结束会立即执行Flush阻塞。
+    if (previous_group-&gt;logs_handle.provider == group-&gt;logs_handle.provider) {
+        previous_group-&gt;logs_handle.reset();
+    }
+    if (previous_group-&gt;metrics_handle.provider == group-&gt;metrics_handle.provider) {
+        previous_group-&gt;metrics_handle.reset();
+    }
+    if (previous_group-&gt;tracer_handle.provider == group-&gt;tracer_handle.provider) {
+        previous_group-&gt;tracer_handle.reset();
+    }
+    std::thread cleanup_thread([previous_group, current_service_cache]() {
+        // 子线程执行Flush和销毁操作,这里面是执行一些线程安全相关的设置和Flush
+        _opentelemetry_cleanup_group(previous_group, current_service_cache);
+    });
+    cleanup_thread.detach();
+} while (false);
+
+static void _opentelemetry_cleanup_group(std::shared_ptr&lt;::mx::telemetry::group_type&gt; group,
+                                         const std::shared_ptr&lt;global_service_data_type&gt; &amp;current_service_cache) {
+  std::list&lt;std::shared_ptr&lt;std::thread&gt;&gt; shutdown_threads;
+
+  if (current_service_cache &amp;&amp; group &amp;&amp; group-&gt;initialized) {
+    atfw::util::lock::read_lock_holder&lt;atfw::util::lock::spin_rw_lock&gt; lock_guard{
+        current_service_cache-&gt;on_group_destroy_callback_lock};
+    for (auto &amp;callback_fn : current_service_cache-&gt;on_group_destroy_callbacks) {
+      if (callback_fn) {
+        callback_fn(group);
+      }
+    }
+
+    group-&gt;initialized = false;
+  }
+
+  if (group) {
+    // Provider must be destroy before logger
+    {
+      atfw::util::lock::write_lock_holder&lt;atfw::util::lock::spin_rw_lock&gt; lock_guard{group-&gt;logger_lock};
+      if (group-&gt;logs_handle.provider) {
+        if (group-&gt;logs_handle.shutdown_callback) {
+          auto handle = group-&gt;logs_handle;
+          // 每个组件分别再在子线程内销毁，减少远端配置错误或者远端延迟导致累计延迟
+          shutdown_threads.push_back(
+              atfw::memory::stl::make_shared&lt;std::thread&gt;([handle]() { handle.shutdown_callback(handle.provider); }));
+        }
+        group-&gt;logs_handle.reset();
+      }
+      group-&gt;default_logger = opentelemetry::nostd::shared_ptr&lt;opentelemetry::logs::Logger&gt;();
+    }
+
+    // ...
+}
+
+// 这里是其中一个Shutdown回调的代码
+ret.shutdown_callback =
+    [processors_ptr](const opentelemetry::nostd::shared_ptr&lt;opentelemetry::trace::TracerProvider&gt; &amp;provider) {
+    if (!provider) {
+        return;
+    }
+
+    auto trace_provider = opentelemetry::trace::Provider::GetTracerProvider();
+    if (trace_provider == provider) {
+        opentelemetry::trace::Provider::SetTracerProvider(
+            opentelemetry::nostd::shared_ptr&lt;opentelemetry::trace::TracerProvider&gt;(
+                new opentelemetry::trace::NoopTracerProvider()));
+    }
+
+    // 处理优雅退出时无限等待的问题
+    if (processors_ptr &amp;&amp; !processors_ptr-&gt;empty()) {
+        std::chrono::microseconds timeout =
+            std::chrono::duration_cast&lt;std::chrono::microseconds&gt;(std::chrono::seconds{10});
+        auto app = atapp::app::get_last_instance();
+        if (nullptr != app) {
+        timeout = std::chrono::duration_cast&lt;std::chrono::microseconds&gt;(
+            std::chrono::seconds{app-&gt;get_origin_configure().timer().stop_timeout().seconds() / 2});
+        timeout += std::chrono::duration_cast&lt;std::chrono::microseconds&gt;(
+            std::chrono::nanoseconds{app-&gt;get_origin_configure().timer().stop_timeout().nanos() / 2});
+        }
+        // 某些老版本Provider层调用Shutdown没有透传timeout到processor，会导致Flush时间过长。这里显示调用一次来解决
+        for (auto &amp;processor : *processors_ptr) {
+            processor-&gt;Shutdown(timeout);
+        }
+        processors_ptr-&gt;clear();
+    }
+
+    static_cast&lt;opentelemetry::sdk::trace::TracerProvider *&gt;(provider.get())-&gt;Shutdown();
+    };
+</code></pre><p>问题二：在重新创建后所有的指标监听都需要重建。我们有不希望把这个重复注册的复杂性暴露给用户层，所以底层做了另外一层缓存。在重建Provider之后也自动重新注册。</p><p>因为我们之前采集层面已经做了数据层缓存分离了，所以我们这里在那个缓存层之上顺便把注册也缓存了就行了。</p><pre><code class=language-cpp>SERVER_FRAME_API bool opentelemetry_utility::add_global_metics_observable_int64(
+    metrics_observable_type type, opentelemetry::nostd::string_view meter_name, meter_instrument_key metrics_key,
+    std::function&lt;void(metrics_observer&amp;)&gt; fn) {
+  if (!fn) {
+    return false;
+  }
+
+  // opentelemetry only use metrics name as key of metric storage
+  std::string key = atfw::util::log::format(&quot;{}:{}&quot;, gsl::string_view{meter_name.data(), meter_name.size()},
+                                            gsl::string_view{metrics_key.name.data(), metrics_key.name.size()});
+
+  std::pair&lt;std::recursive_mutex&amp;, opentelemetry_utility_global_metrics_set&amp;&gt; data_set = get_global_metrics_set();
+  {
+    std::lock_guard&lt;std::recursive_mutex&gt; lock_guard{data_set.first};
+    auto iter = data_set.second.int64_observable_by_key.find(key);
+    if (data_set.second.int64_observable_by_key.end() != iter &amp;&amp; iter-&gt;second) {
+      iter-&gt;second-&gt;callback = fn;
+      return true;
+    }
+  }
+
+  auto handle = atfw::memory::stl::make_shared&lt;opentelemetry_utility::metrics_observer&gt;();
+  if (!handle) {
+    return false;
+  }
+  handle-&gt;key = key;
+  handle-&gt;type = type;
+  handle-&gt;meter_name = static_cast&lt;std::string&gt;(meter_name);
+  handle-&gt;meter_instrument_name = static_cast&lt;std::string&gt;(metrics_key.name);
+  handle-&gt;meter_instrument_description = static_cast&lt;std::string&gt;(metrics_key.description);
+  handle-&gt;meter_instrument_unit = static_cast&lt;std::string&gt;(metrics_key.unit);
+  handle-&gt;collect_interval = protobuf_to_chrono_duration&lt;&gt;(
+      logic_config::me()-&gt;get_logic().telemetry().opentelemetry().metrics().reader().export_interval());
+  if (handle-&gt;collect_interval &lt; std::chrono::seconds{2}) {
+    handle-&gt;collect_interval = std::chrono::seconds{15};
+  } else {
+    handle-&gt;collect_interval -= std::chrono::seconds{1};
+  }
+  handle-&gt;callback = std::move(fn);
+  handle-&gt;origin_callback = nullptr;
+  if (false == data_set.second.initialized.load(std::memory_order_acquire) ||
+      internal_add_global_metrics_observable_int64(*handle)) {
+    std::lock_guard&lt;std::recursive_mutex&gt; lock_guard{data_set.first};
+    data_set.second.int64_observable_by_key[key] = handle;
+    data_set.second.int64_observable_by_pointer[reinterpret_cast&lt;void*&gt;(handle.get())] = handle;
+    ++data_set.second.collecting_version;
+    return true;
+  } else {
+    return false;
+  }
+}
+</code></pre><p>这里面 <code>internal_add_global_metrics_observable_int64</code> 是实际执行注册observable。Reload的时候重新调用一次就行了。</p><h2 id=上报数据转换>上报数据转换</h2><p>虽然我们的通信接口都是OTEL规范，但是有时候会上传到其他平台。比如目前指标领域的事实标准-<a href=https://prometheus.io/>Prometheus</a>。</p><p><a href=https://prometheus.io/>Prometheus</a> 其实数据结构是比较简单的，比如指标名只允许 <code>[a-zA-Z_:][a-zA-Z0-9_:]*</code> 这个规范。只有一层标签的概念，标签名必须满足 <code>[a-zA-Z_][a-zA-Z0-9_]*</code> ，并且只有一层。</p><blockquote><p>参考: <a href=https://prometheus.io/docs/concepts/data_model/>https://prometheus.io/docs/concepts/data_model/</a></p></blockquote><p>OTEL就复杂多了，指标的结构如下:</p><pre><code class=language-proto>// MetricsData
+// └─── ResourceMetrics
+//   ├── Resource
+//   ├── SchemaURL
+//   └── ScopeMetrics
+//      ├── Scope
+//      ├── SchemaURL
+//      └── Metric
+//         ├── Name
+//         ├── Description
+//         ├── Unit
+//         └── data
+//            ├── Gauge
+//            ├── Sum
+//            ├── Histogram
+//            ├── ExponentialHistogram
+//            └── Summary
+</code></pre><p>里面的属性结构更加复杂:</p><pre><code class=language-proto>//    Metric
+//  +------------+
+//  |name        |
+//  |description |
+//  |unit        |     +------------------------------------+
+//  |data        |---&gt; |Gauge, Sum, Histogram, Summary, ... |
+//  +------------+     +------------------------------------+
+//
+//    Data [One of Gauge, Sum, Histogram, Summary, ...]
+//  +-----------+
+//  |...        |  // Metadata about the Data.
+//  |points     |--+
+//  +-----------+  |
+//                 |      +---------------------------+
+//                 |      |DataPoint 1                |
+//                 v      |+------+------+   +------+ |
+//              +-----+   ||label |label |...|label | |
+//              |  1  |--&gt;||value1|value2|...|valueN| |
+//              +-----+   |+------+------+   +------+ |
+//              |  .  |   |+-----+                    |
+//              |  .  |   ||value|                    |
+//              |  .  |   |+-----+                    |
+//              |  .  |   +---------------------------+
+//              |  .  |                   .
+//              |  .  |                   .
+//              |  .  |                   .
+//              |  .  |   +---------------------------+
+//              |  .  |   |DataPoint M                |
+//              +-----+   |+------+------+   +------+ |
+//              |  M  |--&gt;||label |label |...|label | |
+//              +-----+   ||value1|value2|...|valueN| |
+//                        |+------+------+   +------+ |
+//                        |+-----+                    |
+//                        ||value|                    |
+//                        |+-----+                    |
+//                        +---------------------------+
+</code></pre><p>那为什么要这么复杂呢？
+我们举例一个场景，比如我们自己接入了指标上报，我们依赖的gRPC或者其他第三方组件也接入了可观测性。
+那么怎么保证我们的上报点不冲突？这可以通过不同的Scope来区分。
+然后同样在一个进程里，上报的数据会包含比如host信息，进程名字、业务类型等等和进程相关的信息。但是我们有2000个指标，那么用原始的 <a href=https://prometheus.io/>Prometheus</a> 我们不得不把这些信息重复上报 2000 份。
+而在OTEL里，只要在Resource去上报一次就行了。同理还有指标级共享和每个Point不同的数据区，也是能减少不必要的重复上报。</p><blockquote><p>实际上对于进程级资源共享，<a href=https://prometheus.io/>Prometheus</a> 和 <a href=https://opencensus.io/>OpenCensus</a> 都有一个方案。定义了一个 <a href=https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#supporting-target-metadata-in-both-push-based-and-pull-based-systems>target_info</a> 类型的特殊指标来承载这些信息。
+同一个连接，<a href=https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#supporting-target-metadata-in-both-push-based-and-pull-based-systems>target_info</a> 只要上报一次即可。后面上报的指标自动关联这些属性。但是这个并不是所有平台都兼容，将具体是否可用还要咨询使用的平台。
+有兴趣可以阅读 <a href=https://opentelemetry.io/docs/specs/otel/compatibility/prometheus_and_openmetrics/#resource-attributes-1>https://opentelemetry.io/docs/specs/otel/compatibility/prometheus_and_openmetrics/#resource-attributes-1</a></p></blockquote><p>这里涉及数据标签的问题。另外，规范里还定义了一些特殊的单位转换，比如:</p><pre><code class=language-cpp>// Time
+{&quot;d&quot;, &quot;days&quot;},
+{&quot;h&quot;, &quot;hours&quot;},
+{&quot;min&quot;, &quot;minutes&quot;},
+{&quot;s&quot;, &quot;seconds&quot;},
+{&quot;ms&quot;, &quot;milliseconds&quot;},
+{&quot;us&quot;, &quot;microseconds&quot;},
+{&quot;ns&quot;, &quot;nanoseconds&quot;},
+// Bytes
+{&quot;By&quot;, &quot;bytes&quot;},
+{&quot;KiBy&quot;, &quot;kibibytes&quot;},
+{&quot;MiBy&quot;, &quot;mebibytes&quot;},
+{&quot;GiBy&quot;, &quot;gibibytes&quot;},
+{&quot;TiBy&quot;, &quot;tibibytes&quot;},
+{&quot;KBy&quot;, &quot;kilobytes&quot;},
+{&quot;MBy&quot;, &quot;megabytes&quot;},
+{&quot;GBy&quot;, &quot;gigabytes&quot;},
+{&quot;TBy&quot;, &quot;terabytes&quot;},
+{&quot;By&quot;, &quot;bytes&quot;},
+{&quot;KBy&quot;, &quot;kilobytes&quot;},
+{&quot;MBy&quot;, &quot;megabytes&quot;},
+{&quot;GBy&quot;, &quot;gigabytes&quot;},
+{&quot;TBy&quot;, &quot;terabytes&quot;},
+// SI
+{&quot;m&quot;, &quot;meters&quot;},
+{&quot;V&quot;, &quot;volts&quot;},
+{&quot;A&quot;, &quot;amperes&quot;},
+{&quot;J&quot;, &quot;joules&quot;},
+{&quot;W&quot;, &quot;watts&quot;},
+{&quot;g&quot;, &quot;grams&quot;},
+// Misc
+{&quot;Cel&quot;, &quot;celsius&quot;},
+{&quot;Hz&quot;, &quot;hertz&quot;},
+{&quot;1&quot;, &quot;&quot;},
+{&quot;%&quot;, &quot;percent&quot;}
+</code></pre><p>比如我们定义的一个OTEL的指标为 <code>{name="abc", description="XXX", unit="%"}</code> ，最后输出的 <a href=https://prometheus.io/>Prometheus</a> 指标名是 <code>abc_percent</code> 。
+这些规则还在演进变化中，另外早期的OTEL-CPP SDK有个BUG，没有设置单位的属性多余输出了下划线。
+比如 <code>{name="abc", description="XXX", unit=""}</code> 对应的 <a href=https://prometheus.io/>Prometheus</a> 指标名应该是 <code>abc</code>, 但是早期版本会使用 <code>abc_</code> 。</p><p>那为了抹平拉取聚合这一侧用户使用的复杂性，我们抽象了 <code>SanitizePrometheusName</code> 接口，保持和OTEL-CPP里一样的转换规则。
+而提取指标名则是搞了个“奇技淫巧”,先创建一个虚假的指标。执行一次OTEL里的指标转换，在提取生成的指标名。代码如下:</p><pre><code class=language-cpp>  opentelemetry::sdk::metrics::ResourceMetrics fake_resource_metrics;
+  opentelemetry::sdk::metrics::MetricData fake_metrics_data;
+  opentelemetry::sdk::metrics::PointDataAttributes fake_point_data;
+  auto fake_scope = opentelemetry::sdk::instrumentationscope::InstrumentationScope::Create(&quot;none&quot;);
+  fake_metrics_data.aggregation_temporality = opentelemetry::sdk::metrics::AggregationTemporality::kCumulative;
+  fake_metrics_data.instrument_descriptor.name_ = metrics_name_;
+  fake_metrics_data.instrument_descriptor.description_ = metrics_description_;
+  fake_metrics_data.instrument_descriptor.unit_ = metrics_unit_;
+  fake_metrics_data.instrument_descriptor.value_type_ = opentelemetry::sdk::metrics::InstrumentValueType::kLong;
+
+  // @see OtlpMetricUtils::GetAggregationType in otel-cpp
+  switch (metrics_type_) {
+    case PROJECT_NAMESPACE_ID::config::EN_HPA_POLICY_METRICS_TYPE_COUNTER: {
+      fake_metrics_data.instrument_descriptor.type_ = opentelemetry::sdk::metrics::InstrumentType::kObservableCounter;
+      fake_point_data.point_data = opentelemetry::sdk::metrics::SumPointData{};
+      break;
+    }
+    default: {
+      fake_metrics_data.instrument_descriptor.type_ = opentelemetry::sdk::metrics::InstrumentType::kObservableGauge;
+      fake_point_data.point_data = opentelemetry::sdk::metrics::LastValuePointData{};
+      break;
+    }
+  }
+  fake_metrics_data.point_data_attr_.push_back(fake_point_data);
+#if OPENTELEMETRY_VERSION_MAJOR * 1000 + OPENTELEMETRY_VERSION_MINOR &gt;= 1012
+  fake_resource_metrics.scope_metric_data_.push_back(
+      {fake_scope.get(), std::vector&lt;opentelemetry::sdk::metrics::MetricData&gt;{fake_metrics_data}});
+#else
+  fake_resource_metrics.scope_metric_data_.push_back({fake_scope.get(), {fake_metrics_data}});
+#endif
+#if OPENTELEMETRY_VERSION_MAJOR * 1000 + OPENTELEMETRY_VERSION_MINOR &lt; 1012
+  auto prometheus_family =
+      opentelemetry::exporter::metrics::PrometheusExporterUtils::TranslateToPrometheus(fake_resource_metrics);
+#else
+  auto prometheus_family =
+      opentelemetry::exporter::metrics::PrometheusExporterUtils::TranslateToPrometheus(fake_resource_metrics, false);
+#endif
+</code></pre><p>最终我们提供给用户层的配置大概是这样。</p><pre><code class=language-yaml>- metrics_name: &quot;ds_fps_gauge&quot;
+  metrics_unit: us
+  metrics_description: &quot;DS Runtime Fps Metrics&quot;
+  metrics_type: gauge
+  aggregation: count
+  aggregation_parameter:
+  by:
+    labels:
+    - region_group
+    - StandAlone
+  simple_function:
+  - last_over_time: 1m
+  selectors:
+  &quot;PlayerInit&quot;: &quot;true&quot;
+  &quot;service_name&quot;: &quot;DsMonitor&quot;
+  without_auto_selectors:
+  - service_name
+  - hpa_target_name
+- metrics_name: &quot;product_sales_order&quot;
+  metrics_unit: count
+  metrics_description: &quot;OrderSvr Product Sales Order Count&quot;
+  metrics_type: gauge
+  aggregation: sum
+  aggregation_parameter:
+  by:
+    labels:
+    - area_code
+    - market_id
+    - product_id
+  simple_function:
+  - last_over_time: 1m
+  without_auto_selectors:
+  - service_name
+  - hpa_target_name
+</code></pre><p>受<a href=https://grafana.com/>Grafana</a>的启发，我们也提供了一些基础的函数包装和聚合转换，并且自动注入一些聚合标签来做多环境隔离，避免用户直接配置PromQL，防止出错的可能性。</p><h2 id=基础的部分采样方案>基础的部分采样方案</h2><p>最后，我们提供给使用者一方的的指标接口就相当简单，比如交易行服务的IO毛刺监控:</p><pre><code class=language-cpp>// 一秒内IO数
+rpc::telemetry::opentelemetry_utility::add_global_metics_observable_int64(
+    rpc::telemetry::metrics_observable_type::kGauge, &quot;trade_order&quot;, {&quot;trade_order_second_max_io_count&quot;, &quot;&quot;, &quot;&quot;},
+    [](rpc::telemetry::opentelemetry_utility::metrics_observer&amp; result) {
+    if (global_order_manager::is_instance_destroyed()) {
+        return;
+    }
+    metrics_global_data&amp; metrics_data = global_order_manager::me()-&gt;metrics_data_;
+    int64_t value = metrics_data.second_max_io_count.load(std::memory_order_acquire);
+    metrics_data.second_max_io_count.store(metrics_data.second_current_max_io_count, std::memory_order_release);
+    rpc::telemetry::opentelemetry_utility::global_metics_observe_record(result, value);
+    });
+</code></pre><p><img src=2503-02.png alt=2503-02.png></p><p>再展示个更复杂的动态多层级指标:</p><pre><code class=language-cpp>// 更新视图索引索引CPU消耗
+rpc::telemetry::opentelemetry_utility::add_global_metics_observable_int64(
+    rpc::telemetry::metrics_observable_type::kGauge, &quot;trade_order&quot;, {&quot;trade_order_slot_distribution&quot;, &quot;&quot;, &quot;&quot;},
+    [](rpc::telemetry::opentelemetry_utility::metrics_observer&amp; result) {
+    if (global_order_manager::is_instance_destroyed()) {
+        return;
+    }
+
+    std::shared_ptr&lt;::rpc::telemetry::group_type&gt; lifetime;
+
+    for (auto&amp; area_data : global_order_manager::me()-&gt;metrics_data_.area_metric_data) {
+        if (!area_data.second) {
+        continue;
+        }
+        for (auto&amp; order_type_data : area_data.second-&gt;order_type_metric) {
+        if (!order_type_data.second) {
+            continue;
+        }
+
+        for (auto&amp; slot_dist : order_type_data.second-&gt;slot_distribution) {
+            rpc::telemetry::trace_attribute_pair_type internal_attributes[] = {
+                {&quot;trade_area_code&quot;, area_data.first},
+                {&quot;trade_order_type&quot;, order_type_data.first},
+                {&quot;trade_order_slot_id&quot;, slot_dist}};
+
+            rpc::telemetry::opentelemetry_utility::global_metics_observe_record_extend_attrubutes(
+                result, 1, lifetime, internal_attributes);
+        }
+        }
+    }
+});
+</code></pre><p><img src=2503-03.png alt=2503-03.png></p><h2 id=最后>最后</h2><p>可观测性领域还有很多其他的优化和探索，后面有空慢慢分享吧。
+也欢迎有兴趣的小伙伴们互相交流探讨。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2025-05-21T00:39:45.000+00:00 itemprop=datePublished>2025-05-21</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/opentelemetry.html>opentelemetry</a></li><li class=article-tag-list-item><a href=//owent.net/tags/otel.html>otel</a></li><li class=article-tag-list-item><a href=//owent.net/tags/otel-cpp.html>otel-cpp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/hpa.html>HPA</a></li><li class=article-tag-list-item><a href=//owent.net/tags/prometheus.html>prometheus</a></li><li class=article-tag-list-item><a href=//owent.net/tags/metrics.html>metrics</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7.html>可观测性</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2025/2502.html>下一篇<strong>协程(libcopp)的Channel功能和CPU命中率优化</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2025&nbsp;owent
+</strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong><span class=clearfix></span></div></div></footer></div><script type=module>// import * as Popper from "@popperjs/core";// import * as bootstrap from "bootstrap";
+// import React from "react";
+
+        
+</script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/highlight.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/awk.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/bash.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cpp.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/capnproto.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/cmake.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/d.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/diff.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dockerfile.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/dos.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/erlang.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/go.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/less.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/llvm.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/lua.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/php.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/powershell.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/protobuf.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/python.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/profile.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/typescript.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/vim.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/rust.min.js></script><script type=text/javascript src=//unpkg.com/@highlightjs/cdn-assets@latest/languages/yaml.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="//unpkg.com/@highlightjs/cdn-assets@latest/styles/vs2015.min.css",document.querySelector("head").appendChild(t),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const n={};for(const e of hljs.listLanguages())n[e.toLowerCase()]=!0;for(const e of document.querySelectorAll("pre>code"))try{if(e.className.match(/\bmermaid\b/i)){e.classList.add("mermaid");continue}if(e.className.match(/\bnohighlight\b/i))continue;const t=e.className.match(/language-([^\s]+)/i);if(t&&t.length>=2&&hljs.getLanguage(t[1]))hljs.highlightElement(e);else{const t=hljs.highlightAuto(e.innerText,hljs.listLanguages());t&&t.value&&(e.innerHTML=t.value,e.classList.add("hljs"))}}catch(e){window.console&&console.log(e.toString()+`\r
+Maybe can not detect the language`)}})</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-PQEY77BYG1"></script><script>var dnt,doNotTrack=!1;if(!1&&(dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes"),!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-PQEY77BYG1")}</script><script type=text/javascript src=//unpkg.com/katex@latest/dist/katex.min.js></script><script type=text/javascript src=//unpkg.com/katex@latest/dist/contrib/auto-render.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="//unpkg.com/katex@latest/dist/katex.min.css",document.querySelector("head").appendChild(t),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=//unpkg.com/chart.js@latest/dist/chart.umd.js></script><script type=module>
+import mermaid from "mermaid";
+const config = {
+    theme: 'neutral',
+    logLevel: 'fatal',
+    securityLevel: 'loose', 
+    startOnLoad: true,
+    arrowMarkerAbsolute: false,
+    
+
+};
+mermaid.initialize(config);
+</script><script type=text/javascript>var _hmt=_hmt||[];(function(){var t,n,e=document.createElement("script");e.src="https://hm.baidu.com/hm.js?6a0daf8d58889f1cf55a353867bfdbb0",t=document.getElementsByTagName("script"),n=document.getElementsByTagName("script")[t.length-1],n.parentNode.appendChild(e)})()</script></div></body></html>
