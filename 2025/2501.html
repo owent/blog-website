@@ -119,7 +119,7 @@ generate_for_pb_add_simulator_cs_api(&quot;服务名&quot; &quot;输出目录&qu
 
 # 执行生成
 generate_for_pb_run_generator()
-</code></pre><p>还可以根据需要扩展更多的自定义服务流程</p><h3 id=技术白皮书>技术白皮书</h3><p>为了降低重复解析pb和建立符号表带来的CPU开销导致的流程缓慢。整个模板引擎的RPC流程尽量采用统一配置文件，加载多个pb file的方式。然后通过配置多组生成组来生成不同的服务和模板。</p><p><img src=2501.01.png alt=2501.01.png></p><p>代码生成的层级分为两类，第一类是全局模板。对应配置中的 <code>- global:</code> 。另一类是层级模板，分为外层和里层。外层会对每个模板执行一次渲染，里层模板会对每个内部子结构分别做一次渲染。</p><ul><li>对于service模板，外层是service本身，里层是rpc。</li><li>对于message模板，外层是message本身，里层是每个字段。</li><li>对于enum模板，外层是enum本身，里层是每个枚举项。</li><li>对于fileset模板，外层是pb文件本身的描述，里层是每个文件。</li></ul><p>比如我们要对以下服务应用模板渲染:</p><pre><code class=language-proto>service FriendsvrService {
+</code></pre><p>还可以根据需要扩展更多的自定义服务流程</p><h3 id=技术白皮书>技术白皮书</h3><p>为了降低重复解析pb和建立符号表带来的CPU开销导致的流程缓慢。整个模板引擎的RPC流程尽量采用统一配置文件，加载多个pb file的方式。然后通过配置多组生成组来生成不同的服务和模板。</p><div class=bg-dark><p><img src=2501.01.png alt=2501.01.png></p></div><p>代码生成的层级分为两类，第一类是全局模板。对应配置中的 <code>- global:</code> 。另一类是层级模板，分为外层和里层。外层会对每个模板执行一次渲染，里层模板会对每个内部子结构分别做一次渲染。</p><ul><li>对于service模板，外层是service本身，里层是rpc。</li><li>对于message模板，外层是message本身，里层是每个字段。</li><li>对于enum模板，外层是enum本身，里层是每个枚举项。</li><li>对于fileset模板，外层是pb文件本身的描述，里层是每个文件。</li></ul><p>比如我们要对以下服务应用模板渲染:</p><pre><code class=language-proto>service FriendsvrService {
   option (atframework.service_options) = {
     module_name: &quot;friend_api&quot;
   };

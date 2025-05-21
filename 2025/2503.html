@@ -143,7 +143,7 @@ instrument-&gt;AddCallback([](opentelemetry::metrics::ObserverResult result, voi
 </code></pre><p>然后外部Tick的时候，发现这个collecting_version大于导出数据版本的时候，才去触发用户层采集接口。
 在多源抓取的时候，可能在一个采集周期内多次触发采集回调。这时候就能直接命中缓存，直接返回。</p><p>这里有个小细节是因为指标数量可能比较多，如果一帧里全量采集可能会导致卡顿。所以有必要在一次采集消耗过高时分针增量采集。
 我们现在是以一个指标为单位，比如有2000个指标，采集200个就话费了比较长时间了，就让出时间片，下一个Tick从第201个开始。
-这里也要限制每个Tick的采集量，尽可能公平调度，防止引起其他功能模块饥饿。</p><p>由于希望业务层不要关心线程安全的复杂性，所以我们的OTEL层采集在专门的采集线程上，但是业务层的采集总是在主线程执行。中间用无锁队列串起来，大致结构如下:</p><p><img src=2503-01.png alt=2503-01.png></p><h2 id=自动重注册>自动重注册</h2><p>在Reload的时候，我们需要支持重新加载所有的配置资源、processor、exporter等组件。但是整个OTEL SDK里是没有移除接口的。整个处理组件和IO组件一旦搭配好就处于immutable状态。
+这里也要限制每个Tick的采集量，尽可能公平调度，防止引起其他功能模块饥饿。</p><p>由于希望业务层不要关心线程安全的复杂性，所以我们的OTEL层采集在专门的采集线程上，但是业务层的采集总是在主线程执行。中间用无锁队列串起来，大致结构如下:</p><div class=bg-dark><p><img src=2503-01.png alt=2503-01.png></p></div><h2 id=自动重注册>自动重注册</h2><p>在Reload的时候，我们需要支持重新加载所有的配置资源、processor、exporter等组件。但是整个OTEL SDK里是没有移除接口的。整个处理组件和IO组件一旦搭配好就处于immutable状态。
 那么为了实现Reload，最简单的方式就是从最上游开始，也就是从Provider层开始整个重建。这里涉及两个问题。</p><p>问题一：在创建完新Provider后，销毁前一个Provider时，会触发对正在导出的数据的Flush操作。这有可能是个延迟操作，会阻塞调用方。显然我们不能接受足额阻塞我们业务线程。
 所以这里的解决方法就是创建一个专门的销毁线程。</p><pre><code class=language-cpp>std::shared_ptr&lt;global_service_data_type&gt; current_service_cache = get_global_service_data();
 if (!current_service_cache) {
@@ -480,7 +480,7 @@ rpc::telemetry::opentelemetry_utility::add_global_metics_observable_int64(
     metrics_data.second_max_io_count.store(metrics_data.second_current_max_io_count, std::memory_order_release);
     rpc::telemetry::opentelemetry_utility::global_metics_observe_record(result, value);
     });
-</code></pre><p>再展示个更复杂的动态多层级指标:</p><pre><code class=language-cpp>// 更新视图索引索引CPU消耗
+</code></pre><p><img src=2503-02.png alt=2503-02.png></p><p>再展示个更复杂的动态多层级指标:</p><pre><code class=language-cpp>// 更新视图索引索引CPU消耗
 rpc::telemetry::opentelemetry_utility::add_global_metics_observable_int64(
     rpc::telemetry::metrics_observable_type::kGauge, &quot;trade_order&quot;, {&quot;trade_order_slot_distribution&quot;, &quot;&quot;, &quot;&quot;},
     [](rpc::telemetry::opentelemetry_utility::metrics_observer&amp; result) {
