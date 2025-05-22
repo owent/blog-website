@@ -1,5 +1,4 @@
-<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>指标上报的多线程优化和多拉取源点优化|I'm OWenT</title>
-<meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2025/2503.html><link rel=icon href=/favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net//css/style.css><link rel=stylesheet href=//owent.net/css/syntax.css><script type=importmap>
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>指标上报的多线程优化和多拉取源点优化|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2025/2503.html><link rel=icon href=/favicon.ico><link rel=stylesheet href=//unpkg.com/bootstrap@latest/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net//css/style.css><link rel=stylesheet href=//owent.net/css/syntax.css><script type=importmap>
 {
   "imports": {
     "react": "//unpkg.com/react@latest",
@@ -21,7 +20,7 @@
 这就要求我们上报代码逻辑需要保证线程安全。</p><p>而要求所有逻辑代码保证线程安全，一方面对于深层次有复杂关系的数据，代码复杂度比较高，很容易出错；另一方面如果过多无脑加锁也会一种开销和资源浪费。
 所以我尝试抽象了一组接口来屏蔽这个细节，让业务层可以无脑接入。</p><h2 id=性能和易用性问题>性能和易用性问题</h2><p>最早我们使用 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 比较粗暴，直接调用同步接口。在上报量稍微大点的时候，因为频繁触发视图的属性比较和Merge计算，导致某些场景的CPU开销能占到 10%。
 所以后来进行了一系列优化，第一步骤就是通过一些预统计，减少属性集比较和视图合并。然后采用异步接口上报。</p><p>大致的采集流程如下：</p><pre><code class=language-{mermaid}>flowchart LR
- subgraph PullExporter[&quot;Pull模式驱动器&quot;]
+  subgraph PullExporter[&quot;Pull模式驱动器&quot;]
     direction LR
         PPull(&quot;Prometheus Pull Exporter
             (MetricReader)
@@ -29,48 +28,48 @@
         PEMR(&quot;PeriodicExportingMetricReader
             【fa:fa-clock 定时器触发】&quot;)
   end
- subgraph PrometheusExporter[&quot;Prometheus和其他&quot;]
+  subgraph PrometheusExporter[&quot;Prometheus和其他&quot;]
     direction LR
         PPush(&quot;fa:fa-file-export Prometheus Push Exporter&quot;)
         PFile(&quot;fa:fa-file-export Prometheus File Exporter&quot;)
         OtherPushExporter(&quot;fa:fa-file-export 其他Push模式Exporter...&quot;)
   end
- subgraph OTLPExporter[&quot;OTLP&quot;]
+  subgraph OTLPExporter[&quot;OTLP&quot;]
     direction LR
         OTLPGRPC(&quot;fa:fa-file-export OTLP gRPC Exporter&quot;)
         OTLPHTTP(&quot;fa:fa-file-export OTLP HTTP Exporter&quot;)
         OTLPFile(&quot;fa:fa-file-export OTLP File Exporter&quot;)
   end
- subgraph PushExporter[&quot;Push模式输出&quot;]
+  subgraph PushExporter[&quot;Push模式输出&quot;]
     direction TB
         PrometheusExporter
         OTLPExporter
   end
- subgraph Meters[&quot;多个指标&quot;]
+  subgraph Meters[&quot;多个指标&quot;]
     direction LR
         Meter1(&quot;Meter 1&quot;)
         Meter2(&quot;Meter 2&quot;)
         Meter3(&quot;Meter 3&quot;)
         Meter4(&quot;Meter ...&quot;)
   end
- classDef callback stroke:#f00
- subgraph MeterCallbacks[&quot;指标回调(每个指标)&quot;]
+  classDef callback stroke:#f00
+  subgraph MeterCallbacks[&quot;指标回调(每个指标)&quot;]
     direction TB
         Callback[&quot;Callback&quot;]:::callback
         ObservableRegistry[&quot;ObservableRegistry&quot;]       
   end
- subgraph SyncMeterAPI[&quot;同步指标接口(每个指标)&quot;]
+  subgraph SyncMeterAPI[&quot;同步指标接口(每个指标)&quot;]
     direction LR
         Counter[&quot;fa:fa-paper-plane Counter&quot;]
         Gauge[&quot;fa:fa-paper-plane Gauge&quot;]
         Histogram[&quot;fa:fa-paper-plane Histogram&quot;]
   end
- subgraph MetricStorageLayer[&quot;存储层(每个视图)&quot;]
+  subgraph MetricStorageLayer[&quot;存储层(每个视图)&quot;]
     direction TB
         SyncMetricStorage[&quot;fa:fa-layer-group 同步存储层&quot;]
         AsyncMetricStorage[&quot;fa:fa-layer-group 异步存储层&quot;]
   end
- subgraph MeterCollect[&quot;采集层&quot;]
+  subgraph MeterCollect[&quot;采集层&quot;]
         MC(&quot;MetricCollector&quot;)
         MetricProducer(&quot;MetricProducer&quot;)
         Meters
