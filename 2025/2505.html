@@ -239,7 +239,7 @@ from func_no_var_fmt_twice, previous offset: 240, top offset: 1856
 from func_no_var_fmt_once, previous offset: 128, top offset: 1984
 ======
 (LEAF) from func_no_var_no_fmt, previous offset: 48, top offset: 2032
-</code></pre><p>可以看到，每次调用fmt接口增量都挺大。在 <code>-O2</code> 下可能是涉及内存对齐（我没有再仔细查看汇编），offset会更大。</p><h2 id=解决方案>解决方案</h2><p>这个问题我试了一些方案，都无法零开销地解决这个问题。最后采用的方法是利用匿名的Lambda做一次中转。相当于把内存增量控制在Lambda表达式的对象本身的开销上。</p><p>按上面的代码例子就是 <code>LOGFMT(...)</code> 改成如下形式, 其他代码不变:</p><pre><code class=language-cpp>#define LOGFMT(...)                                                 \
+</code></pre><p>可以看到，每次调用fmt接口增量都挺大。在 <code>-O2</code> 下可能是涉及内存对齐（我没有再仔细查看汇编），offset会更大。</p><h2 id=解决方案>解决方案</h2><p>这个问题我试了一些方案，都无法零开销地解决这个问题。最后采用的方法是利用匿名的Lambda对象做一次中转。相当于把内存增量控制在Lambda表达式的对象本身的开销上。(直接加函数中转可能会被内联，从而导致栈仍然无法被复用)</p><p>按上面的代码例子就是 <code>LOGFMT(...)</code> 改成如下形式, 其他代码不变:</p><pre><code class=language-cpp>#define LOGFMT(...)                                                 \
     ([&amp;]() {                                                        \
         auto buf = get_log_buffer_addr();                           \
         auto size = get_log_buffer_size();                          \
