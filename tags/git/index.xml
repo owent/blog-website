@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Git on I'm OWenT</title><link>//owent.net/tags/git.html</link><description>Recent content in Git on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md"&gt;&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /&gt;&lt;/a&gt;</copyright><lastBuildDate>Sun, 23 Oct 2016 12:31:14 +0000</lastBuildDate><atom:link href="//owent.net/tags/git/index.xml" rel="self" type="application/rss+xml"/><item><title>atsf4g完整游戏工程示例</title><link>//owent.net/2016/1306.html</link><pubDate>Sun, 23 Oct 2016 12:31:14 +0000</pubDate><guid>//owent.net/2016/1306.html</guid><description>&lt;p&gt;近期仍然在搭建完整的游戏服务器架构。基于&lt;a href="https://github.com/atframework/atsf4g-co/"&gt;atsf4g（asynchronously-tree server framework fo game）&lt;/a&gt;的完整解决方案终于接近完成。基本框架之前其实已经做完了，但是之前解决的只是基本的框架层代码，不包含任何特定的交互模型、协议模型、配置服务等等。这回就整理了一个只包含登入登出逻辑的完整工程，另外优化了一些小细节和周边工具的支持。&lt;/p&gt;</description></item><item><title>博客文章和文档迁移到gitbook</title><link>//owent.net/2016/1209.html</link><pubDate>Fri, 15 Jan 2016 21:42:11 +0000</pubDate><guid>//owent.net/2016/1209.html</guid><description>&lt;p&gt;使用_Markdown_写blog已经很久了，近期接触并且看了下流传已久的&lt;a href="gitbook.com"&gt;gitbook&lt;/a&gt;平台，感觉做得确实不错。、&lt;/p&gt;
+&lt;p&gt;之前写blog的时候一直用得是&lt;a href="stackedit.io"&gt;stackedit&lt;/a&gt;，是因为&lt;a href="stackedit.io"&gt;stackedit&lt;/a&gt;的对_Markdown_做了很多扩展，功能很强大，有自动目录、流程图、时序图等等，然后可以浏览器直接开很方便。但实际上这些功能写出的东西虽然不错，但是放到比如&lt;a href="github.com"&gt;github&lt;/a&gt;上的时候，&lt;a href="github.com"&gt;github&lt;/a&gt;不支持。目前大多数平台对_Mardown_的扩展都只是到了和&lt;a href="github.com"&gt;github&lt;/a&gt;差不多的地步，没有到&lt;a href="stackedit.io"&gt;stackedit&lt;/a&gt;的程度。这也导致同样写得东西，复制到&lt;a href="github.com"&gt;github&lt;/a&gt;或者其他的平台的时候还得过一遍样式，比较麻烦。而且这些扩展的功能也用得不太多。另外&lt;a href="stackedit.io"&gt;stackedit&lt;/a&gt;时不时被墙然后访问很不稳定也是挺麻烦的一件事儿。&lt;/p&gt;
+&lt;p&gt;再来说这个&lt;a href="gitbook.com"&gt;gitbook&lt;/a&gt;，看中他是觉得它做了一个可持续集成的功能。就是&lt;a href="github.com"&gt;github&lt;/a&gt; _push_完以后可以通知&lt;a href="gitbook.com"&gt;gitbook&lt;/a&gt;然后让&lt;a href="gitbook.com"&gt;gitbook&lt;/a&gt;自动构建文档内容。这点和比如&lt;a href="https://jenkins-ci.org/"&gt;jenkins&lt;/a&gt;和&lt;a href="https://travis-ci.org/"&gt;travis&lt;/a&gt;等等的CI系统很像。然后支持构建成pdf、epub（开源电子书格式）、mobi（kindle电子书格式）和在线书籍。然后版式也挺漂亮，还支持模板，引用等等，感觉确实蛮适合出版发行的。虽然目前为止_Markdown_的功能丰富程度比起Latex还差不少，但是上手难度也比Latex低不少。还是非常有潜力的，而且&lt;a href="gitbook.com"&gt;gitbook&lt;/a&gt;支持用javascript写得插件，以后变数也可以很多。&lt;/p&gt;</description></item><item><title>gitlab腾讯企业邮箱配置</title><link>//owent.net/2015/1138.html</link><pubDate>Fri, 23 Jan 2015 12:02:44 +0000</pubDate><guid>//owent.net/2015/1138.html</guid><description>&lt;p&gt;介于配置gitlab邮箱测试起来补交麻烦而且看日志还不明朗，这里记录一下成功配置好的企业邮箱方案。&lt;/p&gt;
+&lt;p&gt;模板如下：&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt; # mail config
+ gitlab_rails['smtp_enable'] = true
+ gitlab_rails['smtp_address'] = &amp;quot;smtp.exmail.qq.com&amp;quot;
+ gitlab_rails['smtp_port'] = 465
+ gitlab_rails['smtp_user_name'] = &amp;quot;完整邮件账户&amp;quot;
+ gitlab_rails['smtp_password'] = &amp;quot;密码&amp;quot;
+ gitlab_rails['smtp_domain'] = &amp;quot;邮件账户所在域&amp;quot;
+ gitlab_rails['smtp_authentication'] = &amp;quot;login&amp;quot;
+ gitlab_rails['smtp_enable_starttls_auto'] = true
+ gitlab_rails['smtp_tls'] = true # 这个很重要，而且是官方文档里没提及的 
+
+ # If your SMTP server does not like the default 'From: gitlab@localhost' you
+ # # can change the 'From' with this setting.
+ gitlab_rails['gitlab_email_from'] = '完整邮件账户'
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;比如我的邮箱admin@owent.net
+
+配置如下：
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt; # mail config
+ gitlab_rails['smtp_enable'] = true
+ gitlab_rails['smtp_address'] = &amp;quot;smtp.exmail.qq.com&amp;quot;
+ gitlab_rails['smtp_port'] = 465
+ gitlab_rails['smtp_user_name'] = &amp;quot;admin@owent.net&amp;quot;
+ gitlab_rails['smtp_password'] = &amp;quot;admin@owent.net的密码&amp;quot;
+ gitlab_rails['smtp_domain'] = &amp;quot;owent.net&amp;quot;
+ gitlab_rails['smtp_authentication'] = &amp;quot;login&amp;quot;
+ gitlab_rails['smtp_enable_starttls_auto'] = true
+ gitlab_rails['smtp_tls'] = true
+
+ # If your SMTP server does not like the default 'From: gitlab@localhost' you
+ # # can change the 'From' with this setting.
+ gitlab_rails['gitlab_email_from'] = 'admin@owent.net'
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;done.&lt;/p&gt;</description></item><item><title>[转]类似github的框架</title><link>//owent.net/2014/1132.html</link><pubDate>Tue, 23 Dec 2014 10:52:51 +0000</pubDate><guid>//owent.net/2014/1132.html</guid><description>&lt;blockquote&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;github是程序员经常上的网站，但如果是在一家苦逼不能访问外网的公司，那不能把自己的代码托管在github上绝对是一件非常痛苦的事情。如 果想要在公司内网也可以用github托管自己的代码，那就要自己搭建类似github的服务器，好在类似github的框架有很多，基本上都是基于 git的，可以无缝衔接github而无需额外学习其他技术。&lt;/p&gt;</description></item><item><title>Gitlab环境搭建小计</title><link>//owent.net/2014/1110.html</link><pubDate>Mon, 20 Oct 2014 11:13:43 +0000</pubDate><guid>//owent.net/2014/1110.html</guid><description>&lt;p&gt;最近给公司搭建Gitlab作源代码管理工具
+满满都是坑呐。&lt;/p&gt;
+&lt;p&gt;Gitlab 开源仓库软件包官方地址: &lt;a href="https://about.gitlab.com/"&gt;https://about.gitlab.com/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://about.gitlab.com/downloads/"&gt;https://about.gitlab.com/downloads/&lt;/a&gt; 这里有各个Linux分支的安装包，下面的说明笔记齐全，直接使用比较简单。&lt;/p&gt;</description></item></channel></rss>

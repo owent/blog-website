@@ -1,0 +1,96 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>ARM 交叉编译环境搭建|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2013/738.html><link rel=icon href=/favicon.ico><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net//css/style.css><link rel=stylesheet href=//owent.net/css/syntax.css><script type=importmap>
+{
+  "imports": {
+    "react": "https://cdn.jsdelivr.net/npm/react/+esm",
+    "react-bootstrap": "https://cdn.jsdelivr.net/npm/react-bootstrap/+esm",
+    "mermaid": "https://cdn.jsdelivr.net/npm/mermaid/+esm",
+    "bootstrap": "https://cdn.jsdelivr.net/npm/bootstrap/+esm",
+    "@popperjs/core": "https://cdn.jsdelivr.net/npm/popper.js/+esm"
+  }
+}
+</script><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8180054975285991" crossorigin=anonymous></script><meta content="codeva-4M5iohb9TW" name=baidu-site-verification></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net/ id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-bs-toggle=collapse data-bs-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-3264b0008e0739041d02ed669b170b4d class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2013/738.html target=_blank itemprop=url>ARM 交叉编译环境搭建</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#方案一利用android-ndk--jni>方案一：（利用Android ndk + jni）</a></li><li><a href=#方案二利用android-ndk建立独立的toolchains>方案二：（利用Android ndk建立独立的toolchains）</a></li><li><a href=#方案三自己搞个arm版gcc编译器>方案三：（自己搞个Arm版GCC编译器）</a></li><li><a href=#方案四别人有编译好直接给你用哇>方案四：（别人有编译好直接给你用哇）</a></li><li><a href=#方案五还是人家的工具脚本>方案五：（还是人家的工具脚本）</a></li><li><a href=#方案六arm官方推荐>方案六：（ARM官方推荐）</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>最近研究了一下ARM的交叉编译环境搭建，太麻烦了必须作一下记录啊。
+前两个方法比较简单一点，关键是淫家Google帮你弄好了大部分功能</p><h2 id=方案一利用android-ndk--jni>方案一：（利用Android ndk + jni）</h2><p>使用Android NDK的第一步当然是下载Android NDK啦。
+<a href=http://developer.android.com/tools/sdk/ndk/index.html>http://developer.android.com/tools/sdk/ndk/index.html</a>
+使用jni的话，还必须下载相应的Android SDK
+<a href=http://developer.android.com/sdk/index.html>http://developer.android.com/sdk/index.html</a>
+下载完后可以使用 $ANDROID_SDK_ROOT/sdk/tools/android update sdk –no-ui 来更新SDK包
+附注：ANDROID_SDK_ROOT指代Android SDK根目录，NDK_ROOT指代Android NDK根目录。下同。
+为了方便可以把$ANDROID_SDK_ROOT/sdk/tools:$ANDROID_SDK_ROOT/sdk/platform-tools:$NDK_ROOT 加到环境变量PATH里去
+另外,Android 如果要命令行编译，需要ant和ant扩展，需要安装 Android 依赖的32位库
+大致上是 glibc.i686 libzip.i686 libzip-devel.i686 libstdc++.i686 ant ant-* jdk
+其中 libc.i686 libzip.i686 libzip-devel.i686 libstdc++.i686 ant ant-* 可以用 yum install或apt-get install 安装
+jdk最好是官网下一个rpm包安装 rpm -ivh *.rpm</p><pre><code>yum install glibc.i686 libzip.i686 libzip-devel.i686 libstdc++.i686 ant ant-*  #Debian or Ubuntu
+apt-get install glibc.i686 libzip.i686 libzip-devel.i686 libstdc++.i686 ant ant-*  #Redhat or Fedora or CentOS
+rpm -ivh [jdk地址,如jdk-7u17-linux-x64.rpm]
+</code></pre><p>使用NDK+jni交叉编译的时候需要修改Android.mk文件
+位于:
+<strong>[工程目录]/jni/Android.mk</strong>
+编译时cd进工程目录然后调用 $NDK_ROOT/ndk-build 即可，其他的和标准的Android开发流程一样
+详见：http://developer.android.com/tools/sdk/ndk/index.html
+如果要打包成apk，可以执行</p><pre><code>​ant -f build.xml clean debug -Dsdk.dir=$ANDROID_SDK_ROOT
+</code></pre><h2 id=方案二利用android-ndk建立独立的toolchains>方案二：（利用Android ndk建立独立的toolchains）</h2><p>使用Android NDK的第一步当然还是下载Android NDK啦。
+<a href=http://developer.android.com/tools/sdk/ndk/index.html>http://developer.android.com/tools/sdk/ndk/index.html</a></p><p>​这个Google提供了提取交叉编译环境的脚本，所谓不用白不用啦是吧。
+还有这笔第一种方法好的地方在于，不用写Android.mk啦,大部分开源库，直接configure之后该一点点生成的不合理的地方就OK了，我拿tcpdump小试过牛刀，改了两处configure文件和三处源代码就搞定了，哈哈</p><pre><code># 构建交叉编译Toolchain:
+$NDK_ROOT/build/tools/make-standalone-toolchain.sh --system=linux-x86_64 --toolchain=arm-linux-androideabi-4.7   # 具体的这两个参数的值要根据当前的环境搞哈
+cp /tmp/... ... # 复制包，在上一条执行的结尾可以看到他把包扔哪去了
+tar -zxvf ... # 解压toolchains
+# 或者直接生成到目标目录
+$NDK_ROOT/build/tools/make-standalone-toolchain.sh --system=linux-x86_64 --toolchain=arm-linux-androideabi-4.7 --install-dir=/tmp/my-android-toolchain  # 同样
+参数的值要根据当前的环境搞哈
+
+# 新增环境变量:
+export PATH=[新toolchains路径]/bin:$PATH
+export CC=arm-linux-androideabi-gcc  # 如果是其他的名字就设成其他的名字，建议实现ls一下那个目录
+export CXX=arm-linux-androideabi-g++ # 如果是其他的名字就设成其他的名字，建议实现ls一下那个目录
+export CXXFLAGS=&quot;-lstdc++&quot;           # 可选
+</code></pre><p>然后就可以交叉编译了，其实感觉还是 <strong>env CC=arm-linux-androideabi-gcc CXX=arm-linux-androideabi-g++ CXXFLAGS="-lstdc++"</strong> 执行的指令 这样比较好
+另外，因为Android自带的库比较少，要用个什么东西还得一个一个编译依赖库，挺坑的</p><h2 id=方案三自己搞个arm版gcc编译器>方案三：（自己搞个Arm版GCC编译器）</h2><p>本来打算参照 <a href=https://www.owent.net/2013/730.html>Linux 编译安装 GCC 4.8</a> 的脚本改进而来
+后来发现太麻烦了, 大概是先编译arm架构用得binutils、newlib，再准备GCC的依赖库，和编译GCC 4.8的依赖库一样，然后编译初版的arm gcc
+接下来要以ARM架构为目标重新编译Linux kernel、glibc、glibc-ports、glibc-linuxthreads、libc、libz等等，然后再编译完整的cross-compile的gcc
+大致是这样，太麻烦了，一时半会搞不定</p><h2 id=方案四别人有编译好直接给你用哇>方案四：（别人有编译好直接给你用哇）</h2><p>无意中找到的，真的是无意 <a href=https://launchpad.net/gcc-arm-embedded>https://launchpad.net/gcc-arm-embedded</a>
+这里有很多版本的编译好的GCC和源码，也有文档教你怎么用源码编译
+写得比较清晰简单，我就不Cope-Paste了.
+不过用起来不太爽，我写了个hello world链接选项就要手写–specs=nano.specs -lc -lc -lrdimon
+总而言之，就是很难用啊很难用</p><h2 id=方案五还是人家的工具脚本>方案五：（还是人家的工具脚本）</h2><p>还是无意中找到滴 <a href=http://crosstool-ng.org/>http://crosstool-ng.org/</a>
+这玩意依赖 bison gperf flex texinfo libtool ncurses-libs ncurses-devel gawk gcc gcc-c++ gcc-java glibc glibc-common libc-client-devel libc-client glibc-devel glibc-static glibc-utils (确切地说是编译GCC需要用)
+使用方法依然照着文档，比较简单
+还有，这个工具提供了一个<strong>可视化的图形界面</strong>，比较Nice</p><pre><code>ct-ng menuconfig # 启动可视化界面
+# 其实可以类似这样搞
+ct-ng arm-unknown-linux-gnueabi
+ct-ng menuconfig
+# 然后Load Config，再改，比较Nice，最后再编译toolchains
+ct-ng build
+</code></pre><p>可以用来设置要编译的库和环境，好Nice的工具啊。不过乱选可能会搭不起来，比较麻烦
+<strong>另外，他的下载包的过程啥也看不见，如果下载包失败了，可以手动去下载来对应的版本，扔进源码目录里(默认是~/src)</strong>
+还是Google的用起来比较轻松愉快哈</p><h2 id=方案六arm官方推荐>方案六：（ARM官方推荐）</h2><p>ARM官方介绍了很多工具 <a href=http://www.arm.com/zh/support/university/tools.php>http://www.arm.com/zh/support/university/tools.php</a>
+不过大多是收费的
+我只试用了Windows下的DS-5 <a href=http://www.arm.com/zh/products/tools/software-tools/ds-5/ds-5-downloads.php>点击这里可以下载</a>
+安装完毕后，bin目录里有个脚本 console.bat 可以用来生成环境变量
+之后重定义CC和CXX环境变量就可以使用新的ARM编译器了（这个我也是拿tcpdump测试滴，需要改一点configure，注释掉cross compile报错的部分，而且make install也有点异常，我手动install滴）</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/work.html>Work</a></li></ol></span><span class=article-meta-right><time datetime=2013-04-11T17:55:04.000+00:00 itemprop=datePublished>2013-04-11</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/android.html>android</a></li><li class=article-tag-list-item><a href=//owent.net/tags/arm.html>arm</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cross-compile.html>cross-compile</a></li><li class=article-tag-list-item><a href=//owent.net/tags/crosstool.html>crosstool</a></li><li class=article-tag-list-item><a href=//owent.net/tags/gcc.html>gcc</a></li><li class=article-tag-list-item><a href=//owent.net/tags/jni.html>jni</a></li><li class=article-tag-list-item><a href=//owent.net/tags/linux.html>linux</a></li><li class=article-tag-list-item><a href=//owent.net/tags/ndk.html>ndk</a></li><li class=article-tag-list-item><a href=//owent.net/tags/toolchains.html>toolchains</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91.html>交叉编译</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2013/740.html>上一篇<strong>Lnmp yum 安装脚本 (for CentOS)</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2013/730.html>下一篇<strong>Linux 编译安装 GCC 4.8</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2025&nbsp;OWenT
+</strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong><span class=clearfix></span></div></div></footer></div><script type=module>// import * as Popper from "@popperjs/core";// import * as bootstrap from "bootstrap";
+// import React from "react";
+
+        
+</script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/accesslog.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/armasm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/awk.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/basic.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/bnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/capnproto.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/cmake.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/d.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dockerfile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dos.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/erlang.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/ebnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/latex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/llvm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/lua.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/powershell.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/protobuf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/profile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/vim.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/x86asm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/yaml.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/vs2015.min.css",document.querySelector("head").appendChild(t),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const n={};for(const e of hljs.listLanguages())n[e.toLowerCase()]=!0;for(const e of document.querySelectorAll("pre>code"))try{if(e.className.match(/\bmermaid\b/i)){e.classList.add("mermaid");continue}if(e.className.match(/\bnohighlight\b/i))continue;const t=e.className.match(/language-([^\s]+)/i);if(t&&t.length>=2&&hljs.getLanguage(t[1]))hljs.highlightElement(e);else{const t=hljs.highlightAuto(e.innerText,hljs.listLanguages());t&&t.value&&(e.innerHTML=t.value,e.classList.add("hljs"))}}catch(e){window.console&&console.log(e.toString()+`\r
+Maybe can not detect the language`)}})</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-PQEY77BYG1"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-PQEY77BYG1")}</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css",document.querySelector("head").appendChild(t),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js></script><script type=module>
+import mermaid from "mermaid";
+const config = {
+    theme: 'neutral',
+    logLevel: 'fatal',
+    securityLevel: 'loose', 
+    startOnLoad: true,
+    arrowMarkerAbsolute: false,
+    
+
+};
+mermaid.initialize(config);
+</script><script type=text/javascript>var _hmt=_hmt||[];(function(){var t,n,e=document.createElement("script");e.src="https://hm.baidu.com/hm.js?6a0daf8d58889f1cf55a353867bfdbb0",t=document.getElementsByTagName("script"),n=document.getElementsByTagName("script")[t.length-1],n.parentNode.appendChild(e)})()</script></div></body></html>

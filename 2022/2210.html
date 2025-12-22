@@ -1,0 +1,113 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>又开新坑之 coredns 插件: nftables和filter|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2022/2210.html><link rel=icon href=/favicon.ico><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net//css/style.css><link rel=stylesheet href=//owent.net/css/syntax.css><script type=importmap>
+{
+  "imports": {
+    "react": "https://cdn.jsdelivr.net/npm/react/+esm",
+    "react-bootstrap": "https://cdn.jsdelivr.net/npm/react-bootstrap/+esm",
+    "mermaid": "https://cdn.jsdelivr.net/npm/mermaid/+esm",
+    "bootstrap": "https://cdn.jsdelivr.net/npm/bootstrap/+esm",
+    "@popperjs/core": "https://cdn.jsdelivr.net/npm/popper.js/+esm"
+  }
+}
+</script><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8180054975285991" crossorigin=anonymous></script><meta content="codeva-4M5iohb9TW" name=baidu-site-verification></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net/ id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-bs-toggle=collapse data-bs-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-15a021cf854ad12c425479a0c1b896c6 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2022/2210.html target=_blank itemprop=url>又开新坑之 coredns 插件: nftables和filter</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#背景>背景</a></li><li><a href=#coredns和插件>CoreDNS和插件</a></li><li><a href=#coredns-nftables>coredns-nftables</a></li><li><a href=#coredns-filter>coredns-filter</a></li><li><a href=#最后>最后</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><h2 id=背景>背景</h2><p>传说中的下一代 <a href=https://nftables.org/projects/iptables/index.html>iptables</a> 的 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 已经出来了好长时间了。现在主流发行版的内核也都已经更新到了对 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 支持足够好的版本。
+在2年多前我也初步体验过了 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> ，当时写了个 <a href=https://owent.net/2020/2002.html>《nftables初体验》</a> 。并且开始使用 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 来实现对家里软路由的管理。
+而去年的时候，我也尝试用 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 实现了双拨（详见: <a href=https://owent.net/2021/2104.html>《折腾一下nftables下的双拨》</a>）并且可以搭配TPROXY透明代理使用。</p><p>但是由于 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 的生态建设仍然时落后于 <a href=https://nftables.org/projects/iptables/index.html>iptables</a> ，导致我一直没能完全把家里的软路由全部迁移到 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 上来。
+剩下的部分主要有两处，一处是桥接的重路由，另一个是我原来的策略路由会根据域名解析动态地写 <a href=https://nftables.org/projects/ipset/index.html>ipset</a> ，然后根据 <a href=https://nftables.org/projects/ipset/index.html>ipset</a> 来决定是否走tproxy。
+前者之前和别人讨论过说是我之前测试时候用地地址不对，理论上是有解的（我还没测试）。
+而后者由于 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 有自己的 set 结构，且并没有指令可以访问 <a href=https://nftables.org/projects/ipset/index.html>ipset</a>，并且我之前用的无论是 <a href=https://dnsmasq.org/>dnsmasq</a> 还是 <a href=https://github.com/pymumu/smartdns>smartdns</a> 都不支持直接写 <a href=https://nftables.org/projects/nftables/index.html>nftables</a>，所以就一直没有完全替换。</p><p>其实最新版本的 <a href=https://dnsmasq.org/>dnsmasq</a> 在今年9约发布的版本（2.8.7）里已经支持写入 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 了，而 <a href=https://github.com/pymumu/smartdns>smartdns</a> 去年就有PR支持 <a href=https://nftables.org/projects/nftables/index.html>nftables</a>，但是知道今天都还没合入。
+然而由于之前无论是 <a href=https://dnsmasq.org/>dnsmasq</a> 和 <a href=https://github.com/pymumu/smartdns>smartdns</a>，我在使用上都碰到了一些问题。所以现在是全面替换成了 <a href=https://coredns.io/>coredns</a> 作为软路由的DNS服务，然后仅仅把 <a href=https://dnsmasq.org/>dnsmasq</a> 用作 ipv4 的DHCP服务。</p><blockquote><p><a href=https://dnsmasq.org/>dnsmasq</a> 是碰到过一些ipv6的兼容性问题，这个问题存在了很久都没有解决。而 2.8.7 版本又迟迟不发布。另一个问题是 <a href=https://dnsmasq.org/>dnsmasq</a> 内部很多操作都是链表实现，如果我们有个巨大的匹配规则，会导致CPU居高不下。后来有Patch加了缓存来减少这个开销，但是本质上还是 <code>O(n)</code> 复杂度，感觉很不优雅。
+而 <a href=https://github.com/pymumu/smartdns>smartdns</a> 仅支持 A 和 AAAA 记录。如果把它当作DNS服务的入口，对PTR、ANY等记录解析是由问题的，导致有些app网络不正常。所以官方主页也是建议把它放在已有的DNS服务后面当加速DNS使用，而不是替代现有DNS服务。</p></blockquote><h2 id=coredns和插件>CoreDNS和插件</h2><p><a href=https://coredns.io/>coredns</a> 是 <a href=https://cncf.io/>CNCF</a> 基金会下的项目，也是现在 <a href=https://kubernetes.io/>Kubernetes</a> 中默认的DNS服务。基于 <a href=https://github.com/caddyserver/caddy>Caddy</a> , 使用 <a href=https://go.dev/>golang</a> 编写。所以它其实消耗内存相对较高。
+但是我家里软路由是 x86_64 的，不在乎那点内存。受益于 <a href=https://kubernetes.io/>Kubernetes</a> 社区和 <a href=https://go.dev/>golang</a> 的灵活性，它的可靠性和可扩展性都特别好。编写插件的上手难度相当地低，所以我就打算自己写插件满足我的需求。</p><p>我的需求其实也比较简单:</p><ul><li>根据域名解析结果写入 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 的set。</li><li>如果域名能同时解析出 ipv4 地址和 ipv6 地址，则只返回ipv4地址。<blockquote><p>我的用于tproxy的机器只有ipv4地址，所以有个特殊的需要是尽可能用ipv4，实在没有的话才用ipv6。</p></blockquote></li><li>实现 <a href=https://dnsmasq.org/>dnsmasq</a> 和 <a href=https://github.com/pymumu/smartdns>smartdns</a> 里都有的 bogus-nxdomain 功能。</li></ul><p>针对这两个需求，我拆分成了2个插件，一个仅用于操作 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 的 <a href=https://github.com/owent/coredns-nftables>coredns-nftables</a> ；另一个相当于是对返回数据的过滤，所以叫 <a href=https://github.com/owent/coredns-filter>coredns-filter</a> 。</p><p><a href=https://coredns.io/>coredns</a> 的插件行为编写只需要实现一个Handle，实现这两个接口即可:</p><pre><code class=language-go>Handler interface {
+  ServeDNS(context.Context, dns.ResponseWriter, *dns.Msg) (int, error)
+  Name() string
+}
+</code></pre><p>然后初始化的时候需要实现</p><pre><code class=language-go>func init() {
+  plugin.Register(&quot;插件名&quot;, setup)
+}
+
+func setup(c *caddy.Controller) error {
+  handle := NewHandler()    // 创建插件实例
+  err := parse(c, &amp;handle)  // 解析配置
+  if err != nil {
+    return plugin.Error(&quot;插件名&quot;, err)
+  }
+
+  // 设置串联插件的回调（设置下一个插件）
+  dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
+    handle.Next = next
+    return &amp;handle
+  })
+
+  log.Debug(&quot;Add 插件名 plugin to dnsserver&quot;)
+
+  return nil
+}
+</code></pre><p><a href=https://coredns.io/>coredns</a> 的插件是静态的，就是增减插件都需要把插件名字和地址写进 <code>plugin.cfg</code> 里然后重新编译。而 <a href=https://coredns.io/>coredns</a> 的插件触发顺序是按 <code>plugin.cfg</code> 里的顺序，和用户写配置的顺序无关。
+实际上 <a href=https://coredns.io/>coredns</a> 会对每个Zone建立一个插件的链表，然后从尾部开始触发插件的 <code>setup</code> 接口。</p><p>比如，如果 <code>plugin.cfg</code> 里插件 <code>A</code> , <code>B</code> 的配置顺序是</p><pre><code>A
+B
+</code></pre><p>那么会先调用 <code>B</code> 的 <code>func(next plugin.Handler) plugin.Handler</code> ，然后在调用 <code>A</code> 的 <code>func(next plugin.Handler) plugin.Handler</code> 时候 <code>next</code> 传入 <code>B</code> 的返回值。</p><p>而执行的时候，几乎所有的插件都是使用 <code>plugin.NextOrFailure(m.Name(), m.Next, ctx, w, r)</code> 来先触发下一跳，通过协程的等待机制等下一跳完成在执行自己的逻辑。
+如果需要修改下一跳的返回结果，可以通过 <a href=https://coredns.io/>coredns</a> 提供的 <a href=github.com/coredns/coredns/plugin/pkg/nonwriter>nonwriter</a> 模块对插件链的解析结果进行劫持再重新写入。</p><p>这些操作最终使得整体像是一个链表按配置的顺序执行，实际上它是一个栈。</p><p>当然也可以不用这种标准方式执行，比如说我们也可以像 <a href=https://github.com/pymumu/smartdns>smartdns</a> 一样并发发起多个请求，返回最快的那个。（说不定哪天有时间了我可以再写个插件完成这个功能）</p><p>其中 <code>ServeDNS</code> 接口的返回值如果无错误的话要返回 DNS解析的 RCODE 。</p><p>所以实现插件只要把我们要加的功能插入到合适的位置。</p><h2 id=coredns-nftables>coredns-nftables</h2><p><a href=https://github.com/owent/coredns-nftables>coredns-nftables</a> 用于操作 <a href=https://nftables.org/projects/nftables/index.html>nftables</a>。先预留了也许以后还可以由其他操作，所以插件名字就叫 <code>nftables</code> 。只是当前版本还是仅支持添加 set 。</p><p><a href=https://go.dev/>golang</a> 其实没有成熟的能够直接操作 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 的库，所幸 Google 有一个没有Release的库 <a href=https://github.com/google/nftables>https://github.com/google/nftables</a> ，可以直接用。</p><p>然后由于这个库是对解析出的最终结果写入set，对于返回 CNAME 的域名，其实需要进一步递归解析，这时候可以使用 <a href=https://coredns.io/>coredns</a> 的外部插件 <a href=https://coredns.io/explugins/finalize/>finalize</a> 。</p><p>那么由于我们要对 <a href=https://coredns.io/explugins/finalize/>finalize</a> 的最终结果做处理，所以我们的这个插件要挂在 <a href=https://coredns.io/explugins/finalize/>finalize</a> 的后面。</p><p>我测试的时候发现操作 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 的时候延迟还是比较大的，能有上百毫秒。所以为了不拖慢域名解析的速度，我把这个插件写成了先写出和返回解析结果，然后后台起了个 goroutine 去执行 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 的写入。同时也为了降低不必要的开销，建议是把这个插件放在 <a href=https://coredns.io/plugins/cache/>cache</a> 插件后，并且超时时间大于 <a href=https://coredns.io/plugins/cache/>cache</a> 的超时时间。</p><pre><code class=language-bash>sed -i.bak -r '/finalize:.*/d' plugin.cfg
+sed -i.bak '/cache:.*/a finalize:github.com/tmeckel/coredns-finalizer' plugin.cfg
+go get github.com/tmeckel/coredns-finalizer
+
+sed -i.bak -r '/nftables:.*/d' plugin.cfg
+sed -i.bak '/cache:.*/i nftables:github.com/owent/coredns-nftables' plugin.cfg
+go get github.com/owent/coredns-nftables
+
+go generate
+</code></pre><p>最终的配置结构如下:</p><pre><code>nftables [ip/ip6]... {
+  set add element &lt;TABLE_NAME&gt; &lt;SET_NAME&gt; [ip/ip6/auto] [interval] [timeout]
+  [connection timeout &lt;timeout&gt;]
+}
+
+nftables [inet/bridge/arp/netdev]... {
+  set add element &lt;TABLE_NAME&gt; &lt;SET_NAME&gt; &lt;ip/ip6&gt; [interval] [timeout]
+  [connection timeout &lt;timeout&gt;]
+}
+</code></pre><p>这里还利用了 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 的 set 自带的超时机制去设置定时淘汰。
+对于 <code>ip</code> 和 <code>ip6</code> 的 family 类型，可以设置 set 类型为 auto，这样就只会写入符合条件对的ip。
+而对于其他的 family 类型，就必须自己设置建立 set 时要使用哪种类型了。当然如果set本身就已存在会用已存在的set的类型。</p><h2 id=coredns-filter>coredns-filter</h2><p><a href=https://github.com/owent/coredns-filter>coredns-filter</a> 插件就更简单一些了。当然也是建议放在 <a href=https://coredns.io/plugins/cache/>cache</a> 和 <a href=https://github.com/owent/coredns-nftables>coredns-nftables</a> 插件后，但是应该在 <a href=https://coredns.io/explugins/finalize/>finalize</a> 前。这样能减少 <a href=https://github.com/owent/coredns-nftables>coredns-nftables</a> 不必要的开销。</p><p>整个配置的语法大概是:</p><pre><code>filter [command options...] {
+  [command options...]
+}
+</code></pre><p>然后这里的指令可以是:</p><ul><li><code>prefer &lt;none/ipv4/ipv6></code> : 不过滤/优先使用ipv4/优先使用ipv6</li><li><code>bogus-nxdomain [ip address/ip prefix...]</code> : 反污染的ip地址或前缀</li></ul><p>比如:</p><pre><code>example.org {
+    whoami
+    forward . 8.8.8.8
+    filter prefer ipv4 {
+      bogus-nxdomain 127.0.0.1/30 123.125.81.12
+    }
+}
+</code></pre><p>当然ipv6也是可以的</p><h2 id=最后>最后</h2><p>以上两个插件我开源在了 <a href=https://github.com/owent/coredns-nftables>https://github.com/owent/coredns-nftables</a> 和 <a href=https://github.com/owent/coredns-filter>https://github.com/owent/coredns-filter</a> 。</p><p>另外我还做了个 <a href=https://coredns.io/>coredns</a> 的docker镜像放在了 <code>docker.io/owt5008137/coredns</code> 。
+每周三拉取最新版本的 <a href=https://coredns.io/>coredns</a> 代码并在 <a href=https://coredns.io/plugins/cache/>cache</a> 插件后面依次插入 <a href=https://github.com/owent/coredns-nftables>coredns-nftables</a> 、 <a href=https://github.com/owent/coredns-filter>coredns-filter</a> 和 <a href=https://coredns.io/explugins/finalize/>finalize</a> ，并在 <a href=https://coredns.io/plugins/forward/>forward</a> 插件前插入了 <a href=https://coredns.io/explugins/alternate/>alternate</a> 插件。<a href=https://coredns.io/explugins/alternate/>alternate</a> 相当于反向的 <code>bogus-nxdomain</code> 功能。</p><p>最终大概这个样子:</p><pre><code>cache
+nftables
+filter
+finalizer
+# ...
+alternate
+forward
+</code></pre><p>有需要的小伙伴可以通过 <code>podman/docker pull owt5008137/coredns</code> 或者 <code>podman/docker pull docker.io/owt5008137/coredns</code> 自取。</p><p>也欢迎有兴趣的小伙伴们互相交流。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2022-10-03T21:23:45.000+00:00 itemprop=datePublished>2022-10-03</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/coredns.html>coredns</a></li><li class=article-tag-list-item><a href=//owent.net/tags/plugin.html>plugin</a></li><li class=article-tag-list-item><a href=//owent.net/tags/nftables.html>nftables</a></li><li class=article-tag-list-item><a href=//owent.net/tags/filter.html>filter</a></li><li class=article-tag-list-item><a href=//owent.net/tags/nxdomain.html>nxdomain</a></li><li class=article-tag-list-item><a href=//owent.net/tags/ipset.html>ipset</a></li><li class=article-tag-list-item><a href=//owent.net/tags/smartdns.html>smartdns</a></li><li class=article-tag-list-item><a href=//owent.net/tags/dnsmasq.html>dnsmasq</a></li><li class=article-tag-list-item><a href=//owent.net/tags/golang.html>golang</a></li><li class=article-tag-list-item><a href=//owent.net/tags/caddy.html>caddy</a></li><li class=article-tag-list-item><a href=//owent.net/tags/kubernetes.html>kubernetes</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cncf.html>CNCF</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2023/2301.html>上一篇<strong>给cmake-toolset和工具链(curl等)加HTTP/2和HTTP/3支持</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2022/2209.html>下一篇<strong>关于opentelemetry-cpp社区对于C++ Head Only组件单例和符号可见性的讨论小记</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2025&nbsp;owent
+</strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong><span class=clearfix></span></div></div></footer></div><script type=module>// import * as Popper from "@popperjs/core";// import * as bootstrap from "bootstrap";
+// import React from "react";
+
+        
+</script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/accesslog.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/armasm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/awk.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/basic.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/bnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/capnproto.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/cmake.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/d.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dockerfile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dos.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/erlang.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/ebnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/latex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/llvm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/lua.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/powershell.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/protobuf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/profile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/vim.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/x86asm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/yaml.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/vs2015.min.css",document.querySelector("head").appendChild(t),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const n={};for(const e of hljs.listLanguages())n[e.toLowerCase()]=!0;for(const e of document.querySelectorAll("pre>code"))try{if(e.className.match(/\bmermaid\b/i)){e.classList.add("mermaid");continue}if(e.className.match(/\bnohighlight\b/i))continue;const t=e.className.match(/language-([^\s]+)/i);if(t&&t.length>=2&&hljs.getLanguage(t[1]))hljs.highlightElement(e);else{const t=hljs.highlightAuto(e.innerText,hljs.listLanguages());t&&t.value&&(e.innerHTML=t.value,e.classList.add("hljs"))}}catch(e){window.console&&console.log(e.toString()+`\r
+Maybe can not detect the language`)}})</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-PQEY77BYG1"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-PQEY77BYG1")}</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css",document.querySelector("head").appendChild(t),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js></script><script type=module>
+import mermaid from "mermaid";
+const config = {
+    theme: 'neutral',
+    logLevel: 'fatal',
+    securityLevel: 'loose', 
+    startOnLoad: true,
+    arrowMarkerAbsolute: false,
+    
+
+};
+mermaid.initialize(config);
+</script><script type=text/javascript>var _hmt=_hmt||[];(function(){var t,n,e=document.createElement("script");e.src="https://hm.baidu.com/hm.js?6a0daf8d58889f1cf55a353867bfdbb0",t=document.getElementsByTagName("script"),n=document.getElementsByTagName("script")[t.length-1],n.parentNode.appendChild(e)})()</script></div></body></html>

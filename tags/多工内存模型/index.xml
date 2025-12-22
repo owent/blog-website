@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>多工内存模型 on I'm OWenT</title><link>//owent.net/tags/%E5%A4%9A%E5%B7%A5%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B.html</link><description>Recent content in 多工内存模型 on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md"&gt;&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /&gt;&lt;/a&gt;</copyright><lastBuildDate>Tue, 12 Jun 2012 08:58:09 +0000</lastBuildDate><atom:link href="//owent.net/tags/%E5%A4%9A%E5%B7%A5%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/index.xml" rel="self" type="application/rss+xml"/><item><title>C++ 新特性学习（八） — 原子操作和多线程库[多工内存模型]</title><link>//owent.net/2012/611.html</link><pubDate>Tue, 12 Jun 2012 08:58:09 +0000</pubDate><guid>//owent.net/2012/611.html</guid><description>&lt;p&gt;这是我对C++新特性系统学习的最后一部分，之后就靠实践中再来看新标准的新特性啦。&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;在之前，我对这部分没太在意，直到看到了一篇文章 [http://blog.csdn.net/pongba/article/details/1659952](http://blog.csdn.net/pongba/article/details/1659952) 才意识到，C++的多线程操作也是个麻烦的问题。
+
+简而言之，C++编译器在进行编译优化的时候，认为当前是单进程的，并且遵循**可观察行为**（Observable Behavior）不变的原则。就是说在可观察行为不变的情况下，操作是可以被改变顺序的，而单进程可观察行为不变，不代表在多进程的情况下仍然不变。还是上大牛的例子：
+
+_**例子一：**_
+&lt;/code&gt;&lt;/pre&gt;
+&lt;!-- raw HTML omitted --&gt;
+&lt;p&gt;完全可以优化成&lt;/p&gt;</description></item></channel></rss>

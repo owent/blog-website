@@ -1,0 +1,176 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>踩坑一处（GCC）STL `std::async` 实现BUG导致的crash问题|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2024/2402.html><link rel=icon href=/favicon.ico><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net//css/style.css><link rel=stylesheet href=//owent.net/css/syntax.css><script type=importmap>
+{
+  "imports": {
+    "react": "https://cdn.jsdelivr.net/npm/react/+esm",
+    "react-bootstrap": "https://cdn.jsdelivr.net/npm/react-bootstrap/+esm",
+    "mermaid": "https://cdn.jsdelivr.net/npm/mermaid/+esm",
+    "bootstrap": "https://cdn.jsdelivr.net/npm/bootstrap/+esm",
+    "@popperjs/core": "https://cdn.jsdelivr.net/npm/popper.js/+esm"
+  }
+}
+</script><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8180054975285991" crossorigin=anonymous></script><meta content="codeva-4M5iohb9TW" name=baidu-site-verification></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net/ id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-bs-toggle=collapse data-bs-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-c526a330875595d9d528c03ba79237d6 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2024/2402.html target=_blank itemprop=url>踩坑一处（GCC）STL `std::async` 实现BUG导致的crash问题</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#前言>前言</a></li><li><a href=#问题分析>问题分析</a><ul><li><a href=#相关代码和规范>相关代码和规范</a></li><li><a href=#崩溃栈>崩溃栈</a></li><li><a href=#相关代码>相关代码</a></li></ul></li><li><a href=#最后>最后</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><h2 id=前言>前言</h2><p>近期发现项目组使用新版本的 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 的时候偶现崩溃。崩溃的位置在STL的 <code>std::future</code> 析构的地方，而这个 <code>std::future</code> 由 <code>std::async</code>创建。
+比较违反直觉，这里记录分享一下分析和解决过程方面其他碰到的小伙伴们。</p><h2 id=问题分析>问题分析</h2><h3 id=相关代码和规范>相关代码和规范</h3><p>首先我们来看下相关代码：</p><pre><code class=language-cpp>bool PeriodicExportingMetricReader::CollectAndExportOnce()
+{
+  std::atomic&lt;bool&gt; cancel_export_for_timeout{false};
+  auto future_receive = std::async(std::launch::async, [this, &amp;cancel_export_for_timeout] {
+    Collect([this, &amp;cancel_export_for_timeout](ResourceMetrics &amp;metric_data) {
+      if (cancel_export_for_timeout)
+      {
+        OTEL_INTERNAL_LOG_ERROR(
+            &quot;[Periodic Exporting Metric Reader] Collect took longer configured time: &quot;
+            &lt;&lt; export_timeout_millis_.count() &lt;&lt; &quot; ms, and timed out&quot;);
+        return false;
+      }
+      this-&gt;exporter_-&gt;Export(metric_data);
+      return true;
+    });
+  });
+
+  std::future_status status;
+  do
+  {
+    status = future_receive.wait_for(std::chrono::milliseconds(export_timeout_millis_));
+    if (status == std::future_status::timeout)
+    {
+      cancel_export_for_timeout = true;
+      break;
+    }
+  } while (status != std::future_status::ready);
+  bool notify_force_flush = is_force_flush_pending_.exchange(false, std::memory_order_acq_rel);
+  if (notify_force_flush)
+  {
+    is_force_flush_notified_.store(true, std::memory_order_release);
+    force_flush_cv_.notify_one();
+  }
+
+  return true;
+}
+</code></pre><p>这里的逻辑简单得说就是在收集上报指标的时候，在一个子线程执行导出。如果超时了就标记timeout中断上报流程。
+按照 <a href=https://en.cppreference.com/w/cpp/thread/async>https://en.cppreference.com/w/cpp/thread/async</a> 和 <a href=https://en.cppreference.com/w/cpp/thread/future/%7Efuture>https://en.cppreference.com/w/cpp/thread/future/%7Efuture</a> 的对标准的描述。</p><blockquote><h4 id=async-invocation>Async invocation</h4><p>If the async flag is set (i.e. (policy & std::launch::async) != 0), then</p><p><code>std::async</code> calls <code>INVOKE(decay-copy(std::forward&lt;F>(f)), decay-copy(std::forward&lt;Args>(args))...)</code> as if in a new thread of execution represented by a std::thread object. (until C++23)
+<code>std::async</code> calls <code>std::invoke(auto(std::forward&lt;F>(f)), auto(std::forward&lt;Args>(args))...)</code> as if in a new thread of execution represented by a std::thread object. (since C++23)</p><p>The calls of decay-copy are evaluated(until C++23)The values produced by auto are materialized(since C++23) in the current thread. If the function f returns a value or throws an exception, it is stored in the shared state accessible through the std::future that std::async returns to the caller.</p></blockquote><p>还有</p><blockquote><ol><li>these actions will not block for the shared state to become ready, except that they may block if all of the following are true:</li><li>the shared state was created by a call to std::async,</li><li>the shared state is not yet ready, and</li><li>the current object was the last reference to the shared state.</li></ol></blockquote><p><code>std::launch::async</code> 模式的调用将在另一个线程中执行。且在 <code>future</code> （设立没有把state share出去所以这里的满足 <code>the current object was the last reference to the shared state.</code>）析构的时候会阻塞等到 <code>future</code> ready。</p><p>由于栈上后构造的对象先释放，所以这里lambda里引用了栈上变量也不会有什么问题。但是这里Crash了，那么我们来看看崩溃栈。</p><h3 id=崩溃栈>崩溃栈</h3><pre><code class=language-bash>(gdb) bt
+#0  0x00007f75ddb24387 in raise () from /lib64/libc.so.6
+#1  0x00007f75ddb25a78 in abort () from /lib64/libc.so.6
+#2  0x00007f75de21ea95 in __gnu_cxx::__verbose_terminate_handler() () from /lib64/libstdc++.so.6
+#3  0x00007f75de21ca06 in ?? () from /lib64/libstdc++.so.6
+#4  0x00007f75de21b9b9 in ?? () from /lib64/libstdc++.so.6
+#5  0x00007f75de21c624 in __gxx_personality_v0 () from /lib64/libstdc++.so.6
+#6  0x00007f75e9a928e3 in ?? () from /lib64/libgcc_s.so.1
+#7  0x00007f75e9a92c7b in _Unwind_RaiseException () from /lib64/libgcc_s.so.1
+#8  0x00007f75de21cc46 in __cxa_throw () from /lib64/libstdc++.so.6
+#9  0x00007f75de271f30 in std::__throw_system_error(int) () from /lib64/libstdc++.so.6
+#10 0x00007f75de2730f8 in std::thread::join() () from /lib64/libstdc++.so.6
+#11 0x00007f75df2e420b in __pthread_once_slow () from /lib64/libpthread.so.0
+#12 0x00007f75de21abd7 in ?? () from /lib64/libstdc++.so.6
+#13 0x00007f75de21acc4 in std::__future_base::_Async_state_common::~_Async_state_common() () from /lib64/libstdc++.so.6
+#14 0x00007f75da6487f8 in std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt;::_Async_state_impl (__fn=..., 
+    this=0x7f75cca00018) at /usr/include/c++/4.8.2/future:1495
+#15 __gnu_cxx::new_allocator&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt; &gt;::construct&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt;, std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt; &gt; (this=&lt;optimized out&gt;, __p=0x7f75cca00018) at /usr/include/c++/4.8.2/ext/new_allocator.h:120
+#16 std::allocator_traits&lt;std::allocator&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt; &gt; &gt;::_S_construct&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt;, std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt; &gt; (__a=..., __p=0x7f75cca00018) at /usr/include/c++/4.8.2/bits/alloc_traits.h:254
+#17 std::allocator_traits&lt;std::allocator&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt; &gt; &gt;::construct&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt;, std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt; &gt; (__a=..., __p=0x7f75cca00018) at /usr/include/c++/4.8.2/bits/alloc_traits.h:393
+#18 std::_Sp_counted_ptr_inplace&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt;, std::allocator&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt; &gt;, (__gnu_cxx::_Lock_policy)2u&gt;::_Sp_counted_ptr_inplace&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt; &gt; (__a=..., this=0x7f75cca00000) at /usr/include/c++/4.8.2/bits/shared_ptr_base.h:399
+#19 __gnu_cxx::new_allocator&lt;std::_Sp_counted_ptr_inplace&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt;, std::allocator&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt; &gt;, (__gnu_cxx::_Lock_policy)2u&gt; &gt;::construct&lt;std::_Sp_counted_ptr_inplace&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt;, std::allocator&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt; &gt;, (__gnu_cxx::_Lock_policy)2u&gt;, const std::allocator&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt; &gt;, std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt; &gt; (this=&lt;synthetic pointer&gt;, __p=&lt;optimized out&gt;) at /usr/include/c++/4.8.2/ext/new_allocator.h:120
+#20 std::allocator_traits&lt;std::allocator&lt;std::_Sp_counted_ptr_inplace&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt;, std::allocator&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt; &gt;, (__gnu_cxx::_Lock_policy)2u&gt; &gt; &gt;::_S_construct&lt;std::_Sp_counted_ptr_inplace&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt;, std::allocator&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt; &gt;, (__gnu_cxx::_Lock_policy)2u&gt;, const std::allocator&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt; &gt;, std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt; &gt; (__a=&lt;synthetic pointer&gt;..., __p=&lt;optimized out&gt;) at /usr/include/c++/4.8.2/bits/alloc_traits.h:254
+#21 std::allocator_traits&lt;std::allocator&lt;std::_Sp_counted_ptr_inplace&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt;, std::allocator&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt; &gt;, (__gnu_cxx::_Lock_policy)2u&gt; &gt; &gt;::construct&lt;std::_Sp_counted_ptr_inplace&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt;, std::allocator&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt; &gt;, (__gnu_cxx::_Lock_policy)2u&gt;, const std::allocator&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt; &gt;, std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt; &gt; (__a=&lt;synthetic pointer&gt;..., __p=&lt;optimized out&gt;) at /usr/include/c++/4.8.2/bits/alloc_traits.h:393
+#22 std::__shared_count&lt;(__gnu_cxx::_Lock_policy)2&gt;::__shared_count&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt;, std::allocator&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt; &gt;, std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt; &gt; (__a=..., this=&lt;optimized out&gt;) at /usr/include/c++/4.8.2/bits/shared_ptr_base.h:502
+#23 std::__shared_ptr&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt;, (__gnu_cxx::_Lock_policy)2u&gt;::__shared_ptr&lt;std::allocator&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt; &gt;, std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt; &gt; (__a=..., this=&lt;optimized out&gt;, __tag=...) at /usr/include/c++/4.8.2/bits/shared_ptr_base.h:957
+#24 std::shared_ptr&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt; &gt;::shared_ptr&lt;std::allocator&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt; &gt;, std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt; &gt; (__a=..., __tag=..., this=&lt;optimized out&gt;) at /usr/include/c++/4.8.2/bits/shared_ptr.h:316
+#25 std::allocate_shared&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt;, std::allocator&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt; &gt;, std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::Collec--Type &lt;RET&gt; for more, q to quit, c to continue without paging--
+tAndExportOnce()::__lambda11()&gt; &gt; (__a=...) at /usr/include/c++/4.8.2/bits/shared_ptr.h:598
+#26 std::make_shared&lt;std::__future_base::_Async_state_impl&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt;, void&gt;, std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt; &gt; () at /usr/include/c++/4.8.2/bits/shared_ptr.h:614
+#27 std::__future_base::_S_make_async_state&lt;std::_Bind_simple&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11()&gt; &gt; (__fn=...) at /usr/include/c++/4.8.2/future:1525
+#28 std::async&lt;opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce()::__lambda11&gt; (__policy=std::launch::async, __fn=...) at /usr/include/c++/4.8.2/future:1538
+#29 opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::CollectAndExportOnce (this=this@entry=0x7f75d760c000)
+    at /data/devops/workspace/p-4943d876cb734a609b55ad5c740c36ff/src/pool/0/server/main/third_party/packages/opentelemetry-cpp-v1.15.0/sdk/src/metrics/export/periodic_exporting_metric_reader.cc:89
+#30 0x00007f75da648a38 in opentelemetry::v1::sdk::metrics::PeriodicExportingMetricReader::DoBackgroundWork (this=0x7f75d760c000)
+    at /data/devops/workspace/p-4943d876cb734a609b55ad5c740c36ff/src/pool/0/server/main/third_party/packages/opentelemetry-cpp-v1.15.0/sdk/src/metrics/export/periodic_exporting_metric_reader.cc:55
+#31 0x00007f75de273340 in ?? () from /lib64/libstdc++.so.6
+#32 0x00007f75df2e5ea5 in start_thread () from /lib64/libpthread.so.0
+#33 0x00007f75ddbecb0d in clone () from /lib64/libc.so.6
+</code></pre><p>然后我们来看数据层面。</p><pre><code class=language-bash>(gdb) f 14
+#14 0x00007f7c4a1ebc93 in _Async_state_impl (__fn=&lt;unknown type in /data/home/user00/tgf-server/d-8/tgf/matchsvr/bin/../../lib64/6689e6af/lib64/libopentelemetry_metrics.so, CU 0x3cc73e, DIE 0x415b2f&gt;, this=0x7f7acd401018)
+    at /usr/include/c++/4.8.2/future:1495
+1495          : _M_result(new _Result&lt;_Res&gt;()), _M_fn(std::move(__fn))
+(gdb) p _M_thread
+$9 = {_M_id = {_M_thread = 0}}
+(gdb) p _M_once
+$10 = {_M_once = 1}
+(gdb) p _M_result
+$11 = std::unique_ptr&lt;std::__future_base::_Result&lt;void&gt;&gt; containing 0x0
+(gdb)
+</code></pre><p>可以看到，这个尝试 join 的 <code>_M_thread</code> 已经为空了 。</p><h3 id=相关代码>相关代码</h3><pre><code class=language-cpp> class __future_base::_Async_state_common : public __future_base::_State_base
+  {
+  protected:
+#ifdef _GLIBCXX_ASYNC_ABI_COMPAT
+    ~_Async_state_common();
+#else
+    ~_Async_state_common() = default;
+#endif
+
+    // Allow non-timed waiting functions to block until the thread completes,
+    // as if joined.
+    virtual void _M_run_deferred() { _M_join(); }
+
+    void _M_join() { std::call_once(_M_once, &amp;thread::join, ref(_M_thread)); }
+
+    thread _M_thread;
+    once_flag _M_once;
+  };
+
+  template&lt;typename _BoundFn, typename _Res&gt;
+    class __future_base::_Async_state_impl final
+    : public __future_base::_Async_state_common
+    {
+    public:
+      explicit
+      _Async_state_impl(_BoundFn&amp;&amp; __fn)
+      : _M_result(new _Result&lt;_Res&gt;()), _M_fn(std::move(__fn))
+      {
+        _M_thread = std::thread{ [this] {
+          _M_set_result(_S_task_setter(_M_result, _M_fn));
+        } };
+      }
+
+      ~_Async_state_impl() { _M_join(); }
+
+    private:
+      typedef __future_base::_Ptr&lt;_Result&lt;_Res&gt;&gt; _Ptr_type;
+      _Ptr_type _M_result;
+      _BoundFn _M_fn;
+    };
+</code></pre><p>另外 <code>std::__future_base::_Async_state_common::~_Async_state_common()</code> 的代码在头文件里没有，所以得去源仓库找 <a href=https://github.com/gcc-mirror/gcc/blob/releases/gcc-4.8.2/libstdc%2B%2B-v3/src/c%2B%2B11/compatibility-thread-c%2B%2B0x.cc#L89>https://github.com/gcc-mirror/gcc/blob/releases/gcc-4.8.2/libstdc%2B%2B-v3/src/c%2B%2B11/compatibility-thread-c%2B%2B0x.cc#L89</a> 。这里直接贴出代码</p><pre><code class=language-cpp>namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
+  __future_base::_Async_state_common::~_Async_state_common() { _M_join(); }
+
+// 后续无关代码不再贴出
+}
+</code></pre><p>按道理来说，<code>_M_join()</code> 里已经保证了 <code>_M_thread.join()</code> 只被调用一次，但是实际上析构函数里的 <code>_M_thread.join()</code> 确被诡异地触发了。</p><p>这个问题也有一些外部参考链接：</p><ul><li><a href="https://gcc.gnu.org/bugzilla/show_bug.cgi?id=54297">[C++11] Segmentation fault with std::async and released shared state</a>+</li><li><a href=https://stackoverflow.com/questions/28604461/using-c11-futures-nested-calls-of-stdasync-crash-compiler-standard-library>Using C++11 futures: Nested calls of std::async crash: Compiler/Standard library bug?</a> 。</li><li><a href="https://gcc.gnu.org/bugzilla/show_bug.cgi?id=49204">https://gcc.gnu.org/bugzilla/show_bug.cgi?id=49204</a></li><li><a href="https://sourceware.org/bugzilla/show_bug.cgi?id=12683">https://sourceware.org/bugzilla/show_bug.cgi?id=12683</a></li></ul><p>这个问题只是偶现的，所以可能和上面链接里前几个都无关，可能和最后一个线程安全的边界条件有关。实际上我参与开源社区 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 的时候也发下过几个 <code>std::condition_variable</code> 几处临界条件有问题的地方，这个以后再分享。</p><h2 id=最后>最后</h2><p>要沿着线程安全的方向分析，可能就需要花费大量时间了，我暂时没有更深一步去分析。
+目前要适配这个GCC STL实现BUG，最快的方法是绕过去，然后记住不要使用（C++ 又一坑）。相关的修复PR已经推送 <a href=https://github.com/open-telemetry/opentelemetry-cpp/issues/2982>https://github.com/open-telemetry/opentelemetry-cpp/issues/2982</a> 并且已经合入。
+我们项目组的开源构建系统 <a href=https://github.com/owent/cmake-toolset>cmake-toolset</a> 也已经Patch接入的 otel-cpp 版本。（详见: <a href=https://github.com/owent/cmake-toolset/commit/46643e8b695fff9c7f13d0da1ecca07c2f8e9444>https://github.com/owent/cmake-toolset/commit/46643e8b695fff9c7f13d0da1ecca07c2f8e9444</a>）</p><p>欢迎有兴趣的小伙伴互相交流研究。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2024-07-21T02:32:45.000+00:00 itemprop=datePublished>2024-07-21</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/cpp.html>cpp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cxx.html>cxx</a></li><li class=article-tag-list-item><a href=//owent.net/tags/stl.html>stl</a></li><li class=article-tag-list-item><a href=//owent.net/tags/gcc.html>gcc</a></li><li class=article-tag-list-item><a href=//owent.net/tags/crash.html>crash</a></li><li class=article-tag-list-item><a href=//owent.net/tags/coredump.html>coredump</a></li><li class=article-tag-list-item><a href=//owent.net/tags/async.html>async</a></li><li class=article-tag-list-item><a href=//owent.net/tags/opentelemetry-cpp.html>opentelemetry-cpp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/otel-cpp.html>otel-cpp</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2024/2403.html>上一篇<strong>std::condition_variable 的信号丢失问题</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2024/2401.html>下一篇<strong>GCC 14的一个warning to error BUG</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2025&nbsp;owent
+</strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong><span class=clearfix></span></div></div></footer></div><script type=module>// import * as Popper from "@popperjs/core";// import * as bootstrap from "bootstrap";
+// import React from "react";
+
+        
+</script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/accesslog.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/armasm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/awk.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/basic.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/bnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/capnproto.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/cmake.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/d.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dockerfile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dos.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/erlang.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/ebnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/latex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/llvm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/lua.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/powershell.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/protobuf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/profile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/vim.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/x86asm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/yaml.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/vs2015.min.css",document.querySelector("head").appendChild(t),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const n={};for(const e of hljs.listLanguages())n[e.toLowerCase()]=!0;for(const e of document.querySelectorAll("pre>code"))try{if(e.className.match(/\bmermaid\b/i)){e.classList.add("mermaid");continue}if(e.className.match(/\bnohighlight\b/i))continue;const t=e.className.match(/language-([^\s]+)/i);if(t&&t.length>=2&&hljs.getLanguage(t[1]))hljs.highlightElement(e);else{const t=hljs.highlightAuto(e.innerText,hljs.listLanguages());t&&t.value&&(e.innerHTML=t.value,e.classList.add("hljs"))}}catch(e){window.console&&console.log(e.toString()+`\r
+Maybe can not detect the language`)}})</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-PQEY77BYG1"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-PQEY77BYG1")}</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css",document.querySelector("head").appendChild(t),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js></script><script type=module>
+import mermaid from "mermaid";
+const config = {
+    theme: 'neutral',
+    logLevel: 'fatal',
+    securityLevel: 'loose', 
+    startOnLoad: true,
+    arrowMarkerAbsolute: false,
+    
+
+};
+mermaid.initialize(config);
+</script><script type=text/javascript>var _hmt=_hmt||[];(function(){var t,n,e=document.createElement("script");e.src="https://hm.baidu.com/hm.js?6a0daf8d58889f1cf55a353867bfdbb0",t=document.getElementsByTagName("script"),n=document.getElementsByTagName("script")[t.length-1],n.parentNode.appendChild(e)})()</script></div></body></html>

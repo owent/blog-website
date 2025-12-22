@@ -1,0 +1,281 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>协程(libcopp)的Channel功能和CPU命中率优化|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2025/2502.html><link rel=icon href=/favicon.ico><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net//css/style.css><link rel=stylesheet href=//owent.net/css/syntax.css><script type=importmap>
+{
+  "imports": {
+    "react": "https://cdn.jsdelivr.net/npm/react/+esm",
+    "react-bootstrap": "https://cdn.jsdelivr.net/npm/react-bootstrap/+esm",
+    "mermaid": "https://cdn.jsdelivr.net/npm/mermaid/+esm",
+    "bootstrap": "https://cdn.jsdelivr.net/npm/bootstrap/+esm",
+    "@popperjs/core": "https://cdn.jsdelivr.net/npm/popper.js/+esm"
+  }
+}
+</script><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8180054975285991" crossorigin=anonymous></script><meta content="codeva-4M5iohb9TW" name=baidu-site-verification></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net/ id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-bs-toggle=collapse data-bs-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-97dcc85f667e944b4f936c243fe71c9d class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2025/2502.html target=_blank itemprop=url>协程(libcopp)的Channel功能和CPU命中率优化</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#背景>背景</a></li><li><a href=#方案和实现>方案和实现</a><ul><li><a href=#简化编译选项>简化编译选项</a></li><li><a href=#c20协程的-channel-模型实现>C++20协程的 channel 模型实现</a></li><li><a href=#stackful协程的-channel-模型实现>stackful协程的 channel 模型实现</a></li><li><a href=#strong_rc_ptr-和-weak_rc_ptr><code>strong_rc_ptr</code> 和 <code>weak_rc_ptr</code></a></li></ul></li><li><a href=#压力测试对比和分析>压力测试对比和分析</a></li><li><a href=#最后>最后</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><h2 id=背景>背景</h2><p>设计 <a href=https://owent.net/2022/2206.html>《libcopp对C++20协程的接入和接口设计》</a> 的时候，由于C++20协程的promise和awaitable是链式关联的。所以当时设计promise和awaitable之间通过一个共享的context来通信交互。当时第一版实现直接使用了 <code>std::shared_ptr</code> 来管理共享引用，也预留了个规划是未来可以改成非线程安全的引用来减少不必要的Cache Miss开销。</p><p>大部分业务场景中，单单atomic的开销占比非常低。但是在密集计算的场景中，反复atomic操作带来的Cache Miss不仅仅影响自己，还影响后续其他的代码操作，考虑这些影响以后，总体而言开销就不能忽略不计了。
+在计算密集的场景中，经验上通常是调度层处理线程安全问题，然后分发到worker的时候尽可能不要设计线程同步，这样比每个接口去保证线程安全有更好的新能。</p><p>在之前 <a href=https://owent.net/2024/2405.html>《实现strong_rc_ptr(比shared_ptr更快的引用计数智能指针)》</a> 的分享中，我给我们项目组的交易行模块实现了通用的不使用 atomic 的 <code>std::shared_ptr</code> 替代品（<code>strong_rc_ptr</code> 和 <code>weak_rc_ptr</code>）。在附带大量业务逻辑代码的实际业务场景的压测Case中，仅仅是替换索引的指针，最高可以提升16%的性能。</p><p>同时虽然 <a href=https://github.com/owent/libcopp>libcopp</a> 的有栈协程部分可以有选项关闭掉部分atomic操作。但是栈池管理的部分仍然用的 <code>std::shared_ptr</code> ，关闭得并不彻底。</p><p>另一方面，之前在给框架层实现RPC框架的时候，有些时候需要其他同学实现新的接入层。虽然之前实现了 <code>rpc::custom_resume</code> 和 <code>rpc::custom_wait</code> 来方便接入。但是这个缺乏严格的类型检查，而且需要组合使用,仍然会对一些同学造成困惑。现在golang的channel模型很多同学都比较习惯了。所以也想做一个类似 go channel 模型的抽象。方便使用和理解，也能在上面实施一些静态检查。</p><h2 id=方案和实现>方案和实现</h2><p>针对以上问题，这次的调整主要就是改动这两块。一个是 channel 模型组件，另一个是把 <code>strong_rc_ptr</code> 和 <code>weak_rc_ptr</code> 移植入 <a href=https://github.com/owent/libcopp>libcopp</a> 并且应用到所有数据管理层。</p><h3 id=简化编译选项>简化编译选项</h3><p><a href=https://github.com/owent/libcopp>libcopp</a> 之前用 <code>LIBCOPP_DISABLE_ATOMIC_LOCK</code>, <code>LIBCOPP_LOCK_DISABLE_THIS_MT</code> 和 <code>LIBCOPP_LOCK_DISABLE_MT</code> 分别控制原子操作是否用atomic，是否 this_coroutine 和 this_task 使用atomic防止冲突和是否关闭 <code>task_manager</code> 的加锁。这次再加入栈管理和C++20协程共享context管理层面的选项的话太过于复杂了。所以现在改成 <code>LIBCOPP_ENABLE_MULTI_THREAD</code> 统一管控是否启用线程安全。</p><h3 id=c20协程的-channel-模型实现>C++20协程的 channel 模型实现</h3><p>channel模型主要是提供一个receiver给调用房使用，还有一个sender给接入方使用。其实和之前 <code>copp::generator_future</code> + <code>copp::generator_context</code> 的能力是一样的。
+但是当时为了最佳适应性，提供了一个vtable组件来做事件通知，结构大概这样:</p><pre><code class=language-cpp>template &lt;class TCONTEXT&gt;
+class LIBCOPP_COPP_API_HEAD_ONLY generator_vtable {
+ public:
+  using context_type = TCONTEXT;
+  using context_pointer_type = LIBCOPP_COPP_NAMESPACE_ID::memory::default_strong_rc_ptr&lt;context_type&gt;;
+  using value_type = typename context_type::value_type;
+  using await_suspend_callback_type = std::function&lt;void(context_pointer_type)&gt;;
+  using await_resume_callback_type = std::function&lt;void(const context_type&amp;)&gt;;
+
+  // ...
+ private:
+  LIBCOPP_UTIL_INTRUSIVE_PTR_ATOMIC_TYPE intrusive_ref_counter_;
+  await_suspend_callback_type await_suspend_callback_;
+  await_resume_callback_type await_resume_callback_;
+}
+</code></pre><p>可以看到，除了引用计数外，回调函数使用的是 <code>std::function</code> , 它还是有一定开销的。所以当时有个计划是实现一个使用更轻量级的裸指针和一个不包含任何事件回调通知的版本。
+对于channel功能而言，其实就是不需要任何事件回调的版本。</p><p>为了复用之前实现的 <code>copp::some</code> 、 <code>copp::any</code> 、 <code>copp::all</code> 这类设计模式的抽象，这次的优化通过对 <code>copp::generator_future</code> 特化实现来进行。</p><pre><code class=language-cpp>enum class generator_vtable_type : uint8_t {
+  kDefault = 0,
+  kLightWeight = 1,
+  kNone = 2,
+};
+
+// 对外接口
+template &lt;class TVALUE, class TERROR_TRANSFORM = promise_error_transform&lt;TVALUE&gt;,
+          generator_vtable_type VTABLE_TYPE = generator_vtable_type::kDefault&gt;
+class generator_future;
+
+template &lt;class TPROMISE, bool RETURN_VOID, generator_vtable_type VTABLE_TYPE&gt;
+class generator_awaitable;
+
+template &lt;class TVALUE, class TERROR_TRANSFORM = promise_error_transform&lt;TVALUE&gt;&gt;
+using generator_lightweight_future = generator_future&lt;TVALUE, TERROR_TRANSFORM, generator_vtable_type::kLightWeight&gt;;
+
+template &lt;class TVALUE, class TERROR_TRANSFORM = promise_error_transform&lt;TVALUE&gt;&gt;
+using generator_channel_future = generator_future&lt;TVALUE, TERROR_TRANSFORM, generator_vtable_type::kNone&gt;;
+
+// ============ 特化回调类型 ============
+template &lt;class TCONTEXT&gt;
+struct generator_vtable_type_trait&lt;TCONTEXT, generator_vtable_type::kDefault&gt; {
+  using context_type = TCONTEXT;
+  using context_pointer_type = LIBCOPP_COPP_NAMESPACE_ID::memory::default_strong_rc_ptr&lt;context_type&gt;;
+  using value_type = typename context_type::value_type;
+  using await_suspend_callback_type = std::function&lt;void(context_pointer_type)&gt;;
+  using await_resume_callback_type = std::function&lt;void(const context_type&amp;)&gt;;
+};
+
+template &lt;class TCONTEXT&gt;
+struct generator_vtable_type_trait&lt;TCONTEXT, generator_vtable_type::kLightWeight&gt; {
+  using context_type = TCONTEXT;
+  using context_pointer_type = LIBCOPP_COPP_NAMESPACE_ID::memory::default_strong_rc_ptr&lt;context_type&gt;;
+  using value_type = typename context_type::value_type;
+  using await_suspend_callback_type = void (*)(context_pointer_type);
+  using await_resume_callback_type = void (*)(const context_type&amp;);
+};
+
+// ============ 特化vtable容器代理 ============
+template &lt;class TCONTEXT&gt;
+class LIBCOPP_COPP_API_HEAD_ONLY generator_vtable_delegate&lt;TCONTEXT, generator_vtable_type::kLightWeight&gt; {
+ public:
+  using context_type = TCONTEXT;
+  using vtable_type = generator_vtable&lt;context_type, generator_vtable_type::kLightWeight&gt;;
+  using context_pointer_type = LIBCOPP_COPP_NAMESPACE_ID::memory::default_strong_rc_ptr&lt;context_type&gt;;
+  using value_type = typename context_type::value_type;
+  using await_suspend_callback_type = typename vtable_type::await_suspend_callback_type;
+  using await_resume_callback_type = typename vtable_type::await_resume_callback_type;
+
+  template &lt;class TSUSPEND, class TRESUME&gt;
+  LIBCOPP_UTIL_FORCEINLINE generator_vtable_delegate(TSUSPEND&amp;&amp; await_suspend_callback,
+                                                     TRESUME&amp;&amp; await_resume_callback) noexcept
+      : vtable_(new vtable_type(std::forward&lt;TSUSPEND&gt;(await_suspend_callback),
+                                std::forward&lt;TRESUME&gt;(await_resume_callback))) {}
+
+  template &lt;class TSUSPEND&gt;
+  LIBCOPP_UTIL_FORCEINLINE generator_vtable_delegate(TSUSPEND&amp;&amp; await_suspend_callback) noexcept
+      : vtable_(new vtable_type(std::forward&lt;TSUSPEND&gt;(await_suspend_callback), nullptr)) {}
+
+  LIBCOPP_UTIL_FORCEINLINE generator_vtable_delegate() noexcept : vtable_(nullptr) {}
+
+  LIBCOPP_UTIL_FORCEINLINE generator_vtable_delegate(const generator_vtable_delegate&amp; other) noexcept
+      : vtable_(other.vtable_) {}
+
+  LIBCOPP_UTIL_FORCEINLINE void trigger_suspend_callback(context_type&amp; context) {
+    if (vtable_ &amp;&amp; vtable_-&gt;get_await_suspend_callback()) {
+      vtable_-&gt;get_await_suspend_callback()(context.shared_from_this());
+    }
+  }
+
+  LIBCOPP_UTIL_FORCEINLINE void trigger_resume_callback(const context_type&amp; context) {
+    if (vtable_ &amp;&amp; vtable_-&gt;get_await_resume_callback()) {
+      vtable_-&gt;get_await_resume_callback()(context);
+    }
+  }
+
+ private:
+  copp::memory::intrusive_ptr&lt;vtable_type&gt; vtable_;
+};
+
+template &lt;class TCONTEXT&gt;
+class generator_vtable_delegate&lt;TCONTEXT, generator_vtable_type::kNone&gt; {
+ public:
+  using context_type = TCONTEXT;
+  using context_pointer_type = LIBCOPP_COPP_NAMESPACE_ID::memory::default_strong_rc_ptr&lt;context_type&gt;;
+  using value_type = typename context_type::value_type;
+
+  generator_vtable_delegate() noexcept {}
+  generator_vtable_delegate(const generator_vtable_delegate&amp;) noexcept {}
+
+  void trigger_suspend_callback(context_type&amp; /*context*/) noexcept {}
+
+  void trigger_resume_callback(const context_type&amp; /*context*/) noexcept {}
+};
+</code></pre><p>最后提供一组类似 Rust的 <a href=https://doc.rust-lang.org/std/sync/mpsc/fn.channel.html><code>std::sync::mpsc::channel</code></a> 来创建channel就行了。</p><pre><code class=language-cpp>template &lt;class TVALUE, class TERROR_TRANSFORM = promise_error_transform&lt;TVALUE&gt;&gt;
+using generator_channel_receiver = generator_channel_future&lt;TVALUE, TERROR_TRANSFORM&gt;;
+
+template &lt;class TVALUE, class TERROR_TRANSFORM = promise_error_transform&lt;TVALUE&gt;&gt;
+using generator_channel_sender = typename generator_channel_receiver&lt;TVALUE, TERROR_TRANSFORM&gt;::context_pointer_type;
+
+template &lt;class TVALUE, class TERROR_TRANSFORM = promise_error_transform&lt;TVALUE&gt;&gt;
+inline std::pair&lt;generator_channel_receiver&lt;TVALUE, TERROR_TRANSFORM&gt;,
+                 generator_channel_sender&lt;TVALUE, TERROR_TRANSFORM&gt;&gt;
+make_channel() {
+  generator_channel_receiver&lt;TVALUE, TERROR_TRANSFORM&gt; future;
+  generator_channel_sender&lt;TVALUE, TERROR_TRANSFORM&gt; context = future.get_context();
+  return std::make_pair(std::move(future), std::move(context));
+}
+</code></pre><h3 id=stackful协程的-channel-模型实现>stackful协程的 channel 模型实现</h3><p>stackful模式下之前没有现成的实现，为了保持使用上统一，所以需要新实现一个。
+原理和结构也类似，也是receiver和sender通过共享的context来交互。</p><pre><code class=language-{mermaid}>classDiagram
+    stackful_channel_context &lt;|-- stackful_channel_receiver
+    stackful_channel_context &lt;|-- stackful_channel_sender
+    stackful_channel_context: -future data_
+    stackful_channel_context: -variant callers_
+    stackful_channel_context: +bool is_ready()
+    stackful_channel_context: +bool is_pending()
+    stackful_channel_context: +void reset_value()
+    stackful_channel_context: +const value_type *get_value() const
+    stackful_channel_context: +value_type *get_value()
+    stackful_channel_context: +void add_caller(handle_delegate handle)
+    stackful_channel_context: +bool remove_caller(handle_delegate handle)
+    stackful_channel_context: +size_t resume_callers()
+    stackful_channel_context: +bool has_multiple_callers() const
+    class stackful_channel_receiver{
+      -context_pointer_type context_;
+      +bool is_ready()
+      +bool is_pending()
+      +void reset_value()
+      +const value_type *get_value() const
+      +value_type *get_value()
+      +value_type inject_await(TCONTEXT *ctx, TERROR_TRANSFORM &amp;&amp;error_transform)
+      +const context_pointer_type &amp;get_context() const
+      +context_pointer_type &amp;get_context()
+    }
+    class stackful_channel_sender{
+      -context_pointer_type context_;
+      +bool is_ready()
+      +bool is_pending()
+      +void reset_value()
+      +void set_value(U &amp;&amp;in)
+      +const context_pointer_type &amp;get_context() const
+      +context_pointer_type &amp;get_context()
+    }
+</code></pre><p>和C++20协程的 <code>copp::generator_future</code> 实现一样。这里也会对小的trivial类型执行 inplace 构造优化，所以后面的压力测试会区分 trivial 和 非trivial 两种值类型。
+这里的caller也是记录无栈协程的上下文即可，然后增加了 <code>inject_await</code> 接口和stackful的协程和task对象交互。除此之外还有两处差异。</p><p>一是错误码转换是在调用 <code>inject_await</code> 的时候，也就是在执行等待的时候传入。这是为了类型数量可以尽可能少一点。</p><pre><code class=language-cpp>template &lt;class TERROR_TRANSFORM&gt;
+value_type inject_await(coroutine_context *ctx, TERROR_TRANSFORM &amp;&amp;error_transform) noexcept(
+    std::is_nothrow_copy_constructible&lt;value_type&gt;::value &amp;&amp; noexcept(error_transform(COPP_EC_ARGS_ERROR))) {
+  return internal_inject_await&lt;coroutine_context&gt;(ctx, std::forward&lt;TERROR_TRANSFORM&gt;(error_transform));
+}
+</code></pre><p>另一处是这里要stackful协程和task分别去适配注入。</p><pre><code class=language-cpp>// coroutine_context
+template &lt;class TAWAITABLE, class TERROR_TRANSFORM,
+            class = nostd::enable_if_t&lt;stackful_inject_awaitable&lt;nostd::remove_cvref_t&lt;TAWAITABLE&gt;&gt;::value&gt;&gt;
+inline container_value_type&lt;TAWAITABLE&gt; await_value(TAWAITABLE &amp;&amp;awaitable, TERROR_TRANSFORM &amp;&amp;error_transform) noexcept(
+      std::is_nothrow_copy_constructible&lt;container_value_type&lt;TAWAITABLE&gt;&gt;::value &amp;&amp; noexcept(error_transform(COPP_EC_ARGS_ERROR))) {
+  return awaitable.inject_await(this, std::forward&lt;TERROR_TRANSFORM&gt;(error_transform));
+}
+
+// task inject
+LIBCOPP_COPP_NAMESPACE_BEGIN
+template &lt;class TCO_MACRO&gt;
+struct stackful_channel_resume_handle&lt;LIBCOPP_COTASK_NAMESPACE_ID::task&lt;TCO_MACRO&gt;&gt; {
+  inline static int resume(void *invoke_task, stackful_channel_context_base *priv_data) {
+    if (nullptr != invoke_task) {
+      return reinterpret_cast&lt;LIBCOPP_COTASK_NAMESPACE_ID::task&lt;TCO_MACRO&gt; *&gt;(invoke_task)
+          -&gt;resume(reinterpret_cast&lt;void *&gt;(priv_data));
+    }
+
+    return 0;
+  }
+};
+LIBCOPP_COPP_NAMESPACE_END
+</code></pre><p>这是因为 <code>cotask::task&lt;T></code> 在执行resume后要做一些状态机切换的操作和触发完成事件，如果不单独注入无法及时触发完成事件和状态机切换。</p><p>最后在提供构造receiver和sender的接口就好了。</p><pre><code class=language-cpp>template &lt;class TVALUE&gt;
+inline std::pair&lt;stackful_channel_receiver&lt;TVALUE&gt;, stackful_channel_sender&lt;TVALUE&gt;&gt; make_stackful_channel() {
+  stackful_channel_receiver&lt;TVALUE&gt; receiver;
+  stackful_channel_sender&lt;TVALUE&gt; sender{receiver.get_context()};
+  return std::make_pair(std::move(receiver), std::move(sender));
+}
+</code></pre><h3 id=strong_rc_ptr-和-weak_rc_ptr><code>strong_rc_ptr</code> 和 <code>weak_rc_ptr</code></h3><p>智能指针的实现和 <a href=https://owent.net/2024/2405.html>《实现strong_rc_ptr(比shared_ptr更快的引用计数智能指针)》</a> 里一样，没啥特殊的。仅仅是多加了 <code>default_rc_ptr_trait</code> 来处理默认用带还是不带atomic的版本。</p><pre><code class=language-cpp>#if LIBCOPP_MACRO_ENABLE_MULTI_THREAD
+using default_rc_ptr_trait = compat_strong_ptr_function_trait&lt;compat_strong_ptr_mode::kStl&gt;;
+#else
+using default_rc_ptr_trait = compat_strong_ptr_function_trait&lt;compat_strong_ptr_mode::kStrongRc&gt;;
+#endif
+
+template &lt;class T&gt;
+using default_strong_rc_ptr = typename default_rc_ptr_trait::template shared_ptr&lt;T&gt;;
+
+template &lt;class T&gt;
+using default_weak_rc_ptr = typename default_rc_ptr_trait::template weak_ptr&lt;T&gt;;
+
+template &lt;class T&gt;
+using default_enable_shared_from_this = typename default_rc_ptr_trait::template enable_shared_from_this&lt;T&gt;;
+
+template &lt;class T, class... ArgsT&gt;
+LIBCOPP_UTIL_FORCEINLINE default_strong_rc_ptr&lt;T&gt; default_make_strong(ArgsT&amp;&amp;... args) {
+  return default_rc_ptr_trait::template make_shared&lt;T&gt;(std::forward&lt;ArgsT&gt;(args)...);
+}
+
+template &lt;class T, class Alloc, class... TArgs&gt;
+LIBCOPP_UTIL_FORCEINLINE default_strong_rc_ptr&lt;T&gt; default_allocate_strong(const Alloc&amp; alloc, TArgs&amp;&amp;... args) {
+  return default_rc_ptr_trait::template allocate_shared&lt;T&gt;(alloc, std::forward&lt;TArgs&gt;(args)...);
+}
+
+template &lt;class T, class F&gt;
+LIBCOPP_UTIL_FORCEINLINE default_strong_rc_ptr&lt;T&gt; default_static_pointer_cast(F&amp;&amp; f) {
+  return default_rc_ptr_trait::template static_pointer_cast&lt;T&gt;(std::forward&lt;F&gt;(f));
+}
+
+template &lt;class T, class F&gt;
+LIBCOPP_UTIL_FORCEINLINE default_strong_rc_ptr&lt;T&gt; default_const_pointer_cast(F&amp;&amp; f) {
+  return default_rc_ptr_trait::template const_pointer_cast&lt;T&gt;(std::forward&lt;F&gt;(f));
+}
+
+#if defined(LIBCOPP_MACRO_ENABLE_RTTI) &amp;&amp; LIBCOPP_MACRO_ENABLE_RTTI
+template &lt;class T, class F&gt;
+LIBCOPP_UTIL_FORCEINLINE default_strong_rc_ptr&lt;T&gt; default_dynamic_pointer_cast(F&amp;&amp; f) {
+  return default_rc_ptr_trait::template dynamic_pointer_cast&lt;T&gt;(std::forward&lt;F&gt;(f));
+}
+#endif
+</code></pre><p>具体实现见: <a href=https://github.com/owent/libcopp/tree/v2/include/libcopp/utils/memory>https://github.com/owent/libcopp/tree/v2/include/libcopp/utils/memory</a></p><h2 id=压力测试对比和分析>压力测试对比和分析</h2><p>下面测试分几组:</p><ul><li><strong>低并发:基准</strong> ：同时运行协程数低，编译优化开 <code>-O2</code></li><li><strong>低并发:仅命中率</strong> ：同时运行协程数低，编译优化开 <code>-O2</code> ，关闭Atomic，去除task_manager锁</li><li><strong>低并发:Release</strong> ：同时运行协程数低，编译优化开 <code>-O3</code> ，关闭Atomic，去除task_manager锁</li><li><strong>高并发:基准</strong> ：同时运行协程数高，模拟随机访问，编译优化开 <code>-O2</code></li><li><strong>高并发:仅命中率</strong> ：同时运行协程数高，模拟随机访问，编译优化开 <code>-O2</code> ，关闭Atomic，去除task_manager锁</li><li><strong>高并发:Release</strong> ：同时运行协程数高，模拟随机访问，编译优化开 <code>-O3</code> ，关闭Atomic，去除task_manager锁</li></ul><table><thead><tr><th>对比项</th><th>低并发:基准</th><th>低并发:仅命中率</th><th>低并发:Release</th><th>高并发:基准</th><th>高并发:仅命中率</th><th>高并发:Release</th></tr></thead><tbody><tr><td>Stackful协程上下文(<code>cotask::coroutine_context*</code>)创建（动态栈池）</td><td>-</td><td>-</td><td>-</td><td>66ns</td><td>41ns(-38%)</td><td>38ns(-43%)</td></tr><tr><td>Stackful协程上下文(<code>cotask::coroutine_context*</code>)切换</td><td>47ns</td><td>32ns(-32%)</td><td>25ns(-47%)</td><td>83ns</td><td>54ns(-35%)</td><td>42ns(-49%)</td></tr><tr><td>Stackful协程任务(<code>cotask::task</code>)创建（动态栈池）</td><td>-</td><td>-</td><td>-</td><td>102ns</td><td>61ns(-40%)</td><td>64ns(-37%)</td></tr><tr><td>Stackful协程任务(<code>cotask::task</code>)切换</td><td>65ns</td><td>42ns(-35%)</td><td>34ns(-48%)</td><td>95ns</td><td>78ns(-18%)</td><td>68ns(-28%)</td></tr><tr><td>C++20协程任务(<code>cotask::task_future</code>)创建(Trivial值类型)</td><td>-</td><td>-</td><td>-</td><td>98ns</td><td>78ns(-21%)</td><td>77ns(-22%)</td></tr><tr><td>C++20协程任务(<code>cotask::task_future</code>)创建(非Trivial值类型)</td><td>-</td><td>-</td><td>-</td><td>109ns</td><td>91ns(-16%)</td><td>93ns(-15%)</td></tr><tr><td>C++20协程任务(<code>cotask::generator_future</code>)切换(Trivial值类型)</td><td>46ns</td><td>32ns(-31%)</td><td>28ns(-40%)</td><td>49ns</td><td>28ns(-43%)</td><td>31ns(-37%)</td></tr><tr><td>C++20协程任务(<code>cotask::generator_future</code>)切换(非Trivial值类型)</td><td>52ns</td><td>38ns(-27%)</td><td>39ns(-25%)</td><td>56ns</td><td>41ns(-27%)</td><td>44ns(-22%)</td></tr><tr><td>C++20协程Callable(<code>cotask::callable_future</code>)创建(Trivial值类型)</td><td>-</td><td>-</td><td>-</td><td>57ns</td><td>53ns(-7%)</td><td>51ns(-3%)</td></tr><tr><td>C++20协程Callable(<code>cotask::callable_future</code>)创建(非Trivial值类型)</td><td>-</td><td>-</td><td>-</td><td>55ns</td><td>55ns(-0%)</td><td>52ns(-11%)</td></tr><tr><td>C++20协程Callable(<code>cotask::generator_future</code>)切换(Trivial值类型)</td><td>34ns</td><td>23ns(-32%)</td><td>20ns(-41%)</td><td>35ns</td><td>27ns(-22%)</td><td>21ns(-40%)</td></tr><tr><td>C++20协程Callable(<code>cotask::generator_future</code>)切换(非Trivial值类型)</td><td>47ns</td><td>41ns(-13%)</td><td>34ns(-28%)</td><td>49ns</td><td>43ns(-12%)</td><td>38ns(-22%)</td></tr><tr><td>C++20协程轻量级Generator(<code>cotask::generator_future</code>，Trivial值类型)</td><td>47ns</td><td>29ns(-38%)</td><td>23ns(-51%)</td><td>52ns</td><td>36ns(-31%)</td><td>33ns(-36%)</td></tr><tr><td>C++20协程轻量级Generator(<code>cotask::generator_future</code>，非Trivial值类型)</td><td>54ns</td><td>44ns(-22%)</td><td>37ns(-31%)</td><td>60ns</td><td>49ns(-17%)</td><td>46ns(-23%)</td></tr><tr><td>C++20协程Channel(<code>cotask::generator_future</code>，Trivial值类型)</td><td>34ns</td><td>23ns(-32%)</td><td>20ns(-41%)</td><td>38ns</td><td>26ns(-32%)</td><td>26ns(-32%)</td></tr><tr><td>C++20协程Channel(<code>cotask::generator_future</code>，非Trivial值类型)</td><td>47ns</td><td>39ns(-17%)</td><td>33ns(-30%)</td><td>48ns</td><td>42ns(-13%)</td><td>39ns(-19%)</td></tr></tbody></table><p>为什么上面的基准使用动态栈池的版本？这是因为我们实际项目里使用的是根据负载动态伸缩的栈池。
+实际开销包含涉及模式带来的管理开销，比如一些简单地DAG能力，<code>wait_all/wait_some/wait_any</code> ，<code>then</code> 接口，任务管理器注入等等。
+所以这个组合和测试参考参考数据更贴近业务实际使用场景，而不是单纯为了“跑分”。</p><blockquote><ul><li><strong>C++20协程Channel</strong> 和 <strong>C++20协程轻量级Generator</strong> 的Case都使用 <strong>C++20协程Callable</strong> 进行,数据都是触发协程切换的开销。</li><li>低并发下创建开销误差大，无意义所以忽略数据。</li><li>上面的切换开销都是一来+一回两次。在实际RPC使用场景中，一次RPC调用涉及IO写的时候切出和拿到回包后切入。这样更符合实际使用场景。<ul><li>有些对称式协程一般只测一次切换，要对比的话可以*2后对比。</li></ul></li><li>C++20协程的 <code>cotask::generator_future</code> 组件本身创建开销大约是40ns左右。实际使用的时候可以池化复用，所以这里没有列举出 <code>cotask::generator_future</code> 的创建开销。</li><li>C++20协程涉及对分配，这个压测使用的是默认的内存分配器，没有使用 jemalloc/mimalloc/tcmalloc 等，有兴趣需要测试的同学可以自己加载PRELOAD跑。</li></ul></blockquote><p>来个图更直观一点。首先是 <strong>低并发场景</strong>：</p><canvas id=charjs-chart-0>Chart 0</canvas>
+<script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{var t="charjs-chart-0";new Chart(document.getElementById(t),{type:"line",data:{labels:["基准","仅命中率","Release"],datasets:[{label:"Stackful上下文切换",data:[47,32,25],borderColor:"rgb(54, 162, 235)",backgroundColor:"rgb(54, 162, 235)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"Stackful任务切换",data:[65,42,34],borderColor:"rgb(75, 192, 192)",backgroundColor:"rgb(75, 192, 192)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20任务切换(Trivial)",data:[46,32,28],borderColor:"rgb(201, 203, 207)",backgroundColor:"rgb(201, 203, 207)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20任务切换(非Trivial)",data:[52,38,39],borderColor:"rgb(54, 72, 149)",backgroundColor:"rgb(54, 72, 149)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20 Callable切换(Trivial)",data:[35,27,21],borderColor:"rgb(166, 77, 121)",backgroundColor:"rgb(166, 77, 121)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20 Callable切换(非Trivial)",data:[47,41,34],borderColor:"rgb(77, 166, 166)",backgroundColor:"rgb(77, 166, 166)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20轻量Generator(Trivial)",data:[47,29,23],borderColor:"rgb(110, 177, 0)",backgroundColor:"rgb(110, 177, 0)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20轻量Generator(非Trivial)",data:[54,44,37],borderColor:"rgb(170, 110, 40)",backgroundColor:"rgb(170, 110, 40)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20 Channel(Trivial)",data:[34,23,20],borderColor:"rgb(0, 128, 128)",backgroundColor:"rgb(0, 128, 128)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20 Channel(非Trivial)",data:[47,39,33],borderColor:"rgb(128, 0, 128)",backgroundColor:"rgb(128, 0, 128)",tension:.3,pointRadius:5,pointHoverRadius:7}]},options:{plugins:{title:{display:!0,text:"低并发场景下各操作性能优化趋势 (耗时越低越好)"},tooltip:{mode:"index",intersect:!1},legend:{position:"right",labels:{boxWidth:12}}},scales:{x:{title:{display:!0,text:"优化阶段"}},y:{title:{display:!0,text:"耗时 (ns)"}}}}})})</script><p>然后是 <strong>高并发场景</strong>：</p><canvas id=charjs-chart-1>Chart 1</canvas>
+<script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{var t="charjs-chart-1";new Chart(document.getElementById(t),{type:"line",data:{labels:["基准","仅命中率","Release"],datasets:[{label:"Stackful上下文创建",data:[66,41,38],borderColor:"rgb(255, 99, 132)",backgroundColor:"rgb(255, 99, 132)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"Stackful上下文切换",data:[83,54,42],borderColor:"rgb(54, 162, 235)",backgroundColor:"rgb(54, 162, 235)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"Stackful任务创建",data:[102,61,64],borderColor:"rgb(255, 159, 64)",backgroundColor:"rgb(255, 159, 64)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"Stackful任务切换",data:[95,78,68],borderColor:"rgb(75, 192, 192)",backgroundColor:"rgb(75, 192, 192)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20任务创建(Trivial)",data:[98,78,77],borderColor:"rgb(153, 102, 255)",backgroundColor:"rgb(153, 102, 255)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20任务创建(非Trivial)",data:[109,91,93],borderColor:"rgb(255, 205, 86)",backgroundColor:"rgb(255, 205, 86)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20任务切换(Trivial)",data:[49,28,31],borderColor:"rgb(201, 203, 207)",backgroundColor:"rgb(201, 203, 207)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20任务切换(非Trivial)",data:[56,41,44],borderColor:"rgb(54, 72, 149)",backgroundColor:"rgb(54, 72, 149)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20 Callable创建(Trivial)",data:[57,53,51],borderColor:"rgb(0, 148, 97)",backgroundColor:"rgb(0, 148, 97)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20 Callable创建(非Trivial)",data:[55,55,52],borderColor:"rgb(192, 75, 75)",backgroundColor:"rgb(192, 75, 75)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20 Callable切换(Trivial)",data:[35,27,21],borderColor:"rgb(166, 77, 121)",backgroundColor:"rgb(166, 77, 121)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20 Callable切换(非Trivial)",data:[49,43,38],borderColor:"rgb(77, 166, 166)",backgroundColor:"rgb(77, 166, 166)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20轻量Generator(Trivial)",data:[52,36,33],borderColor:"rgb(110, 177, 0)",backgroundColor:"rgb(110, 177, 0)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20轻量Generator(非Trivial)",data:[60,49,46],borderColor:"rgb(170, 110, 40)",backgroundColor:"rgb(170, 110, 40)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20 Channel(Trivial)",data:[38,26,26],borderColor:"rgb(0, 128, 128)",backgroundColor:"rgb(0, 128, 128)",tension:.3,pointRadius:5,pointHoverRadius:7},{label:"C++20 Channel(非Trivial)",data:[48,42,39],borderColor:"rgb(128, 0, 128)",backgroundColor:"rgb(128, 0, 128)",tension:.3,pointRadius:5,pointHoverRadius:7}]},options:{plugins:{title:{display:!0,text:"高并发场景下各操作性能优化趋势 (耗时越低越好)"},tooltip:{mode:"index",intersect:!1}},scales:{x:{title:{display:!0,text:"优化阶段"}},y:{title:{display:!0,text:"耗时 (ns)"}}}}})})</script><p>总体来看，无论是高并发场景还是低并发场景，关闭atomic操作都能带来大约20%-30%的性能提升，提升量相当可观。
+而进一步开启 <code>-O3</code> 编译后，大部分场景可以进一步提升，特别是对非Trivial类型比较明显。少量场景可能是过度inline反而导致Code Cache命中率下降从而开销轻微增加。</p><p>最新测试也可以查看 <a href=https://github.com/owent/libcopp/actions>https://github.com/owent/libcopp/actions</a> 里的CI输出。</p><h2 id=最后>最后</h2><p>当前版本的优化已经发布到 <a href=https://github.com/owent/libcopp/releases/tag/v2.3.1>https://github.com/owent/libcopp/releases/tag/v2.3.1</a> 。未来可能可以针对小对象和对缓存命中率进一步优化。
+也欢迎有兴趣的小伙伴们一起交流。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2025-03-12T20:58:45.000+00:00 itemprop=datePublished>2025-03-12</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/coroutine.html>coroutine</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E5%8D%8F%E7%A8%8B.html>协程</a></li><li class=article-tag-list-item><a href=//owent.net/tags/libcopp.html>libcopp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/c++20.html>C++20</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cpu.html>cpu</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cache.html>cache</a></li><li class=article-tag-list-item><a href=//owent.net/tags/optimize.html>optimize</a></li><li class=article-tag-list-item><a href=//owent.net/tags/channel.html>channel</a></li><li class=article-tag-list-item><a href=//owent.net/tags/sync.html>sync</a></li><li class=article-tag-list-item><a href=//owent.net/tags/await.html>await</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2025/2503.html>上一篇<strong>指标上报的多线程优化和多拉取源点优化</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2025/2501.html>下一篇<strong>通用RPC代码生成器</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2025&nbsp;owent
+</strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong><span class=clearfix></span></div></div></footer></div><script type=module>// import * as Popper from "@popperjs/core";// import * as bootstrap from "bootstrap";
+// import React from "react";
+
+        
+</script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/accesslog.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/armasm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/awk.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/basic.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/bnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/capnproto.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/cmake.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/d.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dockerfile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dos.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/erlang.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/ebnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/latex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/llvm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/lua.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/powershell.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/protobuf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/profile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/vim.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/x86asm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/yaml.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/vs2015.min.css",document.querySelector("head").appendChild(t),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const n={};for(const e of hljs.listLanguages())n[e.toLowerCase()]=!0;for(const e of document.querySelectorAll("pre>code"))try{if(e.className.match(/\bmermaid\b/i)){e.classList.add("mermaid");continue}if(e.className.match(/\bnohighlight\b/i))continue;const t=e.className.match(/language-([^\s]+)/i);if(t&&t.length>=2&&hljs.getLanguage(t[1]))hljs.highlightElement(e);else{const t=hljs.highlightAuto(e.innerText,hljs.listLanguages());t&&t.value&&(e.innerHTML=t.value,e.classList.add("hljs"))}}catch(e){window.console&&console.log(e.toString()+`\r
+Maybe can not detect the language`)}})</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-PQEY77BYG1"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-PQEY77BYG1")}</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css",document.querySelector("head").appendChild(t),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js></script><script type=module>
+import mermaid from "mermaid";
+const config = {
+    theme: 'neutral',
+    logLevel: 'fatal',
+    securityLevel: 'loose', 
+    startOnLoad: true,
+    arrowMarkerAbsolute: false,
+    
+
+};
+mermaid.initialize(config);
+</script><script type=text/javascript>var _hmt=_hmt||[];(function(){var t,n,e=document.createElement("script");e.src="https://hm.baidu.com/hm.js?6a0daf8d58889f1cf55a353867bfdbb0",t=document.getElementsByTagName("script"),n=document.getElementsByTagName("script")[t.length-1],n.parentNode.appendChild(e)})()</script></div></body></html>

@@ -1,0 +1,120 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>Excel转表工具(xresloader) 增加protobuf插件功能和集成 UnrealEngine 支持|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2019/1906.html><link rel=icon href=/favicon.ico><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net//css/style.css><link rel=stylesheet href=//owent.net/css/syntax.css><script type=importmap>
+{
+  "imports": {
+    "react": "https://cdn.jsdelivr.net/npm/react/+esm",
+    "react-bootstrap": "https://cdn.jsdelivr.net/npm/react-bootstrap/+esm",
+    "mermaid": "https://cdn.jsdelivr.net/npm/mermaid/+esm",
+    "bootstrap": "https://cdn.jsdelivr.net/npm/bootstrap/+esm",
+    "@popperjs/core": "https://cdn.jsdelivr.net/npm/popper.js/+esm"
+  }
+}
+</script><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8180054975285991" crossorigin=anonymous></script><meta content="codeva-4M5iohb9TW" name=baidu-site-verification></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net/ id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-bs-toggle=collapse data-bs-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-95a763812d4ae50c24560f54e947b623 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2019/1906.html target=_blank itemprop=url>Excel转表工具(xresloader) 增加protobuf插件功能和集成 UnrealEngine 支持</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#数据输出和代码输出>数据输出和代码输出</a></li><li><a href=#unrealengine-的额外扩展>UnrealEngine 的额外扩展</a></li></ul><ul><li><a href=#ue的datatable和ustruct数据结构>UE的DataTable和UStruct数据结构</a></li><li><a href=#csvjson和importsetting>Csv、Json和ImportSetting</a></li><li><a href=#helper类和辅助函数>Helper类和辅助函数</a></li></ul><ul><li><a href=#xresconv-gui额外事件和nodejs沙盒>xresconv-gui额外事件和nodejs沙盒</a></li><li><a href=#持续发布cd>持续发布(CD)</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><h1 id=前言>前言</h1><p>我们项目组最近在学习UE，然后就涉及导表这个东东。之前我已经做过一个功能比较全面并且跨平台的Excel导出protobuf、msgpack、xml、lua、json、javascript等的工具 <a href=http://github.com/xresloader/>xresloader</a> 。并且做了方便服务器集成的CLI工具和方便策划、前端用的GUI工具。那么这次很自然地就让它能够导出UE所支持的内容就行了。然后额外增加了基于protobuf插件形式的多key索引和自动生成一些支持蓝图和非蓝图的常用接口代码。</p><p>其实也是看了一下周边团队的做法，参考了一下他们的流程。然后结合 UE的文档和 <a href=http://github.com/xresloader/>xresloader</a> 的特性，让它支持导出 UE所支持的DataTable，供给项目中使用。 顺便还完成了一些之前想做但是一直没做的功能流程，那就是支持通过protobuf插件的形式配置部分数据。目前只是还是简单地加了一些插件功能，但是这个流程打通以后，后面就方便做一些更高级特性了。</p><h1 id=protobuf插件式扩展>protobuf插件式扩展</h1><p>protobuf插件功能在protobuf的官方文档里没有什么详细的说明。但是根据其他一些应用和protobuf提供的descriptor.proto文件还是比较容易知道它的用法。</p><p>protobuf内部数据描述保留了 1-1000 的段，那么我这里 xresloader 就使用了 1001-2000 的段。 其中 1001-1100 用来标记公共的扩展功能，其他的还可以分类放在不同的段里。</p><p>我在 <a href=https://github.com/xresloader/xresloader>xresloader</a> 的设计里早先是独立于协议的。所以内部有自己的数据结构描述，相当于也要加扩展信息的结构，用于把 protobuf 插件信息用 <a href=https://github.com/xresloader/xresloader>xresloader</a> 内部的 AST 结构描述出来。</p><h2 id=数据输出和代码输出>数据输出和代码输出</h2><p>目前数据extend支持以下扩展。</p><pre><code class=language-protobuf>syntax = &quot;proto3&quot;;
+
+import &quot;google/protobuf/descriptor.proto&quot;;
+
+package org.xresloader;
+
+extend google.protobuf.FileOptions {
+    string file_description = 1001; // 描述信息（不同的输出可能有不同的功能）
+
+    // 用户自定义扩展字段请使用 2000 to max;
+}
+
+extend google.protobuf.MessageOptions {
+    string   msg_description          = 1001; // 描述信息（不同的输出可能有不同的功能）
+    // 用户自定义扩展字段请使用 2000 to max;
+}
+
+extend google.protobuf.FieldOptions {
+    string verifier          = 1001; // 附加验证器
+    string field_description = 1011; // 描述信息（不同的输出可能有不同的功能）
+
+    // 用户自定义扩展字段请使用 2000 to max;
+    // extensions 1000 to max;
+}
+
+</code></pre><p>对于 File 和 Message 扩展可能目前用处不是特别大，仅仅是在输出的header里和某些代码文件里增加了一个头，用来输出一些描述信息。
+实际更有意义一点的可能是 Field 里的verifier，这样我们就可以不仅仅能在Excel里加验证器，而是直接可以把数据验证器加到类型上。比如sample里 <code>role_upgrade_cfg</code> 的 <code>CostType</code> 字段：</p><pre><code class=language-protobuf>message role_upgrade_cfg {
+    uint32 Id        = 1;
+    uint32 Level     = 2;
+    uint32 CostType  = 3 [ (org.xresloader.verifier) = &quot;cost_type&quot;, (org.xresloader.field_description) = &quot;Refer to cost_type&quot; ];
+    int32  CostValue = 4;
+    int32  ScoreAdd  = 5;
+}
+</code></pre><h2 id=unrealengine-的额外扩展>UnrealEngine 的额外扩展</h2><p>在完成上面的流程之后，增加内容就变得很容易了。 我目前给 UE 扩展插件时分配了 1101-1200 段。 UE扩展其实更需要这些功能，因为要比较好地支持 UE 里的功能，需要自定义的条目可能结构比较复杂。特别是考虑到以后会加入多索引以后。目前的扩展结构如下：</p><pre><code class=language-protobuf>syntax = &quot;proto3&quot;;
+
+import &quot;google/protobuf/descriptor.proto&quot;;
+
+package org.xresloader.ue;
+
+extend google.protobuf.FieldOptions {
+    int64  key_tag        = 1101; // key字段映射的系数
+    string ue_type_name   = 1102; // UE内部类型(比如: TSoftObjectPtr&lt;UTexture&gt;)
+    bool ue_type_is_class = 1103; // UE内部类型是否是Class(如果为true，会生成: TSoftClassPtr&lt;T&gt; 而不是 TSoftObjectPtr&lt;T&gt;)
+}
+
+extend google.protobuf.MessageOptions {
+    string helper = 1101;       // 辅助函数的类名
+    bool not_data_table = 1102; // 不是DataTable，helper类里不生成加载代码
+}
+</code></pre><p>主要的功能上面注释里写的应该也比较清晰了。后面也有对内哦那个更详细的说明。</p><h1 id=unrealengine-支持>UnrealEngine 支持</h1><h2 id=ue的datatable和ustruct数据结构>UE的DataTable和UStruct数据结构</h2><p>UE的数据导入支持Json和CSV两种形式。Json格式比较固定，但是CSV比较麻烦。</p><p>初期我实现的第一个版本没有支持可嵌套的结构，所有的复杂结构会被打平到扁平结构再生成代码和输出数据。但是后来结合对UE的导入模块的代码分析和Csv格式的Export结果分析。其实CSV也是支持复杂格式的，而且CSV的导入代码里数据加载是流式的。所以后面又增加了一个选项 <code>UeCfg-RecursiveMode=true/false</code> 来控制是否要开启嵌套结构的支持，然后默认处于开启状态。</p><p>在嵌套模式里，Csv所有的一级字段都是引号包裹的字符串。对于数组，是括号 <code>()</code> 包裹， <code>,</code> 分隔的数据元组。对于UStruct，则是 <code>()</code> 包裹， <code>,</code> 分隔的 <code>Key=Value</code> 的数据对。因为Key必须可输出为变量名，所以肯定是没有需要转义的字符的，而Value如果是字符串则需要再来一层 <code>""</code> 包裹起来。 因为数据的类型要么是基本类型，要么是数组或是UStruct，也没有嵌套转义的问题。</p><p>另外就是输出的数据不允许空字段，不然打开UEditor的时候会报Warning。在之前所有支持的输出类型，都是支持 <strong>optional</strong> 字段的，但是在输出UE数据的时候，就得把数据结构中空数据的 <strong>optional</strong> 补全默认值。</p><p>因为没有找到相关的比较确切的文档，所以对于CSV格式，我目前的实现还是按读的代码和UE导出的样例，按我的理解实现的转出。所以建议上，如果要使用平铺的模式，两种转表输出的格式都可以。
+如果要使用嵌套模式，还是推荐用json。因为至少它的规范是统一的。</p><p>对常量的转出目前也是一个最简单的形式。即Key-Value，Key为protobuf形式的路径字符串，value为对应的数字。这个应用场景没有特别多，而且很容易有可替代方案。后面有空改成输出UE支持的蓝图枚举类型吧。</p><h2 id=csvjson和importsetting>Csv、Json和ImportSetting</h2><p>UE的数据导入可以用 <strong>UEditor-Cmd.exe</strong> + <strong>UnreaImportSettings.json</strong> 导入到项目中，也可以UEditor里手动导入。（不过我咨询了下UE的技术支持，说是他们目前版本的 <strong>UEditor-Cmd.exe</strong> 仅支持Windows）。
+<strong>UnreaImportSettings.json</strong> 文件里主要描述了每个要导入的 <strong>DataTable</strong> 的csv/json文件路径和映射的代码类。当然导入之前需要把生成的代码先编译进dll。结构大概是这样:</p><pre><code class=language-json>{
+    &quot;ImportGroups&quot;: [
+    {
+        &quot;GroupName&quot;: &quot;XResConfig&quot;,
+        &quot;DestinationPath&quot;: &quot;DataTable&quot;,
+        &quot;FactoryName&quot;: &quot;ReimportDataTableFactory&quot;,
+        &quot;Filenames&quot;: [&quot;/mnt/d/workspace/projs/xresloader/xresloader/sample/proto_v3/json/KindConst.json&quot;],
+        &quot;ImportSettings&quot;: {
+            &quot;ImportType&quot;: &quot;ECSV_DataTable&quot;,
+            &quot;ImportRowStruct&quot;: &quot;KindConst&quot;
+        },
+        &quot;bSkipReadOnly&quot;: &quot;true&quot;,
+        &quot;bReplaceExisting&quot;: &quot;true&quot;
+    }
+}
+</code></pre><p>这边我输出的文件名都是绝对路径，因为Windows环境下跨盘符不是太好处理，还是需要转成绝对路径。当然这个也可以后面有空再来优化成相对路径。绝对路径有个坏处就是不同人那里转出来的数据源可能不一样，转出的uassert里是会记录数据源的路径的。这时候如果换一个环境可能路径就不存在了，那么UEditor里就没有检测到文件变化然后自动提示reload了。</p><p>第二期优化的时候，我加了个scheme参数 <code>UeCfg-DestinationPath</code> 用来指定uassert的输出目录。最早的版本实现里uassert的输出目录和csv/json的数据文件输出目录是一样的，实际上导入项目只需要uassert就行了。所以之前我们会把所有资源文件（包括 <strong>UnreaImportSettings.json</strong> ）都输出到Content同一目录下。这个只是为了把uassert和其他数据源分开来。</p><h2 id=helper类和辅助函数>Helper类和辅助函数</h2><p>前面的插件功能大多是针对于辅助函数的，因为UE里的UStruct是不允许有虚函数的，而UE的DataTable的Key固定只有一个并且是 <code>FName</code> 类型。但是我们项目里肯定会有需求是多级Key的，甚至多重索引（这个目前还只是预留，还没加这个功能）。所以我们要提供一个通用的方法把几个Key组合成UE的Name，实现 <strong>get by key</strong> ，显然会同时需要static的版本和蓝图版本。另外UStruct是不允许返回指针的，所以我们也需要一个Default对象，就是空对象。并且空对象的函数也可以方便逻辑里的一些操作。</p><p>除了上面提到的以外，还会有一些辅助函数。为了防止这些函数和字段重名，所以我是支持另外生成一个Helper类，来存放这些函数。比如sample里的:</p><pre><code class=language-cpp>UCLASS(Blueprintable, BlueprintType)
+class UArrInArrHelper : public UObject
+{
+    GENERATED_BODY()
+
+public:
+    UArrInArrHelper();
+
+    static void ClearRow(FArrInArr&amp; TableRow);
+
+    UFUNCTION(BlueprintCallable, Category = &quot;XResConfig&quot;)
+    void ClearDataRow(FArrInArr&amp; TableRow) const;
+
+private:
+    FArrInArr Empty;
+};
+</code></pre><p>这也是为以后如果有更复杂的用法的时候，提供一个功能支持的容器。</p><h1 id=题外话>题外话</h1><p>后面只是记录一些随手做的优化和改进了，和UE转表无关。</p><h2 id=xresconv-gui额外事件和nodejs沙盒>xresconv-gui额外事件和nodejs沙盒</h2><p>首先是批量转表GUI工具里，原先的事件是一个eval函数，现在改成了nodejs沙盒。这样能尽可能减少破坏外部环境，也基本杜绝了注入问题。同时也是为了方便工具集成，给GUI工具加了一些开始转表前的事件和转表完成后的事件支持。主要用于开始前集成转pb的功能和转表后处理支援和自动调用 <strong>UEditor-Cmd.exe</strong> 来导入uassert到项目里。</p><h2 id=持续发布cd>持续发布(CD)</h2><p>持续发布就是把之前其他项的流程搬过来了，以前都是我手动打包jar发布的，现在就走自动发布啦。</p><h1 id=写在最后>写在最后</h1><p>最后也没啥好写的了。主要都是UE的踩坑经历，贴一个上面转表的流程结构图吧。</p><p><img src=1906-01.png alt=1906-01.png></p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2019-06-08T12:47:58.000+00:00 itemprop=datePublished>2019-06-08</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/xresloader.html>xresloader</a></li><li class=article-tag-list-item><a href=//owent.net/tags/xresconv.html>xresconv</a></li><li class=article-tag-list-item><a href=//owent.net/tags/excel.html>excel</a></li><li class=article-tag-list-item><a href=//owent.net/tags/protobuf.html>protobuf</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E8%BD%AC%E8%A1%A8%E5%B7%A5%E5%85%B7.html>转表工具</a></li><li class=article-tag-list-item><a href=//owent.net/tags/poi.html>poi</a></li><li class=article-tag-list-item><a href=//owent.net/tags/unrealengine.html>UnrealEngine</a></li><li class=article-tag-list-item><a href=//owent.net/tags/ue.html>UE</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2019/1907.html>上一篇<strong>协程框架(libcopp) 小幅优化</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2019/1905.html>下一篇<strong>Anna（支持任意扩展和超高性能的KV数据库系统）阅读笔记</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2025&nbsp;owent
+</strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong><span class=clearfix></span></div></div></footer></div><script type=module>// import * as Popper from "@popperjs/core";// import * as bootstrap from "bootstrap";
+// import React from "react";
+
+        
+</script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/accesslog.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/armasm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/awk.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/basic.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/bnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/capnproto.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/cmake.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/d.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dockerfile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dos.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/erlang.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/ebnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/latex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/llvm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/lua.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/powershell.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/protobuf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/profile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/vim.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/x86asm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/yaml.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/vs2015.min.css",document.querySelector("head").appendChild(t),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const n={};for(const e of hljs.listLanguages())n[e.toLowerCase()]=!0;for(const e of document.querySelectorAll("pre>code"))try{if(e.className.match(/\bmermaid\b/i)){e.classList.add("mermaid");continue}if(e.className.match(/\bnohighlight\b/i))continue;const t=e.className.match(/language-([^\s]+)/i);if(t&&t.length>=2&&hljs.getLanguage(t[1]))hljs.highlightElement(e);else{const t=hljs.highlightAuto(e.innerText,hljs.listLanguages());t&&t.value&&(e.innerHTML=t.value,e.classList.add("hljs"))}}catch(e){window.console&&console.log(e.toString()+`\r
+Maybe can not detect the language`)}})</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-PQEY77BYG1"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-PQEY77BYG1")}</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css",document.querySelector("head").appendChild(t),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js></script><script type=module>
+import mermaid from "mermaid";
+const config = {
+    theme: 'neutral',
+    logLevel: 'fatal',
+    securityLevel: 'loose', 
+    startOnLoad: true,
+    arrowMarkerAbsolute: false,
+    
+
+};
+mermaid.initialize(config);
+</script><script type=text/javascript>var _hmt=_hmt||[];(function(){var t,n,e=document.createElement("script");e.src="https://hm.baidu.com/hm.js?6a0daf8d58889f1cf55a353867bfdbb0",t=document.getElementsByTagName("script"),n=document.getElementsByTagName("script")[t.length-1],n.parentNode.appendChild(e)})()</script></div></body></html>

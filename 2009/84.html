@@ -1,0 +1,274 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>ECUST 09年 校赛个人赛第三场部分解题报告(A,D,F,I)|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2009/84.html><link rel=icon href=/favicon.ico><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net//css/style.css><link rel=stylesheet href=//owent.net/css/syntax.css><script type=importmap>
+{
+  "imports": {
+    "react": "https://cdn.jsdelivr.net/npm/react/+esm",
+    "react-bootstrap": "https://cdn.jsdelivr.net/npm/react-bootstrap/+esm",
+    "mermaid": "https://cdn.jsdelivr.net/npm/mermaid/+esm",
+    "bootstrap": "https://cdn.jsdelivr.net/npm/bootstrap/+esm",
+    "@popperjs/core": "https://cdn.jsdelivr.net/npm/popper.js/+esm"
+  }
+}
+</script><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8180054975285991" crossorigin=anonymous></script><meta content="codeva-4M5iohb9TW" name=baidu-site-verification></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net/ id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-bs-toggle=collapse data-bs-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-9683e4dad80367ea0ea42dff65fd9a1f class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2009/84.html target=_blank itemprop=url>ECUST 09年 校赛个人赛第三场部分解题报告(A,D,F,I)</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#a-the-k-th-city>A. The K-th City</a></li><li><a href=#d-city-mapping>D. City Mapping</a></li><li><a href=#f-tetris>F. Tetris</a></li><li><a href=#i-girl-friend>I. Girl Friend</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>校赛个人赛第三场部分解题报告（A,D,F,I）</p><p>这次我完成了四道题分别是A,D,F,I</p><p>一大半时间我都花在了A上，我犯了很究级的错误</p><p>首先是VC6.0的algorithm里没有min函数，而我用min做变量名导致CE4次，找了半天才找出来</p><p>其次是我的最短路算法中错误和初始化错误交替出现导致的6次WA</p><h2 id=a-the-k-th-city>A. The K-th City</h2><p>A题的大意是给出几个城市之间的距离，要求算出第k远的城市因为数据量较小，可以用floyd或dijkstra算法</p><p>floyd版：</p><pre><code class=language-cpp>#include&lt;iostream&gt;
+#include&lt;algorithm&gt;
+using namespace std;
+struct Pos
+{
+    long pos;
+    long dis;
+};
+bool cmpFun(Pos a,Pos b)
+{
+    if(a.dis == b.dis)
+        return a.pos &lt; b.pos;
+    else
+        return a.dis &lt; b.dis;
+}
+Pos pos[201];
+long mini[201][201];
+int main()
+{
+    long n,m;
+    while(cin&gt;&gt;n,n)
+    {
+        cin&gt;&gt;m;
+    int i,j,k;
+    for(i = 0 ; i &lt; n ; i ++)
+    {
+        mini[i][i] = 0;
+    for(j = i + 1 ; j &lt; n ; j ++)
+        mini[i][j] = mini[j][i] = 100000000;
+    }
+    while(m --)
+    {
+        scanf(&quot;%d %d %d&quot;,&amp;i,&amp;j,&amp;k);
+        if(mini[i][j] &gt; k)
+        mini[i][j] = mini[j][i] = k;
+    }
+    for (k=0;k&lt;n;k++)
+        for (i=0;i&lt;n;i++)
+            for (j=0;j&lt;n;j++)
+                if (mini[i][k]+mini[k][j]&lt;mini[i][j])
+                    mini[i][j] = mini[j][i] =mini[i][k]+mini[k][j];
+    for(i = 1 ; i &lt; n ; i ++)
+    {
+        pos[i - 1].pos = i;
+        pos[i - 1].dis = mini[0][i];
+    }
+    sort(pos,pos + n - 1 ,cmpFun);
+    cin&gt;&gt;i;
+    cout&lt;&lt;pos[i - 1].pos&lt;&lt;&quot; &quot;&lt;&lt;pos[i - 1].dis&lt;&lt;endl;
+    }
+    return 0;
+}
+</code></pre><p>dijkstra版:</p><pre><code class=language-cpp>#include&lt;iostream&gt;
+#include&lt;algorithm&gt;
+using namespace std;
+#define MAXN 201
+#define inf 1000000000
+typedef long elem_t;
+void dijkstra(int n,elem_t mat[][MAXN],int s,elem_t* minNum,int* pre){
+    int v[MAXN],i,j,k;
+    for (i=0;i&lt;n;i++)
+        minNum[i]=inf,v[i]=0,pre[i]=-1;
+    for (minNum[s]=0,j=0;j&lt;n;j++){
+        for (k=-1,i=0;i&lt;n;i++)
+            if (!v[i]&amp;&amp;(k==-1||minNum[i]&lt;minNum[k]))
+                k=i;
+        for (v[k]=1,i=0;i&lt;n;i++)
+            if (!v[i]&amp;&amp;minNum[k]+mat[k][i]&lt;minNum[i])
+                minNum[i]=minNum[k]+mat[pre[i]=k][i];
+    }
+}
+struct Pos
+{
+    long pos;
+    long dis;
+};
+bool cmpFun(Pos a,Pos b)
+{
+    if(a.dis == b.dis)
+        return a.pos &lt; b.pos;
+    else
+        return a.dis &lt; b.dis;
+}
+Pos pos[MAXN];
+long matNum[MAXN][MAXN];
+long mini[MAXN];
+int preNode[MAXN];
+int main()
+{
+    long n,m;
+    while(cin&gt;&gt;n,n)
+    {
+        cin&gt;&gt;m;
+        int i,j,k;
+
+        for(i = 0 ; i &lt; n ; i ++)
+            for(j = 0 ; j &lt; n ; j ++)
+                matNum[i][j] = inf;
+        while(m --)
+        {
+            scanf(&quot;%d %d %d&quot;,&amp;i,&amp;j,&amp;k);
+            matNum[i][j] = matNum[j][i] = k;
+        }
+        dijkstra(n,matNum,0,mini,preNode);
+        for(i = 1 ; i &lt; n ; i ++)
+        {
+            pos[i - 1].pos = i;
+            pos[i - 1].dis = mini[i];
+        }
+        sort(pos,pos + n - 1 ,cmpFun);
+        cin&gt;&gt;i;
+        cout&lt;&lt;pos[i - 1].pos&lt;&lt;endl;
+    }
+    return 0;
+}
+</code></pre><h2 id=d-city-mapping>D. City Mapping</h2><p>D题是按输入的方向走，输出走过的路径和路径的模式（横向街道，纵向街道，十字路口）</p><p>这题只要纯模拟就能过</p><p>代码：</p><pre><code class=language-cpp>#include&lt;iostream&gt;
+#include&lt;cstring&gt;
+using namespace std;
+int strees[201][201][2];
+int main()
+{
+    long m,n,i,j,k;
+    long posX,posY;
+    long t = 1,tmpInt;
+    char cmd[10];
+    while(cin&gt;&gt;m&gt;&gt;n&gt;&gt;i,m || n || i)
+    {
+        memset(strees,0,sizeof(strees));
+        posX = posY = 0;
+        printf(&quot;Scenario #%ld:\n&quot; , t ++);
+        while(i --)
+        {
+            scanf(&quot;%s %d&quot;,cmd,&amp;tmpInt);
+            if(!strcmp(cmd,&quot;South&quot;))
+            {
+                for( j = posY ; j &lt;= posY + tmpInt ; j ++)
+                    strees[posX][j][1] = 1;
+                posY = j - 1;
+            }
+            else if(!strcmp(cmd,&quot;North&quot;))
+            {
+                for( j = posY ; j &gt;= posY - tmpInt ; j --)
+                    strees[posX][j][1] = 1;
+                posY = j + 1;
+            }
+            else if(!strcmp(cmd,&quot;West&quot;))
+            {
+                for( j = posX ; j &gt;= posX - tmpInt ; j --)
+                    strees[j][posY][0] = 1;
+                posX = j + 1;
+            }
+            else if(!strcmp(cmd,&quot;East&quot;))
+            {
+                for( j = posX ; j &lt;= posX + tmpInt ; j ++)
+                    strees[j][posY][0] = 1;
+                posX = j - 1;
+            }
+        }
+        for(j = 0 ; j &lt; m ; j ++)
+        {
+            for(k = 0 ; k &lt; n ; k ++)
+                if(strees[k][j][0] &amp;&amp; strees[k][j][1])
+                    printf(&quot;+&quot;);
+                else if(strees[k][j][0])
+                    printf(&quot;-&quot;);
+                else if(strees[k][j][1])
+                    printf(&quot;|&quot;);
+                else
+                    printf(&quot;.&quot;);
+            printf(&quot;\n&quot;);
+        }
+    }
+    return 0;
+}
+</code></pre><h2 id=f-tetris>F. Tetris</h2><p>F是简单的俄罗斯方块：</p><p>要求按顺序输入方块的其始位置和终点位置，算出最高点</p><p>这题可以列一个转移方程，</p><p>令第i个方块的最高点为a[i]</p><p>=> a[i] = max{a[k] + h[i]}其中h[i]为第i个方块的高度，k&lt;i,且k满足s[i] &lt;= e[k] && e[i] >= s[k]</p><p>或 s[i] &lt;= s[k] && e[i] >= e[k]</p><p>代码如下：</p><pre><code class=language-cpp>#include&lt;iostream&gt;
+using namespace std;
+long s[1001],e[1001],h[1001];
+long posH[1001];
+int main()
+{
+    long n,w;
+    while(cin&gt;&gt;n&gt;&gt;w , n || w)
+    {
+        int i,j;
+        for(i = 0 ; i &lt; n ; i ++)
+            scanf(&quot;%ld %ld %ld&quot;,&amp;s[i],&amp;e[i],&amp;h[i]);
+        memset(posH,0,sizeof(posH));
+        long maxInt = 0,tmpInt;
+        for(i = 0 ; i &lt; n ; i ++)
+        {
+            tmpInt = h[i];
+            for(j = 0 ; j &lt; i ; j ++)
+            {
+                if((s[i] &lt;= e[j] &amp;&amp; e[i] &gt;= s[j]
+                  || s[i] &lt;= s[j] &amp;&amp; e[i] &gt;= e[j])
+                  &amp;&amp; tmpInt &lt; posH[j] + h[i])
+                    tmpInt = posH[j] + h[i];
+            }
+            posH[i] = tmpInt;
+        }
+        for(i = 0 ; i &lt; n ; i ++)
+            if(maxInt &lt; posH[i])
+                maxInt = posH[i];
+        cout&lt;&lt;maxInt&lt;&lt;endl;
+    }
+    return 0;
+}
+</code></pre><h2 id=i-girl-friend>I. Girl Friend</h2><p>I题比较有意思，是帮一个倒霉孩子找女朋友，要求概率*好感度（暂且这么翻译吧）</p><p>这是DP问题，令每个女孩的好感度为s[i],成为女朋友的概率为pl[i],第一个见面的美女的最大好感度为a[i]</p><p>=>a[i] = max{a[i + 1] * (1 – pl[i]) + s[i] * pl[i] , a[i + 1]}复杂度O(n)</p><p>具体代码如下：</p><pre><code class=language-cpp>#include&lt;iostream&gt;
+using namespace std;
+double a[100001],pl[100001];
+double s[100001];
+int main()
+{
+    int n;
+    while(cin&gt;&gt;n,n)
+    {
+        long i;
+        for(i = 0 ; i &lt; n ; i ++)
+        {
+            scanf(&quot;%lf %lf&quot;,&amp;pl[i],&amp;s[i]);
+            pl[i] /= 100;
+        }
+        a[n - 1] = s[n - 1] * pl[n - 1];
+        for(i = n - 2 ; i &gt;=0 ; i --)
+            if(a[i + 1] * (1.0 - pl[i]) + pl[i] * s[i] &gt; a[i + 1])
+                a[i] = a[i + 1] * (1 - pl[i]) + pl[i] * s[i];
+            else
+                a[i] = a[i + 1];
+        double output = 0;
+        for(i = 0 ; i &lt; n ; i ++)
+            if(output &lt; a[i])
+                output = a[i];
+        printf(&quot;%.2lf\n&quot;,output);
+    }
+    return 0;
+}
+</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2009-07-30T09:58:51.000+00:00 itemprop=datePublished>2009-07-30</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/acm.html>acm</a></li><li class=article-tag-list-item><a href=//owent.net/tags/ecust.html>ecust</a></li><li class=article-tag-list-item><a href=//owent.net/tags/eoj.html>eoj</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2009/83.html>上一篇<strong>牛顿迭代解方程 ax^3+bX^2+cx+d=0</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2009/85.html>下一篇<strong>ECUST 09年 校赛个人赛第六，七场总结</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2025&nbsp;OWenT
+</strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong><span class=clearfix></span></div></div></footer></div><script type=module>// import * as Popper from "@popperjs/core";// import * as bootstrap from "bootstrap";
+// import React from "react";
+
+        
+</script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/accesslog.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/armasm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/awk.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/basic.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/bnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/capnproto.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/cmake.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/d.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dockerfile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dos.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/erlang.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/ebnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/latex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/llvm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/lua.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/powershell.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/protobuf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/profile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/vim.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/x86asm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/yaml.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/vs2015.min.css",document.querySelector("head").appendChild(t),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const n={};for(const e of hljs.listLanguages())n[e.toLowerCase()]=!0;for(const e of document.querySelectorAll("pre>code"))try{if(e.className.match(/\bmermaid\b/i)){e.classList.add("mermaid");continue}if(e.className.match(/\bnohighlight\b/i))continue;const t=e.className.match(/language-([^\s]+)/i);if(t&&t.length>=2&&hljs.getLanguage(t[1]))hljs.highlightElement(e);else{const t=hljs.highlightAuto(e.innerText,hljs.listLanguages());t&&t.value&&(e.innerHTML=t.value,e.classList.add("hljs"))}}catch(e){window.console&&console.log(e.toString()+`\r
+Maybe can not detect the language`)}})</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-PQEY77BYG1"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-PQEY77BYG1")}</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css",document.querySelector("head").appendChild(t),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js></script><script type=module>
+import mermaid from "mermaid";
+const config = {
+    theme: 'neutral',
+    logLevel: 'fatal',
+    securityLevel: 'loose', 
+    startOnLoad: true,
+    arrowMarkerAbsolute: false,
+    
+
+};
+mermaid.initialize(config);
+</script><script type=text/javascript>var _hmt=_hmt||[];(function(){var t,n,e=document.createElement("script");e.src="https://hm.baidu.com/hm.js?6a0daf8d58889f1cf55a353867bfdbb0",t=document.getElementsByTagName("script"),n=document.getElementsByTagName("script")[t.length-1],n.parentNode.appendChild(e)})()</script></div></body></html>

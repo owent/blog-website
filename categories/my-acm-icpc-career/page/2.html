@@ -1,0 +1,482 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>My ACM-ICPC Career|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/categories/my-acm-icpc-career.html><link rel=alternate type=application/rss+xml href=//owent.net/categories/my-acm-icpc-career/index.xml title="I'm OWenT"><link rel=icon href=/favicon.ico><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net//css/style.css><link rel=stylesheet href=//owent.net/css/syntax.css><script type=importmap>
+{
+  "imports": {
+    "react": "https://cdn.jsdelivr.net/npm/react/+esm",
+    "react-bootstrap": "https://cdn.jsdelivr.net/npm/react-bootstrap/+esm",
+    "mermaid": "https://cdn.jsdelivr.net/npm/mermaid/+esm",
+    "bootstrap": "https://cdn.jsdelivr.net/npm/bootstrap/+esm",
+    "@popperjs/core": "https://cdn.jsdelivr.net/npm/popper.js/+esm"
+  }
+}
+</script><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8180054975285991" crossorigin=anonymous></script><meta content="codeva-4M5iohb9TW" name=baidu-site-verification></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net/ id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-bs-toggle=collapse data-bs-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/categories/my-acm-icpc-career/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-30"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/30.html target=_blank itemprop=url>树状数组模块(个人模板)</a></h1></header><div class=article-summary><p>树状数组模块</p><p>ACM个人模板</p><p>POJ 2155 题目测试通过</p><pre><code class=language-cpp>/**
+ * 树状数组模块
+ * 下标从0开始
+ */
+typedef long DG_Ran;
+typedef long DG_Num;
+const DG_Num DG_MAXN = 1005;
+
+//2^n
+DG_Num LowBit(DG_Num n)
+{
+    return n &amp; (-n);
+}
+//获取父节点索引
+DG_Num DGFather(DG_Num n)
+{
+    return n + LowBit(n + 1);
+}
+//获取小的兄弟节点索引
+DG_Num DGBrother(DG_Num n)
+{
+    return n - LowBit(n + 1);
+}
+//查找增加树状数组前pos项和
+//参数(树状数组[in],索引[in],初始赋0即查找前n项和[out])
+//复杂度:log(n)
+void DGFind(DG_Ran *g,DG_Num pos,DG_Ran &amp;sum)
+{
+    sum += *(g + pos);
+    if(pos &gt;= LowBit(pos + 1))
+        DGFind(g, pos - LowBit(pos + 1), sum);
+}
+//查找对应线性数组元素
+//参数(树状数组[in],索引[in]).
+//返回值:对应线性数组元素log(n)
+//复杂度:log(n)
+DG_Ran DGFindEle(DG_Ran *g,DG_Num pos)
+{
+    DG_Ran a = 0 , b = 0;
+    DGFind(g, pos, a);
+    if(pos)
+    {
+        DGFind(g,pos - 1,b);
+        return a - b;
+    }
+    else
+        return a;
+}
+//树状数组,增加节点
+//参数:树状数组[out],原数组大小[in],新增线性数组值[in]
+//复杂度:log(n)
+DG_Ran DGAdd(DG_Ran *g,DG_Num n,DG_Ran val)
+{
+    *(g + n) = val;
+    DG_Num a = n;
+    DG_Num b = 1;
+    while((a &amp; (~b)) != a)
+    {
+        *(g + n) += *(g + a - 1);
+        a &amp;= (~b);
+        b &lt;&lt;= 1;
+    }
+    return n + 1;
+}
+//构建树状数组
+//参数:线性数组[in],数组大小[in],树状数组[out]
+//复杂度:nlog(n)
+DG_Ran DGCreate(DG_Ran *g,DG_Num n,DG_Ran *tg)
+{
+    DG_Num i;
+    *tg = *g;
+    for(i = 1 ; i &lt; n ; i ++)
+        DGAdd(tg,i,*(g + i));
+    return n;
+}
+//修改指定位置值
+//参数:线性数组[in],数组位置[in],数组大小[in],新值[in]
+//复杂度:log(n)
+DG_Ran DGEdit(DG_Ran *g,DG_Num pos,DG_Num n,DG_Ran val)
+{
+    DG_Num f = DGFather(pos);
+    DG_Ran o = *( g + pos );
+    *( g + pos ) = val;
+    if(f &lt; n)
+    {
+        DG_Ran fv = val - o + *( g + f );
+        DGEdit(g, f, n, fv);
+    }
+    return n;
+}
+
+//树状数组的翻转(树状数组的应用)
+//一维  复杂度log(n)
+//小于等于指定位置的元素的翻转&lt;=pos
+void DGDown1(DG_Ran g[],DG_Num pos,DG_Ran av)
+{
+    while(pos &gt;= 0)
+        g[pos] += av , pos = DGBrother(pos);
+}
+//获取位置pos的元素翻转次数
+DG_Ran DGCUp1(DG_Ran g[],DG_Num pos , DG_Num n)
+{
+    DG_Ran t = 0;
+    while(pos &lt; n)
+        t += g[pos] , pos = DGFather(pos);
+    return t;
+}
+//二维  复杂度(log(n))^2
+//小于等于指定位置的元素的翻转(0,0)-&gt;(x,y)
+void DGDown2(DG_Ran g[][DG_MAXN],DG_Num x ,DG_Num y,DG_Ran av)
+{
+    while(x &gt;= 0)
+    {
+        DG_Num tmp = y;
+        while (tmp &gt;= 0)
+        {
+            g[x][tmp] += av;
+            tmp = DGBrother(tmp);
+        }
+        x = DGBrother(x);
+    }
+}
+//获取位置(x,y)的元素翻转次数
+DG_Ran DGCUp2(DG_Ran g[][DG_MAXN],DG_Num x ,DG_Num y , DG_Num n)
+{
+    DG_Ran t = 0;
+    while(x &lt; n)
+    {
+        DG_Num tmp = y;
+        while (tmp &lt; n)
+        {
+            t += g[x][tmp];
+            tmp = DGFather(tmp);
+        }
+        x = DGFather(x);
+    }
+    return t;
+}
+</code></pre></div><div class=article-more><a href=//owent.net/2010/30.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-05-06T13:51:29.000+00:00 itemprop=datePublished>2010-05-06</time></div></div></article><article class="article-panel archive-article archive-type-31"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/31.html target=_blank itemprop=url>HDU HDOJ 3398 String 解题报告</a></h1></header><div class=article-summary><p>题目链接：<a href="http://acm.hdu.edu.cn/showproblem.php?pid=3398">http://acm.hdu.edu.cn/showproblem.php?pid=3398</a></p><p>题目要我们计算1，0的排列方式总数，并且对任意长的字符串，1的数量大于等于0的数量</p><p>我们可以把题目转化为从（0，0）点到（m，n）点的方法总数，且路径不经过y=x-1这条直线</p></div><div class=article-more><a href=//owent.net/2010/31.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-05-05T16:51:22.000+00:00 itemprop=datePublished>2010-05-05</time></div></div></article><article class="article-panel archive-article archive-type-32"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/32.html target=_blank itemprop=url>线性筛法求质数(素数)表 及其原理</a></h1></header><div class=article-summary><pre><code class=language-cpp>/**
+ * 线性筛法求素数表
+ * 复杂度: O(n)
+ */
+const long MAXP = 1000000;
+long prime[MAXP] = {0},num_prime = 0;
+int isNotPrime[MAXP] = {1, 1};
+void GetPrime_Init()//初始化调用
+{
+    for(long i = 2 ; i &lt;  MAXP ; i ++)
+    {
+        if(! isNotPrime[i])
+            prime[num_prime ++]=i;
+        for(long j = 0 ; j &lt; num_prime &amp;&amp; i * prime[j] &lt;  MAXP ; j ++)
+        {
+            isNotPrime[i * prime[j]] = 1;
+            if( !(i % prime[j]))
+                break;
+        }
+    }
+}
+</code></pre><p>线性筛法,即是筛选掉所有合数,留下质数</p></div><div class=article-more><a href=//owent.net/2010/32.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-05-03T11:20:33.000+00:00 itemprop=datePublished>2010-05-03</time></div></div></article><article class="article-panel archive-article archive-type-33"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/33.html target=_blank itemprop=url>HDU HDOJ 3400 Line belt 解题报告</a></h1></header><div class=article-summary><p>题目链接：<a href="http://acm.hdu.edu.cn/showproblem.php?pid=3400">http://acm.hdu.edu.cn/showproblem.php?pid=3400</a></p><p>这题就是一道简单的两重三分</p><p>首先设e点为从ab上离开的点，f为从cd上进入的点</p><p>显然对固定点e,f从距c的距离的长度是一个单调函数或者先减后增的函数，这里可以三分算出最优解。这里是第一个三分</p></div><div class=article-more><a href=//owent.net/2010/33.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-05-03T11:17:15.000+00:00 itemprop=datePublished>2010-05-03</time></div></div></article><article class="article-panel archive-article archive-type-34"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/34.html target=_blank itemprop=url>Southeastern European 2008 Sky Code 解题报告</a></h1></header><div class=article-summary><p>又是我们的OJ</p><p>题目链接：</p><p><a href="http://www.cn210.com/onlinejudge/problemshow.php?pro_id=92">http://www.cn210.com/onlinejudge/problemshow.php?pro_id=92</a></p><h2 id=description>Description</h2><p>tancu likes space travels but he is a poor software developer and will never be able to buy his own spacecraft. That is why he is preparing to steal the spacecraft of Petru. There is only one problem - Petru has locked the spacecraft with a sophisticated cryptosystem based on the ID numbers of the stars from the Milky Way Galaxy. For breaking the system Stancu has to check each subset of four stars such that the only common divisor of their numbers is 1. Nasty, isn't it? Fortunately, Stancu has succeeded to limit the number of the interesting stars to N but, any way, the possible subsets of four stars can be too many. Help him to find their number and to decide if there is a chance to break the system.</p></div><div class=article-more><a href=//owent.net/2010/34.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-29T12:08:10.000+00:00 itemprop=datePublished>2010-04-29</time></div></div></article><article class="article-panel archive-article archive-type-35"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/35.html target=_blank itemprop=url>GCD Determinant 解题报告</a></h1></header><div class=article-summary><p><a href="http://www.cn210.com/onlinejudge/problemshow.php?pro_id=98">http://www.cn210.com/onlinejudge/problemshow.php?pro_id=98</a></p><p>我们的OJ</p><h2 id=description>Description</h2><p>We say that a set $$S = {x1, x2, &mldr;, xn}$$ is factor closed if for any xi ∈ S and any divisor d of xi we have d ∈ S. Let&rsquo;s build a GCD matrix (S) = (sij), wheresij = GCD(xi, xj) - the greatest common divisor of xi and xj. Given the factor closed set S, find the value of the determinant:</p></div><div class=article-more><a href=//owent.net/2010/35.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-26T14:33:11.000+00:00 itemprop=datePublished>2010-04-26</time></div></div></article><article class="article-panel archive-article archive-type-41"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/41.html target=_blank itemprop=url>PKU POJ 3757 Simple Distributed storage system 解题报告</a></h1></header><div class=article-summary><p>题目链接：http://acm.pku.edu.cn/JudgeOnline/problem?id=3757</p><p>题目大意</p><p>第一行输入n，k，f表示从n个服务器里选k个，传输大小为f（以Mb为单位）的文件</p></div><div class=article-more><a href=//owent.net/2010/41.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-10T17:10:47.000+00:00 itemprop=datePublished>2010-04-10</time></div></div></article><article class="article-panel archive-article archive-type-43"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/43.html target=_blank itemprop=url>PKU POJ 2976 Dropping tests 解题报告</a></h1></header><div class=article-summary><p>题目链接： <a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=2976">http://acm.pku.edu.cn/JudgeOnline/problem?id=2976</a></p><p>0-1分数规划</p><p>最优比例生成树</p><p>迭代法</p><p>证明：（前几次都是看别人的，这次自己证明）</p><p>对于集合s，令l* = max{ a(x) / b(x) } = a(x*) / b(x*).l<em>为所求的最优解，x</em>为对应的集合</p></div><div class=article-more><a href=//owent.net/2010/43.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-09T17:04:09.000+00:00 itemprop=datePublished>2010-04-09</time></div></div></article><article class="article-panel archive-article archive-type-45"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/45.html target=_blank itemprop=url>PKU POJ 2728 Desert King 解题报告</a></h1></header><div class=article-summary><p>题目链接：<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=2728">http://acm.pku.edu.cn/JudgeOnline/problem?id=2728</a></p><p>和3757一样都是01分数规划的题，不同的是3757是用的二分，这里用的是Prim</p><p>0-1背包部分和3757一样</p><p>令m(l) = min{∑(1.0 * h[i][j] - l * dis[i][j] )}</p></div><div class=article-more><a href=//owent.net/2010/45.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-07T10:51:26.000+00:00 itemprop=datePublished>2010-04-07</time></div></div></article><article class="article-panel archive-article archive-type-46"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/46.html target=_blank itemprop=url>PKU POJ 1141 Brackets Sequence 解题报告</a></h1></header><div class=article-summary><p>链接: <a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=1141">http://acm.pku.edu.cn/JudgeOnline/problem?id=1141</a>
+题目意思是输入一些括号，补充括号使之成为没有错误的括号就是只能有括号组在括号组里面，不能出现([)]或者([)]一类的情况
+方法是DP，有点绕的DP
+DP方程是 <em>bc[i][j] = min(bc[i][k] + bc[k][j])</em> 注：bc[i][j]表示字符i和字符j之间需要插入几个括弧
+然后尽量多地分割字符串
+不解释，贴代码：</p></div><div class=article-more><a href=//owent.net/2010/46.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-05T16:52:28.000+00:00 itemprop=datePublished>2010-04-05</time></div></div></article><article class="article-panel archive-article archive-type-47"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/47.html target=_blank itemprop=url>POJ PKU 2155 Matrix 解题报告</a></h1></header><div class=article-summary><p>这道题是我专门为了了解和学习树状数组而写的</p><p>这题用树状数组记录翻转次数,然后mod一个2,也可以不断地取反</p><p>还要用到二维的树状数组.于是我专门写了个模板用</p></div><div class=article-more><a href=//owent.net/2010/47.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-05T11:01:59.000+00:00 itemprop=datePublished>2010-04-05</time></div></div></article><article class="article-panel archive-article archive-type-48"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/48.html target=_blank itemprop=url>PKU POJ 1720 SQUARES 解题报告</a></h1></header><div class=article-summary><p>题目链接：http://acm.pku.edu.cn/JudgeOnline/problem?id=1720</p><p>这题纯计算几何就搞定了，开始我写了个很长很长的代码，但是Wa掉，也不知道是代码那里有疏漏还是精度问题</p></div><div class=article-more><a href=//owent.net/2010/48.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-03T17:12:41.000+00:00 itemprop=datePublished>2010-04-03</time></div></div></article><article class="article-panel archive-article archive-type-50"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/50.html target=_blank itemprop=url>PKU POJ 1724 ROADS 解题报告</a></h1></header><div class=article-summary><p>看来我的搜索真的很烂，简单的搜索都搞定的这么痛苦</p><p>题目链接：http://acm.pku.edu.cn/JudgeOnline/problem?id=1724</p></div><div class=article-more><a href=//owent.net/2010/50.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-02T17:07:50.000+00:00 itemprop=datePublished>2010-04-02</time></div></div></article><article class="article-panel archive-article archive-type-52"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/52.html target=_blank itemprop=url>POJ PKU Let's Go to the Movies 解题报告</a></h1></header><div class=article-summary><p>题目链接：<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3513">http://acm.pku.edu.cn/JudgeOnline/problem?id=3513</a></p><p>题目大意是输入树状的家庭关系，问怎么买票（买家庭票还是个人票）最省钱并且票的数量最少</p><p>这道题是一道Hash+树状DP问题。编码长度相当可观，需要较好的编码能力</p></div><div class=article-more><a href=//owent.net/2010/52.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-03-31T16:04:21.000+00:00 itemprop=datePublished>2010-03-31</time></div></div></article><article class="article-panel archive-article archive-type-53"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/53.html target=_blank itemprop=url>ZOJ 3309 Search New Posts 解题报告</a></h1></header><div class=article-summary><p>题目链接：<a href="http://acm.zju.edu.cn/onlinejudge/showProblem.do?problemCode=3309">http://acm.zju.edu.cn/onlinejudge/showProblem.do?problemCode=3309</a></p><p>一道典型的Hash题</p><p>题目很好理解。这里不复述</p><p>由于输入语句最大数量200000，不用Hash铁定TLE。然后数据量不超过10000，所以必然有很多search和reply的操作。</p></div><div class=article-more><a href=//owent.net/2010/53.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-03-15T14:49:52.000+00:00 itemprop=datePublished>2010-03-15</time></div></div></article><article class="article-panel archive-article archive-type-54"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/54.html target=_blank itemprop=url>Hash模板 个人模板</a></h1></header><div class=article-summary><pre><code class=language-cpp>/**
+ * Hash模板
+ * Based: 0
+ * template&lt;unsigned long _SZ,class _T, unsigned long *pFun(_T _Off)&gt;
+ * class _My_Hash_ToInt
+ * 传入数据大小_SZ,传入类型_T,Hash函数
+ * 传入类型_T必须重载 = 和 == 符号
+ * 收录了ELFHash函数
+ * 主要是为了判重的简化些的模板
+ * Hash算法性能比较见 http://www.cnblogs.com/lonelycatcher/archive/2011/08/23/2150587.html
+ */
+
+const long hashsize = 51071; //Hash表大小(注意修改)
+// 各种Hash算法
+unsigned int SDBMHash(char *str)
+{
+    unsigned int hash = hashsize;
+
+    while (*str)
+    {
+        // equivalent to: hash = 65599*hash + (*str++);
+        hash = (*str++) + (hash &lt;&lt; 6) + (hash &lt;&lt; 16) - hash;
+    }
+
+    return (hash &amp; 0x7FFFFFFF);
+}
+
+// RS Hash Function
+unsigned int RSHash(char *str)
+{
+    unsigned int b = 378551;
+    unsigned int a = 63689;
+    unsigned int hash = hashsize;
+
+    while (*str)
+    {
+        hash = hash * a + (*str++);
+        a *= b;
+    }
+
+    return (hash &amp; 0x7FFFFFFF);
+}
+
+// JS Hash Function
+unsigned int JSHash(char *str)
+{
+    unsigned int hash = 1315423911;
+
+    while (*str)
+    {
+        hash ^= ((hash &lt;&lt; 5) + (*str++) + (hash &gt;&gt; 2));
+    }
+
+    return (hash &amp; 0x7FFFFFFF);
+}
+
+// P. J. Weinberger Hash Function
+unsigned int PJWHash(char *str)
+{
+    unsigned int BitsInUnignedInt = (unsigned int)(sizeof(unsigned int) * 8);
+    unsigned int ThreeQuarters    = (unsigned int)((BitsInUnignedInt  * 3) / 4);
+    unsigned int OneEighth        = (unsigned int)(BitsInUnignedInt / 8);
+    unsigned int HighBits         = (unsigned int)(0xFFFFFFFF) &lt;&lt; (BitsInUnignedInt - OneEighth);
+    unsigned int hash             = hashsize;
+    unsigned int test             = 0;
+
+    while (*str)
+    {
+        hash = (hash &lt;&lt; OneEighth) + (*str++);
+        if ((test = hash &amp; HighBits) != 0)
+        {
+            hash = ((hash ^ (test &gt;&gt; ThreeQuarters)) &amp; (~HighBits));
+        }
+    }
+
+    return (hash &amp; 0x7FFFFFFF);
+}
+
+// ELF Hash Function
+unsigned int ELFHash(char *str)
+{
+    unsigned int hash = hashsize;
+    unsigned int x    = 0;
+
+    while (*str)
+    {
+        hash = (hash &lt;&lt; 4) + (*str++);
+        if ((x = hash &amp; 0xF0000000L) != 0)
+        {
+            hash ^= (x &gt;&gt; 24);
+            hash &amp;= ~x;
+        }
+    }
+
+    return (hash &amp; 0x7FFFFFFF);
+}
+
+// BKDR Hash Function
+unsigned int BKDRHash(char *str)
+{
+    unsigned int seed = 131; // 31 131 1313 13131 131313 etc..
+    unsigned int hash = hashsize;
+
+    while (*str)
+    {
+        hash = hash * seed + (*str++);
+    }
+
+    return (hash &amp; 0x7FFFFFFF);
+}
+
+// DJB Hash Function
+unsigned int DJBHash(char *str)
+{
+    unsigned int hash = 5381;
+
+    while (*str)
+    {
+        hash += (hash &lt;&lt; 5) + (*str++);
+    }
+
+    return (hash &amp; 0x7FFFFFFF);
+}
+
+// AP Hash Function
+unsigned int APHash(char *str)
+{
+    unsigned int hash = hashsize;
+    int i;
+
+    for (i=0; *str; i++)
+    {
+        if ((i &amp; 1) == 0)
+        {
+            hash ^= ((hash &lt;&lt; 7) ^ (*str++) ^ (hash &gt;&gt; 3));
+        }
+        else
+        {
+            hash ^= (~((hash &lt;&lt; 11) ^ (*str++) ^ (hash &gt;&gt; 5)));
+        }
+    }
+
+    return (hash &amp; 0x7FFFFFFF);
+}
+
+// 程序模板
+template&lt;typename _T&gt;
+class _My_Hash_ToInt_Data
+{
+public:
+    _My_Hash_ToInt_Data()
+    {
+        times = 0;
+        next = -1;
+    }
+    _T data;
+    long times;
+    long next;
+};
+template&lt;long _SZ,class _T, unsigned long pFun(_T&amp; _Off)&gt;
+class _My_Hash_ToInt
+{
+public:
+    _My_Hash_ToInt()
+    {
+        memset(hash, -1, sizeof(hash));
+        length = 0;
+    };
+    ~_My_Hash_ToInt(){};
+    long find(_T _Off)
+    {
+        long pos = hash[pFun(_Off)];
+        while(pos &gt;= 0)
+        {
+            if(data[pos].data == _Off)
+                return pos;
+            else
+                pos = data[pos].next;
+        }
+        return -1;
+    }
+    long insert(_T _Off)
+    {
+        long oldPos = pFun(_Off);
+        long pos = hash[oldPos];
+        while(pos &gt;= 0)
+        {
+            if(data[pos].data == _Off)
+            {
+                data[pos].times ++;
+                return pos;
+            }
+            else
+                pos = data[pos].next;
+        }
+        data[length].data = _Off;
+        data[length].times = 1;
+        data[length].next = hash[oldPos];
+        hash[oldPos] = length ;
+        return length ++;
+    }
+    void clear()
+    {
+        length = 0;
+        memset(hash, -1, sizeof(hash));
+        memset(data, -1, sizeof(data));
+    }
+    //Member
+    long length;
+    _My_Hash_ToInt_Data&lt;_T&gt; data[_SZ];
+    long hash[hashsize];
+};
+
+//节点类（注意修改）
+class node
+{
+public:
+    char str[60];
+    bool operator == (node &amp;strin)
+    {
+        return !strcmp(str, strin.str);
+    }
+    node&amp; operator = (node &amp;strin)
+    {
+        strcpy(str, strin.str);
+        return (*this);
+    }
+};
+//扩展Hash函数（注意修改）
+unsigned long ELFHashEx(node &amp;strIn)
+{
+    return ELFHash(strIn.str);
+}
+_My_Hash_ToInt&lt;10005, node, ELFHashEx&gt;hash;//Hash类例子
+</code></pre></div><div class=article-more><a href=//owent.net/2010/54.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-03-15T12:58:47.000+00:00 itemprop=datePublished>2010-03-15</time></div></div></article><article class="article-panel archive-article archive-type-55"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/55.html target=_blank itemprop=url>HDU 3336 Count the string 解题报告</a></h1></header><div class=article-summary><p>题目：
+<a href="http://acm.hdu.edu.cn/showproblem.php?pid=3336">http://acm.hdu.edu.cn/showproblem.php?pid=3336</a></p><p>水题一道，主要是测试数据很水</p><p>不解释，贴代码：</p><pre><code class=language-cpp>#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+#include &lt;vector&gt;
+#include &lt;cstring&gt;
+using namespace std;
+
+char str[200005];
+vector&lt;long&gt;glo_Pos;
+int main()
+{
+    int t;
+    long output,i,n,j;
+    scanf(&quot;%d&quot;,&amp;t);
+    while(t --)
+    {
+        output = 0;
+        glo_Pos.clear();
+        scanf(&quot;%ld %s&quot;, &amp;n, str);
+
+        for(i = 0; i &lt; n; i ++)
+        {
+            if(str[i] == str[0])
+            {
+                glo_Pos.push_back(i);
+                output ++;
+            }
+        }
+        output = output % 10007;
+        for(i = 1; i &lt; n; i ++)
+        {
+            for(j = 0; j &lt; glo_Pos.size();j ++)
+            {
+                if(str[i] == str[glo_Pos[j] + i])
+                    output = (output + 1) % 10007;
+                else
+                {
+                    glo_Pos.erase(glo_Pos.begin() + j);
+                    j --;
+                }
+            }
+        }
+
+        printf(&quot;%ld\n&quot;, output);
+    }
+    return 0;
+}
+</code></pre></div><div class=article-more><a href=//owent.net/2010/55.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-03-15T11:12:56.000+00:00 itemprop=datePublished>2010-03-15</time></div></div></article><article class="article-panel archive-article archive-type-57"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/57.html target=_blank itemprop=url>POJ PKU 1065 Wooden Sticks 3636 Nested Dolls 解题报告</a></h1></header><div class=article-summary><p>3636 Nested Dolls</p><p>题目链接：[http://acm.pku.edu.cn/JudgeOnline/problem?id=3636</p><p>](<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3636">http://acm.pku.edu.cn/JudgeOnline/problem?id=3636</a>)好吧，这题我看了解题报告。而且解题报告有错误的。只考虑w递增，没考虑w值相等的情况。</p><p>我自己这里加进去了判断。主要是看解题报告后才知道数据这么弱，就按他的写了</p></div><div class=article-more><a href=//owent.net/2010/57.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-02-24T15:43:54.000+00:00 itemprop=datePublished>2010-02-24</time></div></div></article><article class="article-panel archive-article archive-type-58"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/58.html target=_blank itemprop=url>POJ PKU 3631 Cuckoo Hashing 解题报告</a></h1></header><div class=article-summary><p>题目链接：<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3631">http://acm.pku.edu.cn/JudgeOnline/problem?id=3631</a></p><p>我讨厌这么长的题目</p><p>这题是模拟那个Hash算法，有点像我之前转载的那篇文章里提到的Hash</p><p><a href=https://www.owent.net/2009/87.html>打造最快的Hash表(转) [以暴雪的游戏的Hash为例]</a> 这里是用两个Hash函数算出两个Hash值h1和h2，如果h1位置已经被占用就检查h2位置，如果都被占用就把原来的替换掉再给原来的字符串重新计算映射。这样下去可能出现死循环。会出现死循环就输出</p></div><div class=article-more><a href=//owent.net/2010/58.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-02-24T10:14:57.000+00:00 itemprop=datePublished>2010-02-24</time></div></div></article><article class="article-panel archive-article archive-type-59"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/59.html target=_blank itemprop=url>POJ PKU 2596 Dice Stacking 解题报告</a></h1></header><div class=article-summary><p>状态压缩+DP</p><p>1972的增强版</p><p>题目链接：<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=2596">http://acm.pku.edu.cn/JudgeOnline/problem?id=2596</a></p><p>题意是给出小于10个的骰子，要求竖着叠成一条，而且每两个相接的骰子相接的面的数字相同</p><p>求侧面数字的最大和。如果叠不出来输出0</p></div><div class=article-more><a href=//owent.net/2010/59.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-02-19T12:31:50.000+00:00 itemprop=datePublished>2010-02-19</time></div></div></article></div><hr><nav id=page-nav><ul class=pagination><li class=page-item><a class=page-link href=/categories/my-acm-icpc-career.html>&#171;上一页</a></li><li class=page-item><a class=page-link href=/categories/my-acm-icpc-career.html>1</a></li><li class='page-item disabled'><a class=page-link href=/categories/my-acm-icpc-career/page/2.html>2</a><span class=sr-only>(current)</span></li><li class=page-item><a class=page-link href=/categories/my-acm-icpc-career/page/3.html>3</a></li><li class=page-item><a class=page-link href=/categories/my-acm-icpc-career/page/4.html>4</a></li><li class=page-item><a class=page-link href=/categories/my-acm-icpc-career/page/3.html>下一页&#187;</a></li></ul></nav></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2025&nbsp;OWenT
+</strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong><span class=clearfix></span></div></div></footer></div><script type=module>// import * as Popper from "@popperjs/core";// import * as bootstrap from "bootstrap";
+// import React from "react";
+
+        
+</script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/accesslog.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/armasm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/awk.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/basic.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/bnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/capnproto.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/cmake.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/d.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dockerfile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dos.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/erlang.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/ebnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/latex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/llvm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/lua.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/powershell.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/protobuf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/profile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/vim.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/x86asm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/yaml.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/vs2015.min.css",document.querySelector("head").appendChild(t),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const n={};for(const e of hljs.listLanguages())n[e.toLowerCase()]=!0;for(const e of document.querySelectorAll("pre>code"))try{if(e.className.match(/\bmermaid\b/i)){e.classList.add("mermaid");continue}if(e.className.match(/\bnohighlight\b/i))continue;const t=e.className.match(/language-([^\s]+)/i);if(t&&t.length>=2&&hljs.getLanguage(t[1]))hljs.highlightElement(e);else{const t=hljs.highlightAuto(e.innerText,hljs.listLanguages());t&&t.value&&(e.innerHTML=t.value,e.classList.add("hljs"))}}catch(e){window.console&&console.log(e.toString()+`\r
+Maybe can not detect the language`)}})</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-PQEY77BYG1"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-PQEY77BYG1")}</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css",document.querySelector("head").appendChild(t),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js></script><script type=module>
+import mermaid from "mermaid";
+const config = {
+    theme: 'neutral',
+    logLevel: 'fatal',
+    securityLevel: 'loose', 
+    startOnLoad: true,
+    arrowMarkerAbsolute: false,
+    
+
+};
+mermaid.initialize(config);
+</script><script type=text/javascript>var _hmt=_hmt||[];(function(){var t,n,e=document.createElement("script");e.src="https://hm.baidu.com/hm.js?6a0daf8d58889f1cf55a353867bfdbb0",t=document.getElementsByTagName("script"),n=document.getElementsByTagName("script")[t.length-1],n.parentNode.appendChild(e)})()</script></div></body></html>

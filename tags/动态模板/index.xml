@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>动态模板 on I'm OWenT</title><link>//owent.net/tags/%E5%8A%A8%E6%80%81%E6%A8%A1%E6%9D%BF.html</link><description>Recent content in 动态模板 on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md"&gt;&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /&gt;&lt;/a&gt;</copyright><lastBuildDate>Mon, 27 Jan 2014 16:27:46 +0000</lastBuildDate><atom:link href="//owent.net/tags/%E5%8A%A8%E6%80%81%E6%A8%A1%E6%9D%BF/index.xml" rel="self" type="application/rss+xml"/><item><title>C++11动态模板参数和type_traits</title><link>//owent.net/2014/971.html</link><pubDate>Mon, 27 Jan 2014 16:27:46 +0000</pubDate><guid>//owent.net/2014/971.html</guid><description>&lt;p&gt;C++11标准里有动态模板参数已经是众所周知的事儿了。但是当时还有个主流编译器还不支持。
+但是现在，主要的编译器。VC(Windows),GCC(Windows,Linux),Clang(Mac,IOS)都已经支持了。所以就可以准备用于生产环境了。
+type_traits没啥好说的。主要是一些静态检测。主要还是要看动态模板参数和他们两的结合使用上。
+动态模版参数标准文档见:
+&lt;a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2242.pdf"&gt;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2242.pdf&lt;/a&gt;
+和
+&lt;a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf"&gt;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf&lt;/a&gt;
+虽然贴出来了。估计是没人看得。所以就直接说重点。&lt;/p&gt;</description></item></channel></rss>

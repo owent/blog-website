@@ -1,0 +1,124 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>Work|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/categories/work.html><link rel=alternate type=application/rss+xml href=//owent.net/categories/work/index.xml title="I'm OWenT"><link rel=icon href=/favicon.ico><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net//css/style.css><link rel=stylesheet href=//owent.net/css/syntax.css><script type=importmap>
+{
+  "imports": {
+    "react": "https://cdn.jsdelivr.net/npm/react/+esm",
+    "react-bootstrap": "https://cdn.jsdelivr.net/npm/react-bootstrap/+esm",
+    "mermaid": "https://cdn.jsdelivr.net/npm/mermaid/+esm",
+    "bootstrap": "https://cdn.jsdelivr.net/npm/bootstrap/+esm",
+    "@popperjs/core": "https://cdn.jsdelivr.net/npm/popper.js/+esm"
+  }
+}
+</script><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8180054975285991" crossorigin=anonymous></script><meta content="codeva-4M5iohb9TW" name=baidu-site-verification></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net/ id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-bs-toggle=collapse data-bs-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/categories/work/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-1000"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2014/1000.html target=_blank itemprop=url>捣鼓一个协程库</a></h1></header><div class=article-summary><p>今年准备安安心心写一个协程库。一方面是觉得协程挺有意思，另一方面也是因为C/C++在这方面没有一个非常权威的解决方案。
+按照我自己风格还是喜欢C++，所以协程库定名为 libcopp 。
+源码托管在 github: <a href=https://github.com/owent/libcopp>https://github.com/owent/libcopp</a>
+镜像托管 <a href=http://git.oschina.net/owent/distinctionpp>http://git.oschina.net/owent/distinctionpp</a></p></div><div class=article-more><a href=//owent.net/2014/1000.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2014-03-05T21:52:49.000+00:00 itemprop=datePublished>2014-03-05</time></div></div></article><article class="article-panel archive-article archive-type-738"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/738.html target=_blank itemprop=url>ARM 交叉编译环境搭建</a></h1></header><div class=article-summary><p>最近研究了一下ARM的交叉编译环境搭建，太麻烦了必须作一下记录啊。
+前两个方法比较简单一点，关键是淫家Google帮你弄好了大部分功能</p><h2 id=方案一利用android-ndk--jni>方案一：（利用Android ndk + jni）</h2><p>使用Android NDK的第一步当然是下载Android NDK啦。
+<a href=http://developer.android.com/tools/sdk/ndk/index.html>http://developer.android.com/tools/sdk/ndk/index.html</a>
+使用jni的话，还必须下载相应的Android SDK
+<a href=http://developer.android.com/sdk/index.html>http://developer.android.com/sdk/index.html</a>
+下载完后可以使用 $ANDROID_SDK_ROOT/sdk/tools/android update sdk –no-ui 来更新SDK包
+附注：ANDROID_SDK_ROOT指代Android SDK根目录，NDK_ROOT指代Android NDK根目录。下同。
+为了方便可以把$ANDROID_SDK_ROOT/sdk/tools:$ANDROID_SDK_ROOT/sdk/platform-tools:$NDK_ROOT 加到环境变量PATH里去
+另外,Android 如果要命令行编译，需要ant和ant扩展，需要安装 Android 依赖的32位库
+大致上是 glibc.i686 libzip.i686 libzip-devel.i686 libstdc++.i686 ant ant-* jdk
+其中 libc.i686 libzip.i686 libzip-devel.i686 libstdc++.i686 ant ant-* 可以用 yum install或apt-get install 安装
+jdk最好是官网下一个rpm包安装 rpm -ivh *.rpm</p></div><div class=article-more><a href=//owent.net/2013/738.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-04-11T17:55:04.000+00:00 itemprop=datePublished>2013-04-11</time></div></div></article><article class="article-panel archive-article archive-type-674"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/674.html target=_blank itemprop=url>Boost.Spirit 初体验</a></h1></header><div class=article-summary><p>使用代码生成代码是一件十分美妙的事情，于是有了各种代码生成器。但是生成代码，意味着要有对生成规则的分析和处理。
+Boost.Spirit 就是这么一个语法分析工具，它实现了对<strong>上下文无关文法的LL分析</strong>。支持<strong>EBNF(扩展巴科斯范式)</strong>。
+Boost.Spirit 的使用真的是把模板嵌套用到了极致。确实这么做造成了非常强的扩展性，生成的代码也非常高效，但是嵌套的太复杂了，对于初学者而言真心难看懂。
+你能想象在学习阶段一个不是太明白的错误导致编译器报出的几十层模板嵌套错误信息的感受吗？而且，这么复杂的模板嵌套还直接导致了编译速度的巨慢无比。
+其实在之前，我已经使用过Spirit的Classic版本，即1.X版本，但是过多的复制操作让我觉得当时用得很低效，还好分析的内容并不复杂所以没。体现出来
+这回就来研究下功能更强劲的2.X 版本。</p></div><div class=article-more><a href=//owent.net/2012/674.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-11-08T18:57:34.000+00:00 itemprop=datePublished>2012-11-08</time></div></div></article><article class="article-panel archive-article archive-type-652"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/652.html target=_blank itemprop=url>AC自动机</a></h1></header><div class=article-summary><p>某个课程的作业，促使我来看看这玩意。</p><p>整个程序的算法思想是看别人的ACM的blog看懂的，感觉确实和KMP很像。但是代码呢就比较工程化一点。顺便回忆了一把ACM的感觉。</p></div><div class=article-more><a href=//owent.net/2012/652.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-08-28T20:10:27.000+00:00 itemprop=datePublished>2012-08-28</time></div></div></article><article class="article-panel archive-article archive-type-643"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/643.html target=_blank itemprop=url>C++ 标准过渡期</a></h1></header><div class=article-summary><p>C++11的新标准已经出台，各个编译器已经开始陆续支持。
+主流编译器支持程度见(VC++, gcc, clang, intel c++等)：<a href=http://en.cppreference.com/w/cpp/compiler_support>http://en.cppreference.com/w/cpp/compiler_support</a></p><p>但是要让C++11应用与生产环境还需时日，所以就在这里记录一下在过渡时期可能用到的一些重要功能</p></div><div class=article-more><a href=//owent.net/2012/643.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-08-23T06:05:20.000+00:00 itemprop=datePublished>2012-08-23</time></div></div></article><article class="article-panel archive-article archive-type-603"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/603.html target=_blank itemprop=url>C++ 新特性学习（七） — 右值引用</a></h1></header><div class=article-summary><p>C++在效率上有个硬伤。我们知道C#和Java对于类传递都是以引用的方式，而C++默认都是传值。在传值过程中就经常会进行复制构造，这完全没必要而且浪费CPU，为了解决这种问题，于是乎C++11 增加了一个新的非常数引用（reference）类型，称为右值引用（R-value reference）。我就专门看了一下关于右值引用的东西。
+右值引用在GCC 4.3之后开始支持，VS 2010（VC 10.0）已经支持，再前一点的VC版本没试过所以不知道。
+右值引用的申明标记为T &&，主要用于处理临时变量，比如函数返回的变量（暂时想不出其他例子，忽略返回值优化吧，(命名)返回值优化参见http://efnetcpp.org/wiki/Return_value_optimization，再说返回值优化能力有限是吧，比要求如单返回语句、不能使用异常等等），避免复制构造。同时在析构的时候就不会析构这个临时变量，从而提升效率。
+上代码：</p></div><div class=article-more><a href=//owent.net/2012/603.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-05-31T04:50:21.000+00:00 itemprop=datePublished>2012-05-31</time></div></div></article><article class="article-panel archive-article archive-type-584"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/584.html target=_blank itemprop=url>Linux编译安装GCC 4.7</a></h1></header><div class=article-summary><h1 id=linux编译安装gcc-47>Linux编译安装GCC 4.7</h1><p>详见: <a href=https://www.owent.net/2012/584.html>Linux编译安装GCC 4.7</a></p><h4 id=准备环境及依赖项>准备环境及依赖项</h4><ol><li>支持 ISO C90 的编译器</li><li>用于创建Ada编译器的GNAT</li><li>支持POSIX的shell或GNU bash</li><li>POSIX或SVR4的 awk工具</li><li>GNU binutils</li><li>gzip 版本1.2.4及以上 （可由GNU镜像列表 <a href=http://www.gnu.org/prep/ftp.html>http://www.gnu.org/prep/ftp.html</a> 或自动选择最佳镜像 <a href=http://ftpmirror.gnu.org>http://ftpmirror.gnu.org</a> 下载 ）</li><li>bzip2 版本 1.0.2及以上 （此处可下载 <a href=http://www.bzip.org/>http://www.bzip.org/</a>）</li><li>GNU make 工具 版本3.80及以上 （可由GNU镜像列表 <a href=http://www.gnu.org/prep/ftp.html>http://www.gnu.org/prep/ftp.html</a> 或自动选择最佳镜像 <a href=http://ftpmirror.gnu.org>http://ftpmirror.gnu.org</a> 下载 ）</li><li>GNU tar工具 版本1.14及以上 （可由GNU镜像列表 <a href=http://www.gnu.org/prep/ftp.html>http://www.gnu.org/prep/ftp.html</a> 或自动选择最佳镜像 <a href=http://ftpmirror.gnu.org>http://ftpmirror.gnu.org</a> 下载 ）</li><li>perl 版本5.6.1及以上 （此处可下载 <a href=http://www.perl.org/>http://www.perl.org/</a>）</li><li>jar或zip和unzip工具 （此处可下载 <a href=http://www.info-zip.org>http://www.info-zip.org</a>)</li><li>gmp库 版本4.3.2及以上 （可由GNU镜像列表 <a href=http://www.gnu.org/prep/ftp.html>http://www.gnu.org/prep/ftp.html</a> 或自动选择最佳镜像 <a href=http://ftpmirror.gnu.org>http://ftpmirror.gnu.org</a> 下载 ）</li><li>mpfr库 版本2.4.2及以上 （可由GNU镜像列表 <a href=http://www.gnu.org/prep/ftp.html>http://www.gnu.org/prep/ftp.html</a> 或自动选择最佳镜像 <a href=http://ftpmirror.gnu.org>http://ftpmirror.gnu.org</a> 下载 ）</li><li>mpc库 版本0.8.1及以上 （可由GNU镜像列表 <a href=http://www.gnu.org/prep/ftp.html>http://www.gnu.org/prep/ftp.html</a> 或自动选择最佳镜像 <a href=http://ftpmirror.gnu.org>http://ftpmirror.gnu.org</a> 下载 ）</li><li>ppl库 版本0.11及以上 （此处可下载 <a href=http://www.cs.unipr.it/ppl/Download/>http://www.cs.unipr.it/ppl/Download/</a>）</li><li>isl 版本 0.10 （可由GNU镜像列表 <a href=http://www.gnu.org/prep/ftp.html>http://www.gnu.org/prep/ftp.html</a> 或自动选择最佳镜像 <a href=http://ftpmirror.gnu.org>http://ftpmirror.gnu.org</a> 中gcc目录中的infrastructure目录下载 ）</li><li>cloog-ppl 版本0.15 或cloog 版本0.16(注意不能使用更高版本) （此处可下载 <a href=http://cloog.org/>http://cloog.org/</a> ）</li></ol><h6 id=我编译的环境>我编译的环境</h6><p><strong>系统</strong>：</p></div><div class=article-more><a href=//owent.net/2012/584.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-04-07T10:25:18.000+00:00 itemprop=datePublished>2012-04-07</time></div></div></article><article class="article-panel archive-article archive-type-573"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/573.html target=_blank itemprop=url>JSON显示库 -- showJson （Javascript）</a></h1></header><div class=article-summary><p>现在的web的js开发很方便啊，但是碰到iframe里的东西还是不方便看到变量的内容，所以就写了这么个看json内容的玩意，还可以当控制台输出用。</p></div><div class=article-more><a href=//owent.net/2012/573.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-04-01T06:17:48.000+00:00 itemprop=datePublished>2012-04-01</time></div></div></article><article class="article-panel archive-article archive-type-128"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/128.html target=_blank itemprop=url>JQuery扩展插件--提示信息</a></h1></header><div class=article-summary><p>学校做项目顺便写的，还是有点用的。</p><pre><code class=language-js>/***
+ * JQuery扩展插件--提示信息
+ *
+ * 本函数用于创建提示信息
+ *
+ * Example
+ * &lt;code&gt;
+ *      var t = $.noticeMessage(msg, a, b);
+ * &lt;/code&gt;
+ *
+ *
+ * function noticeMessage([msg, a,b])
+ * @Param  {
+ *      msg:    信息内容(默认: Notice Message!)
+ *      a:      配置选项({expire: 过期时间（默认5秒）, time: 过渡时间, from: {起始CSS样式}, to:{最终CSS样式}})
+ *      b:      回调函数
+ * }
+ * @Return {jQuery(msgDiv): 产生的信息DOM组件的jQuery容器}
+ *
+ *
+ * Example:
+ * &lt;code&gt;
+ *      var t = $.noticeMessage(&quot;Hello World!&quot;);
+ * &lt;/code&gt;
+ *
+ *
+ * @Author      OWenT
+ * @Version     1.0
+ * @Link        http://www.owent.net
+ */
+jQuery.extend({
+    noticeMessage: function (msg, a, b) {
+        msg = msg || &quot;Notice Message!&quot;;
+        var option = { &quot;expire&quot;: 5000, &quot;time&quot;: 500,
+            &quot;from&quot;: { &quot;background-color&quot;: &quot;LightGreen&quot;, &quot;opacity&quot;: &quot;0&quot;, &quot;position&quot;: &quot;fixed&quot;, &quot;bottom&quot;: &quot;0px&quot;, &quot;z-index&quot;: &quot;1000&quot;,
+                &quot;font-size&quot;: &quot;24px&quot;, &quot;color&quot;: &quot;DarkGreen&quot;, &quot;padding&quot;: &quot;3px&quot;, &quot;font-weight&quot;: &quot;bold&quot;
+            },
+            &quot;to&quot;: { &quot;opacity&quot;: &quot;1&quot;, &quot;bottom&quot;: &quot;+5px&quot; }
+        };
+        var callback = function () { };
+        if (a &amp;&amp; jQuery.isFunction(a))
+            callback = a;
+        else {
+            a = a || {};
+            jQuery.extend(option, a);
+            callback = b || function () { };
+        }
+
+        var msgDiv = document.createElement(&quot;div&quot;);
+
+        jQuery(msgDiv).css(option.from).html(msg);
+        jQuery(document.body).append(msgDiv);
+        jQuery(msgDiv).stop().animate(option.to, option.time, callback);
+        if (option.expire &gt; 0) {
+            setTimeout(function () {
+                if (msgDiv) {
+                    jQuery(msgDiv).stop().animate({ &quot;opacity&quot;: &quot;0&quot;, &quot;bottom&quot;: &quot;-5px&quot; }, option.time,
+                        function () { callback(); jQuery(this).remove(); });
+                }
+            }, option.expire);
+        }
+        return jQuery(msgDiv);
+    }
+});
+</code></pre><p>写在最后补充一下，这个动机基本没什么用了</p></div><div class=article-more><a href=//owent.net/2010/128.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-11-19T15:20:12.000+00:00 itemprop=datePublished>2010-11-19</time></div></div></article><article class="article-panel archive-article archive-type-104"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/104.html target=_blank itemprop=url>解析网站字符串型参数 Javascript QueryString 操作 TQueryString类</a></h1></header><div class=article-summary><p>这是学校USRP项目需要而写的一个类，但是既然写出来了，以后也可能用到，就共享出来吧。</p><p>这个类用于解析网页URL的QueryString参数，或者也可以当做操作一些其他设置的类库。</p></div><div class=article-more><a href=//owent.net/2010/104.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-11-01T02:15:09.000+00:00 itemprop=datePublished>2010-11-01</time></div></div></article></div><hr><nav id=page-nav><ul class=pagination><li class=page-item><a class=page-link href=/categories/work/page/2.html>&#171;上一页</a></li><li class=page-item><a class=page-link href=/categories/work.html>1</a></li><li class=page-item><a class=page-link href=/categories/work/page/2.html>2</a></li><li class='page-item disabled'><a class=page-link href=/categories/work/page/3.html>3</a><span class=sr-only>(current)</span></li></ul></nav></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2025&nbsp;OWenT
+</strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong><span class=clearfix></span></div></div></footer></div><script type=module>// import * as Popper from "@popperjs/core";// import * as bootstrap from "bootstrap";
+// import React from "react";
+
+        
+</script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/accesslog.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/armasm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/awk.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/basic.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/bnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/capnproto.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/cmake.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/d.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dockerfile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dos.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/erlang.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/ebnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/latex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/llvm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/lua.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/powershell.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/protobuf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/profile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/vim.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/x86asm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/yaml.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/vs2015.min.css",document.querySelector("head").appendChild(t),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const n={};for(const e of hljs.listLanguages())n[e.toLowerCase()]=!0;for(const e of document.querySelectorAll("pre>code"))try{if(e.className.match(/\bmermaid\b/i)){e.classList.add("mermaid");continue}if(e.className.match(/\bnohighlight\b/i))continue;const t=e.className.match(/language-([^\s]+)/i);if(t&&t.length>=2&&hljs.getLanguage(t[1]))hljs.highlightElement(e);else{const t=hljs.highlightAuto(e.innerText,hljs.listLanguages());t&&t.value&&(e.innerHTML=t.value,e.classList.add("hljs"))}}catch(e){window.console&&console.log(e.toString()+`\r
+Maybe can not detect the language`)}})</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-PQEY77BYG1"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-PQEY77BYG1")}</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css",document.querySelector("head").appendChild(t),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js></script><script type=module>
+import mermaid from "mermaid";
+const config = {
+    theme: 'neutral',
+    logLevel: 'fatal',
+    securityLevel: 'loose', 
+    startOnLoad: true,
+    arrowMarkerAbsolute: false,
+    
+
+};
+mermaid.initialize(config);
+</script><script type=text/javascript>var _hmt=_hmt||[];(function(){var t,n,e=document.createElement("script");e.src="https://hm.baidu.com/hm.js?6a0daf8d58889f1cf55a353867bfdbb0",t=document.getElementsByTagName("script"),n=document.getElementsByTagName("script")[t.length-1],n.parentNode.appendChild(e)})()</script></div></body></html>

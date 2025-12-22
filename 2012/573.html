@@ -1,0 +1,164 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>JSON显示库 -- showJson （Javascript）|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2012/573.html><link rel=icon href=/favicon.ico><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net//css/style.css><link rel=stylesheet href=//owent.net/css/syntax.css><script type=importmap>
+{
+  "imports": {
+    "react": "https://cdn.jsdelivr.net/npm/react/+esm",
+    "react-bootstrap": "https://cdn.jsdelivr.net/npm/react-bootstrap/+esm",
+    "mermaid": "https://cdn.jsdelivr.net/npm/mermaid/+esm",
+    "bootstrap": "https://cdn.jsdelivr.net/npm/bootstrap/+esm",
+    "@popperjs/core": "https://cdn.jsdelivr.net/npm/popper.js/+esm"
+  }
+}
+</script><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8180054975285991" crossorigin=anonymous></script><meta content="codeva-4M5iohb9TW" name=baidu-site-verification></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net/ id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-bs-toggle=collapse data-bs-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-f0ec0cc47bb140626b3a46afda3fb8fb class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2012/573.html target=_blank itemprop=url>JSON显示库 -- showJson （Javascript）</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>现在的web的js开发很方便啊，但是碰到iframe里的东西还是不方便看到变量的内容，所以就写了这么个看json内容的玩意，还可以当控制台输出用。</p><p>很简单,有需要以后开发新功能</p><pre><code class=language-js>/** 
+ * Show json in a new page.(For debug)
+ *
+ * Licensed under the MIT or GPL Version 3 licenses.
+ * @version 1.3
+ * @author OWenT
+ * @link http://www.owent.net
+ * @history 
+ * 		2012.12.27 
+ * 			1. 改进JSON内对象循环引用时的导致的栈溢出问题
+ * 			2. 引入层级路径
+ * 			3. 引入锚点
+ */
+ 
+ /**
+  * Object转为字符串
+  * @param {Object} json Object对象 
+  * @param {Number} tab 缩进数量
+  * @param {Object} rules 应用规则
+  * @param {String} path 当前路径
+  * @return 生成的HTML
+  */
+function json2String(json, tab, rules, path) {
+    var tabStr = &quot;&quot;, singleTab = &quot;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&quot;, isClear = false;
+    var txt = &quot;&quot;;
+    
+    if (!rules) {
+        rules = {
+            id: &quot;__json2string_process&quot; + (new Date).getTime().toString() + (json2String.baseIndex ++),
+            objs: []
+        };
+        isClear = true;
+    }
+    
+    tab = tab || 1;
+    if (!path) {
+        path = &quot;{ROOT}&quot;;
+        txt += &quot;&lt;a name=\&quot;&quot; + rules.id + &quot;.&quot; + path + &quot;\&quot;&gt; &lt;/a&gt;&quot;;
+    }
+    
+    for (var i = 0; i &lt; tab; i ++) {
+        tabStr += singleTab;
+    }
+    
+    if (!json &amp;&amp; json !== 0) {
+        txt += '&lt;span style=&quot;color: Red;&quot;&gt;null&lt;/span&gt;';
+    } else if (typeof(json) == &quot;object&quot;) {
+        var prefix = '&lt;span style=&quot;color: DarkGray; font-weight: bolder;&quot;&gt;{&lt;/span&gt;', suffix = '&lt;span style=&quot;color: DarkGray; font-weight: bolder;&quot;&gt;}&lt;/span&gt;';
+        try {		
+            if (toString.call(json).match(/array/i)) {
+                prefix = '&lt;span style=&quot;color: Orange;&quot;&gt;[&lt;/span&gt;';
+                suffix = '&lt;span style=&quot;color: Orange;&quot;&gt;]&lt;/span&gt;';
+            }
+        } catch(e) {
+            // hoho ...
+        }
+        
+        if (json[rules.id]) {
+            txt += prefix + &quot;此处引用 &lt;a style=\&quot;text-decoration: underline; color: Blue;\&quot; href=\&quot;#&quot; + rules.id + &quot;.&quot; + json[rules.id] + &quot;\&quot; target=\&quot;_self\&quot; title=\&quot;跳转到引用 &quot; + json[rules.id] + &quot;\&quot; &gt;&quot; + 
+                json[rules.id] + &quot;&lt;/a&gt;&quot; + suffix;
+            return txt;
+        }
+        json[rules.id] = path;
+        rules.objs.push(json);
+        
+        txt += prefix + &quot;&lt;br /&gt;\r\n&quot;;
+        var first = true;
+        for (var key in json) {
+            if (key == rules.id)
+                continue;
+                
+            if (first)
+                first = false;
+            else
+                txt += &quot;,&lt;br /&gt;\r\n&quot;;
+            txt += tabStr + &quot;&lt;a name=\&quot;&quot; + rules.id + &quot;.&quot; + path + &quot;.&quot; + key + &quot;\&quot;&gt; &lt;/a&gt;&quot; + &quot;&lt;strong&gt;&quot; + 
+                key + &quot;&lt;/strong&gt; : &quot; +	json2String(json[key], tab + 1, rules, path + &quot;.&quot; + key);
+        }
+        txt += &quot;&lt;br /&gt;\r\n&quot; + tabStr.substr(0, tabStr.length - singleTab.length) + suffix;
+    } else if (typeof(json) == &quot;string&quot;) {
+        txt += '&lt;span style=&quot;color: Green;&quot;&gt;&quot;' + json + '&quot;&lt;/span&gt;';
+    } else if (typeof(json) == &quot;number&quot;) {
+        txt += '&lt;span style=&quot;color: Blue;&quot;&gt;' + json + '&lt;/span&gt;';
+    } else if (typeof(json) == &quot;function&quot;) {
+        txt += '&lt;span style=&quot;color: Purple;&quot;&gt;' + json + '&lt;/span&gt;';
+    } else {
+        txt += json.toString();
+    }
+    
+    if (isClear) {
+        for (var i = 0; i &lt; rules.objs.length; ++ i) {
+            delete rules.objs[i][rules.id];
+        }
+        rules.objs = [];
+    }
+    
+    return txt;
+}
+ 
+function showJson(json, title, windowName, dlg_opt) {
+    json2String.baseIndex = json2String.baseIndex || 0;
+    
+    title = title || &quot;Json viewer&quot;;
+    windowName = windowName || &quot;result&quot; + (new Date()).toGMTString();
+    if (window.jQuery &amp;&amp; jQuery.fn &amp;&amp; jQuery.fn.dialog) {
+        $(&quot;&lt;div&gt;&lt;/div&gt;&quot;).append(json2String(json)).css({
+            &quot;text-align&quot;: &quot;left&quot;
+        }).dialog($.extend({
+            &quot;modal&quot;: false,
+            &quot;title&quot;: title,
+            &quot;width&quot;: 640,
+            &quot;height&quot;: 480,
+            &quot;buttons&quot;: {
+                &quot;关闭&quot;: function() {
+                    $( this ).dialog( &quot;close&quot; );
+                }
+            }
+        }, dlg_opt));
+    } else {
+        var wnd = window.open(&quot;about:blank&quot;, &quot;_blank&quot;, &quot;height=600, width=800, toolbar=no, menubar=no, resizable=yes, location=no, status=no&quot;, true);
+        if (!wnd)
+            alert(&quot;窗口被拦截！&quot;);
+        wnd.document.write(&quot;&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;title&gt;&quot; + title + &quot;&lt;/title&gt;&lt;/head&gt;&lt;body&gt;&quot; + json2String(json) + &quot;&lt;/body&gt;&lt;/html&gt;&quot;);
+    }
+    return wnd;
+}
+</code></pre><ol><li>更新对不同类型着色</li><li>如果载入了jQuery UI 则使用jQuery UI的Dialog打开，用于解决嵌套iframe时浏览器拦截问题</li><li>解决Object循环引用时栈溢出问题，同时增加引用的指向锚点</li></ol><p>Licensed under the MIT or GPL Version 3 licenses.</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/web.html>Web</a></li><li><a href=//owent.net/categories/work.html>Work</a></li></ol></span><span class=article-meta-right><time datetime=2012-04-01T06:17:48.000+00:00 itemprop=datePublished>2012-04-01</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/javascript.html>Javascript</a></li><li class=article-tag-list-item><a href=//owent.net/tags/json.html>JSON</a></li><li class=article-tag-list-item><a href=//owent.net/tags/showjson.html>showjson</a></li><li class=article-tag-list-item><a href=//owent.net/tags/web.html>Web</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2012/584.html>上一篇<strong>Linux编译安装GCC 4.7</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2012/560.html>下一篇<strong>C++ 新特性学习（六） — 新的字符串编码和伪随机数</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2025&nbsp;OWenT
+</strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong><span class=clearfix></span></div></div></footer></div><script type=module>// import * as Popper from "@popperjs/core";// import * as bootstrap from "bootstrap";
+// import React from "react";
+
+        
+</script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/accesslog.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/armasm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/awk.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/basic.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/bnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/capnproto.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/cmake.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/d.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dockerfile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dos.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/erlang.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/ebnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/latex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/llvm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/lua.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/powershell.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/protobuf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/profile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/vim.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/x86asm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/yaml.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/vs2015.min.css",document.querySelector("head").appendChild(t),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const n={};for(const e of hljs.listLanguages())n[e.toLowerCase()]=!0;for(const e of document.querySelectorAll("pre>code"))try{if(e.className.match(/\bmermaid\b/i)){e.classList.add("mermaid");continue}if(e.className.match(/\bnohighlight\b/i))continue;const t=e.className.match(/language-([^\s]+)/i);if(t&&t.length>=2&&hljs.getLanguage(t[1]))hljs.highlightElement(e);else{const t=hljs.highlightAuto(e.innerText,hljs.listLanguages());t&&t.value&&(e.innerHTML=t.value,e.classList.add("hljs"))}}catch(e){window.console&&console.log(e.toString()+`\r
+Maybe can not detect the language`)}})</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-PQEY77BYG1"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-PQEY77BYG1")}</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css",document.querySelector("head").appendChild(t),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js></script><script type=module>
+import mermaid from "mermaid";
+const config = {
+    theme: 'neutral',
+    logLevel: 'fatal',
+    securityLevel: 'loose', 
+    startOnLoad: true,
+    arrowMarkerAbsolute: false,
+    
+
+};
+mermaid.initialize(config);
+</script><script type=text/javascript>var _hmt=_hmt||[];(function(){var t,n,e=document.createElement("script");e.src="https://hm.baidu.com/hm.js?6a0daf8d58889f1cf55a353867bfdbb0",t=document.getElementsByTagName("script"),n=document.getElementsByTagName("script")[t.length-1],n.parentNode.appendChild(e)})()</script></div></body></html>

@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hdu on I'm OWenT</title><link>//owent.net/tags/hdu.html</link><description>Recent content in Hdu on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md"&gt;&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /&gt;&lt;/a&gt;</copyright><lastBuildDate>Mon, 28 Apr 2014 21:10:46 +0000</lastBuildDate><atom:link href="//owent.net/tags/hdu/index.xml" rel="self" type="application/rss+xml"/><item><title>[ACM] HDU 1006 解题报告</title><link>//owent.net/2014/1046.html</link><pubDate>Mon, 28 Apr 2014 21:10:46 +0000</pubDate><guid>//owent.net/2014/1046.html</guid><description>&lt;p&gt;偶尔写写ACM水题还是挺好玩的。(好吧其实是老婆求助我才看滴)&lt;/p&gt;
+&lt;p&gt;题目链接：&lt;a href="http://acm.hdu.edu.cn/showproblem.php?pid=1006"&gt;http://acm.hdu.edu.cn/showproblem.php?pid=1006&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;一开始看到这题的时候，感觉一天24小时&lt;em&gt;60分钟&lt;/em&gt;60秒。把每一秒的最小指针角度记下来再搞个排序。&lt;/p&gt;</description></item><item><title>POJ 2192 Zipper HDU 2059 龟兔赛跑</title><link>//owent.net/2013/861.html</link><pubDate>Mon, 15 Jul 2013 18:39:41 +0000</pubDate><guid>//owent.net/2013/861.html</guid><description>&lt;p&gt;今天心情好，刷了两到ACM水题，思路很简单都在注释里，所以直接贴代码:&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-cpp"&gt;/**
+ * @file 龟兔赛跑.cpp
+ * @brief 龟兔赛跑 AC代码 (DP)
+ * DP方程式: [到第i的充电站的最短时间] = [到最后一个冲了电的充电站的最短时间] + [那个充电站到第i个充电站的时间]
+ *
+ * @link http://acm.hdu.edu.cn/showproblem.php?pid=2059
+ * @version 1.0
+ * @author OWenT
+ * @date 2013.07.15
+ *
+ * @history
+ *
+ *
+ */
+
+#include &amp;lt;cstdio&amp;gt;
+#include &amp;lt;iostream&amp;gt;
+#include &amp;lt;cstring&amp;gt;
+#include &amp;lt;algorithm&amp;gt;
+#include &amp;lt;set&amp;gt;
+#include &amp;lt;numeric&amp;gt;
+
+int pn[128];
+double dp[128]; /** dp[i] 表示 到第i个充电站的最小时间(0为开始位置，n+1为终点) **/
+
+double calc_charge_time(int dis, int v1, int v2, int c) {
+ if (dis &amp;lt;= c)
+ return 1.0 * dis / v1;
+
+ return 1.0 * c / v1 + 1.0 * (dis - c) / v2;
+}
+
+int main(int argc, char* argv[]) {
+ using namespace std;
+
+ double eps = std::numeric_limits&amp;lt;double&amp;gt;::epsilon();
+ int l, n, c, t, vr, v1, v2;
+
+ while(cin&amp;gt;&amp;gt; l) {
+ cin &amp;gt;&amp;gt; n&amp;gt;&amp;gt; c&amp;gt;&amp;gt; t&amp;gt;&amp;gt; vr&amp;gt;&amp;gt; v1&amp;gt;&amp;gt; v2;
+
+ pn[0] = 0; /** 0为起点 **/
+ for (int i = 1; i &amp;lt;= n; ++ i) {
+ cin&amp;gt;&amp;gt; pn[i];
+ }
+ pn[n + 1] = l; /** n+1为终点 **/
+
+ memset(dp, 0, sizeof(dp));
+ for(int i = 0; i &amp;lt;= n + 1; ++ i) {
+ dp[i] = calc_charge_time(pn[i] - pn[0], v1, v2, c);
+ }
+
+ for(int i = 1; i &amp;lt;= n + 1; ++ i) {
+ for(int j = 0; j &amp;lt; i; ++ j) {
+ double tc = calc_charge_time(pn[i] - pn[j], v1, v2, c) + t + dp[j];
+ dp[i] = std::min(tc, dp[i]);
+ }
+ 
+ }
+
+ double rt = 1.0 * l / vr, tt = dp[n + 1];
+
+ if (tt &amp;lt; rt)
+ puts(&amp;quot;What a pity rabbit!&amp;quot;);
+ else
+ puts(&amp;quot;Good job,rabbit!&amp;quot;);
+ }
+
+ return 0;
+}
+
+/**
+ * @file Zipper.cpp
+ * @brief Zipper AC代码 (DP)
+ * @link http://poj.org/problem?id=2192
+ * DP方程式: [A串消耗个数i][B串消耗个数j] = min{[A串消耗个数i - 1][B串消耗个数j]|[A串消耗个数i][B串消耗个数j + 1]}
+ * 以上分支选取条件是 A或B的新选用字符和C串新字符匹配
+ *
+ * @version 1.0
+ * @author OWenT
+ * @date 2013.07.15
+ *
+ * @history
+ *
+ *
+ */
+
+#include &amp;lt;cstdio&amp;gt;
+#include &amp;lt;cstring&amp;gt;
+#include &amp;lt;algorithm&amp;gt;
+#include &amp;lt;set&amp;gt;
+#include &amp;lt;numeric&amp;gt;
+
+
+char strA[256], strB[256], strC[512];
+int dp[256][256]; /** dp[i][j] = k 表示A消耗了i个字符，B消耗了j个字符，拼成的C串消耗了k个字符（其实就是i+j） **/
+
+int main(int argc, char* argv[]) {
+ using namespace std;
+ int s, n;
+
+ scanf(&amp;quot;%d&amp;quot;, &amp;amp;n);
+ for( s = 0; s &amp;lt; n; ++ s) {
+ scanf(&amp;quot;%s %s %s&amp;quot;, strA, strB, strC);
+ int lenA = strlen(strA);
+ int lenB = strlen(strB);
+ int lenC = strlen(strC);
+ bool bFlag = false;
+
+ if ( lenC != lenA + lenB ) {
+ printf(&amp;quot;Data set %d: no\n&amp;quot;, s + 1);
+ continue;
+ }
+
+ memset(dp, 0, sizeof(dp));
+
+ if (strA[0] == strC[0])
+ dp[1][0] = 1;
+ if (strB[0] == strC[0])
+ dp[0][1] = 1;
+
+ for (int i = 0; i &amp;lt;= lenA; ++ i) {
+ for (int j = 0; j &amp;lt;= lenB; ++ j) {
+ if (0 == dp[i][j])
+ continue;
+
+ int ri = i + 1, rj = j + 1;
+
+ if (strA[i] == strC[dp[i][j]]) {
+ dp[ri][j] = dp[i][j] + 1;
+ if (ri + j == lenC)
+ bFlag = true;
+ }
+
+ if (strB[j] == strC[dp[i][j]]) {
+ dp[i][rj] = dp[i][j] + 1;
+ if (i + rj == lenC)
+ bFlag = true;
+ }
+ }
+ }
+
+ printf(&amp;quot;Data set %d: %s\n&amp;quot;, s + 1, bFlag? &amp;quot;yes&amp;quot;: &amp;quot;no&amp;quot;);
+ }
+
+ return 0;
+}
+
+&lt;/code&gt;&lt;/pre&gt;</description></item><item><title>HDU HDOJ 3398 String 解题报告</title><link>//owent.net/2010/31.html</link><pubDate>Wed, 05 May 2010 16:51:22 +0000</pubDate><guid>//owent.net/2010/31.html</guid><description>&lt;p&gt;题目链接：&lt;a href="http://acm.hdu.edu.cn/showproblem.php?pid=3398"&gt;http://acm.hdu.edu.cn/showproblem.php?pid=3398&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;题目要我们计算1，0的排列方式总数，并且对任意长的字符串，1的数量大于等于0的数量&lt;/p&gt;
+&lt;p&gt;我们可以把题目转化为从（0，0）点到（m，n）点的方法总数，且路径不经过y=x-1这条直线&lt;/p&gt;</description></item><item><title>HDU HDOJ 3400 Line belt 解题报告</title><link>//owent.net/2010/33.html</link><pubDate>Mon, 03 May 2010 11:17:15 +0000</pubDate><guid>//owent.net/2010/33.html</guid><description>&lt;p&gt;题目链接：&lt;a href="http://acm.hdu.edu.cn/showproblem.php?pid=3400"&gt;http://acm.hdu.edu.cn/showproblem.php?pid=3400&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;这题就是一道简单的两重三分&lt;/p&gt;
+&lt;p&gt;首先设e点为从ab上离开的点，f为从cd上进入的点&lt;/p&gt;
+&lt;p&gt;显然对固定点e,f从距c的距离的长度是一个单调函数或者先减后增的函数，这里可以三分算出最优解。这里是第一个三分&lt;/p&gt;</description></item><item><title>HDU 3336 Count the string 解题报告</title><link>//owent.net/2010/55.html</link><pubDate>Mon, 15 Mar 2010 11:12:56 +0000</pubDate><guid>//owent.net/2010/55.html</guid><description>&lt;p&gt;题目：
+&lt;a href="http://acm.hdu.edu.cn/showproblem.php?pid=3336"&gt;http://acm.hdu.edu.cn/showproblem.php?pid=3336&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;水题一道，主要是测试数据很水&lt;/p&gt;
+&lt;p&gt;不解释，贴代码：&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-cpp"&gt;#include &amp;lt;iostream&amp;gt;
+#include &amp;lt;cstdio&amp;gt;
+#include &amp;lt;vector&amp;gt;
+#include &amp;lt;cstring&amp;gt;
+using namespace std;
+
+char str[200005];
+vector&amp;lt;long&amp;gt;glo_Pos;
+int main()
+{
+ int t;
+ long output,i,n,j;
+ scanf(&amp;quot;%d&amp;quot;,&amp;amp;t);
+ while(t --)
+ {
+ output = 0;
+ glo_Pos.clear();
+ scanf(&amp;quot;%ld %s&amp;quot;, &amp;amp;n, str);
+
+ for(i = 0; i &amp;lt; n; i ++)
+ {
+ if(str[i] == str[0])
+ {
+ glo_Pos.push_back(i);
+ output ++;
+ }
+ }
+ output = output % 10007;
+ for(i = 1; i &amp;lt; n; i ++)
+ {
+ for(j = 0; j &amp;lt; glo_Pos.size();j ++)
+ {
+ if(str[i] == str[glo_Pos[j] + i])
+ output = (output + 1) % 10007;
+ else
+ {
+ glo_Pos.erase(glo_Pos.begin() + j);
+ j --;
+ }
+ }
+ }
+
+ printf(&amp;quot;%ld\n&amp;quot;, output);
+ }
+ return 0;
+}
+&lt;/code&gt;&lt;/pre&gt;</description></item></channel></rss>
