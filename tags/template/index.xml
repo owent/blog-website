@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Template on I'm OWenT</title><link>//owent.net/tags/template.html</link><description>Recent content in Template on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md"&gt;&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /&gt;&lt;/a&gt;</copyright><lastBuildDate>Tue, 03 Jun 2014 20:55:44 +0000</lastBuildDate><atom:link href="//owent.net/tags/template/index.xml" rel="self" type="application/rss+xml"/><item><title>再议 C++ 11 Lambda表达式</title><link>//owent.net/2014/1060.html</link><pubDate>Tue, 03 Jun 2014 20:55:44 +0000</pubDate><guid>//owent.net/2014/1060.html</guid><description>&lt;h2 id="目录"&gt;目录&lt;/h2&gt;
+&lt;!-- toc --&gt;
 &lt;h2 id="c-的lambda表达式"&gt;C++ 的Lambda表达式&lt;/h2&gt;
 &lt;p&gt;C++ 11 标准发布，各大编译器都开始支持里面的各种新特性，其中一项比较有意思的就是lambda表达式。&lt;/p&gt;
 &lt;h2 id="语法规则"&gt;语法规则&lt;/h2&gt;
@@ -12,12 +13,8 @@ type_traits没啥好说的。主要是一些静态检测。主要还是要看动
 &lt;a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2242.pdf"&gt;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2242.pdf&lt;/a&gt;
 和
 &lt;a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf"&gt;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf&lt;/a&gt;
-虽然贴出来了。估计是没人看得。所以就直接说重点。&lt;/p&gt;</description></item><item><title>std和boost的function与bind实现剖析</title><link>//owent.net/2013/938.html</link><pubDate>Thu, 28 Nov 2013 22:01:30 +0000</pubDate><guid>//owent.net/2013/938.html</guid><description>&lt;p&gt;用过std和boost的function对象和bind函数的童鞋们都知道这玩意用起来腰不酸了，腿不疼了，心情也舒畅了。先上一个简单得示例：&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-cpp"&gt;std::string str;
-std::function&amp;lt;bool()&amp;gt; func = std::bind(&amp;amp;std::string::at, &amp;amp;str);
-bool is_empty = func();
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;但是这是怎么做到的呢？看完源码以后，你会发现这里面有着一些很巧妙的设计。&lt;/p&gt;</description></item><item><title>ACM 计算几何 个人模板</title><link>//owent.net/2010/11.html</link><pubDate>Mon, 04 Oct 2010 11:19:02 +0000</pubDate><guid>//owent.net/2010/11.html</guid><description>&lt;pre&gt;&lt;code class="language-cpp"&gt;/**
+虽然贴出来了。估计是没人看得。所以就直接说重点。&lt;/p&gt;</description></item><item><title>std和boost的function与bind实现剖析</title><link>//owent.net/2013/938.html</link><pubDate>Thu, 28 Nov 2013 22:01:30 +0000</pubDate><guid>//owent.net/2013/938.html</guid><description>&lt;!-- toc --&gt;
+&lt;p&gt;用过std和boost的function对象和bind函数的童鞋们都知道这玩意用起来腰不酸了，腿不疼了，心情也舒畅了。先上一个简单得示例：&lt;/p&gt;</description></item><item><title>ACM 计算几何 个人模板</title><link>//owent.net/2010/11.html</link><pubDate>Mon, 04 Oct 2010 11:19:02 +0000</pubDate><guid>//owent.net/2010/11.html</guid><description>&lt;pre&gt;&lt;code class="language-cpp"&gt;/**
  * 二维ACM计算几何模板
  * 注意变量类型更改和EPS
  * #include &amp;lt;cmath&amp;gt;

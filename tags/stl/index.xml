@@ -2,6 +2,7 @@
 &lt;p&gt;近期发现项目组使用新版本的 &lt;a href="https://github.com/open-telemetry/opentelemetry-cpp"&gt;opentelemetry-cpp&lt;/a&gt; 的时候偶现崩溃。崩溃的位置在STL的 &lt;code&gt;std::future&lt;/code&gt; 析构的地方，而这个 &lt;code&gt;std::future&lt;/code&gt; 由 &lt;code&gt;std::async&lt;/code&gt;创建。
 比较违反直觉，这里记录分享一下分析和解决过程方面其他碰到的小伙伴们。&lt;/p&gt;</description></item><item><title>GCC 7和LLVM+Clang+libc++abi 4.0的构建脚本</title><link>//owent.net/2017/1431.html</link><pubDate>Tue, 09 May 2017 11:17:55 +0000</pubDate><guid>//owent.net/2017/1431.html</guid><description>&lt;p&gt;之前的版本发完，有空来更新一下之前的gcc和llvm+clang工具链的编译脚本了。其实GCC 7是才release没多久但是llvm 4.0发布其实有一段时间了。&lt;/p&gt;</description></item><item><title>libatbus基本功能及单元测试终于写完啦</title><link>//owent.net/2016/1214.html</link><pubDate>Fri, 19 Feb 2016 12:44:53 +0000</pubDate><guid>//owent.net/2016/1214.html</guid><description>&lt;h2 id="libatbus"&gt;&lt;a href="https://github.com/atframework/libatbus"&gt;libatbus&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;经过茫茫长时间的编写+过年在家无聊补充和修正单元测试，再加上这两天的整理，终于把以前的这个关于服务器通信中间件的基本功能和相应的单元测试完成啦。还是可以热烈庆祝一下的。&lt;/p&gt;</description></item><item><title>小记最近踩得两个C++坑</title><link>//owent.net/2015/1189.html</link><pubDate>Sat, 25 Jul 2015 14:53:44 +0000</pubDate><guid>//owent.net/2015/1189.html</guid><description>&lt;h1 id="小记最近踩得两个c坑"&gt;小记最近踩得两个C++坑&lt;/h1&gt;
+&lt;!-- toc --&gt;
 &lt;p&gt;记一下最近踩得两个C++独有的暗坑，其中一个和ABI相关。第二个坑其实之前研究过，但是没有实例，这次算是碰到了个典型的实例。&lt;/p&gt;
 &lt;h2 id="坑一常量引用失效"&gt;坑一：常量引用失效&lt;/h2&gt;
 &lt;p&gt;在项目中碰到的实例的大致流程是:&lt;/p&gt;</description></item><item><title>[libiniloader] Project</title><link>//owent.net/2014/1081.html</link><pubDate>Mon, 14 Jul 2014 19:28:49 +0000</pubDate><guid>//owent.net/2014/1081.html</guid><description>&lt;h2 id="ini-配置读取库发布"&gt;INI 配置读取库发布&lt;/h2&gt;
@@ -11,6 +12,7 @@
 但是现在很多的配置读取库都过于庞大了，比如Boost.PropertyTree，功能很强大，但是基本不会用到里面所有的东西。
 另外微软的INI读取，功能不是很强不说，还限制在Windows上，更重要的是API设计得实在不优雅。
 于是libiniloader就诞生啦。&lt;/p&gt;</description></item><item><title>再议 C++ 11 Lambda表达式</title><link>//owent.net/2014/1060.html</link><pubDate>Tue, 03 Jun 2014 20:55:44 +0000</pubDate><guid>//owent.net/2014/1060.html</guid><description>&lt;h2 id="目录"&gt;目录&lt;/h2&gt;
+&lt;!-- toc --&gt;
 &lt;h2 id="c-的lambda表达式"&gt;C++ 的Lambda表达式&lt;/h2&gt;
 &lt;p&gt;C++ 11 标准发布，各大编译器都开始支持里面的各种新特性，其中一项比较有意思的就是lambda表达式。&lt;/p&gt;
 &lt;h2 id="语法规则"&gt;语法规则&lt;/h2&gt;
@@ -24,12 +26,8 @@ type_traits没啥好说的。主要是一些静态检测。主要还是要看动
 &lt;a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2242.pdf"&gt;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2242.pdf&lt;/a&gt;
 和
 &lt;a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf"&gt;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf&lt;/a&gt;
-虽然贴出来了。估计是没人看得。所以就直接说重点。&lt;/p&gt;</description></item><item><title>std和boost的function与bind实现剖析</title><link>//owent.net/2013/938.html</link><pubDate>Thu, 28 Nov 2013 22:01:30 +0000</pubDate><guid>//owent.net/2013/938.html</guid><description>&lt;p&gt;用过std和boost的function对象和bind函数的童鞋们都知道这玩意用起来腰不酸了，腿不疼了，心情也舒畅了。先上一个简单得示例：&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-cpp"&gt;std::string str;
-std::function&amp;lt;bool()&amp;gt; func = std::bind(&amp;amp;std::string::at, &amp;amp;str);
-bool is_empty = func();
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;但是这是怎么做到的呢？看完源码以后，你会发现这里面有着一些很巧妙的设计。&lt;/p&gt;</description></item><item><title>Boost.Spirit 初体验</title><link>//owent.net/2012/674.html</link><pubDate>Thu, 08 Nov 2012 18:57:34 +0000</pubDate><guid>//owent.net/2012/674.html</guid><description>&lt;p&gt;使用代码生成代码是一件十分美妙的事情，于是有了各种代码生成器。但是生成代码，意味着要有对生成规则的分析和处理。
+虽然贴出来了。估计是没人看得。所以就直接说重点。&lt;/p&gt;</description></item><item><title>std和boost的function与bind实现剖析</title><link>//owent.net/2013/938.html</link><pubDate>Thu, 28 Nov 2013 22:01:30 +0000</pubDate><guid>//owent.net/2013/938.html</guid><description>&lt;!-- toc --&gt;
+&lt;p&gt;用过std和boost的function对象和bind函数的童鞋们都知道这玩意用起来腰不酸了，腿不疼了，心情也舒畅了。先上一个简单得示例：&lt;/p&gt;</description></item><item><title>Boost.Spirit 初体验</title><link>//owent.net/2012/674.html</link><pubDate>Thu, 08 Nov 2012 18:57:34 +0000</pubDate><guid>//owent.net/2012/674.html</guid><description>&lt;p&gt;使用代码生成代码是一件十分美妙的事情，于是有了各种代码生成器。但是生成代码，意味着要有对生成规则的分析和处理。
 Boost.Spirit 就是这么一个语法分析工具，它实现了对&lt;strong&gt;上下文无关文法的LL分析&lt;/strong&gt;。支持&lt;strong&gt;EBNF(扩展巴科斯范式)&lt;/strong&gt;。
 Boost.Spirit 的使用真的是把模板嵌套用到了极致。确实这么做造成了非常强的扩展性，生成的代码也非常高效，但是嵌套的太复杂了，对于初学者而言真心难看懂。
 你能想象在学习阶段一个不是太明白的错误导致编译器报出的几十层模板嵌套错误信息的感受吗？而且，这么复杂的模板嵌套还直接导致了编译速度的巨慢无比。
@@ -45,7 +43,8 @@ Boost.Spirit 的使用真的是把模板嵌套用到了极致。确实这么做�
 =号操作符， 用于重新绑定引用对象
 类型转换操作符， 用于转换为模板目标类的引用类型
 get方法， 用于获取引用的对象
-()操作符， 用于执行引用的函数&lt;/p&gt;</description></item><item><title>C++ 新特性学习（四） — Bind和Function</title><link>//owent.net/2012/536.html</link><pubDate>Fri, 10 Feb 2012 09:52:37 +0000</pubDate><guid>//owent.net/2012/536.html</guid><description>&lt;p&gt;绑定函数是我认为C++新标准里第二有用的库了
+()操作符， 用于执行引用的函数&lt;/p&gt;</description></item><item><title>C++ 新特性学习（四） — Bind和Function</title><link>//owent.net/2012/536.html</link><pubDate>Fri, 10 Feb 2012 09:52:37 +0000</pubDate><guid>//owent.net/2012/536.html</guid><description>&lt;!-- toc --&gt;
+&lt;p&gt;绑定函数是我认为C++新标准里第二有用的库了
 绑定库的使用环境是：&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;GCC-C++ 4.3 及以上&lt;/li&gt;

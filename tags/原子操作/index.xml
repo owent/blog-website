@@ -5,5 +5,19 @@
 
 _**例子一：**_
 &lt;/code&gt;&lt;/pre&gt;
-&lt;!-- raw HTML omitted --&gt;
+&lt;table border="0" cellpadding="1" cellspacing="1"&gt;
+	&lt;tbody&gt;
+		&lt;tr&gt;
+			&lt;td colspan="2"&gt;x = y = 0;&lt;/td&gt;
+		&lt;/tr&gt;
+		&lt;tr&gt;
+			&lt;td&gt;线程1&lt;/td&gt;
+			&lt;td&gt;线程2&lt;/td&gt;
+		&lt;/tr&gt;
+		&lt;tr&gt;
+			&lt;td&gt;if(x == 1)&lt;br /&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp; ++y;&lt;/td&gt;
+			&lt;td&gt;if(y == 1)&lt;br /&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp; ++x;&lt;/td&gt;
+		&lt;/tr&gt;
+	&lt;/tbody&gt;
+&lt;/table&gt;
 &lt;p&gt;完全可以优化成&lt;/p&gt;</description></item></channel></rss>

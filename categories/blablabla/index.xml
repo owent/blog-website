@@ -391,7 +391,8 @@
 &lt;h2 id="加密协商"&gt;加密协商&lt;/h2&gt;
 &lt;p&gt;以前提到过，最初决定重构这个流程是因为我觉得之前的方法，如果以后要扩展新的算法的话非常的麻烦。而后我看了一下shadowsocksr对多种加解密算法的实现方法，觉得还不错。就打算用类似的方法重写一下。当然也是因为写第一版的时候没考虑太多关于加解密方面的细节，还是优先实现出工程上可用的东西。这次就先稍微深入看了下像&lt;a href="https://www.openssl.org/"&gt;openssl&lt;/a&gt;和&lt;a href="https://tls.mbed.org/"&gt;mbedtls&lt;/a&gt;的一些实现，特别是下面会提到的cipher的实现。并以这个为基础来实现以后可能的增加加密算法的扩展。&lt;/p&gt;</description></item><item><title>整理一波软件源镜像同步工具+DevOps工具</title><link>//owent.net/2017/1468.html</link><pubDate>Thu, 17 Aug 2017 12:33:44 +0000</pubDate><guid>//owent.net/2017/1468.html</guid><description>&lt;p&gt;上个月，同学的公司，格奕，突然间跪了。这个月基本属于休息+四处溜达。同时空闲的时候也想整理下之前做得一些之前的做得一些小工具们。在不泄密的情况下开源出来吧（其实也就是想找github存放一下而已，也没什么特别NB的东西）。&lt;/p&gt;</description></item><item><title>Blog切换到Hugo</title><link>//owent.net/2017/1467.html</link><pubDate>Mon, 17 Jul 2017 12:33:44 +0000</pubDate><guid>//owent.net/2017/1467.html</guid><description>&lt;p&gt;其实很早就想把Blog迁移到静态化的博客系统了。不过一直没花时间来搞，当然主要原因还是懒。&lt;/p&gt;
 &lt;p&gt;这次下决心搞主要是因为，之前VPS迁移到Vultr，然后它的主机默认是没有交换区的。后来老是收到网站崩溃告警，每次去看都是MariaDB挂掉了，然后查了一下是内存不足。
-然后，调整了几次参数，发现都不能解决问题。我这么个小站搞个高配机器显然是浪费。这种小网站都能耗尽1GB的内存我也是醉了。所以后来就干脆迁移到静态博客系统算了。&lt;/p&gt;</description></item><item><title>libcopp的线程安全、栈池和merge boost.context 1.64.0</title><link>//owent.net/2017/1446.html</link><pubDate>Fri, 12 May 2017 19:45:17 +0000</pubDate><guid>//owent.net/2017/1446.html</guid><description>&lt;h2 id="线程安全"&gt;线程安全&lt;/h2&gt;
+然后，调整了几次参数，发现都不能解决问题。我这么个小站搞个高配机器显然是浪费。这种小网站都能耗尽1GB的内存我也是醉了。所以后来就干脆迁移到静态博客系统算了。&lt;/p&gt;</description></item><item><title>libcopp的线程安全、栈池和merge boost.context 1.64.0</title><link>//owent.net/2017/1446.html</link><pubDate>Fri, 12 May 2017 19:45:17 +0000</pubDate><guid>//owent.net/2017/1446.html</guid><description>&lt;!-- toc --&gt;
+&lt;h2 id="线程安全"&gt;线程安全&lt;/h2&gt;
 &lt;p&gt;前段时间看到了一个完成读比较高的协程库-&lt;a href="https://github.com/yyzybb537/libgo"&gt;libgo&lt;/a&gt;，里面提供了线程安全的协程实现，并且也是使用锁。本来我并没有给&lt;a href="https://github.com/owent/libcopp"&gt;libcopp&lt;/a&gt;里的功能加锁的打算，因为上层dispatcher还是比较容易做到安全分发的，所以原来并不保证线程安全。而且线程安全这种问题单元测试比较难写，可能还得碰点运气。但是思来想去，还是为线程安全做点什么吧。反正也不是很复杂。&lt;/p&gt;
 &lt;p&gt;由于我并没有给utils加互斥锁的跨平台适配，所以先就直接用了自旋锁，来锁住需要考虑线程安全的地方。其实需要加锁的地方并不多，无非是管理器的增删查和task的next函数需要加锁。这些逻辑都很短，功能也很简单，并不会占用太多时间，所以自旋锁的问题也不大。而且以后真发现有问题，换掉也不是什么难事儿。&lt;/p&gt;</description></item><item><title>GCC 7和LLVM+Clang+libc++abi 4.0的构建脚本</title><link>//owent.net/2017/1431.html</link><pubDate>Tue, 09 May 2017 11:17:55 +0000</pubDate><guid>//owent.net/2017/1431.html</guid><description>&lt;p&gt;之前的版本发完，有空来更新一下之前的gcc和llvm+clang工具链的编译脚本了。其实GCC 7是才release没多久但是llvm 4.0发布其实有一段时间了。&lt;/p&gt;</description></item><item><title>2016年总结</title><link>//owent.net/2017/1334.html</link><pubDate>Fri, 03 Feb 2017 19:08:44 +0000</pubDate><guid>//owent.net/2017/1334.html</guid><description>&lt;p&gt;又好久没写blog啦。诶最近好懒啊。正好过年在家里有点空，写完我那些lib的patch之后还有一点时间写一下2016年的总结吧。&lt;/p&gt;
 &lt;p&gt;之前两年的总结有点流水账，我还是写得随意一点好了，也没必要凑字数。&lt;/p&gt;</description></item><item><title>接入letsencrypt+全面启用HTTP/2</title><link>//owent.net/2016/1253.html</link><pubDate>Sat, 07 May 2016 15:10:43 +0000</pubDate><guid>//owent.net/2016/1253.html</guid><description>&lt;p&gt;之前我的域名只有owent.net和www.owent.net买了SSL证书，现在有&lt;a href="https://letsencrypt.org/"&gt;letsencrypt&lt;/a&gt;可以拿到免费的SSL签证，就稍微花了点时间把我的域名的其他部分接入了&lt;a href="https://letsencrypt.org/"&gt;letsencrypt&lt;/a&gt;签证系统。另外根据其他人的一些配置建议，提高了HTTPS的安全性配置和性能配置（主要是缓存）。另外原本我的blog就已经启用了spdy，然而现在新版本的&lt;a href="http://nginx.org/"&gt;nginx&lt;/a&gt;（&lt;a href="http://nginx.org/en/CHANGES-1.10"&gt;1.10&lt;/a&gt;）已经release，原先的spdy模块被取消，新增了http/2模块。但是直接换nginx掉包是不行滴（后面有说原因），所以顺带自己处理了一下HTTP/2和nginx新版本的问题。&lt;/p&gt;
@@ -403,17 +404,21 @@
 &lt;p&gt;之前的文章内容应该要有修订，但是并没有更新到blog里，而是直接写在了&lt;a href="https://github.com/atframework/libatbus"&gt;libatbus&lt;/a&gt;的文档里&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;h2 id="目录"&gt;目录&lt;/h2&gt;
+&lt;!-- toc --&gt;
 &lt;h2 id="前言"&gt;前言&lt;/h2&gt;
 &lt;p&gt;好久没写总结啦，最近一段时间比较忙，抽出的空闲时间都在不断完善之前提到的一个进程间通信lib的想法和实现（&lt;a href="https://github.com/atframework/libatbus"&gt;libatbus&lt;/a&gt;）。&lt;/p&gt;</description></item><item><title>关于BUS通信系统的一些思考（二）</title><link>//owent.net/2014/1099.html</link><pubDate>Tue, 05 Aug 2014 14:08:20 +0000</pubDate><guid>//owent.net/2014/1099.html</guid><description>&lt;blockquote&gt;
 &lt;p&gt;接上文&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;h2 id="目录"&gt;目录&lt;/h2&gt;
+&lt;!-- toc --&gt;
 &lt;h2 id="bus系统的设计思路"&gt;BUS系统的设计思路&lt;/h2&gt;
 &lt;p&gt;虽然我很不愿意再设计一套BUS系统，但是现有的一些确实都没有特别符合我的口味的。所以还是尝试设计一个出来。&lt;/p&gt;
 &lt;h3 id="结构设计"&gt;结构设计&lt;/h3&gt;
 &lt;p&gt;简单来说，我希望BUS系统可以简单、高效、稳定。&lt;/p&gt;</description></item><item><title>关于BUS通信系统的一些思考（一）</title><link>//owent.net/2014/1090.html</link><pubDate>Fri, 01 Aug 2014 14:21:53 +0000</pubDate><guid>//owent.net/2014/1090.html</guid><description>&lt;h2 id="目录"&gt;目录&lt;/h2&gt;
+&lt;!-- toc --&gt;
 &lt;h2 id="概述"&gt;概述&lt;/h2&gt;
 &lt;p&gt;如何保证一个进程或线程能安全稳定地把一段消息发送到另一个进程和线程，甚至是另一台机器的进程或线程，再或是要通过代理转发到另一个进程或线程，一直是一个比较麻烦的问题。&lt;/p&gt;</description></item><item><title>再议 C++ 11 Lambda表达式</title><link>//owent.net/2014/1060.html</link><pubDate>Tue, 03 Jun 2014 20:55:44 +0000</pubDate><guid>//owent.net/2014/1060.html</guid><description>&lt;h2 id="目录"&gt;目录&lt;/h2&gt;
+&lt;!-- toc --&gt;
 &lt;h2 id="c-的lambda表达式"&gt;C++ 的Lambda表达式&lt;/h2&gt;
 &lt;p&gt;C++ 11 标准发布，各大编译器都开始支持里面的各种新特性，其中一项比较有意思的就是lambda表达式。&lt;/p&gt;
 &lt;h2 id="语法规则"&gt;语法规则&lt;/h2&gt;
@@ -425,12 +430,8 @@ type_traits没啥好说的。主要是一些静态检测。主要还是要看动
 和
 &lt;a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf"&gt;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf&lt;/a&gt;
 虽然贴出来了。估计是没人看得。所以就直接说重点。&lt;/p&gt;</description></item><item><title>C++又一坑:动态链接库中的全局变量</title><link>//owent.net/2014/962.html</link><pubDate>Sat, 04 Jan 2014 17:30:32 +0000</pubDate><guid>//owent.net/2014/962.html</guid><description>&lt;p&gt;前几天我们项目的日志系统出现了一点问题，但是一直没有时间去深究。
-昨天在同事的帮助下，无意中猜了一种可能性，结果还真被我猜中了，于是今天就特别研究了一下，记录下来。&lt;/p&gt;</description></item><item><title>std和boost的function与bind实现剖析</title><link>//owent.net/2013/938.html</link><pubDate>Thu, 28 Nov 2013 22:01:30 +0000</pubDate><guid>//owent.net/2013/938.html</guid><description>&lt;p&gt;用过std和boost的function对象和bind函数的童鞋们都知道这玩意用起来腰不酸了，腿不疼了，心情也舒畅了。先上一个简单得示例：&lt;/p&gt;
-&lt;pre&gt;&lt;code class="language-cpp"&gt;std::string str;
-std::function&amp;lt;bool()&amp;gt; func = std::bind(&amp;amp;std::string::at, &amp;amp;str);
-bool is_empty = func();
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;但是这是怎么做到的呢？看完源码以后，你会发现这里面有着一些很巧妙的设计。&lt;/p&gt;</description></item><item><title>Lua 挺好用的样子</title><link>//owent.net/2013/918.html</link><pubDate>Thu, 24 Oct 2013 20:59:44 +0000</pubDate><guid>//owent.net/2013/918.html</guid><description>&lt;p&gt;项目里面引入了Lua，就特别学习了一下。&lt;/p&gt;
+昨天在同事的帮助下，无意中猜了一种可能性，结果还真被我猜中了，于是今天就特别研究了一下，记录下来。&lt;/p&gt;</description></item><item><title>std和boost的function与bind实现剖析</title><link>//owent.net/2013/938.html</link><pubDate>Thu, 28 Nov 2013 22:01:30 +0000</pubDate><guid>//owent.net/2013/938.html</guid><description>&lt;!-- toc --&gt;
+&lt;p&gt;用过std和boost的function对象和bind函数的童鞋们都知道这玩意用起来腰不酸了，腿不疼了，心情也舒畅了。先上一个简单得示例：&lt;/p&gt;</description></item><item><title>Lua 挺好用的样子</title><link>//owent.net/2013/918.html</link><pubDate>Thu, 24 Oct 2013 20:59:44 +0000</pubDate><guid>//owent.net/2013/918.html</guid><description>&lt;p&gt;项目里面引入了Lua，就特别学习了一下。&lt;/p&gt;
 &lt;p&gt;其实对于理解Javascipt的人来说，Lua也很容易理解，因为他们太多的地方相像了。&lt;/p&gt;
 &lt;p&gt;初步看来，Lua的设计模式和思想很像Javascript，也是原型模型（Javascript里叫&lt;strong&gt;prototype&lt;/strong&gt;，Lua里是&lt;strong&gt;metatable&lt;/strong&gt;）&lt;/p&gt;</description></item><item><title>VC和GCC成员函数指针实现的研究(三)</title><link>//owent.net/2013/902.html</link><pubDate>Wed, 11 Sep 2013 14:57:15 +0000</pubDate><guid>//owent.net/2013/902.html</guid><description>&lt;p&gt;接上一篇 &lt;a href="https://www.owent.net/2013/896.html"&gt;VC和GCC内成员函数指针实现的研究(二)&lt;/a&gt;&lt;/p&gt;
 &lt;h2 id="虚继承"&gt;虚继承&lt;/h2&gt;
