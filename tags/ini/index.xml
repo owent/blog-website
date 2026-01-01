@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Ini on I'm OWenT</title><link>//owent.net/tags/ini.html</link><description>Recent content in Ini on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md"&gt;&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /&gt;&lt;/a&gt;</copyright><lastBuildDate>Mon, 14 Jul 2014 19:28:49 +0000</lastBuildDate><atom:link href="//owent.net/tags/ini/index.xml" rel="self" type="application/rss+xml"/><item><title>[libiniloader] Project</title><link>//owent.net/2014/1081.html</link><pubDate>Mon, 14 Jul 2014 19:28:49 +0000</pubDate><guid>//owent.net/2014/1081.html</guid><description>&lt;h2 id="ini-配置读取库发布"&gt;INI 配置读取库发布&lt;/h2&gt;
-&lt;p&gt;Github地址: &lt;a href="https://github.com/owent/libiniloader"&gt;https://github.com/owent/libiniloader&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;OSChina镜像: &lt;a href="http://git.oschina.net/owent/libiniloader"&gt;http://git.oschina.net/owent/libiniloader&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;项目中经常会碰到需要读取配置的情况，而用ini配置最大的优势就是简单易懂。
-但是现在很多的配置读取库都过于庞大了，比如Boost.PropertyTree，功能很强大，但是基本不会用到里面所有的东西。
-另外微软的INI读取，功能不是很强不说，还限制在Windows上，更重要的是API设计得实在不优雅。
-于是libiniloader就诞生啦。&lt;/p&gt;</description></item></channel></rss>

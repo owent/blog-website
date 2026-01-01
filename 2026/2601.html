@@ -1,0 +1,198 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>给内网部署Squid-通用HTTP下载缓存|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2026/2601.html><link rel=icon href=/favicon.ico><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net//css/style.css><link rel=stylesheet href=//owent.net/css/syntax.css><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8180054975285991" crossorigin=anonymous></script><meta content="codeva-4M5iohb9TW" name=baidu-site-verification></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net/ id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-bs-toggle=collapse data-bs-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-f0709aabbb4365b6b73d9e056ba816f9 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2026/2601.html target=_blank itemprop=url>给内网部署Squid-通用HTTP下载缓存</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#0-目标与约束>0. 目标与约束</a></li><li><a href=#1-结构设计>1. 结构设计</a><ul><li><a href=#11-数据流设计https-入口--http-缓存--tls-回源>1.1 数据流设计（HTTPS 入口 + HTTP 缓存 + TLS 回源）</a></li><li><a href=#12-配置与代码分层可扩展可审计默认安全>1.2 配置与代码分层（可扩展、可审计、默认安全）</a></li><li><a href=#13-目录结构为什么要模块化>1.3 目录结构（为什么要“模块化”）</a></li></ul></li><li><a href=#2-共性问题与解决方案以及配置如何落地>2. 共性问题与解决方案（以及配置如何落地）</a><ul><li><a href=#21-问题https-资源不好缓存>2.1 问题：HTTPS 资源不好缓存</a></li><li><a href=#22-问题url-动态参数导致缓存永远-miss>2.2 问题：URL 动态参数导致缓存永远 MISS</a></li><li><a href=#23-问题同域名混合下载内容和api元数据>2.3 问题：同域名混合“下载内容”和“API/元数据”</a></li><li><a href=#24-问题源站-cache-control-过于保守导致代理不敢缓存>2.4 问题：源站 Cache-Control 过于保守，导致代理不敢缓存</a></li><li><a href=#25-问题大文件与并发下载放大回源压力>2.5 问题：大文件与并发下载放大回源压力</a></li><li><a href=#26-问题上游识别你是代理导致风控限速>2.6 问题：上游识别“你是代理”导致风控/限速</a></li><li><a href=#27-问题容器里既要初始化又要长期运行还要做日志轮转>2.7 问题：容器里既要初始化又要长期运行，还要做日志轮转</a></li><li><a href=#28-问题同域名里的配置元数据端点触发频繁刷新tcp_refresh_unmodified>2.8 问题：同域名里的“配置/元数据”端点触发频繁刷新（TCP_REFRESH_UNMODIFIED）</a></li><li><a href=#29-问题系统-ca-正常但-yarnnode-仍报证书不受信任>2.9 问题：系统 CA 正常，但 Yarn/Node 仍报证书不受信任</a></li><li><a href=#210-问题nuget-元数据请求出现大量-tcp_miss_aborted>2.10 问题：NuGet 元数据请求出现大量 TCP_MISS_ABORTED</a></li><li><a href=#211-问题cachelog-出现-vary-object-loopaccept-encoding-变体循环>2.11 问题：cache.log 出现 Vary object loop（Accept-Encoding 变体循环）</a></li></ul></li><li><a href=#3-使用方式>3. 使用方式</a><ul><li><a href=#31-容器方式podmandocker>3.1 容器方式（Podman/Docker）</a></li><li><a href=#32-手动安装方式不使用容器>3.2 手动安装方式（不使用容器）</a></li><li><a href=#33-验证与观测命中率与空间>3.3 验证与观测（命中率与空间）</a></li></ul></li><li><a href=#4-如何扩展新增一个下载域名--api-域名的模块>4. 如何扩展：新增一个“下载域名 + API 域名”的模块</a></li><li><a href=#5-风险与边界为什么这套设计保守但稳>5. 风险与边界（为什么这套设计“保守但稳”）</a></li><li><a href=#最后>最后</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><h1 id=背景>背景</h1><p>近期，公司代理侧的流量负担持续上升；在高峰期访问常见开发资源（包管理器、SDK、依赖镜像、CDN 文件等）会出现明显抖动。为降低重复下载带来的外网带宽开销与峰值波动，决定在内网引入一套“通用下载缓存代理”。</p><p>为了让使用侧尽量接近“零配置”，整体链路采用“内网 DNS 指向 + HTTPS 入口统一管理 + 缓存层只处理 HTTP + 回源保持 TLS”的组合方式：</p><pre><code class=language-mermaid>flowchart LR
+  Client[开发机/CI] --&gt;|信任企业 CA| CA[企业 CA 证书]
+  Client --&gt;|域名解析指向| DNS[内网 DNS 覆盖]
+
+  DNS --&gt; Caddy[Caddy
+  反向代理入口
+  终止 TLS/管理证书]
+  Client --&gt;|HTTPS| Caddy
+  Caddy --&gt;|HTTP| Squid[Squid
+  反代缓存 accel]
+  Squid --&gt;|HTTPS 回源| Origin[源站/CDN/仓库]
+</code></pre><p>下文按“共性问题 -> 原因 -> 配置落地”的方式，复盘这套方案的结构设计与关键取舍，并总结实践中遇到的典型问题与对应的解决策略。</p><h2 id=0-目标与约束>0. 目标与约束</h2><ul><li><strong>目标</strong>：在局域网/机房内为开发与 CI 提供可复用的下载缓存，减少重复拉取与外网带宽消耗。</li><li><strong>约束</strong>：不做 MITM；客户端依旧以 HTTPS 访问入口；后端缓存尽量只处理“可判定稳定”的内容。</li></ul><h2 id=1-结构设计>1. 结构设计</h2><h3 id=11-数据流设计https-入口--http-缓存--tls-回源>1.1 数据流设计（HTTPS 入口 + HTTP 缓存 + TLS 回源）</h3><p>核心思路是把“HTTPS 解密”与“缓存”拆开：</p><ul><li><strong>Caddy</strong> 负责对客户端提供 HTTPS，并将请求转发给 Squid。</li><li><strong>Squid</strong> 以反向代理（<code>accel</code>）方式工作，只处理来自 Caddy 的 HTTP，并通过 <code>cache_peer</code> 用 TLS 回源。</li></ul><pre><code class=language-mermaid>flowchart LR
+    Client[客户端/CI] --&gt;|HTTPS| Caddy[&quot;Caddy: 443&lt;br /&gt;SSL终止&quot;]
+    Caddy --&gt;|HTTP| Squid[&quot;Squid: 3128&lt;br /&gt;反代缓存&quot;]
+    Squid --&gt;|TLS via cache_peer| Origin[源站/仓库/CDN]
+    Squid &lt;--&gt;|store_id_program| Rewriter[Store ID Rewriter]
+</code></pre><h3 id=12-配置与代码分层可扩展可审计默认安全>1.2 配置与代码分层（可扩展、可审计、默认安全）</h3><p>这套方案把“共性能力”与“域名/业务规则”拆成三层：</p><ul><li><strong>主配置</strong>（<code>etc/squid.conf</code>）：端口模式、ACL 基线、缓存参数、日志、以及 <code>include conf.d</code>。</li><li><strong>域名模块</strong>（<code>etc/conf.d/*.conf</code>）：每个“域名集合”的 ACL、<code>cache_peer</code>、<code>never_direct</code>、<code>refresh_pattern</code>、<code>store_id_access</code>。</li><li><strong>URL 重写规则</strong>（<code>script/store_id_rewriter.py</code> + <code>script/domains/*</code>）：把可安全缓存的 URL 规整成稳定的 Store ID。</li></ul><p>一个重要的“安全阀”是：<code>conf.d</code> 的最后通常放一个默认拒绝（例如 <code>store_id_access deny all</code>），确保新增域名不会因为漏配而误重写。</p><h3 id=13-目录结构为什么要模块化>1.3 目录结构（为什么要“模块化”）</h3><p>与其把所有规则塞进一个超长的 <code>squid.conf</code>，这套配置选择了“主配置 + 模块目录 + 脚本规则”的组合。这样做的直接收益是：新增/下线某类资源时，只需要增删一个模块文件，变更边界清晰。</p><pre><code class=language-text>squid/
+├── squid.Dockerfile          # 容器镜像（安装 squid + supervisor）
+├── supervisor/               # 容器内进程编排：初始化 + 主进程 + 日志轮转
+├── etc/
+│   ├── squid.conf            # 基线配置（端口/ACL/缓存参数/日志/include）
+│   └── conf.d/               # 规则模块（按域名集合拆分）
+│       ├── 00-unreal-engine.conf   # Unreal Engine CDN
+│       ├── 10-github.conf          # GitHub 资产
+│       ├── 20-cdn.conf             # 主流 CDN (jsDelivr, cdnjs, etc.)
+│       ├── 30-microsoft.conf       # 微软下载 (VS, VS Code, Windows Update)
+│       ├── 35-unity.conf           # Unity 下载
+│       ├── 40-golang.conf          # Golang 模块代理
+│       ├── 45-maven.conf           # Maven/Gradle 仓库
+│       ├── 50-python.conf          # Python/PyPi仓库
+│       ├── 55-nodejs.conf          # NodeJs/yarn仓库
+│       └── 99-deny-store-id.conf   # 默认拒绝 store_id
+└── script/
+    ├── store_id_rewriter.py  # Store ID 重写入口
+    └── domains/              # 域名/版本匹配规则（正则聚合）
+        ├── __init__.py
+        ├── github.py
+        ├── cdn.py
+        ├── microsoft.py
+        ├── unity.py
+        ├── unreal_engine.py
+        ├── golang.py
+        ├── maven.py
+        ├── python.py
+        └── nodejs.py
+</code></pre><h2 id=2-共性问题与解决方案以及配置如何落地>2. 共性问题与解决方案（以及配置如何落地）</h2><h3 id=21-问题https-资源不好缓存>2.1 问题：HTTPS 资源不好缓存</h3><p><strong>原因</strong>：正向代理想缓存 HTTPS 往往需要解密流量；而不做 MITM 就拿不到明文。</p><p><strong>解决</strong>：把 HTTPS 放在入口终止，缓存层只处理 HTTP；回源仍然保持 TLS。</p><p>配置体现（概念示例，避免逐行照抄）：</p><ul><li>Squid 以 <code>http_port ... accel vhost</code> 作为反代入口。</li><li>对每个域名定义 <code>cache_peer &lt;domain> parent 443 ... originserver tls tls-default-ca=on</code>。</li><li>用 <code>never_direct allow &lt;acl></code> 强制必须通过 peer 回源，避免“直连绕过策略”。</li></ul><p>这使得缓存层既不需要 MITM，又能对 HTTPS 资源进行“可控缓存”。</p><p>补充一个很容易忽略的坑：<strong>DNS 回环/污染</strong>。如果代理节点的 DNS 把某些源站解析回了内网入口，可能导致请求在 Caddy/Squid 之间打转。</p><p>因此主配置会显式指定公共 DNS 服务器，目的是让回源解析更可预测、避免“自己代理自己”。</p><h3 id=22-问题url-动态参数导致缓存永远-miss>2.2 问题：URL 动态参数导致缓存永远 MISS</h3><p><strong>现象</strong>：下载链路经常带签名/追踪参数（典型是云存储签名链接）。同一个文件内容，每次 URL 不同，缓存键不同，自然命中率很低。</p><p><strong>根因</strong>：缓存键通常包含完整 URL（含 query），而 query 往往不影响内容，甚至是纯鉴权参数。</p><p><strong>解决</strong>：启用 <code>store_id_program</code>，用脚本生成“内容等价”的 Store ID。</p><p>这套脚本的策略可以抽象成三段式（比“对某域名就删参数”更安全）：</p><ol><li><strong>明确排除</strong>：先用排除规则拦截“不应该被规整”的 URL（例如快照/临时版本）。</li><li><strong>安全剥离</strong>：对“内容由 path 唯一确定”的 URL，剥离 query/fragment。</li><li><strong>条件剥离</strong>：对 CDN 等场景，仅在 path 中出现“明确版本号”时才剥离；否则保持原 URL，让缓存短周期自更新。</li></ol><p>这样做的核心收益是：提高命中率的同时，尽量避免把“会变的东西”缓存成“不会变”。</p><p><strong>快速自测（不依赖运行 Squid）</strong>：</p><pre><code class=language-bash># 期望：剥离签名参数 -&gt; OK store-id=...
+echo &quot;https://release-assets.githubusercontent.com/xxx?X-Amz-Algorithm=AWS4&quot; | python3 /opt/squid/script/store_id_rewriter.py
+
+# 期望：带版本号 -&gt; OK
+echo &quot;https://cdn.jsdelivr.net/npm/vue@3.2.0/dist/vue.js&quot; | python3 /opt/squid/script/store_id_rewriter.py
+
+# 期望：@latest -&gt; ERR（不重写）
+echo &quot;https://cdn.jsdelivr.net/npm/vue@latest/dist/vue.js&quot; | python3 /opt/squid/script/store_id_rewriter.py
+</code></pre><h3 id=23-问题同域名混合下载内容和api元数据>2.3 问题：同域名混合“下载内容”和“API/元数据”</h3><p><strong>现象</strong>：同一个生态会同时存在：</p><ul><li><strong>大文件/版本化产物</strong>：适合长缓存（例如带版本号的包、安装包、归档）。</li><li><strong>API/元数据</strong>：参数影响内容且频繁变化，通常只适合短缓存或不缓存。</li></ul><p><strong>解决</strong>：用 ACL 做“语义分流”，然后分别配置缓存与重写策略。</p><p>典型落地方式：</p><ul><li><code>acl xxx_downloads dstdomain ...</code> 或按 path 规则命中“可缓存下载”。</li><li><code>acl xxx_api dstdomain ...</code> 或按 path 命中“元数据/API”。</li><li><code>store_id_access allow xxx_downloads</code>，而对 <code>xxx_api</code> 明确不做重写。</li><li><code>refresh_pattern</code> 给两类流量不同 TTL：下载长、元数据短。</li></ul><p>这比“对整个域名一刀切”更稳：既能提升命中率，又不容易引入“更新不及时”的副作用。</p><h3 id=24-问题源站-cache-control-过于保守导致代理不敢缓存>2.4 问题：源站 Cache-Control 过于保守，导致代理不敢缓存</h3><p><strong>原因</strong>：不少分发站点会返回 <code>no-store</code>/<code>private</code>/<code>must-revalidate</code> 等头，目的是让客户端尽量拿到最新内容，但对“版本化大文件”来说会严重浪费带宽。</p><p><strong>解决</strong>：在 <code>refresh_pattern</code> 上使用“有限度的强制策略”，并把范围控制在“可判定稳定”的下载内容上。</p><p>一个典型模式是：</p><pre><code class=language-conf># 仅作为模式演示：对“下载类”放宽缓存指令
+refresh_pattern -i download\.example\.com 10080 100% 43200 \
+  override-expire ignore-reload ignore-no-store ignore-private ignore-must-revalidate \
+  ignore-no-cache store-stale
+</code></pre><p>同时，主配置里常会配合“过期窗口”来优化体验：允许在一定时间内直接命中过期缓存、后台再验证，减少用户等待与回源抖动。</p><h3 id=25-问题大文件与并发下载放大回源压力>2.5 问题：大文件与并发下载放大回源压力</h3><p><strong>现象</strong>：CI/多客户端并发拉取同一资源时，容易出现“回源风暴”（多个 MISS 同时打到源站）。</p><p><strong>解决</strong>：</p><ul><li>开启请求合并/折叠转发（<code>collapsed_forwarding on</code>），让同一资源的并发 MISS 尽量合并成一次回源。</li><li>放开 Range 下载的限制（例如 <code>range_offset_limit none</code>），让断点续传与分段下载更友好。</li><li>调整对象大小与缓存目录（例如 <code>maximum_object_size 5 GB</code>），确保大文件不会因为上限太小而永远不入缓存。</li></ul><h3 id=26-问题上游识别你是代理导致风控限速>2.6 问题：上游识别“你是代理”导致风控/限速</h3><p><strong>原因</strong>：某些源站会根据 <code>Via</code>、<code>X-Forwarded-For</code> 等头判断代理行为。</p><p><strong>解决</strong>：在反代缓存场景下，尽量减少额外头部暴露：关闭 <code>via</code>，删除/禁止部分转发头。</p><p>这属于“可用性增强”，但仍建议只在受控环境中使用，并配合 ACL 限制访问来源。</p><h3 id=27-问题容器里既要初始化又要长期运行还要做日志轮转>2.7 问题：容器里既要初始化又要长期运行，还要做日志轮转</h3><p><strong>原因</strong>：</p><ul><li>Squid 首次启动前需要 <code>squid -z</code> 初始化缓存目录结构。</li><li>容器里通常没有 cron/systemd，日志轮转如果不做，很容易把磁盘写爆。</li></ul><p><strong>解决</strong>：使用 Supervisor 作为容器内的“最小进程编排器”：</p><ul><li>一个一次性初始化进程（检测 <code>swap.state</code>，不存在才初始化）。</li><li>一个前台主进程（Squid foreground，便于容器托管）。</li><li>一个常驻轮转进程（按大小定时触发 <code>squid -k rotate</code>）。</li></ul><p>在实现上通常还会配合 Squid 自身的 <code>logfile_rotate</code>（例如保留 5 份），避免轮转文件无限增长。</p><pre><code class=language-mermaid>stateDiagram-v2
+    [*] --&gt; Init: 容器启动
+    Init --&gt; Squid: 初始化完成
+    Squid --&gt; [*]: 容器停止
+
+    state LogRotate {
+        [*] --&gt; Check
+        Check --&gt; Rotate: 超阈值
+        Rotate --&gt; Check
+        Check --&gt; Check: 未超阈值
+    }
+
+    Squid --&gt; LogRotate: 并行运行
+</code></pre><h3 id=28-问题同域名里的配置元数据端点触发频繁刷新tcp_refresh_unmodified>2.8 问题：同域名里的“配置/元数据”端点触发频繁刷新（TCP_REFRESH_UNMODIFIED）</h3><p><strong>现象</strong>：访问日志中出现类似下面的记录：</p><pre><code class=language-text>TCP_REFRESH_UNMODIFIED/200 ... GET http://public-cdn.cloud.unity3d.com/config/production
+</code></pre><p><strong>解读</strong>：客户端看到的响应仍是 200，但 Squid 的状态 <code>TCP_REFRESH_UNMODIFIED</code> 表示“对象已过期并触发再验证（revalidate），确认上游内容未变化后继续返回本地缓存”。</p><p><strong>原因</strong>（共性规律，不限定 Unity）：</p><ul><li><code>/config/*</code>、<code>/metadata/*</code> 这类端点通常属于“配置/元数据分发”，<strong>内容可能经常变</strong>，但又希望客户端能快速确认“有没有更新”。</li><li>Squid 发现缓存对象过期后，会对上游做 revalidate（例如带 <code>If-Modified-Since</code>/<code>If-None-Match</code>）。如果上游判断内容没变，Squid 会标记为 <em>Refresh Unmodified</em>：<ul><li>表示“已向上游确认未变化，因此继续使用本地缓存响应”。</li></ul></li><li>这并不是错误，但如果对整个域名统一配置“长 TTL + 强制缓存”，就会出现：<strong>配置端点被当成下载资源一样对待</strong>，导致频繁 revalidate 噪音、以及不必要的上游访问。</li></ul><p><strong>影响</strong>：该类端点的“短周期再验证”会表现为日志噪音与额外的上游请求；如果与“长 TTL / 强制缓存 / Store ID 规整”混用，还可能放大不必要的验证流量。</p><p><strong>解决方案</strong>（与本仓库配置一致）：通过“允许短窗口内返回过期缓存 + 后台再验证更新”的方式，把 revalidate 的等待成本从客户端路径上移除。</p><p>落地通常分两层：</p><ul><li><strong>全局窗口</strong>：在主配置启用 <code>refresh_stale_hit</code>，允许在指定时间窗口内直接返回过期对象，同时触发异步验证。</li><li><strong>规则级行为</strong>：在需要的 <code>refresh_pattern</code> 上启用 <code>store-stale</code>，明确该类对象在验证时“先用旧的、后台刷新”。</li></ul><p>配置对应关系：</p><pre><code class=language-conf># etc/squid.conf
+# 允许返回过期缓存的时间窗口 (秒)
+refresh_stale_hit 86400 seconds
+</code></pre><pre><code class=language-conf># etc/conf.d/35-unity.conf
+# store-stale: 验证时先返回过期缓存，后台更新
+refresh_pattern -i public-cdn\.cloud\.unity3d\.com 10080 100% 43200 \
+    override-expire ignore-reload ignore-no-store ignore-private ignore-must-revalidate ignore-no-cache store-stale
+</code></pre><p>这样处理后，日志中依然可能出现 <code>TCP_REFRESH_UNMODIFIED</code>（因为 Squid 仍在做验证以保持一致性），但对客户端而言更接近“stale-while-revalidate”：优先拿到可用结果，同时缓存会在后台被更新。</p><p><strong>可选优化</strong>：如果确实确认某些 path（如 <code>/config/</code>）属于高频变更元数据，且不希望其继承“下载域名”的长缓存策略，再单独做 path 分流、缩短 TTL，并避免纳入 Store ID 规整会更稳。</p><h3 id=29-问题系统-ca-正常但-yarnnode-仍报证书不受信任>2.9 问题：系统 CA 正常，但 Yarn/Node 仍报证书不受信任</h3><p><strong>现象</strong>：浏览器访问 HTTPS 正常，系统也安装了 CA 证书，但 <code>yarn install</code> 仍然报错（证书链不受信任）。</p><p><strong>原因</strong>：</p><ul><li>Yarn 的 TLS 走的是 Node.js 的 TLS 栈。</li><li>Node 在不同平台/发行方式下，<strong>不一定读取系统证书库</strong>（很多情况下更依赖 Node 自带 CA bundle）。因此“系统信任”不等于“Node 信任”。</li></ul><p><strong>解决方案</strong>：显式把额外 CA 证书注入 Node 的信任链。</p><p>推荐做法是设置环境变量 <code>NODE_EXTRA_CA_CERTS</code> 指向你的自定义 CA PEM 文件（例如公司/自建代理的根证书）：</p><pre><code class=language-bash># Linux/macOS
+export NODE_EXTRA_CA_CERTS=/etc/ssl/certs/my-proxy-ca.pem
+
+# Windows PowerShell（示例）
+$env:NODE_EXTRA_CA_CERTS = &quot;C:\\path\\to\\my-proxy-ca.pem&quot;
+
+yarn install
+</code></pre><p>把它归为“共性问题”的原因是：只要遇到“工具 A（浏览器）没问题、工具 B（语言包管理器/CLI）报证书问题”，优先怀疑它使用了不同的信任源；对 Node 生态，<code>NODE_EXTRA_CA_CERTS</code> 往往是最直接、侵入性最小的修复手段。</p><h3 id=210-问题nuget-元数据请求出现大量-tcp_miss_aborted>2.10 问题：NuGet 元数据请求出现大量 TCP_MISS_ABORTED</h3><p><strong>现象</strong>：访问日志中出现大量类似记录，集中在 <code>api.nuget.org</code> 的 registration 索引（JSON 元数据）请求：</p><pre><code class=language-text>TCP_MISS_ABORTED/000 0 GET http://api.nuget.org/v3/registration5-gz-semver2/.../index.json - HIER_NONE/- -
+TCP_MISS_ABORTED/000 0 GET http://api.nuget.org/v3/registration5-gz-semver2/.../index.json - FIRSTUP_PARENT/&lt;ip&gt; -
+TCP_MISS/200 ... GET http://api.nuget.org/v3/registration5-gz-semver2/.../index.json - FIRSTUP_PARENT/&lt;ip&gt; application/json
+</code></pre><p>其中：</p><ul><li><code>TCP_MISS_ABORTED/000 0</code> 常见于“本地无缓存，需要回源，但在 Squid 产生任何响应之前，请求就被中止”，因此状态码显示为 <code>000</code>、响应字节为 <code>0</code>。</li><li><code>FIRSTUP_PARENT/&lt;ip></code> 表示已按规则选择并尝试从上游 peer 回源；<code>HIER_NONE</code> 则常见于回源链路尚未建立完成就已终止，或终止发生在路由/建连之前。</li></ul><p><strong>原因</strong>：</p><ul><li><strong>元数据请求并发高</strong>：NuGet v3 的 registration 索引属于“依赖解析元数据”。在 SDK/workload/依赖树解析阶段，会出现短时间内大量并发请求。</li><li><strong>下游主动取消</strong>：上层工具可能在拿到足够元数据后取消剩余并发请求，或因为自身超时策略提前终止连接。在“入口（Caddy）-> 缓存（Squid）”链路中，这会表现为 Squid 侧的 <code>TCP_MISS_ABORTED/000 0</code>。</li></ul><p><strong>影响</strong>：</p><ul><li><code>TCP_MISS_ABORTED/000</code> 会显著增加日志噪音，掩盖少量真正需要关注的 5xx/timeout。</li><li>若 aborted 发生在回源已发起之后，会造成一定“无效回源”开销（请求被取消但回源已开始），在高峰期可能放大上游压力。</li></ul><p><strong>建议</strong>：</p><ul><li><strong>把 aborted 当成信号，而不是结论</strong>：优先用 <code>.../502</code>、<code>timeout</code>、<code>DNS</code> 等“失败类事件”定位真实问题；对 <code>.../000 0</code> 更倾向于从下游取消/超时入手。</li><li><strong>减少等待型抖动</strong>：对“已有缓存但需要验证”的对象，结合全局 <code>refresh_stale_hit</code> 可把 revalidate 的等待从客户端链路上移除；对首次 MISS 则重点关注上游链路与入口超时策略。</li><li><strong>在受控范围内做短缓存</strong>：对 <code>api.nuget.org</code> 这类元数据端点，短 TTL 往往比强制长缓存更稳；更长的缓存策略建议只用于 <code>globalcdn.nuget.org</code> 这类版本化包文件（<code>.nupkg</code>）。</li></ul><h3 id=211-问题cachelog-出现-vary-object-loopaccept-encoding-变体循环>2.11 问题：cache.log 出现 Vary object loop（Accept-Encoding 变体循环）</h3><p><strong>现象</strong>：<code>cache.log</code> 里出现类似日志，并且集中在某些元数据/配置类端点：</p><pre><code class=language-text>varyEvaluateMatch: Oops. Not a Vary match on second attempt, 'http://public-cdn.cloud.unity3d.com/config/production' 'accept-encoding=&quot;gzip, deflate, br, zstd&quot;'
+clientProcessHit: Vary object loop!
+</code></pre><p><strong>原因</strong>：</p><ul><li>上游响应带有 <code>Vary: Accept-Encoding</code>（或等价的变体控制），表示“响应内容会随请求头 <code>Accept-Encoding</code> 的不同而不同”。</li><li>Squid 会为同一 URL 维护多个变体对象（gzip/br/zstd 等不同压缩方式）。当入口侧转发的 <code>Accept-Encoding</code> 在短时间内出现多种取值（或 Squid 在内部归一化/重试时看到不同取值），就可能出现“尝试命中某个变体 -> 发现不匹配 -> 再尝试 -> 仍不匹配”的循环告警。</li><li>该问题通常发生在“对象已在缓存中（HIT 路径）且存在多变体”的场景，因此会在 <code>clientProcessHit</code> 阶段看到 <code>Vary object loop</code>。</li></ul><p><strong>影响</strong>：</p><ul><li>告警本身会刷屏并增加排障噪音。</li><li>命中路径可能退化为重新回源/重新选择变体，带来额外延迟与回源压力；在极端情况下会放大上游连接数。</li></ul><p><strong>建议</strong>（按侵入性从低到高）：</p><ul><li><p><strong>优先在入口侧收敛上游变体，同时对客户端启用 zstd</strong>：仅对触发 <code>Vary object loop</code> 的问题域名，在 Caddy 到 Squid 的反代链路上固定上游 <code>Accept-Encoding</code>，让 Squid 看到“稳定且单一”的变体。</p><p>推荐做法是对该域名按路径分流：</p><ul><li>对 <code>/config*</code> 这类配置/元数据端点固定 <code>Accept-Encoding: gzip</code>（通常是小文本/JSON，回源更省带宽且兼容性更好）。</li><li>对其他路径固定 <code>Accept-Encoding: identity</code>，让 Squid 缓存单一“未压缩”对象，同时由 Caddy 面向客户端开启 <code>encode zstd gzip</code> 做压缩协商。</li></ul></li></ul><p>配置示例（对应本仓库的 <a href=setup-router/squid/etc/Caddyfile.example>setup-router/squid/etc/Caddyfile.example</a> 思路）：</p><pre><code class=language-caddy>(squid_proxy_unity_public_cdn) {
+  encode zstd gzip
+
+  @unity_public_cdn_config path /config*
+  handle @unity_public_cdn_config {
+    reverse_proxy squid:3128 {
+      header_up Host {host}
+      header_up Accept-Encoding &quot;gzip&quot;
+    }
+  }
+
+  handle {
+    reverse_proxy squid:3128 {
+      header_up Host {host}
+      header_up Accept-Encoding &quot;identity&quot;
+    }
+  }
+}
+
+public-cdn.cloud.unity3d.com {
+  import squid_proxy_unity_public_cdn
+}
+</code></pre><ul><li><strong>在 Squid 侧收敛变体</strong>：若不方便改入口，可在 Squid 上对特定域名/路径剥离或固定 <code>Accept-Encoding</code>，避免产生多变体缓存对象。</li><li><strong>对配置/元数据端点禁缓存</strong>：若该端点本就不期望被缓存（或短缓存收益很小），可以对其 <code>cache deny</code>，直接规避变体缓存与相关告警。</li></ul><h2 id=3-使用方式>3. 使用方式</h2><p>我们的实施配置开源并放在了 <a href=https://github.com/owent/docker-setup/tree/main/setup-router/squid>https://github.com/owent/docker-setup/tree/main/setup-router/squid</a> 。
+有兴趣的小伙伴可以自取。</p><h3 id=31-容器方式podmandocker>3.1 容器方式（Podman/Docker）</h3><p>容器方式的关键是把“配置/脚本”以只读挂载，把“缓存/日志”以可写挂载：</p><pre><code class=language-bash>podman build -f squid.Dockerfile -t squid-cache .
+
+podman run -d \
+  --name squid \
+  -p 3128:3128 \
+  -v /path/to/squid/etc:/etc/squid:ro \
+  -v /path/to/squid/script:/opt/squid/script:ro \
+  -v /path/to/squid/cache:/var/spool/squid \
+  -v /path/to/squid/logs:/var/log/squid \
+  squid-cache
+</code></pre><h3 id=32-手动安装方式不使用容器>3.2 手动安装方式（不使用容器）</h3><p>手动安装的核心流程是：放置配置与脚本、初始化缓存目录、验证配置、再启动/重载。</p><pre><code class=language-bash>cp -r etc/squid.conf /etc/squid/
+cp -r etc/conf.d /etc/squid/
+
+mkdir -p /opt/squid/script
+cp -r script/* /opt/squid/script/
+chmod +x /opt/squid/script/store_id_rewriter.py
+
+mkdir -p /var/spool/squid
+chown squid:squid /var/spool/squid
+
+squid -z
+squid -k parse
+squid -k reconfigure
+</code></pre><h3 id=33-验证与观测命中率与空间>3.3 验证与观测（命中率与空间）</h3><p>建议把“能不能用”和“有没有命中”分开验证：</p><ul><li><strong>重写逻辑</strong>：用 <code>echo URL | python3 store_id_rewriter.py</code> 快速确认 OK/ERR 是否符合预期。</li><li><strong>命中情况</strong>：从 <code>access.log</code> 观察 HIT/MISS/REVALIDATE。</li><li><strong>空间占用</strong>：看 <code>/var/spool/squid</code> 的大小与 <code>swap.state</code> 是否生成。</li></ul><pre><code class=language-bash>tail -f /var/log/squid/access.log | grep -E &quot;HIT|MISS|REVALIDATE&quot;
+du -sh /var/spool/squid/
+ls -la /var/spool/squid/swap.state
+</code></pre><p>如果需要查看缓存目录信息，可查询 Squid 内建管理接口：</p><pre><code class=language-bash>curl -s &quot;http://127.0.0.1:3128/squid-internal-mgr/storedir&quot;
+</code></pre><p>日志轮转可以人工触发（用于验证 supervisor/配置是否生效）：</p><pre><code class=language-bash>podman exec squid squid -k rotate
+</code></pre><h2 id=4-如何扩展新增一个下载域名--api-域名的模块>4. 如何扩展：新增一个“下载域名 + API 域名”的模块</h2><p>新增支持的通用步骤是：</p><ol><li>在 <code>etc/conf.d/</code> 新增一个模块文件：<ul><li>定义下载与 API 的 ACL。</li><li>为每个域名配置 <code>cache_peer</code> 与 <code>cache_peer_access</code>。</li><li>用 <code>store_id_access</code> 只允许下载流量进入重写。</li><li>用 <code>refresh_pattern</code> 给下载与 API 不同的缓存周期。</li></ul></li><li>如需 Store ID 重写：在 <code>script/domains/</code> 添加正则规则，并在 <code>__init__.py</code> 聚合导出。</li></ol><p>这样扩展的好处是：规则可审计、可回滚，且默认不会误把未知域名纳入重写。</p><h2 id=5-风险与边界为什么这套设计保守但稳>5. 风险与边界（为什么这套设计“保守但稳”）</h2><ul><li><strong>误剥离参数的风险</strong>：最危险的不是“命中率低”，而是“命中到错误内容”。因此策略里必须有排除与条件剥离。</li><li><strong>强制缓存头的风险</strong>：只建议用于版本化/可判定稳定的下载内容；对 API/元数据保持短缓存或不缓存。</li><li><strong>入口/访问控制</strong>：这套配置假设在受控网络内使用，仍应依赖 ACL 对来源网段做限制。</li></ul><h2 id=最后>最后</h2><p>欢迎有兴趣的小伙伴们互相交流。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2026-01-01T17:15:45.000+00:00 itemprop=datePublished>2026-01-01</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/protobuf.html>protobuf</a></li><li class=article-tag-list-item><a href=//owent.net/tags/abi.html>ABI</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2025/2507.html>下一篇<strong>UE使用CodeChecker和clang-tidy生成静态分析报告</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;owent
+</strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong><span class=clearfix></span></div></div></footer></div><script type=importmap>
+{"imports":{"@popperjs/core":"https://esm.run/popper.js","bootstrap":"https://esm.run/bootstrap","mermaid":"https://esm.sh/mermaid","react":"https://esm.run/react","react-bootstrap":"https://esm.run/react-bootstrap"}}
+</script><script type=module>// import * as Popper from "@popperjs/core";// import * as bootstrap from "bootstrap";
+// import React from "react";
+
+        
+</script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/accesslog.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/armasm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/awk.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/basic.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/bnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/capnproto.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/cmake.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/d.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dockerfile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dos.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/erlang.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/ebnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/latex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/llvm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/lua.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/powershell.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/protobuf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/profile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/vim.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/x86asm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/yaml.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/vs2015.min.css",document.querySelector("head").appendChild(t),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const n={};for(const e of hljs.listLanguages())n[e.toLowerCase()]=!0;for(const e of document.querySelectorAll("pre>code"))try{if(e.className.match(/\bmermaid\b/i)){e.classList.add("mermaid");continue}if(e.className.match(/\bexcalidraw\b/i)){e.classList.add("excalidraw-root");continue}if(e.className.match(/\bdrawio\b/i)){e.classList.add("drawio-root"),e.classList.add("mxgraph");continue}if(e.className.match(/\bchart(js)?\b/i)){e.classList.add("chartjs-container");continue}if(e.className.match(/\bnohighlight\b/i))continue;const t=e.className.match(/language-([^\s]+)/i);if(t&&t.length>=2&&hljs.getLanguage(t[1]))hljs.highlightElement(e);else{const t=hljs.highlightAuto(e.innerText,hljs.listLanguages());t&&t.value&&(e.innerHTML=t.value,e.classList.add("hljs"))}}catch(e){window.console&&console.log(e.toString()+`\r
+Maybe can not detect the language`)}})</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-PQEY77BYG1"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-PQEY77BYG1")}</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css",document.querySelector("head").appendChild(t),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=module>
+import mermaid from "mermaid";
+const config = {
+    theme: 'neutral',
+    logLevel: 'fatal',
+    securityLevel: 'loose', 
+    startOnLoad: false, 
+    arrowMarkerAbsolute: false,
+    
+
+};
+mermaid.initialize(config);
+
+
+(async () => {
+    const pendingElements = document.querySelectorAll('.mermaid-pending[data-mermaid-src]');
+    for (const el of pendingElements) {
+        const src = el.getAttribute('data-mermaid-src');
+        if (!src) continue;
+        try {
+            const response = await fetch(src);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch ${src}: ${response.status}`);
+            }
+            const content = await response.text();
+            el.textContent = content;
+            el.classList.remove('mermaid-pending');
+        } catch (e) {
+            if (window.console) {
+                console.error("Failed to fetch mermaid file:", src, e);
+            }
+            el.textContent = `Failed to load: ${src}`;
+            el.classList.remove('mermaid');
+            el.classList.remove('mermaid-pending');
+        }
+    }
+    
+    await mermaid.run();
+})();
+</script><script type=text/javascript>var _hmt=_hmt||[];(function(){var t,n,e=document.createElement("script");e.src="https://hm.baidu.com/hm.js?6a0daf8d58889f1cf55a353867bfdbb0",t=document.getElementsByTagName("script"),n=document.getElementsByTagName("script")[t.length-1],n.parentNode.appendChild(e)})()</script></div></body></html>
