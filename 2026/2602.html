@@ -1,0 +1,420 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>AI真好用-给Blog主题统一加mermaid,chart.js,excalidraw,draw.io的多种引入方式支持|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2026/2602.html><link rel=icon href=/favicon.ico><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net//css/style.css><link rel=stylesheet href=//owent.net/css/syntax.css><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8180054975285991" crossorigin=anonymous></script><meta content="codeva-4M5iohb9TW" name=baidu-site-verification></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net/ id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-bs-toggle=collapse data-bs-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-a931df2df611a8f2660dbc2e6d596042 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2026/2602.html target=_blank itemprop=url>AI真好用-给Blog主题统一加mermaid,chart.js,excalidraw,draw.io的多种引入方式支持</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#背景>背景</a></li><li><a href=#ai自动生成的测试用例>AI自动生成的测试用例</a></li><li><a href=#1-drawiodiagramsnet-测试>1. Draw.io/diagrams.net 测试</a><ul><li><a href=#11-图片语法引用-drawio-文件>1.1 图片语法引用 .drawio 文件</a></li><li><a href=#12-代码块方式内嵌xml>1.2 代码块方式（内嵌XML）</a></li><li><a href=#13-shortcode-引用外部文件>1.3 Shortcode 引用外部文件</a></li><li><a href=#14-shortcode-内联方式>1.4 Shortcode 内联方式</a></li></ul></li><li><a href=#2-mermaid-图片语法测试>2. Mermaid 图片语法测试</a><ul><li><a href=#21-图片语法引用-mermaid-文件>2.1 图片语法引用 .mermaid 文件</a></li><li><a href=#22-代码块方式>2.2 代码块方式</a></li><li><a href=#23-shortcode-引用外部文件>2.3 Shortcode 引用外部文件</a></li><li><a href=#24-shortcode-内联方式>2.4 Shortcode 内联方式</a></li></ul></li><li><a href=#3-excalidraw-图片语法测试>3. Excalidraw 图片语法测试</a><ul><li><a href=#31-图片语法引用-excalidraw-文件>3.1 图片语法引用 .excalidraw 文件</a></li><li><a href=#32-shortcode-引用外部文件>3.2 Shortcode 引用外部文件</a></li><li><a href=#33-shortcode-内联方式>3.3 Shortcode 内联方式</a></li><li><a href=#34-代码块方式>3.4 代码块方式</a></li></ul></li><li><a href=#4-chartjs-测试>4. Chart.js 测试</a><ul><li><a href=#41-图片语法引用-chartjson-文件>4.1 图片语法引用 .chart.json 文件</a></li><li><a href=#42-shortcode-引用外部文件>4.2 Shortcode 引用外部文件</a></li><li><a href=#43-shortcode-内联方式>4.3 Shortcode 内联方式</a></li><li><a href=#44-代码块方式>4.4 代码块方式</a></li><li><a href=#45-代码块方式-chartjs-语法>4.5 代码块方式 (chartjs 语法)</a></li></ul></li><li><a href=#5-测试结果>5. 测试结果</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><h2 id=背景>背景</h2><p>在很久以前，我给我的Blog的主题加了 <a href=https://gohugo.io/>Hugo</a> 的针对 <a href=https://mermaid.js.org/>Mermaid</a> 和 <a href=https://www.chartjs.org/>Chart.js</a> shortcodes 的支持。但是之支持迁入代码的方式。
+如果文档很复杂，在Markdown里写大段的代码体验观感也不是很好。
+而现在很多Markdown生态里是支持通过代码块的方式嵌入的。
+同时现在很多插件可以直接按文件后缀编辑文件，然后直接指向文件的形式引用进来，这样可维护性会好很多。</p><p>我之前也懒得一个一个组件去研究和何种模式的测试搭配，现在AI很强了，刚好可以让它帮我把这个优化干了。
+并且可以让这些插件都支持各种引入方式，确实是省事儿不少。</p><p>实测下来写代码还是Claude强，Google Gemini 3 Pro/Flash 也好，GPT 5.2/5.1-Codex-Max也好都会不同层度的瞎写。
+Google Gemini 3 Pro写代码感觉比GPT 5.2强一点。但是通用总结，比如让它给我改Markdown的lingt错误Google Gemini 3 Pro比GPT 5.2差很多。</p><p>以下就是花了差不多2个小时，使用的Claude Opus 4.5模型，一口气消耗了Github copilot 75个高级Request（Copilot Pro+订阅的5%）。
+最后完成了对 <a href=https://mermaid.js.org/>Mermaid</a>、<a href=https://www.chartjs.org/>Chart.js</a>、<a href=https://github.com/excalidraw/excalidraw>Excalidraw</a>、<a href=https://www.diagrams.net/>draw.io/diagrams.net</a> 的统一支持各种引用模式的支持。</p><h2 id=ai自动生成的测试用例>AI自动生成的测试用例</h2><p>This page demonstrates all supported methods for rendering diagrams and charts:</p><ul><li><strong><a href=https://www.diagrams.net/>Draw.io/diagrams.net</a></strong> - <code>.drawio</code> files</li><li><strong><a href=https://mermaid.js.org/>Mermaid</a></strong> - <code>.mermaid</code> files</li><li><strong><a href=https://github.com/excalidraw/excalidraw>Excalidraw</a></strong> - <code>.excalidraw</code> files</li><li><strong><a href=https://www.chartjs.org/>Chart.js</a></strong> - <code>.chart.json</code> files</li></ul><p>Each format supports 4 usage methods:</p><ol><li>Image syntax: <code>![](file.ext)</code></li><li>Code block: <code>```language</code></li><li>Shortcode with src: <code>{{&lt; type src="file" >}}</code></li><li>Shortcode inline: <code>{{&lt; type >}}content{{&lt; /type >}}</code></li></ol><hr><h2 id=1-drawiodiagramsnet-测试>1. <a href=https://www.diagrams.net/>Draw.io/diagrams.net</a> 测试</h2><h3 id=11-图片语法引用-drawio-文件>1.1 图片语法引用 .drawio 文件</h3><p>下面是通过图片语法引用的 <a href=https://www.diagrams.net/>draw.io/diagrams.net</a> 图表：</p><p><div class=drawio-container style="width:100%;height:auto;margin:1rem 0"><div id=drawio-image-0 class="drawio-root mxgraph" style="max-width:100%;border:1px solid transparent" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers lightbox","edit":"_blank","url":"2602-test-diagram.drawio"}'></div></div></p><h3 id=12-代码块方式内嵌xml>1.2 代码块方式（内嵌XML）</h3><pre><code class=language-drawio>&lt;mxfile host=&quot;app.diagrams.net&quot;&gt;
+  &lt;diagram name=&quot;Page-1&quot; id=&quot;codeblock-test&quot;&gt;
+    &lt;mxGraphModel dx=&quot;800&quot; dy=&quot;400&quot; grid=&quot;1&quot; gridSize=&quot;10&quot; guides=&quot;1&quot; tooltips=&quot;1&quot; connect=&quot;1&quot; arrows=&quot;1&quot; fold=&quot;1&quot; page=&quot;1&quot; pageScale=&quot;1&quot; pageWidth=&quot;827&quot; pageHeight=&quot;1169&quot;&gt;
+      &lt;root&gt;
+        &lt;mxCell id=&quot;0&quot; /&gt;
+        &lt;mxCell id=&quot;1&quot; parent=&quot;0&quot; /&gt;
+        &lt;mxCell id=&quot;2&quot; value=&quot;代码块方式&quot; style=&quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1&quot; vertex=&quot;1&quot; parent=&quot;1&quot;&gt;
+          &lt;mxGeometry x=&quot;40&quot; y=&quot;40&quot; width=&quot;120&quot; height=&quot;50&quot; as=&quot;geometry&quot; /&gt;
+        &lt;/mxCell&gt;
+      &lt;/root&gt;
+    &lt;/mxGraphModel&gt;
+  &lt;/diagram&gt;
+&lt;/mxfile&gt;
+</code></pre><h3 id=13-shortcode-引用外部文件>1.3 Shortcode 引用外部文件</h3><div class=drawio-container style="width:100%;height:auto;margin:1rem 0"><div id=drawio-shortcode-0 class="drawio-root mxgraph" style="max-width:100%;border:1px solid transparent" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers lightbox","edit":"_blank","page":0,"url":"2602-test-diagram.drawio"}'></div></div><h3 id=14-shortcode-内联方式>1.4 Shortcode 内联方式</h3><div class=drawio-container style="width:100%;height:auto;margin:1rem 0"><div id=drawio-shortcode-1 class="drawio-root mxgraph drawio-pending" style="max-width:100%;border:1px solid transparent" data-drawio-config-id=drawio-shortcode-1-config data-drawio-page=0></div><script type=text/xml id=drawio-shortcode-1-config><mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="shortcode-inline-test">
+    <mxGraphModel dx="800" dy="400" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="Shortcode 内联" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="120" height="50" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile></script></div><hr><h2 id=2-mermaid-图片语法测试>2. <a href=https://mermaid.js.org/>Mermaid</a> 图片语法测试</h2><h3 id=21-图片语法引用-mermaid-文件>2.1 图片语法引用 .mermaid 文件</h3><p>下面是通过图片语法引用的 <a href=https://mermaid.js.org/>Mermaid</a> 图表：</p><p><div class=mermaid-container style="width:100%;height:auto;margin:1rem 0"><pre id=mermaid-image-1 class="mermaid mermaid-pending" data-mermaid-src=2602-test-diagram.mermaid>流程图</pre></div></p><h3 id=22-代码块方式>2.2 代码块方式</h3><pre><code class=language-mermaid>graph LR
+    A[代码块方式] --&gt; B{工作正常?}
+    B --&gt;|是| C[蓝色流程图]
+    B --&gt;|否| D[检查代码]
+</code></pre><h3 id=23-shortcode-引用外部文件>2.3 Shortcode 引用外部文件</h3><div class=mermaid-container style="width:100%;height:auto;margin:1rem 0"><pre id=mermaid-shortcode-2 class="mermaid mermaid-pending" data-mermaid-src=2602-test-diagram.mermaid>Loading mermaid diagram...</pre></div><h3 id=24-shortcode-内联方式>2.4 Shortcode 内联方式</h3><div class=mermaid-container style="width:100%;height:auto;margin:1rem 0"><pre id=mermaid-shortcode-3 class=mermaid>
+graph TD
+    A[Shortcode 内联] --> B[Mermaid 图表]
+    B --> C{正常显示?}
+    C -->|是| D[成功]
+    C -->|否| E[检查]
+  </pre></div><hr><h2 id=3-excalidraw-图片语法测试>3. <a href=https://github.com/excalidraw/excalidraw>Excalidraw</a> 图片语法测试</h2><h3 id=31-图片语法引用-excalidraw-文件>3.1 图片语法引用 .excalidraw 文件</h3><p>下面是通过图片语法引用的 <a href=https://github.com/excalidraw/excalidraw>Excalidraw</a> 图表：</p><p><div class=excalidraw-container style="width:100%;height:auto;margin:1rem 0"><div id=excalidraw-image-2 class=excalidraw-root style=width:100%;height:auto data-excalidraw-src=2602-test-diagram.excalidraw data-excalidraw-fetch-id=excalidraw-image-2>测试图表</div></div></p><h3 id=32-shortcode-引用外部文件>3.2 Shortcode 引用外部文件</h3><div class=excalidraw-container style="width:100%;height:auto;margin:1rem 0"><div id=excalidraw-shortcode-4 class=excalidraw-root style=width:100%;height:auto data-excalidraw-src=2602-test-diagram.excalidraw>Loading excalidraw...</div></div><h3 id=33-shortcode-内联方式>3.3 Shortcode 内联方式</h3><div class=excalidraw-container style="width:100%;height:auto;margin:1rem 0"><div id=excalidraw-shortcode-5 class=excalidraw-root style=width:100%;height:auto data-excalidraw-data-id=excalidraw-shortcode-5-data>Loading excalidraw...</div></div><script type=application/json id=excalidraw-shortcode-5-data>{"type":"excalidraw","version":2,"source":"https://excalidraw.com","elements":[{"id":"shortcode-inline-rect","type":"rectangle","x":100,"y":100,"width":180,"height":80,"angle":0,"strokeColor":"#2f9e44","backgroundColor":"#b2f2bb","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100,"seed":11111,"version":1,"versionNonce":1},{"id":"shortcode-inline-text","type":"text","x":115,"y":125,"width":150,"height":30,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"roughness":1,"opacity":100,"seed":22222,"version":1,"versionNonce":1,"text":"Shortcode 内联","fontSize":18,"fontFamily":1,"textAlign":"center","verticalAlign":"middle"}],"appState":{"viewBackgroundColor":"#ffffff"}}</script><h3 id=34-代码块方式>3.4 代码块方式</h3><pre><code class=language-excalidraw>{
+  &quot;type&quot;: &quot;excalidraw&quot;,
+  &quot;version&quot;: 2,
+  &quot;source&quot;: &quot;https://excalidraw.com&quot;,
+  &quot;elements&quot;: [
+    {
+      &quot;id&quot;: &quot;codeblock-rect&quot;,
+      &quot;type&quot;: &quot;rectangle&quot;,
+      &quot;x&quot;: 100,
+      &quot;y&quot;: 100,
+      &quot;width&quot;: 200,
+      &quot;height&quot;: 100,
+      &quot;angle&quot;: 0,
+      &quot;strokeColor&quot;: &quot;#1971c2&quot;,
+      &quot;backgroundColor&quot;: &quot;#a5d8ff&quot;,
+      &quot;fillStyle&quot;: &quot;solid&quot;,
+      &quot;strokeWidth&quot;: 2,
+      &quot;roughness&quot;: 1,
+      &quot;opacity&quot;: 100,
+      &quot;seed&quot;: 54321,
+      &quot;version&quot;: 1,
+      &quot;versionNonce&quot;: 1
+    },
+    {
+      &quot;id&quot;: &quot;codeblock-text&quot;,
+      &quot;type&quot;: &quot;text&quot;,
+      &quot;x&quot;: 130,
+      &quot;y&quot;: 135,
+      &quot;width&quot;: 140,
+      &quot;height&quot;: 30,
+      &quot;angle&quot;: 0,
+      &quot;strokeColor&quot;: &quot;#1e1e1e&quot;,
+      &quot;backgroundColor&quot;: &quot;transparent&quot;,
+      &quot;fillStyle&quot;: &quot;solid&quot;,
+      &quot;strokeWidth&quot;: 1,
+      &quot;roughness&quot;: 1,
+      &quot;opacity&quot;: 100,
+      &quot;seed&quot;: 65432,
+      &quot;version&quot;: 1,
+      &quot;versionNonce&quot;: 1,
+      &quot;text&quot;: &quot;代码块方式&quot;,
+      &quot;fontSize&quot;: 20,
+      &quot;fontFamily&quot;: 1,
+      &quot;textAlign&quot;: &quot;center&quot;,
+      &quot;verticalAlign&quot;: &quot;middle&quot;
+    }
+  ],
+  &quot;appState&quot;: {
+    &quot;viewBackgroundColor&quot;: &quot;#ffffff&quot;
+  }
+}
+</code></pre><hr><h2 id=4-chartjs-测试>4. <a href=https://www.chartjs.org/>Chart.js</a> 测试</h2><h3 id=41-图片语法引用-chartjson-文件>4.1 图片语法引用 .chart.json 文件</h3><p>下面是通过图片语法引用的 <a href=https://www.chartjs.org/>Chart.js</a> 图表：</p><p><div class=chartjs-container style="width:100%;height:auto;margin:1rem 0"><canvas id=chartjs-image-3 class=chartjs-pending data-chartjs-src=2602-test-chart.chart.json>销售图表</canvas></div></p><h3 id=42-shortcode-引用外部文件>4.2 Shortcode 引用外部文件</h3><div class=chartjs-container style="width:100%;height:auto;margin:1rem 0"><canvas id=chartjs-shortcode-6 class=chartjs-pending data-chartjs-src=2602-test-chart.chart.json>Chart 6</canvas></div><h3 id=43-shortcode-内联方式>4.3 Shortcode 内联方式</h3><div class=chartjs-container style="width:100%;height:auto;margin:1rem 0"><canvas id=chartjs-shortcode-7 data-chartjs-config-id=chartjs-shortcode-7-config>Chart 7</canvas></div><script type=application/json id=chartjs-shortcode-7-config>{"type":"doughnut","data":{"labels":["Red","Blue","Yellow"],"datasets":[{"data":[300,50,100],"backgroundColor":["#FF6384","#36A2EB","#FFCE56"]}]},"options":{"responsive":true,"plugins":{"title":{"display":true,"text":"Shortcode 内联图表"}}}}</script><h3 id=44-代码块方式>4.4 代码块方式</h3><pre><code class=language-chart>{
+  &quot;type&quot;: &quot;line&quot;,
+  &quot;data&quot;: {
+    &quot;labels&quot;: [&quot;周一&quot;, &quot;周二&quot;, &quot;周三&quot;, &quot;周四&quot;, &quot;周五&quot;],
+    &quot;datasets&quot;: [{
+      &quot;label&quot;: &quot;访问量&quot;,
+      &quot;data&quot;: [65, 59, 80, 81, 56],
+      &quot;fill&quot;: false,
+      &quot;borderColor&quot;: &quot;rgb(75, 192, 192)&quot;,
+      &quot;tension&quot;: 0.1
+    }]
+  },
+  &quot;options&quot;: {
+    &quot;responsive&quot;: true,
+    &quot;plugins&quot;: {
+      &quot;title&quot;: {
+        &quot;display&quot;: true,
+        &quot;text&quot;: &quot;代码块方式图表 (chart)&quot;
+      }
+    }
+  }
+}
+</code></pre><h3 id=45-代码块方式-chartjs-语法>4.5 代码块方式 (chartjs 语法)</h3><pre><code class=language-chartjs>{
+  &quot;type&quot;: &quot;pie&quot;,
+  &quot;data&quot;: {
+    &quot;labels&quot;: [&quot;Chrome&quot;, &quot;Firefox&quot;, &quot;Safari&quot;, &quot;Edge&quot;],
+    &quot;datasets&quot;: [{
+      &quot;data&quot;: [60, 20, 10, 10],
+      &quot;backgroundColor&quot;: [&quot;#4285F4&quot;, &quot;#FF7139&quot;, &quot;#00D084&quot;, &quot;#0078D7&quot;]
+    }]
+  },
+  &quot;options&quot;: {
+    &quot;responsive&quot;: true,
+    &quot;plugins&quot;: {
+      &quot;title&quot;: {
+        &quot;display&quot;: true,
+        &quot;text&quot;: &quot;代码块方式图表 (chartjs)&quot;
+      }
+    }
+  }
+}
+</code></pre><hr><h2 id=5-测试结果>5. 测试结果</h2><table><thead><tr><th>类型</th><th>图片语法</th><th>代码块方式</th><th>Shortcode (内联)</th><th>Shortcode (src)</th></tr></thead><tbody><tr><td><a href=https://www.diagrams.net/>Draw.io/diagrams.net</a></td><td>✓ <code>.drawio</code></td><td>✓ <code>drawio</code></td><td>✓</td><td>✓</td></tr><tr><td><a href=https://mermaid.js.org/>Mermaid</a></td><td>✓ <code>.mermaid</code></td><td>✓ <code>mermaid</code></td><td>✓</td><td>✓</td></tr><tr><td><a href=https://github.com/excalidraw/excalidraw>Excalidraw</a></td><td>✓ <code>.excalidraw</code></td><td>✓ <code>excalidraw</code></td><td>✓</td><td>✓</td></tr><tr><td><a href=https://www.chartjs.org/>Chart.js</a></td><td>✓ <code>.chart.json</code></td><td>✓ <code>chart</code> / <code>chartjs</code></td><td>✓</td><td>✓</td></tr></tbody></table><p>如果所有图表都能正常显示，说明功能正常工作！</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2026-01-01T18:15:45.000+00:00 itemprop=datePublished>2026-01-01</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/hugo.html>hugo</a></li><li class=article-tag-list-item><a href=//owent.net/tags/gohugo.html>gohugo</a></li><li class=article-tag-list-item><a href=//owent.net/tags/mermaid.html>mermaid</a></li><li class=article-tag-list-item><a href=//owent.net/tags/chart.js.html>chart.js</a></li><li class=article-tag-list-item><a href=//owent.net/tags/excalidraw.html>excalidraw</a></li><li class=article-tag-list-item><a href=//owent.net/tags/draw.io.html>draw.io</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2026/2601.html>下一篇<strong>给内网部署Squid-通用HTTP下载缓存</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;owent
+</strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong><span class=clearfix></span></div></div></footer></div><script type=importmap>
+{"imports":{"@excalidraw/excalidraw":"https://esm.sh/@excalidraw/excalidraw","@popperjs/core":"https://esm.run/popper.js","bootstrap":"https://esm.run/bootstrap","excalidraw":"https://esm.sh/@excalidraw/excalidraw","mermaid":"https://esm.sh/mermaid","react":"https://esm.run/react","react-bootstrap":"https://esm.run/react-bootstrap"}}
+</script><script type=module>// import * as Popper from "@popperjs/core";// import * as bootstrap from "bootstrap";
+// import React from "react";
+
+        
+</script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/accesslog.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/armasm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/awk.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/basic.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/bnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/capnproto.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/cmake.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/d.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dockerfile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dos.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/erlang.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/ebnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/latex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/llvm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/lua.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/powershell.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/protobuf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/profile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/vim.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/x86asm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/yaml.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/vs2015.min.css",document.querySelector("head").appendChild(t),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const n={};for(const e of hljs.listLanguages())n[e.toLowerCase()]=!0;for(const e of document.querySelectorAll("pre>code"))try{if(e.className.match(/\bmermaid\b/i)){e.classList.add("mermaid");continue}if(e.className.match(/\bexcalidraw\b/i)){e.classList.add("excalidraw-root");continue}if(e.className.match(/\bdrawio\b/i)){e.classList.add("drawio-root"),e.classList.add("mxgraph");continue}if(e.className.match(/\bchart(js)?\b/i)){e.classList.add("chartjs-container");continue}if(e.className.match(/\bnohighlight\b/i))continue;const t=e.className.match(/language-([^\s]+)/i);if(t&&t.length>=2&&hljs.getLanguage(t[1]))hljs.highlightElement(e);else{const t=hljs.highlightAuto(e.innerText,hljs.listLanguages());t&&t.value&&(e.innerHTML=t.value,e.classList.add("hljs"))}}catch(e){window.console&&console.log(e.toString()+`\r
+Maybe can not detect the language`)}})</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-PQEY77BYG1"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-PQEY77BYG1")}</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css",document.querySelector("head").appendChild(t),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/chart.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",async e=>{const t=e=>!!e&&!!e.className&&(/(^|\s)language-(\{)?(chart|chartjs)(\})?(\s|$)/i.test(e.className)||/\b(chart|chartjs)-container\b/i.test(e.className));for(const n of document.querySelectorAll("pre>code")){if(!t(n))continue;const e=n.parentElement;if(!e)continue;const s=n.textContent||"{}";try{const o=JSON.parse(s.trim()),t=document.createElement("div");t.className="chartjs-container",t.style.cssText="width: 100%; margin: 1rem 0;";const n=document.createElement("canvas");n.id="chartjs-codeblock-"+Math.random().toString(36).substr(2,9),t.appendChild(n),e.parentNode.insertBefore(t,e),e.style.display="none",new Chart(n,o)}catch(e){window.console&&console.error("Failed to parse chart JSON from codeblock:",e)}}for(const e of document.querySelectorAll("canvas[data-chartjs-config-id]")){const t=e.getAttribute("data-chartjs-config-id");if(!t)continue;const n=document.getElementById(t);if(!n)continue;try{const t=JSON.parse(n.textContent||"{}");new Chart(e,t)}catch(e){window.console&&console.error("Failed to parse chart config:",e)}}for(const e of document.querySelectorAll("canvas.chartjs-pending[data-chartjs-src]")){const t=e.getAttribute("data-chartjs-src");if(!t)continue;try{const n=await fetch(t);if(!n.ok)throw new Error(`Failed to fetch ${t}: ${n.status}`);const s=await n.json();e.classList.remove("chartjs-pending"),new Chart(e,s)}catch(s){window.console&&console.error("Failed to load chart:",t,s),e.classList.remove("chartjs-pending");const n=e.getContext("2d");n&&(n.fillStyle="red",n.font="14px sans-serif",n.fillText(`Failed to load: ${t}`,10,30))}}})</script><script type=module>
+import mermaid from "mermaid";
+const config = {
+    theme: 'neutral',
+    logLevel: 'fatal',
+    securityLevel: 'loose', 
+    startOnLoad: false, 
+    arrowMarkerAbsolute: false,
+    
+
+};
+mermaid.initialize(config);
+
+
+(async () => {
+    const pendingElements = document.querySelectorAll('.mermaid-pending[data-mermaid-src]');
+    for (const el of pendingElements) {
+        const src = el.getAttribute('data-mermaid-src');
+        if (!src) continue;
+        try {
+            const response = await fetch(src);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch ${src}: ${response.status}`);
+            }
+            const content = await response.text();
+            el.textContent = content;
+            el.classList.remove('mermaid-pending');
+        } catch (e) {
+            if (window.console) {
+                console.error("Failed to fetch mermaid file:", src, e);
+            }
+            el.textContent = `Failed to load: ${src}`;
+            el.classList.remove('mermaid');
+            el.classList.remove('mermaid-pending');
+        }
+    }
+    
+    await mermaid.run();
+})();
+</script><script type=module>
+(async () => {
+    const ensureCss = () => {
+        const id = "excalidraw-css";
+        if (document.getElementById(id)) {
+            return;
+        }
+        const link = document.createElement("link");
+        link.id = id;
+        link.rel = "stylesheet";
+        link.href = "https:\/\/cdn.jsdelivr.net\/npm\/excalidraw\/dist\/excalidraw.min.css";
+        document.head.appendChild(link);
+    };
+
+    const isExcalidrawCodeBlock = (codeEl) => {
+        if (!codeEl || !codeEl.className) {
+            return false;
+        }
+        return /(^|\s)language-(\{)?excalidraw(\})?(\s|$)/i.test(codeEl.className) || /\bexcalidraw\b/i.test(codeEl.className);
+    };
+
+    const roots = [];
+    for (const el of document.querySelectorAll('.excalidraw-root')) {
+        const dataId = el.getAttribute && el.getAttribute("data-excalidraw-data-id");
+        const dataSrc = el.getAttribute && el.getAttribute("data-excalidraw-src");
+        if (!dataId && !dataSrc) {
+            continue;
+        }
+        if (dataId) {
+            roots.push({
+                rootEl: el,
+                codeEl: null,
+                getInitialData: () => {
+                    const jsonEl = document.getElementById(dataId);
+                    return jsonEl ? (jsonEl.textContent || "{}") : null;
+                },
+            });
+        } else if (dataSrc) {
+            
+            roots.push({
+                rootEl: el,
+                codeEl: null,
+                dataSrc: dataSrc,
+                getInitialData: null, 
+                needsFetch: true,
+            });
+        }
+    }
+    for (const codeEl of document.querySelectorAll('pre>code')) {
+        if (!isExcalidrawCodeBlock(codeEl)) {
+            continue;
+        }
+        const preEl = codeEl.parentElement;
+        if (!preEl) {
+            continue;
+        }
+        const raw = codeEl.textContent || "";
+        if (!raw.trim()) {
+            continue;
+        }
+        const rootEl = document.createElement("div");
+        rootEl.className = "excalidraw-root";
+        rootEl.style.width = "100%";
+        rootEl.style.height = "auto";
+        const container = document.createElement("div");
+        container.className = "excalidraw-container";
+        container.style.height = codeEl.style.height || "auto";
+        container.style.width = codeEl.style.width || "100%";
+        container.style.margin = codeEl.style.margin || "1rem 0";
+        container.appendChild(rootEl);
+        preEl.parentNode.insertBefore(container, preEl);
+        codeEl.textContent = "Loading excalidraw libraries...";
+        roots.push({ rootEl, codeEl, getInitialData: () => raw, sourceEl: preEl, containerEl: container });
+    }
+
+    if (roots.length <= 0) {
+        return;
+    }
+
+    
+    for (const item of roots) {
+        if (item.needsFetch && item.dataSrc) {
+            try {
+                const response = await fetch(item.dataSrc);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch ${item.dataSrc}: ${response.status}`);
+                }
+                const content = await response.text();
+                item.getInitialData = () => content;
+                item.needsFetch = false;
+            } catch (e) {
+                if (window.console) {
+                    console.error("Failed to fetch excalidraw file:", item.dataSrc, e);
+                }
+                item.rootEl.textContent = `Failed to load: ${item.dataSrc}`;
+                item.failed = true;
+            }
+        }
+    }
+
+    
+    const validRoots = roots.filter(item => !item.failed);
+    if (validRoots.length <= 0) {
+        return;
+    }
+
+    const restoreFn = (reason, item) => {
+        if (item) {
+            if (item.codeEl) {
+                item.codeEl.textContent = item.getInitialData ? item.getInitialData() : "";
+            } else if (item.getInitialData) {
+                const reasonEl = document.createElement("div");
+                reasonEl.textContent = reason;
+                const preEl = document.createElement("pre");
+                const codeEl = document.createElement("code");
+                codeEl.textContent = item.getInitialData();
+                preEl.appendChild(codeEl);
+                item.rootEl.replaceChildren(reasonEl, preEl);
+            } else {
+                item.rootEl.textContent = reason;
+            }
+            return;
+        }
+        for (const item of validRoots) {
+            if (item.codeEl) {
+                item.codeEl.textContent = item.getInitialData ? item.getInitialData() : "";
+            } else if (item.getInitialData) {
+                const reasonEl = document.createElement("div");
+                reasonEl.textContent = reason;
+                const preEl = document.createElement("pre");
+                const codeEl = document.createElement("code");
+                codeEl.textContent = item.getInitialData();
+                preEl.appendChild(codeEl);
+                item.rootEl.replaceChildren(reasonEl, preEl);
+            } else {
+                item.rootEl.textContent = reason;
+            }
+        }
+    };
+
+    let exportToSvg;
+    try {
+        ensureCss();
+        let ExcalidrawPkg = await import("@excalidraw/excalidraw");
+        exportToSvg =
+            ExcalidrawPkg.exportToSvg ||
+            (ExcalidrawPkg.default && ExcalidrawPkg.default.exportToSvg) ||
+            null;
+        if (typeof exportToSvg !== "function") {
+            ExcalidrawPkg = await import("https://esm.sh/@excalidraw/excalidraw");
+            exportToSvg =
+                ExcalidrawPkg.exportToSvg ||
+                (ExcalidrawPkg.default && ExcalidrawPkg.default.exportToSvg) ||
+                null;
+        }
+    } catch (e) {
+        if (window.console) {
+            console.error("Failed to load excalidraw dependencies", e);
+        }
+        restoreFn("Failed to load excalidraw libraries");
+        return;
+    }
+
+    if (typeof exportToSvg !== "function") {
+        if (window.console) {
+            console.error("Invalid excalidraw module exports: missing exportToSvg");
+        }
+        restoreFn("Invalid excalidraw module exports: missing exportToSvg");
+        return;
+    }
+
+    for (const item of validRoots) {
+        const rootEl = item.rootEl;
+        const raw = item.getInitialData ? item.getInitialData() : null;
+        if (!raw) {
+            continue;
+        }
+        let sceneData = null;
+        try {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === "object" && parsed.type === "excalidraw" && Array.isArray(parsed.elements)) {
+                sceneData = {
+                    elements: parsed.elements,
+                    appState: parsed.appState || {},
+                    files: parsed.files || {},
+                };
+            } else {
+                sceneData = parsed;
+            }
+        } catch (e) {
+            if (window.console) {
+                console.error("Invalid excalidraw json", e);
+            }
+            restoreFn("Invalid excalidraw json", item);
+            continue;
+        }
+
+        try {
+            const elements = sceneData && sceneData.elements ? sceneData.elements : (Array.isArray(sceneData) ? sceneData : []);
+            const appState = sceneData && sceneData.appState ? sceneData.appState : {};
+            const files = sceneData && sceneData.files ? sceneData.files : {};
+
+            const svg = await exportToSvg({
+                elements,
+                appState,
+                files,
+                exportPadding: 10,
+            });
+            if (!svg) {
+                restoreFn("Invalid excalidraw json", item);
+                continue;
+            }
+            svg.style.width = "100%";
+            svg.style.height = "auto";
+            svg.style.display = "block";
+            rootEl.replaceChildren(svg);
+            if (item.sourceEl) {
+                item.sourceEl.style.display = "none";
+            }
+            if (item.containerEl) {
+                item.containerEl.style.height = "auto";
+            }
+        } catch (e) {
+            if (window.console) {
+                console.error("Failed to render excalidraw", e);
+            }
+            restoreFn("Failed to render excalidraw", item);
+        }
+    }
+})();
+</script><script type=text/javascript>window.drawioViewerLoaded=!1,window.drawioCodeBlocksProcessed=!1,window.processDrawioCodeBlocks=function(){if(window.drawioCodeBlocksProcessed)return;window.drawioCodeBlocksProcessed=!0;const e=e=>!!e&&!!e.className&&(/(^|\s)language-(\{)?drawio(\})?(\s|$)/i.test(e.className)||/\bdrawio-root\b/i.test(e.className));for(const o of document.querySelectorAll("pre>code")){if(!e(o))continue;const t=o.parentElement;if(!t)continue;const i=o.textContent||"";if(!i.trim())continue;const n=document.createElement("div");n.className="drawio-container",n.style.cssText="width: 100%; margin: 1rem 0;";const s=document.createElement("div");s.className="mxgraph",s.style.cssText="max-width: 100%; border: 1px solid transparent;";const a=btoa(unescape(encodeURIComponent(i.trim()))),r="data:text/xml;base64,"+a;s.setAttribute("data-mxgraph",JSON.stringify({highlight:"#0000ff",nav:!0,resize:!0,toolbar:"zoom layers lightbox",edit:"_blank",url:r})),n.appendChild(s),t.parentNode.insertBefore(n,t),t.style.display="none"}for(const e of document.querySelectorAll(".drawio-pending[data-drawio-config-id]")){const t=e.getAttribute("data-drawio-config-id");if(!t)continue;const n=document.getElementById(t);if(!n)continue;try{const t=n.textContent||"";if(!t.trim())continue;const s=e.getAttribute("data-drawio-page")||"0",o=btoa(unescape(encodeURIComponent(t.trim()))),i="data:text/xml;base64,"+o;e.setAttribute("data-mxgraph",JSON.stringify({highlight:"#0000ff",nav:!0,resize:!0,toolbar:"zoom layers lightbox",edit:"_blank",page:parseInt(s),url:i})),e.classList.remove("drawio-pending"),e.classList.add("mxgraph")}catch(e){window.console&&console.error("Failed to process drawio config:",e)}}},window.initDrawioViewer=function(){typeof GraphViewer!="undefined"&&GraphViewer.processElements()},window.onDrawioReady=function(){window.drawioViewerLoaded=!0,document.readyState!=="loading"&&(window.processDrawioCodeBlocks(),window.initDrawioViewer())},document.readyState==="loading"?document.addEventListener("DOMContentLoaded",function(){window.processDrawioCodeBlocks(),window.drawioViewerLoaded&&window.initDrawioViewer()}):(window.processDrawioCodeBlocks(),window.drawioViewerLoaded&&window.initDrawioViewer())</script><script type=text/javascript src=https://viewer.diagrams.net/js/viewer-static.min.js onload=window.onDrawioReady()></script><script type=text/javascript>var _hmt=_hmt||[];(function(){var t,n,e=document.createElement("script");e.src="https://hm.baidu.com/hm.js?6a0daf8d58889f1cf55a353867bfdbb0",t=document.getElementsByTagName("script"),n=document.getElementsByTagName("script")[t.length-1],n.parentNode.appendChild(e)})()</script></div></body></html>
