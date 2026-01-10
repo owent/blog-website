@@ -1,0 +1,203 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>Protobuf又一坑 - C++标准和ABI兼容性|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2026/2603.html><link rel=icon href=/favicon.ico><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net//css/style.css><link rel=stylesheet href=//owent.net/css/syntax.css><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8180054975285991" crossorigin=anonymous></script><meta content="codeva-4M5iohb9TW" name=baidu-site-verification></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net/ id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-bs-toggle=collapse data-bs-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-db5f8635b1035de216e68610c0665c6d class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2026/2603.html target=_blank itemprop=url>Protobuf又一坑 - C++标准和ABI兼容性</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#背景>背景</a></li><li><a href=#现象与错误定位>现象与错误定位</a><ul><li><a href=#生成的-pbcc>生成的 <code>.pb.cc</code></a></li><li><a href=#protobuf-的定义porth--portcc>Protobuf 的定义（<code>port.h</code> / <code>port.cc</code>）</a></li><li><a href=#根因c20-触发了类型符号差异>根因：C++20 触发了类型/符号差异</a></li></ul></li><li><a href=#解决方法>解决方法</a><ul><li><a href=#从-cmake-目标信息推断第一版>从 CMake 目标信息推断（第一版）</a></li><li><a href=#新问题一cxx_std_nn-可能不准确>新问题一：<code>cxx_std_NN</code> 可能不准确</a></li><li><a href=#新问题二abseil-cpp-如果以-c20-配置编译会出现配置宏不匹配>新问题二：abseil-cpp 如果以 C++20 配置/编译，会出现“配置宏不匹配”</a></li><li><a href=#官方的临时解决方案>官方的临时解决方案</a></li></ul></li><li><a href=#最后>最后</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><h2 id=背景>背景</h2><p>前段时间例行升级我为游戏框架写的构建系统 <a href=https://github.com/atframework/cmake-toolset>cmake-toolset</a> 时，又遇到了 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 的一个新 ABI 兼容性问题。</p><p>这已经不是第一次被 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 的 ABI 兼容性问题“教育”了。这篇把问题拆开讲清楚，并给出一套可落地的规避方案，供遇到类似问题的同学参考。</p><ul><li>编译环境：Windows + Visual Studio 2026</li><li>Abseil-Cpp：20250512.1</li><li>Protobuf：v31.1（看起来目前最新的 v33.1 也有这个问题）</li></ul><h2 id=现象与错误定位>现象与错误定位</h2><p>首先在链接阶段出现错误：</p><pre><code class=language-text>[build] test_pb.pb.obj : error LNK2001: 无法解析的外部符号 &quot;class google::protobuf::internal::GlobalEmptyStringConstexpr const google::protobuf::internal::fixed_address_empty_string&quot; (?fixed_address_empty_string@internal@protobuf@google@@3VGlobalEmptyStringConstexpr@123@B) [D:\workspace\git\github\atframework\cmake-toolset\test\build_jobs_dir\cmake-toolset-test.vcxproj]
+[build] D:\workspace\git\github\atframework\cmake-toolset\test\build_jobs_dir\bin\Debug\cmake-toolset-test.exe : fatal error LNK1120: 1 个无法解析的外部命令 [D:\workspace\git\github\atframework\cmake-toolset\test\build_jobs_dir\cmake-toolset-test.vcxproj]
+</code></pre><p>我也在 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 社区提了一个同样现象的 issue（见 <a href=https://github.com/open-telemetry/opentelemetry-cpp/issues/3799>open-telemetry/opentelemetry-cpp#3799</a>）。</p><p>为了说明问题，我们把“生成代码”和“protobuf 库本体”的相关片段并排看一下。</p><h3 id=生成的-pbcc>生成的 <code>.pb.cc</code></h3><p>生成的 <code>.pb.cc</code> 里会出现类似这样的代码（把 <code>std::string</code> 的默认值初始化为一个固定地址的空串）：</p><pre><code class=language-cpp>inline constexpr EntityRef::Impl_::Impl_(
+    ::_pbi::ConstantInitialized) noexcept
+      : id_keys_{},
+        description_keys_{},
+        schema_url_(
+            &amp;::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        type_(
+            &amp;::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        _cached_size_{0} {}
+</code></pre><h3 id=protobuf-的定义porth--portcc>Protobuf 的定义（<code>port.h</code> / <code>port.cc</code>）</h3><p>protobuf 的 <code>port.h</code> 里有如下定义（简化摘录）：</p><pre><code class=language-cpp>class alignas(8) GlobalEmptyStringConstexpr {
+ public:
+  const std::string&amp; get() const { return value_; }
+  // Nothing to init, or destroy.
+  std::string* Init() const { return nullptr; }
+
+  template &lt;typename T = std::string, bool = (T(), true)&gt;
+  static constexpr std::true_type HasConstexprDefaultConstructor(int) {
+    return {};
+  }
+  static constexpr std::false_type HasConstexprDefaultConstructor(char) {
+    return {};
+  }
+
+ private:
+  std::string value_;
+};
+
+using GlobalEmptyString = std::conditional_t&lt;
+    GlobalEmptyStringConstexpr::HasConstexprDefaultConstructor(0),
+    const GlobalEmptyStringConstexpr, GlobalEmptyStringDynamicInit&gt;;
+
+PROTOBUF_EXPORT extern GlobalEmptyString fixed_address_empty_string;
+</code></pre><p>对应的 <code>port.cc</code> 里会定义这个全局对象：</p><pre><code class=language-cpp>PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
+    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 GlobalEmptyString
+        fixed_address_empty_string{};
+</code></pre><h3 id=根因c20-触发了类型符号差异>根因：C++20 触发了类型/符号差异</h3><p>查阅 C++ 文档（例如 <a href=https://en.cppreference.com/w/cpp/string/basic_string/basic_string.html>https://en.cppreference.com/w/cpp/string/basic_string/basic_string.html</a>）可以看到：<code>std::string</code> 的构造函数是在 C++20 之后才逐步具备 <code>constexpr</code> 能力。</p><p>这意味着：</p><ul><li>当 protobuf <strong>以 C++20（或更高）</strong> 编译时，<code>GlobalEmptyStringConstexpr::HasConstexprDefaultConstructor(0)</code> 可能成立，<code>GlobalEmptyString</code> 会走到 <code>GlobalEmptyStringConstexpr</code> 路径。</li><li>当 protobuf <strong>以 C++17（或更低）</strong> 编译时，上述条件不成立，<code>GlobalEmptyString</code> 会走到另一条类型分支。</li></ul><p>而如果你的工程里出现了“protobuf 库”和“.pb.cc”采用不同 C++ 标准编译，且跨越了 C++20 这条分界线，那么：</p><ul><li>生成代码里引用的符号签名（mangled name）会以 <code>GlobalEmptyStringConstexpr</code> 为前提；</li><li>但库里实际导出的符号却来自另一条类型分支；</li></ul><p>最终就会出现前面那种链接错误（<code>LNK2001</code>）。</p><h2 id=解决方法>解决方法</h2><p>一句话：<strong>不要让 “protobuf 库” 和 “生成的 .pb.cc” 在 C++20 前后混用</strong>。</p><p>最理想的做法当然是全工程统一 C++ 标准（例如都用 C++20），并用同一套工具链把 protobuf/abseil 也一起重编。</p><p>但现实里经常会遇到“依赖是预编译包”的情况，这时就需要在 CMake 层面尽量推断 protobuf 的“实际编译标准”，并把 <code>.pb.cc</code> 的编译标准对齐到不会产生 ABI 差异的范围。</p><h3 id=从-cmake-目标信息推断第一版>从 CMake 目标信息推断（第一版）</h3><p>如果 protobuf 是通过 CMake package 导入的，导出的目标里一般会带 <code>INTERFACE_COMPILE_FEATURES</code>，例如：</p><pre><code class=language-cmake>set_target_properties(protobuf::libprotobuf PROPERTIES
+  INTERFACE_COMPILE_FEATURES &quot;cxx_std_17&quot;
+  INTERFACE_INCLUDE_DIRECTORIES &quot;${_IMPORT_PREFIX}/include&quot;
+  INTERFACE_LINK_LIBRARIES &quot;\$&lt;LINK_ONLY:ZLIB::ZLIB&gt;;absl::absl_check;absl::absl_log;absl::algorithm;absl::base;absl::bind_front;absl::bits;absl::btree;absl::cleanup;absl::cord;absl::core_headers;absl::debugging;absl::die_if_null;absl::dynamic_annotations;absl::flags;absl::flat_hash_map;absl::flat_hash_set;absl::function_ref;absl::hash;absl::if_constexpr;absl::layout;absl::log_initialize;absl::log_globals;absl::log_severity;absl::memory;absl::node_hash_map;absl::node_hash_set;absl::optional;absl::random_distributions;absl::random_random;absl::span;absl::status;absl::statusor;absl::strings;absl::synchronization;absl::time;absl::type_traits;absl::utility;absl::variant;\$&lt;LINK_ONLY:utf8_range::utf8_validity&gt;&quot;
+)
+</code></pre><p>我们可以读取 <code>INTERFACE_COMPILE_FEATURES</code>，尝试获得 <code>cxx_std_NN</code> 并用于约束生成的 proto targets。</p><p>我在 <a href=https://github.com/atframework/cmake-toolset>cmake-toolset</a> 里原本就有一个 “patch protobuf 生成代码 target” 的接口（主要用来屏蔽 protobuf 生成代码触发的严格告警）。这次我把它扩展为：如果能推断出 protobuf 的 C++ 标准，就显式把生成的 <code>.pb.cc</code> target 对齐过去。</p><pre><code class=language-cmake>function(project_build_tools_patch_protobuf_targets)
+  # 如果之前找到了 cxx_std_NN 的 INTERFACE_COMPILE_FEATURES, 就把 ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_PROTOBUF_CXX_STANDARD 设置成这个标准数字部分
+  if(ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_PROTOBUF_CXX_STANDARD)
+    foreach(PROTO_TARGET ${ARGN})
+      set_target_properties(${PROTO_TARGET} PROPERTIES CXX_STANDARD
+                                                       ${ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_PROTOBUF_CXX_STANDARD})
+    endforeach()
+
+    if(MSVC)
+      set(__additional_cxx_standard &quot;/std:c++${ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_PROTOBUF_CXX_STANDARD}&quot;)
+    else()
+      set(__additional_cxx_standard &quot;-std=c++${ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_PROTOBUF_CXX_STANDARD}&quot;)
+    endif()
+  endif()
+  foreach(PROTO_TARGET ${ARGN})
+    set(PROTO_TARGET_OPTIONS_CHANGED FALSE)
+    get_target_property(PROTO_TARGET_OPTIONS ${PROTO_TARGET} COMPILE_OPTIONS)
+    if(PROTO_TARGET_OPTIONS)
+      set(__need_cxx_standard TRUE)
+      if(NOT ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_PROTOBUF_CXX_STANDARD
+         OR PROTO_TARGET_OPTIONS MATCHES
+            &quot;(/std:|-std=)(c|gnu)\\+\\+${ATFRAMEWORK_CMAKE_TOOLSET_THIRD_PARTY_PROTOBUF_CXX_STANDARD}&quot;)
+        set(__need_cxx_standard FALSE)
+      else()
+        if(MSVC)
+          string(REGEX REPLACE &quot;/std:c\\+\\+[0-9a-zA-Z_]+&quot; &quot;&quot; PROTO_TARGET_OPTIONS &quot;${PROTO_TARGET_OPTIONS}&quot;)
+        endif()
+        string(REGEX REPLACE &quot;-std=(c|gnu)\\+\\+[0-9a-zA-Z_]+&quot; &quot;&quot; PROTO_TARGET_OPTIONS &quot;${PROTO_TARGET_OPTIONS}&quot;)
+        set(__need_cxx_standard TRUE)
+      endif()
+
+      # 我们原来有一些根据编译环境生产的Patch编译选项，放在 PROJECT_BUILD_TOOLS_PATCH_PROTOBUF_SOURCES_OPTIONS ，这里是做融合
+      foreach(TEST_OPTION ${PROJECT_BUILD_TOOLS_PATCH_PROTOBUF_SOURCES_OPTIONS})
+        if(NOT &quot;${TEST_OPTION}&quot; IN_LIST PROTO_TARGET_OPTIONS)
+          list(APPEND PROTO_TARGET_OPTIONS &quot;${TEST_OPTION}&quot;)
+          set(PROTO_TARGET_OPTIONS_CHANGED TRUE)
+        endif()
+      endforeach()
+      if(__need_cxx_standard)
+        list(APPEND PROTO_TARGET_OPTIONS &quot;${__additional_cxx_standard}&quot;)
+        set(PROTO_TARGET_OPTIONS_CHANGED TRUE)
+      endif()
+    else()
+      set(PROTO_TARGET_OPTIONS ${PROJECT_BUILD_TOOLS_PATCH_PROTOBUF_SOURCES_OPTIONS})
+      if(__additional_cxx_standard)
+        list(APPEND PROTO_TARGET_OPTIONS &quot;${__additional_cxx_standard}&quot;)
+      endif()
+      set(PROTO_TARGET_OPTIONS_CHANGED TRUE)
+    endif()
+    if(PROTO_TARGET_OPTIONS_CHANGED)
+      set_target_properties(${PROTO_TARGET} PROPERTIES COMPILE_OPTIONS &quot;${PROTO_TARGET_OPTIONS}&quot;)
+    endif()
+  endforeach()
+endfunction()
+</code></pre><p>不过把这个策略落下去之后，又遇到了两个“二次踩坑”。这俩坑的共同点是：<strong>仅凭 <code>cxx_std_NN</code> 并不足以推断“实际在用的编译标准/ABI约束”</strong>。</p><h3 id=新问题一cxx_std_nn-可能不准确>新问题一：<code>cxx_std_NN</code> 可能不准确</h3><p>上游工程实际使用了 C++17：</p><pre><code class=language-text>C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\string_view(12): warning STL4038: The contents of &lt;string_view&gt; are available only with C++17 or later. [D:\a\opentelemetry-cpp\opentelemetry-cpp\build\opentelemetry_proto.vcxproj]
+  (compiling source file '../../../../generated/third_party/opentelemetry-proto/opentelemetry/proto/common/v1/common.pb.cc')
+      C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\include\vector(29,1):
+      see declaration of 'std'
+  
+D:\a\opentelemetry-cpp\opentelemetry-cpp\tools\vcpkg\installed\x64-windows\include\absl\strings\string_view.h(53,26): error C2061: syntax error: identifier 'string_view' [D:\a\opentelemetry-cpp\opentelemetry-cpp\build\opentelemetry_proto.vcxproj]
+  (compiling source file '../../../../generated/third_party/opentelemetry-proto/opentelemetry/proto/common/v1/common.pb.cc')
+</code></pre><p>但 protobuf 导出的 package 却声称自己是 <code>cxx_std_14</code> （某些老一些的版本）：</p><pre><code class=language-cmake>get_target_property(protobuf_lib_compile_features protobuf::libprotobuf INTERFACE_COMPILE_FEATURES)
+if(protobuf_lib_compile_features MATCHES &quot;(^|\\s)cxx_std_([0-9]+)(|$\\s)&quot;)
+  message(
+    STATUS
+      &quot;protobuf::libprotobuf detected compile features cxx_std_${CMAKE_MATCH_2}.&quot;
+  )
+endif()
+</code></pre><p>输出是 <code>-- protobuf::libprotobuf detected compile features cxx_std_14.</code>。</p><p>所以这里的处理思路是：不要完全依赖 <code>cxx_std_NN</code>，而是把 <strong>C++20 作为 ABI 分界线</strong>。</p><p>如果你的工程整体用的是 C++20（或更高），而导入的 protobuf “看起来”低于 C++20，那么就需要避免让 <code>.pb.cc</code> 跨过 C++20；反过来也同理。</p><pre><code class=language-cmake>if(DEFINED CMAKE_CXX_STANDARD AND protobuf_lib_compile_features MATCHES
+                                  &quot;(^|\\s)cxx_std_([0-9]+)(|$\\s)&quot;)
+  # Whether the protobuf library using C++20 or higher may have different
+  # ABI. We need to make sure our proto targets are using the same C++
+  # standard.
+  if(${CMAKE_MATCH_2} LESS 20 AND CMAKE_CXX_STANDARD GREATER_EQUAL 20)
+    # Some versions of protobuf will set cxx_std_14, but actually require
+    # c++17
+    set(protobuf_lib_compile_features_cxx_std 17)
+  elseif(${CMAKE_MATCH_2} GREATER_EQUAL 20 AND CMAKE_CXX_STANDARD LESS 20)
+    set(protobuf_lib_compile_features_cxx_std ${CMAKE_MATCH_2})
+  endif()
+  message(
+    STATUS
+      &quot;protobuf::libprotobuf detected compile features cxx_std_${CMAKE_MATCH_2}.&quot;
+  )
+endif()
+</code></pre><h3 id=新问题二abseil-cpp-如果以-c20-配置编译会出现配置宏不匹配>新问题二：abseil-cpp 如果以 C++20 配置/编译，会出现“配置宏不匹配”</h3><p>在 Linux + GCC 上，如果你把 <code>.pb.cc</code> 强行降到 C++17，可能会遇到如下编译错误：</p><pre><code class=language-text>[  2%] Building CXX object CMakeFiles/opentelemetry_proto.dir/generated/third_party/opentelemetry-proto/opentelemetry/proto/resource/v1/resource.pb.cc.o
+In file included from /usr/local/include/absl/numeric/int128.h:41,
+                 from /usr/local/include/absl/strings/internal/str_format/arg.h:35,
+                 from /usr/local/include/absl/strings/str_format.h:83,
+                 from /usr/local/include/absl/crc/crc32c.h:32,
+                 from /usr/local/include/absl/crc/internal/crc_cord_state.h:23,
+                 from /usr/local/include/absl/strings/cord.h:80,
+                 from /usr/local/include/google/protobuf/io/coded_stream.h:111,
+                 from /home/runner/build/generated/third_party/opentelemetry-proto/opentelemetry/proto/resource/v1/resource.pb.h:20,
+                 from /home/runner/build/generated/third_party/opentelemetry-proto/opentelemetry/proto/resource/v1/resource.pb.cc:6:
+/usr/local/include/absl/types/compare.h:60:12: error: ‘partial_ordering’ has not been declared in ‘std’
+   60 | using std::partial_ordering;
+      |            ^~~~~~~~~~~~~~~~
+/usr/local/include/absl/types/compare.h:61:12: error: ‘strong_ordering’ has not been declared in ‘std’
+   61 | using std::strong_ordering;
+      |            ^~~~~~~~~~~~~~~
+/usr/local/include/absl/types/compare.h:62:12: error: ‘weak_ordering’ has not been declared in ‘std’
+   62 | using std::weak_ordering;
+      |            ^~~~~~~~~~~~~
+/usr/local/include/absl/types/compare.h:455:56: error: ‘weak_ordering’ in namespace ‘absl’ does not name a type
+  455 | constexpr bool compare_result_as_less_than(const absl::weak_ordering r) {
+      |                                                        ^~~~~~~~~~~~~
+/usr/local/include/absl/types/compare.h:470:17: error: ‘weak_ordering’ in namespace ‘absl’ does not name a type
+  470 | constexpr absl::weak_ordering compare_result_as_ordering(const Int c) {
+</code></pre><p>这里涉及 <a href=https://en.cppreference.com/w/cpp/language/operator_comparison.html#Three-way_comparison>Three-way comparison</a>（C++20 引入的 <code>&lt;compare></code> 与 <code>std::weak_ordering</code> 等类型）。当 abseil 在安装/打包阶段被“按 C++20 可用”来配置过，而你的 <code>.pb.cc</code> 又用 C++17 编译时，就会出现这种 “头文件里 <code>using std::weak_ordering;</code> 但标准库并未提供” 的报错。</p><p>这也说明了：即便你只想“把 <code>.pb.cc</code> 降回 C++17 来贴合 protobuf 的 ABI”，也必须确保 abseil 的配置/编译假设不会被打破。</p><p>此外还有一个容易误判的点：一些 protobuf 版本会写 <code>target_compile_features("${target}" PUBLIC cxx_std_17)</code>，但如果你在构建 protobuf 时设置了 <code>-DCMAKE_CXX_STANDARD=20</code>，那么它<strong>实际可能会用 C++20 编译</strong>，可导出的 package 信息仍然停留在 <code>cxx_std_17</code>。这会让“靠 package 元信息推断 ABI”变得更不可靠。</p><p>因此，更稳妥（但成本更高）的思路是：在工具链层面做一个小探针，分别用 <code>-std=c++17</code> 和 <code>-std=c++20</code>（或 MSVC 对应的 <code>/std:c++XX</code>）尝试编译/链接一个最小样例，判断当前安装的 protobuf/abseil 组合到底要求哪个标准。</p><pre><code class=language-cpp>#include &lt;iostream&gt;
+#include &lt;google/protobuf/message.h&gt;
+int main () {
+  std::cout&lt;&lt; ::google::protobuf::internal::fixed_address_empty_string.get()&lt;&lt; std::endl;
+  return 0;
+}
+</code></pre><p>当然实际情况还和 protobuf/abseil 具体版本、打包方式、编译器/标准库实现有关，落地时要保留余地。</p><p>不过实际上，在Linux+GCC 13里，protobuf用C++17，而 <code>.pb.cc</code> 使用C++20是没问题的。因为这样虽然符号表里有非 <code>constexpr</code> 的分支，但是编译 <code>.pb.cc</code> 的时候，整个 <code>fixed_address_empty_string</code> 走编译期计算了。
+因为 <code>constexpr</code> 并不是强制性的编译期评估（ <code>consteval</code> 才是 ）,所以如果依赖这个行为的话会和编译环境、编译器版本相关。而恰好MSVC没有全部走编译期计算，所以触发了这个问题。</p><h3 id=官方的临时解决方案>官方的临时解决方案</h3><p>截至写作时间，最新 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 主干分支已经把相关逻辑改成了下面这样：在 MSVC 下强制禁用 <code>constexpr std::string</code> 的那条优化路径，从而规避跨标准导致的符号不一致问题。</p><p>这类改动在发布版落地之前，可以视作一个“临时止血方案”（前提是你能升级到包含该修复的版本/提交，或在自维护分支里 backport）。</p><pre><code class=language-cpp>// Take advantage of C++20 constexpr support in std::string.
+class alignas(8) GlobalEmptyStringConstexpr {
+ public:
+  const std::string&amp; get() const { return value_; }
+  // Nothing to init, or destroy.
+  std::string* Init() const { return nullptr; }
+
+  // Disable the optimization for MSVC and Xtensa.
+  // There are some builds where the default constructed string can't be used as
+  // `constinit` even though the constructor is `constexpr` and can be used
+  // during constant evaluation.
+#if !defined(_MSC_VER) &amp;&amp; !defined(__XTENSA__)
+  // Compilation fails on Xtensa: b/467129751
+  template &lt;typename T = std::string, bool = (T(), true)&gt;
+  static constexpr std::true_type HasConstexprDefaultConstructor(int) {
+    return {};
+  }
+#endif
+  static constexpr std::false_type HasConstexprDefaultConstructor(char) {
+    return {};
+  }
+
+ private:
+  std::string value_;
+};
+</code></pre><h2 id=最后>最后</h2><p>Google 生态下 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 的坑确实不少。如果你对我之前踩过的其他 protobuf 相关坑感兴趣，可以直接在 Blog 里搜关键词 <code>protobuf</code>。</p><p>欢迎小伙伴们交流拍砖。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2026-01-11T01:15:45.000+00:00 itemprop=datePublished>2026-01-11</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/protobuf.html>protobuf</a></li><li class=article-tag-list-item><a href=//owent.net/tags/abi.html>ABI</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2026/2602.html>下一篇<strong>AI真好用-给Blog主题统一加mermaid,chart.js,excalidraw,draw.io的多种引入方式支持</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;owent
+</strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong><span class=clearfix></span></div></div></footer></div><script type=importmap>
+{"imports":{"@popperjs/core":"https://esm.run/popper.js","bootstrap":"https://esm.run/bootstrap","react":"https://esm.run/react","react-bootstrap":"https://esm.run/react-bootstrap"}}
+</script><script type=module>// import * as Popper from "@popperjs/core";// import * as bootstrap from "bootstrap";
+// import React from "react";
+
+        
+</script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/accesslog.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/armasm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/awk.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/basic.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/bnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/capnproto.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/cmake.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/d.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dockerfile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dos.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/erlang.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/ebnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/latex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/llvm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/lua.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/powershell.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/protobuf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/profile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/vim.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/x86asm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/yaml.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/vs2015.min.css",document.querySelector("head").appendChild(t),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const n={};for(const e of hljs.listLanguages())n[e.toLowerCase()]=!0;for(const e of document.querySelectorAll("pre>code"))try{if(e.className.match(/\bmermaid\b/i)){e.classList.add("mermaid");continue}if(e.className.match(/\bexcalidraw\b/i)){e.classList.add("excalidraw-root");continue}if(e.className.match(/\bdrawio\b/i)){e.classList.add("drawio-root"),e.classList.add("mxgraph");continue}if(e.className.match(/\bchart(js)?\b/i)){e.classList.add("chartjs-container");continue}if(e.className.match(/\bnohighlight\b/i))continue;const t=e.className.match(/language-([^\s]+)/i);if(t&&t.length>=2&&hljs.getLanguage(t[1]))hljs.highlightElement(e);else{const t=hljs.highlightAuto(e.innerText,hljs.listLanguages());t&&t.value&&(e.innerHTML=t.value,e.classList.add("hljs"))}}catch(e){window.console&&console.log(e.toString()+`\r
+Maybe can not detect the language`)}})</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-PQEY77BYG1"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-PQEY77BYG1")}</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css",document.querySelector("head").appendChild(t),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript>var _hmt=_hmt||[];(function(){var t,n,e=document.createElement("script");e.src="https://hm.baidu.com/hm.js?6a0daf8d58889f1cf55a353867bfdbb0",t=document.getElementsByTagName("script"),n=document.getElementsByTagName("script")[t.length-1],n.parentNode.appendChild(e)})()</script></div></body></html>
