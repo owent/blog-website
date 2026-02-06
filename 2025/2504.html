@@ -255,7 +255,7 @@ Executor::Executor(const char* name) : name_(name) {
 比如Prometheus Exporter，受限于上游Prometheus CPP库实现得比较暴力，导致只支持同步输出。
 而早期得OTLP接口，也使用得时gRPC和CURL得同步接口。</p><p>其实在大多数场景下，在BatchProcessor合批优化后，即便链路跟踪每秒产生数万条Span。同步输出也是足够的。
 而tRPC这里碰到的场景比较特殊，首先是有大量的日志持续不断地产生。其次平台方在高压力情况下产生了高延迟，一次调用超过100ms。
-最终就导致了导出过程中产生新日志地数量大于消费数量而丢日志。</p><p>实际上这里更高并发度的话平台时可以处理的，所以我就给OTLP协议实现了并发导出支持。</p><p><img src=2504-39.png alt=2504-39.png loading=lazy></p><ul><li>对于gRPC，因为内部有io线程。所以最早我是加了个线程做同步用。后来新版本新增了async接口，可以复用gRPC的线程。于是现在统一改成gRPC async接口做数据同步，可以少一个不必要的线程开销。</li></ul><pre><code class=language-{mermaid}>flowchart LR
+最终就导致了导出过程中产生新日志地数量大于消费数量而丢日志。</p><p>实际上这里更高并发度的话平台时可以处理的，所以我就给OTLP协议实现了并发导出支持。</p><p><img src=2504-39.png alt=2504-39.png loading=lazy></p><ul><li>对于gRPC，因为内部有io线程。所以最早我是加了个线程做同步用。后来新版本新增了async接口，可以复用gRPC的线程。于是现在统一改成gRPC async接口做数据同步，可以少一个不必要的线程开销。</li></ul><pre><code class=language-mermaid>flowchart LR
  subgraph SDK[&quot;OTEL-CPP SDK层&quot;]
     direction TB
         Recordable(&quot;fa:fa-file-text Trace/Metrics/Logs数据&quot;)
@@ -277,7 +277,7 @@ Executor::Executor(const char* name) : name_(name) {
     IOMGR --&gt; Thread1 &amp; Thread2 &amp; Thread3 &amp; Thread4
     Exporter1 --&gt; IOMGR
     SDK --&gt; Exporter
-</code></pre><ul><li>对于HTTP，由于现在 <a href=https://github.com/open-telemetry/opentelemetry-cpp>OTEL-CPP</a> 没有实现自己的event poll机制。所以复用了curl内置的poll机制（curl是支持绑定外部event poll的）。这个默认poll再Linux下是走poll接口（不是epoll），Windows上是select。我们一个Exporter通常并发度不需要太高，所以select也是足够的。但是这里需要一个额外的线程去调用poll，去做IO同步。</li></ul><pre><code class=language-{mermaid}>flowchart LR
+</code></pre><ul><li>对于HTTP，由于现在 <a href=https://github.com/open-telemetry/opentelemetry-cpp>OTEL-CPP</a> 没有实现自己的event poll机制。所以复用了curl内置的poll机制（curl是支持绑定外部event poll的）。这个默认poll再Linux下是走poll接口（不是epoll），Windows上是select。我们一个Exporter通常并发度不需要太高，所以select也是足够的。但是这里需要一个额外的线程去调用poll，去做IO同步。</li></ul><pre><code class=language-mermaid>flowchart LR
  subgraph SDK[&quot;OTEL-CPP SDK层&quot;]
     direction TB
         Recordable(&quot;fa:fa-file-text Trace/Metrics/Logs数据&quot;)
@@ -373,7 +373,7 @@ static bool should_sample_trace_span() {
 
   return atfw::util::random_engine::fast_random_between&lt;int64_t&gt;(0, 0x1000000) &lt; metrics_data.sample_rate;
 }
-</code></pre><h3 id=指标的性能和易用性优化>指标的性能和易用性优化</h3><p>前面提到，指标的采集和合并其实实在单独的后台线程。上报也分Pull模式和Push模式。整个流程是有差异的。</p><p>大致的采集流程如下：</p><pre><code class=language-{mermaid}>flowchart LR
+</code></pre><h3 id=指标的性能和易用性优化>指标的性能和易用性优化</h3><p>前面提到，指标的采集和合并其实实在单独的后台线程。上报也分Pull模式和Push模式。整个流程是有差异的。</p><p>大致的采集流程如下：</p><pre><code class=language-mermaid>flowchart LR
  subgraph PullExporter[&quot;Pull模式驱动器&quot;]
     direction LR
         PPull(&quot;Prometheus Pull Exporter

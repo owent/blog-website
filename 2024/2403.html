@@ -114,7 +114,7 @@ void BatchSpanProcessor::NotifyCompletion(
     synchronization_data-&gt;force_flush_cv.notify_one();
   }
 }
-</code></pre><p>简单描述一下就是在退出阶段，首先要设置shutdown flag，然后唤醒后台线程导出数据。之后用一个 <code>std::condition_variable</code> 来等待后台线程通知导出完成。然后自己再退出，时序大概如下:</p><pre><code class=language-{mermaid}>sequenceDiagram
+</code></pre><p>简单描述一下就是在退出阶段，首先要设置shutdown flag，然后唤醒后台线程导出数据。之后用一个 <code>std::condition_variable</code> 来等待后台线程通知导出完成。然后自己再退出，时序大概如下:</p><pre><code class=language-mermaid>sequenceDiagram
     Caller-&gt;&gt;Caller: 采集当前待上报边界
     Background-&gt;&gt;Background: 启动
     Caller-&gt;&gt;Background: 通知唤醒后台线程(condition_variable-1)

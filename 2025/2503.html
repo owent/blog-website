@@ -9,7 +9,7 @@
 但是这种情况下由于 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 内部存在后台Processor线程、Exporter线程等，指标的采集往往需要跨线程操作。
 这就要求我们上报代码逻辑需要保证线程安全。</p><p>而要求所有逻辑代码保证线程安全，一方面对于深层次有复杂关系的数据，代码复杂度比较高，很容易出错；另一方面如果过多无脑加锁也会一种开销和资源浪费。
 所以我尝试抽象了一组接口来屏蔽这个细节，让业务层可以无脑接入。</p><h2 id=性能和易用性问题>性能和易用性问题</h2><p>最早我们使用 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 比较粗暴，直接调用同步接口。在上报量稍微大点的时候，因为频繁触发视图的属性比较和Merge计算，导致某些场景的CPU开销能占到 10%。
-所以后来进行了一系列优化，第一步骤就是通过一些预统计，减少属性集比较和视图合并。然后采用异步接口上报。</p><p>大致的采集流程如下：</p><pre><code class=language-{mermaid}>flowchart LR
+所以后来进行了一系列优化，第一步骤就是通过一些预统计，减少属性集比较和视图合并。然后采用异步接口上报。</p><p>大致的采集流程如下：</p><pre><code class=language-mermaid>flowchart LR
   subgraph PullExporter[&quot;Pull模式驱动器&quot;]
     direction LR
         PPull(&quot;Prometheus Pull Exporter
