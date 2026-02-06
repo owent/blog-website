@@ -14,26 +14,26 @@ const DG_Num DG_MAXN = 1005;
 //2^n
 DG_Num LowBit(DG_Num n)
 {
-    return n &amp;amp; (-n);
+    return n & (-n);
 }
 //获取父节点索引
 DG_Num DGFather(DG_Num n)
 {
-    return n &#43; LowBit(n &#43; 1);
+    return n + LowBit(n + 1);
 }
 //获取小的兄弟节点索引
 DG_Num DGBrother(DG_Num n)
 {
-    return n - LowBit(n &#43; 1);
+    return n - LowBit(n + 1);
 }
 //查找增加树状数组前pos项和
 //参数(树状数组[in],索引[in],初始赋0即查找前n项和[out])
 //复杂度:log(n)
-void DGFind(DG_Ran *g,DG_Num pos,DG_Ran &amp;amp;sum)
+void DGFind(DG_Ran *g,DG_Num pos,DG_Ran &sum)
 {
-    sum &#43;= *(g &#43; pos);
-    if(pos &amp;gt;= LowBit(pos &#43; 1))
-        DGFind(g, pos - LowBit(pos &#43; 1), sum);
+    sum += *(g + pos);
+    if(pos >= LowBit(pos + 1))
+        DGFind(g, pos - LowBit(pos + 1), sum);
 }
 //查找对应线性数组元素
 //参数(树状数组[in],索引[in]).
@@ -56,16 +56,16 @@ DG_Ran DGFindEle(DG_Ran *g,DG_Num pos)
 //复杂度:log(n)
 DG_Ran DGAdd(DG_Ran *g,DG_Num n,DG_Ran val)
 {
-    *(g &#43; n) = val;
+    *(g + n) = val;
     DG_Num a = n;
     DG_Num b = 1;
-    while((a &amp;amp; (~b)) != a)
+    while((a & (~b)) != a)
     {
-        *(g &#43; n) &#43;= *(g &#43; a - 1);
-        a &amp;amp;= (~b);
-        b &amp;lt;&amp;lt;= 1;
+        *(g + n) += *(g + a - 1);
+        a &= (~b);
+        b <<= 1;
     }
-    return n &#43; 1;
+    return n + 1;
 }
 //构建树状数组
 //参数:线性数组[in],数组大小[in],树状数组[out]
@@ -74,8 +74,8 @@ DG_Ran DGCreate(DG_Ran *g,DG_Num n,DG_Ran *tg)
 {
     DG_Num i;
     *tg = *g;
-    for(i = 1 ; i &amp;lt; n ; i &#43;&#43;)
-        DGAdd(tg,i,*(g &#43; i));
+    for(i = 1 ; i < n ; i ++)
+        DGAdd(tg,i,*(g + i));
     return n;
 }
 //修改指定位置值
@@ -84,11 +84,11 @@ DG_Ran DGCreate(DG_Ran *g,DG_Num n,DG_Ran *tg)
 DG_Ran DGEdit(DG_Ran *g,DG_Num pos,DG_Num n,DG_Ran val)
 {
     DG_Num f = DGFather(pos);
-    DG_Ran o = *( g &#43; pos );
-    *( g &#43; pos ) = val;
-    if(f &amp;lt; n)
+    DG_Ran o = *( g + pos );
+    *( g + pos ) = val;
+    if(f < n)
     {
-        DG_Ran fv = val - o &#43; *( g &#43; f );
+        DG_Ran fv = val - o + *( g + f );
         DGEdit(g, f, n, fv);
     }
     return n;
@@ -96,30 +96,30 @@ DG_Ran DGEdit(DG_Ran *g,DG_Num pos,DG_Num n,DG_Ran val)
 
 //树状数组的翻转(树状数组的应用)
 //一维  复杂度log(n)
-//小于等于指定位置的元素的翻转&amp;lt;=pos
+//小于等于指定位置的元素的翻转<=pos
 void DGDown1(DG_Ran g[],DG_Num pos,DG_Ran av)
 {
-    while(pos &amp;gt;= 0)
-        g[pos] &#43;= av , pos = DGBrother(pos);
+    while(pos >= 0)
+        g[pos] += av , pos = DGBrother(pos);
 }
 //获取位置pos的元素翻转次数
 DG_Ran DGCUp1(DG_Ran g[],DG_Num pos , DG_Num n)
 {
     DG_Ran t = 0;
-    while(pos &amp;lt; n)
-        t &#43;= g[pos] , pos = DGFather(pos);
+    while(pos < n)
+        t += g[pos] , pos = DGFather(pos);
     return t;
 }
 //二维  复杂度(log(n))^2
-//小于等于指定位置的元素的翻转(0,0)-&amp;gt;(x,y)
+//小于等于指定位置的元素的翻转(0,0)->(x,y)
 void DGDown2(DG_Ran g[][DG_MAXN],DG_Num x ,DG_Num y,DG_Ran av)
 {
-    while(x &amp;gt;= 0)
+    while(x >= 0)
     {
         DG_Num tmp = y;
-        while (tmp &amp;gt;= 0)
+        while (tmp >= 0)
         {
-            g[x][tmp] &#43;= av;
+            g[x][tmp] += av;
             tmp = DGBrother(tmp);
         }
         x = DGBrother(x);
@@ -129,12 +129,12 @@ void DGDown2(DG_Ran g[][DG_MAXN],DG_Num x ,DG_Num y,DG_Ran av)
 DG_Ran DGCUp2(DG_Ran g[][DG_MAXN],DG_Num x ,DG_Num y , DG_Num n)
 {
     DG_Ran t = 0;
-    while(x &amp;lt; n)
+    while(x < n)
     {
         DG_Num tmp = y;
-        while (tmp &amp;lt; n)
+        while (tmp < n)
         {
-            t &#43;= g[x][tmp];
+            t += g[x][tmp];
             tmp = DGFather(tmp);
         }
         x = DGFather(x);

@@ -5,33 +5,33 @@
 <input class=form-control type=text placeholder=搜索 name=q>
 <button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-8b4f47a5cfdde80d7acb72451d69c6f1 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2010/17.html target=_blank itemprop=url>简易四则运算(ACM个人模板)</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><pre><code class=language-cpp>/**
  * 简易四则运算（栈实现）
- * #include &amp;lt;stack&amp;gt;
- * #include &amp;lt;cstring&amp;gt;
+ * #include <stack>
+ * #include <cstring>
  */
-std::stack&amp;lt;char&amp;gt; opr;
-std::stack&amp;lt;double&amp;gt; num;
+std::stack<char> opr;
+std::stack<double> num;
 char oprPRI[256];
 //初始化调用
 void initCalc()
 {
     //优先级设置
-    char oprMap[7][2] = { {&amp;#39;&#43;&amp;#39;, 1}, {&amp;#39;-&amp;#39;, 1}, {&amp;#39;*&amp;#39;, 2}, {&amp;#39;/&amp;#39;, 2}, {&amp;#39;^&amp;#39;, 3}, {&amp;#39;(&amp;#39;, 100}, {&amp;#39;)&amp;#39;, 0} };
-    for(int i = 0; i &amp;lt; 7; i &#43;&#43;)
+    char oprMap[7][2] = { {'+', 1}, {'-', 1}, {'*', 2}, {'/', 2}, {'^', 3}, {'(', 100}, {')', 0} };
+    for(int i = 0; i < 7; i ++)
         oprPRI[oprMap[i][0]] = oprMap[i][1];
 }
 bool checkNum(char c)
 {
-    return c == &amp;#39;.&amp;#39; || (c &amp;gt;= &amp;#39;0&amp;#39; &amp;amp;&amp;amp; c &amp;lt;= &amp;#39;9&amp;#39;);
+    return c == '.' || (c >= '0' && c <= '9');
 }
 double calcOpr(double l, double r, char opr)
 {
     switch(opr)
     {
-        case &amp;#39;&#43;&amp;#39;: return l &#43; r;
-        case &amp;#39;-&amp;#39;: return l - r;
-        case &amp;#39;*&amp;#39;: return l * r;
-        case &amp;#39;/&amp;#39;: return l / r;
-        case &amp;#39;^&amp;#39;: return ::pow(l, r);
+        case '+': return l + r;
+        case '-': return l - r;
+        case '*': return l * r;
+        case '/': return l / r;
+        case '^': return ::pow(l, r);
     }
     return 0.0;
 }
@@ -53,37 +53,37 @@ double calc(const char str[])
         num.pop();
     int i = 0, len = strlen(str);
     num.push(0.0);
-    opr.push(&amp;#39;(&amp;#39;);
-    while(i &amp;lt; len)
+    opr.push('(');
+    while(i < len)
     {
         if(::checkNum(str[i]))
         {
             double l;
-            ::sscanf(str &#43; i, &amp;#34;%lf&amp;#34;, &amp;amp;l);
+            ::sscanf(str + i, "%lf", &l);
             while(::checkNum(str[i]))
-            i &#43;&#43;;
+            i ++;
             num.push(l);
         }
         else
         {
-            char c = str[i &#43;&#43;];
-            if(c == &amp;#39;)&amp;#39;)
+            char c = str[i ++];
+            if(c == ')')
             {
-                while(opr.top() != &amp;#39;(&amp;#39;)
+                while(opr.top() != '(')
                     calcStack();
                 opr.pop();
             }
-            else if(oprPRI[c] &amp;gt; oprPRI[opr.top()])
+            else if(oprPRI[c] > oprPRI[opr.top()])
                 opr.push(c);
             else
             {
-                while(opr.top() != &amp;#39;(&amp;#39; &amp;amp;&amp;amp; oprPRI[c] &amp;lt;= oprPRI[opr.top()])
+                while(opr.top() != '(' && oprPRI[c] <= oprPRI[opr.top()])
                     calcStack();
                 opr.push(c);
             }
         }
     }
-    while(opr.size() &amp;gt; 1)
+    while(opr.size() > 1)
         calcStack();
     return num.top();
 }</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2010-08-10T18:40:31.000+00:00 itemprop=datePublished>2010-08-10</time></span>

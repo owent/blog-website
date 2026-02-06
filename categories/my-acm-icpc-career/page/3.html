@@ -3,10 +3,10 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/categories/my-acm-icpc-career/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-63"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/63.html target=_blank itemprop=url>POJ PKU 1990 MooFest 解题报告</a></h1></header><div class=article-summary><p>为什么我用线段数这么不灵活呢？</p><p>大概思路是线段数记录某牛之前的坐标小于这个牛的牛的坐标和和牛的个数</p><p>然后其他部分线性数组记录</p><p>OK，贴代码</p><pre><code class=language-cpp>#include &amp;lt;iostream&amp;gt;
-#include &amp;lt;cstdio&amp;gt;
-#include &amp;lt;cstring&amp;gt;
-#include &amp;lt;algorithm&amp;gt;
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-63"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/63.html target=_blank itemprop=url>POJ PKU 1990 MooFest 解题报告</a></h1></header><div class=article-summary><p>为什么我用线段数这么不灵活呢？</p><p>大概思路是线段数记录某牛之前的坐标小于这个牛的牛的坐标和和牛的个数</p><p>然后其他部分线性数组记录</p><p>OK，贴代码</p><pre><code class=language-cpp>#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
 using namespace std;
 
 #define MAXN 20005
@@ -21,7 +21,7 @@ public:
 
 bool cmp(cow a,cow b)
 {
-    return a.v &amp;lt; b.v;
+    return a.v < b.v;
 }
 cow cw[MAXN];
 long long belowXNT[MAXN];//树状数组，保存小于等于某坐标的牛的个数,计算时使用
@@ -32,22 +32,22 @@ long long velowXRA[MAXN];//一般数组，保存小于等于某牛的坐标之�
 
 int lowbit(int t)
 {
-    return t&amp;amp;(t^(t-1));
+    return t&(t^(t-1));
 }
 void setVal(int pos, int num, long long treeG[], int maxn)
 {
-    while (pos &amp;lt;= maxn)
+    while (pos <= maxn)
     {
-        treeG[pos] &#43;= num;
-        pos &#43;= lowbit(pos);
+        treeG[pos] += num;
+        pos += lowbit(pos);
     }
 }
 long long getSum(int pos, long long treeG[])
 {
     long long sum = 0;
-    while (pos &amp;gt; 0)
+    while (pos > 0)
     {
-        sum &#43;= treeG[pos];
+        sum += treeG[pos];
         pos -= lowbit(pos);
     }
     return sum;
@@ -64,25 +64,25 @@ int main()
     memset(velowXR, 0, sizeof(velowXR));
     memset(velowXRA, 0, sizeof(velowXRA));
     memset(velowXRT, 0, sizeof(velowXRT));
-    scanf(&amp;#34;%d&amp;#34;,&amp;amp;n);
-    for(i = 0 ; i &amp;lt; n ; i &#43;&#43;)
-        scanf(&amp;#34;%d %d&amp;#34;, &amp;amp;cw[i].v, &amp;amp;cw[i].pos);
+    scanf("%d",&n);
+    for(i = 0 ; i < n ; i ++)
+        scanf("%d %d", &cw[i].v, &cw[i].pos);
 
-    sort(cw, cw &#43; n, cmp);
-    for(i = 0 ; i &amp;lt; n ; i &#43;&#43;)
+    sort(cw, cw + n, cmp);
+    for(i = 0 ; i < n ; i ++)
     {
-        velowXRA[i] = velowXRA[i - 1] &#43; cw[i].pos;
+        velowXRA[i] = velowXRA[i - 1] + cw[i].pos;
         setVal(cw[i].pos, 1, belowXNT, MAXN);
         setVal(cw[i].pos, cw[i].pos, velowXRT, MAXN);
         velowXR[i] = getSum(cw[i].pos, velowXRT);
         belowXN[i] = getSum(cw[i].pos, belowXNT);
     }
 
-    for(i = 1 ; i &amp;lt; n ; i &#43;&#43;)
-        //output &#43;= cw[i].v * ((belowXN[i] - 1) * cw[i].pos - velowXR[i] &#43; cw[i].pos &#43; velowXRA[i] - velowXR[i] - (i - belowXN[i] &#43; 1) * cw[i].pos);
-        output &#43;= cw[i].v * ((belowXN[i] - i &#43; belowXN[i] - 1 ) * cw[i].pos - 2 * velowXR[i] &#43; velowXRA[i]);//这里是上面式子的简化版
+    for(i = 1 ; i < n ; i ++)
+        //output += cw[i].v * ((belowXN[i] - 1) * cw[i].pos - velowXR[i] + cw[i].pos + velowXRA[i] - velowXR[i] - (i - belowXN[i] + 1) * cw[i].pos);
+        output += cw[i].v * ((belowXN[i] - i + belowXN[i] - 1 ) * cw[i].pos - 2 * velowXR[i] + velowXRA[i]);//这里是上面式子的简化版
 
-    printf(&amp;#34;%lld\n&amp;#34;,output);
+    printf("%lld\n",output);
     return 0;
 }</code></pre></div><div class=article-more><a href=//owent.net/2009/63.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2009-12-23T14:12:52.000+00:00 itemprop=datePublished>2009-12-23</time></div></div></article><article class="article-panel archive-article archive-type-64"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/64.html target=_blank itemprop=url>POJ PKU 2378 Tree Cutting 解题报告</a></h1></header><div class=article-summary><p>又来发解题报告了</p><p>这回是树状DP</p><pre><code class=language-cpp>/*
  * 树状DP
@@ -91,57 +91,57 @@ int main()
  * 可令degree[i]为包括i且以i为根节点的所有子节点数量
  * dp[i]为删除i后的最大子节点数量或父亲节点数量 （这里我理解了很久）
  */
-#include&amp;lt;iostream&amp;gt;
-#include&amp;lt;cstdio&amp;gt;
-#include&amp;lt;vector&amp;gt;
+#include<iostream>
+#include<cstdio>
+#include<vector>
 using namespace std;
-vector&amp;lt;int&amp;gt;chirld[10002];
+vector<int>chirld[10002];
 int dp[10002] = {0}
     ,degree[10002] = {0}
     ,isJudged[10002] = {0};
 
-int search(int pos,int &amp;amp;n);
+int search(int pos,int &n);
 int main()
 {
     int n,i,a,b;
     bool isnone = true;
-    scanf(&amp;#34;%d&amp;#34;,&amp;amp;n);
-    for(i = 1 ; i &amp;lt; n ; i &#43;&#43;)
+    scanf("%d",&n);
+    for(i = 1 ; i < n ; i ++)
     {
-        scanf(&amp;#34;%d %d&amp;#34;,&amp;amp;a,&amp;amp;b);
+        scanf("%d %d",&a,&b);
         chirld[a].push_back(b);
         chirld[b].push_back(a);
     }
 
     search(1 , n);
 
-    for(i = 1 ; i &amp;lt;= n ; i &#43;&#43;)
-        if(dp[i] * 2 &amp;lt;= n)
-            printf(&amp;#34;%d\n&amp;#34;,i) , isnone = false;
+    for(i = 1 ; i <= n ; i ++)
+        if(dp[i] * 2 <= n)
+            printf("%d\n",i) , isnone = false;
 
     if(isnone)
-        printf(&amp;#34;NONE\n&amp;#34;);
+        printf("NONE\n");
     return 0;
 }
 
-int search(int pos,int &amp;amp;n)
+int search(int pos,int &n)
 {
     int i,j;
     degree[pos] = 1;
     isJudged[pos] = 1;
     dp[pos] = 0;
 
-    for(i = 0 ; i &amp;lt; chirld[pos].size() ; i &#43;&#43;)
+    for(i = 0 ; i < chirld[pos].size() ; i ++)
     {
         if(!isJudged[chirld[pos].at(i)])//如果已经判断过就是父亲节点了
         {
-            degree[pos] &#43;= search(chirld[pos].at(i) , n);
-            if(dp[pos] &amp;lt; degree[chirld[pos].at(i)])
+            degree[pos] += search(chirld[pos].at(i) , n);
+            if(dp[pos] < degree[chirld[pos].at(i)])
                 dp[pos] = degree[chirld[pos].at(i)];
         }
     }
 
-    if(dp[pos] &amp;lt; n - degree[pos])//判断父亲节点数量
+    if(dp[pos] < n - degree[pos])//判断父亲节点数量
         dp[pos] = n - degree[pos];
     return degree[pos];
 }</code></pre></div><div class=article-more><a href=//owent.net/2009/64.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2009-12-23T14:09:13.000+00:00 itemprop=datePublished>2009-12-23</time></div></div></article><article class="article-panel archive-article archive-type-65"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/65.html target=_blank itemprop=url>POJ PKU 2528 Mayor's posters 解题报告</a></h1></header><div class=article-summary><p>题目链接: <a href="http://acm.pku.edu.cn/JudgeOnline/bbs?problem_id=2528">http://acm.pku.edu.cn/JudgeOnline/bbs?problem_id=2528</a></p><p>这题又是线段树+离散化</p><p>慢慢的对离散化有点感觉了,但是这题我还是错了3次</p><p>题目大意是一层一层地叠板子,问最后能看到几块</p><p>输入是板子的开始和结束位置</p></div><div class=article-more><a href=//owent.net/2009/65.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2009-11-18T17:49:55.000+00:00 itemprop=datePublished>2009-11-18</time></div></div></article><article class="article-panel archive-article archive-type-67"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/67.html target=_blank itemprop=url>POJ PKU 3277 City Horizon 解题报告</a></h1></header><div class=article-summary><p>题目链接:<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3277">http://acm.pku.edu.cn/JudgeOnline/problem?id=3277</a></p><p>线段树+离散化</p><p>ACM预选赛过去了,可是我们队什么都没拿到,这给我们的打击是相当大的,这也很大程度上体现了我们的不足</p><p>一直没能静下心,来,今天决定不能再这么悲伤下去,我要奋斗,继续学习,就从之前的断点线段树开始</p></div><div class=article-more><a href=//owent.net/2009/67.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2009-11-12T17:23:39.000+00:00 itemprop=datePublished>2009-11-12</time></div></div></article><article class="article-panel archive-article archive-type-69"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/69.html target=_blank itemprop=url>POJ PKU 2549 Sumsets 解题报告</a></h1></header><div class=article-summary><p><a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=2549">题目链接http://acm.pku.edu.cn/JudgeOnline/problem?id=2549</a></p><p>这道题伤了我很久脑筋</p><p>因为是a+b+c=d,数据量是1000,很自然地想到a+b=d-c</p><p>这样转化为n^2的算法.</p><p>但是我开始枚举d-c的集合二分查找a+b的几何不知道为什么WA掉了</p></div><div class=article-more><a href=//owent.net/2009/69.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2009-10-04T15:54:36.000+00:00 itemprop=datePublished>2009-10-04</time></div></div></article><article class="article-panel archive-article archive-type-74"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/74.html target=_blank itemprop=url>最长单调子序列 复杂度nlog(n)</a></h1></header><div class=article-summary><pre><code class=language-cpp>//最长单调子序列 复杂度nlog(n)
@@ -152,7 +152,7 @@ typedef double LISTYPE;
 #define LISMAXN 10000
 int LIScmp(LISTYPE a,LISTYPE b)
 {
-    return a &amp;lt; b;
+    return a < b;
 }
 long LISLength(LISTYPE list[],long n,LISTYPE lengthRecord[])
 {
@@ -160,49 +160,49 @@ long LISLength(LISTYPE list[],long n,LISTYPE lengthRecord[])
     LISTYPE lR[LISMAXN];
     lR[0] = list[0];
 
-    for(int i = 1 ; i &amp;lt; n ; i &#43;&#43;)
+    for(int i = 1 ; i < n ; i ++)
     {
         //二分查找,复杂度 log(n)
         int b,e,m;
         b = 0;
         e = length - 1;
-        while(b &amp;lt;= e &amp;amp;&amp;amp; e &amp;gt;= 0)
+        while(b <= e && e >= 0)
         {
-            m = (b &#43; e) / 2;
+            m = (b + e) / 2;
             if(LIScmp(lR[m],list[i]))
-                b = m &#43; 1;
+                b = m + 1;
             else
                 e = m - 1;
         }
         lR[b] = list[i];
-        if(b &amp;gt;= length)
-            length &#43;&#43;;
+        if(b >= length)
+            length ++;
     }
     /*
     *计算序列部分
     *复杂度nlog(n)
     */
     lth = 1;
-    for(int i = 1 ; i &amp;lt; n ; i &#43;&#43;)
+    for(int i = 1 ; i < n ; i ++)
     {
         //二分查找,复杂度 log(n)
         int b,e,m;
         b = 0;
         e = lth - 1;
-        while(b &amp;lt;= e &amp;amp;&amp;amp; e &amp;gt;= 0)
+        while(b <= e && e >= 0)
         {
-            m = (b &#43; e) / 2;
+            m = (b + e) / 2;
             if(LIScmp(lR[m],list[i]))
-                b = m &#43; 1;
+                b = m + 1;
             else
                 e = m - 1;
         }
         lR[b] = list[i];
-        if(b &amp;gt;= lth)
-            lth &#43;&#43;;
+        if(b >= lth)
+            lth ++;
         if(lth == length)
         {
-            for(b = 0 ; b &amp;lt; length ; b &#43;&#43;)
+            for(b = 0 ; b < length ; b ++)
                 lengthRecord[b] = lR[b];
             break;
         }
@@ -224,19 +224,19 @@ PrimeType GetPrimeLength(const long n)
     long tmpPos = 0,left = n - 1;
     PrimeType sumLen = 0;
 
-    for(long i = 1 ; i &amp;lt; n ; i &#43;&#43;)
+    for(long i = 1 ; i < n ; i ++)
         PrimeRecord[i] = dis[0][i];
     while(left --)
     {
         tmpLen = MAXNUM;
-        for(long i = 1 ; i &amp;lt; n ; i &#43;&#43;)
-            if(!isLined[i] &amp;amp;&amp;amp; PrimeRecord[i] &amp;lt; tmpLen)
+        for(long i = 1 ; i < n ; i ++)
+            if(!isLined[i] && PrimeRecord[i] < tmpLen)
                 tmpPos = i,tmpLen = PrimeRecord[i];
 
-        sumLen &#43;= tmpLen;
-        isLined[tmpPos] &#43;&#43;;
-        for(long i = 1 ; i &amp;lt; n ; i &#43;&#43;)
-            if(dis[tmpPos][i] &amp;lt; PrimeRecord[i])
+        sumLen += tmpLen;
+        isLined[tmpPos] ++;
+        for(long i = 1 ; i < n ; i ++)
+            if(dis[tmpPos][i] < PrimeRecord[i])
                 PrimeRecord[i] = dis[tmpPos][i];
     }
 
@@ -247,129 +247,129 @@ typedef long MULDATATYPE;
 #define MAXMAT 100
 #define inf 1000000000
 
-#define fabs(x) ((x)&amp;gt;0?(x):-(x))
-#define zero(x) (fabs(x)&amp;lt;1e-10)
+#define fabs(x) ((x)>0?(x):-(x))
+#define zero(x) (fabs(x)<1e-10)
 
 struct mat
 {
     long n,m;
     MULDATATYPE data[MAXMAT][MAXMAT];
-    void operator =(const mat&amp;amp; a);
-    mat operator &#43;(const mat&amp;amp; a);
-    mat operator -(const mat&amp;amp; a);
+    void operator =(const mat& a);
+    mat operator +(const mat& a);
+    mat operator -(const mat& a);
     //0-1邻接矩阵
-    mat operator &amp;amp;(const mat&amp;amp; a);
-    mat operator |(const mat&amp;amp; a);
+    mat operator &(const mat& a);
+    mat operator |(const mat& a);
 };
 
 //c=a*b
 //注意引用
-int Mat_MulMode(mat&amp;amp; c,const mat&amp;amp; a,const mat&amp;amp; b,MULDATATYPE mod)
+int Mat_MulMode(mat& c,const mat& a,const mat& b,MULDATATYPE mod)
 {
     long i,j,k;
     if (a.m != b.n)
         return 0;
     c.n = a.n , c.m = b.m;
-    for (i = 0 ; i &amp;lt; c.n ; i &#43;&#43;)
-        for (j = 0 ; j &amp;lt; c.m ; j &#43;&#43;)
-            for (c.data[i][j] = k = 0 ; k  &amp;lt; a.m ; k &#43;&#43;)
-                c.data[i][j] = (c.data[i][j] &#43; a.data[i][k] * b.data[k][j]) % mod;
+    for (i = 0 ; i < c.n ; i ++)
+        for (j = 0 ; j < c.m ; j ++)
+            for (c.data[i][j] = k = 0 ; k  < a.m ; k ++)
+                c.data[i][j] = (c.data[i][j] + a.data[i][k] * b.data[k][j]) % mod;
     return 1;
 }
-//c=a^b(其中必须满足b&amp;gt;0)
-int Mat_PowMode(mat&amp;amp; c,mat a,long b,MULDATATYPE mod)
+//c=a^b(其中必须满足b>0)
+int Mat_PowMode(mat& c,mat a,long b,MULDATATYPE mod)
 {
     c = a;
     b --;
     while(b)
     {
         mat tmp;
-        if(b &amp;amp; 1)
+        if(b & 1)
         {
             tmp = c;
             Mat_MulMode(c,tmp,a,mod);
         }
         tmp = a;
         Mat_MulMode(a,tmp,tmp,mod);
-        b = b&amp;gt;&amp;gt;1;
+        b = b>>1;
     }
     return 1;
 }
-//c=a&#43;b
-int Mat_AddMode(mat&amp;amp; c,const mat&amp;amp; a,const mat&amp;amp; b,MULDATATYPE mod)
+//c=a+b
+int Mat_AddMode(mat& c,const mat& a,const mat& b,MULDATATYPE mod)
 {
     long i,j;
     if (a.n != b.n || a.m != b.m)
         return 0;
     c.n = a.n , c.m = b.m;
-    for (i = 0 ; i &amp;lt; c.n ; i &#43;&#43;)
-        for (j = 0 ; j &amp;lt; c.m ; j &#43;&#43;)
-            c.data[i][j] = (a.data[i][j] &#43; b.data[i][j]) % mod;
+    for (i = 0 ; i < c.n ; i ++)
+        for (j = 0 ; j < c.m ; j ++)
+            c.data[i][j] = (a.data[i][j] + b.data[i][j]) % mod;
     return 1;
 }
 //c=a-b
-int Mat_SubMode(mat&amp;amp; c,const mat&amp;amp; a,const mat&amp;amp; b,MULDATATYPE mod)
+int Mat_SubMode(mat& c,const mat& a,const mat& b,MULDATATYPE mod)
 {
     long i,j;
     if (a.n != b.n || a.m != b.m)
         return 0;
     c.n = a.n , c.m = b.m;
-    for (i = 0 ; i &amp;lt; c.n ; i &#43;&#43;)
-        for (j = 0 ; j &amp;lt; c.m ; j &#43;&#43;)
+    for (i = 0 ; i < c.n ; i ++)
+        for (j = 0 ; j < c.m ; j ++)
             c.data[i][j] = (a.data[i][j] - b.data[i][j]) % mod;
     return 1;
 }
 
 
-void mat::operator =(const mat&amp;amp; a)
+void mat::operator =(const mat& a)
 {
     n = a.n;
     m = a.m;
-    for(int i = 0 ; i &amp;lt; n ; i &#43;&#43;)
-        for(int j = 0 ; j &amp;lt; m ; j &#43;&#43;)
+    for(int i = 0 ; i < n ; i ++)
+        for(int j = 0 ; j < m ; j ++)
             data[i][j] = a.data[i][j];
 }
-mat mat::operator &#43;(const mat &amp;amp;a)
+mat mat::operator +(const mat &a)
 {
     long i,j;
     mat tmpMat;
     tmpMat.m = m;
     tmpMat.n = n;
-    for(i = 0 ; i &amp;lt; n ; i &#43;&#43;)
-        for(j = 0 ; j &amp;lt; m ; j &#43;&#43;)
-            tmpMat.data[i][j] = data[i][j] &#43; a.data[i][j];
+    for(i = 0 ; i < n ; i ++)
+        for(j = 0 ; j < m ; j ++)
+            tmpMat.data[i][j] = data[i][j] + a.data[i][j];
     return tmpMat;
 }
-mat mat::operator -(const mat &amp;amp;a)
+mat mat::operator -(const mat &a)
 {
     long i,j;
     mat tmpMat;
     tmpMat.m = m;
     tmpMat.n = n;
-    for(i = 0 ; i &amp;lt; n ; i &#43;&#43;)
-        for(j = 0 ; j &amp;lt; m ; j &#43;&#43;)
+    for(i = 0 ; i < n ; i ++)
+        for(j = 0 ; j < m ; j ++)
             tmpMat.data[i][j] = data[i][j] - a.data[i][j];
     return tmpMat;
 }
-mat mat::operator &amp;amp;(const mat &amp;amp;a)
+mat mat::operator &(const mat &a)
 {
     long i,j;
     mat tmpMat;
     tmpMat.m = m;
     tmpMat.n = n;
-    for(i = 0 ; i &amp;lt; n ; i &#43;&#43;)
-        for(j = 0 ; j &amp;lt; m ; j &#43;&#43;)
-            tmpMat.data[i][j] = data[i][j] &amp;amp; a.data[i][j];
+    for(i = 0 ; i < n ; i ++)
+        for(j = 0 ; j < m ; j ++)
+            tmpMat.data[i][j] = data[i][j] & a.data[i][j];
     return tmpMat;
 }
-mat mat::operator |(const mat &amp;amp;a)
+mat mat::operator |(const mat &a)
 {
     long i,j;
     mat tmpMat;
     tmpMat.m = m;
     tmpMat.n = n;
-    for(i = 0 ; i &amp;lt; n ; i &#43;&#43;)
-        for(j = 0 ; j &amp;lt; m ; j &#43;&#43;)
+    for(i = 0 ; i < n ; i ++)
+        for(j = 0 ; j < m ; j ++)
             tmpMat.data[i][j] = data[i][j] | a.data[i][j];
     return tmpMat;
 }</code></pre></div><div class=article-more><a href=//owent.net/2009/76.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2009-09-15T16:39:11.000+00:00 itemprop=datePublished>2009-09-15</time></div></div></article><article class="article-panel archive-article archive-type-77"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/77.html target=_blank itemprop=url>09年8月14日 ECUST ACM 练习赛总结</a></h1></header><div class=article-summary><p>今天在湖南的OJ上做题,发现不到两小时,他服务器就挂了,但是发现他和POJ上的一些题一样而且是连号的,就到POJ上继续了，我们队出了6题。</p><p>A题是<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3507">POJ的3507 Judging Olympia</a>这题是队友干掉的,我没看</p></div><div class=article-more><a href=//owent.net/2009/77.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2009-08-16T16:57:22.000+00:00 itemprop=datePublished>2009-08-16</time></div></div></article><article class="article-panel archive-article archive-type-78"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/78.html target=_blank itemprop=url>ECUST 09年 校赛个人赛第八场（最后一场）总结</a></h1></header><div class=article-summary><p>懒惰了，暂时休息一下</p><p>这次我只AC了一题（在结束的那一刻，另一题在题目来源地网站上AC了，我们的OJ上仍然WA，我们OJ的Special Judge真是—_—!）</p></div><div class=article-more><a href=//owent.net/2009/78.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2009-08-14T11:41:45.000+00:00 itemprop=datePublished>2009-08-14</time></div></div></article><article class="article-panel archive-article archive-type-79"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/79.html target=_blank itemprop=url>ECUST 09年 校赛个人训练赛第五场总结</a></h1></header><div class=article-summary><h1 id=校赛个人训练赛第五场报告>校赛个人训练赛第五场报告</h1><p>今天战绩还行，AC了5题，今天总体没有太复杂的算法题，不过测试数据强度比之前有所增加
@@ -378,33 +378,33 @@ mat mat::operator |(const mat &amp;amp;a)
 
 double disBetweenPointAndLine(double x0,double y0,double x1,double y1,double x2,double y2)
 {
-    //化为ax&#43;by&#43;c=0的形式
+    //化为ax+by+c=0的形式
     double a = y1-y2;
     double b = x2-x1;
     double c = x1*y2-x2*y1;
-    double d = (a*x0&#43;b*y0&#43;c)/sqrt(a*a&#43;b*b);
+    double d = (a*x0+b*y0+c)/sqrt(a*a+b*b);
     /*
     如果是线段判断垂足
 
-    double xp = (b*b*x0-a*b*y0-a*c)/(a*a&#43;b*b);
-    double yp = (-a*b*x0&#43;a*a*y0-b*c)/(a*a&#43;b*b);
-    double xb = (x1&amp;gt;x2)?x1:x2;
-    double yb = (y1&amp;gt;y2)?y1:y2;
-    double xs = x1&#43;x2-xb;
-    double ys = y1&#43;y2-yb;
-    if(xp &amp;gt; xb || xp &amp;lt; xs || yp &amp;gt; yb || yp &amp;lt; ys)
+    double xp = (b*b*x0-a*b*y0-a*c)/(a*a+b*b);
+    double yp = (-a*b*x0+a*a*y0-b*c)/(a*a+b*b);
+    double xb = (x1>x2)?x1:x2;
+    double yb = (y1>y2)?y1:y2;
+    double xs = x1+x2-xb;
+    double ys = y1+y2-yb;
+    if(xp > xb || xp < xs || yp > yb || yp < ys)
     {
-        d = sqrt((x0 - x1) * (x0 - x1) &#43; (y0 - y1) * (y0 - y1));
-        if(d &amp;gt; sqrt((x0 - x2) * (x0 - x2) &#43; (y0 - y2) * (y0 - y2)))
-            d = sqrt((x0 - x2) * (x0 - x2) &#43; (y0 - y2) * (y0 - y2));
+        d = sqrt((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
+        if(d > sqrt((x0 - x2) * (x0 - x2) + (y0 - y2) * (y0 - y2)))
+            d = sqrt((x0 - x2) * (x0 - x2) + (y0 - y2) * (y0 - y2));
     }
     */
     return fabs(d);
 }</code></pre><p>线段间最短距离</p></div><div class=article-more><a href=//owent.net/2009/80.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2009-08-14T11:33:38.000+00:00 itemprop=datePublished>2009-08-14</time></div></div></article><article class="article-panel archive-article archive-type-81"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/81.html target=_blank itemprop=url>连接最多点直线 (OWenT 个人模板)</a></h1></header><div class=article-summary><pre><code class=language-cpp>//n每个用例的点个数
 //MAXN为最大点个数
 //PTYPE为坐标值类型
-#include&amp;lt;iostream&amp;gt;
-#include&amp;lt;cmath&amp;gt;
+#include<iostream>
+#include<cmath>
 using namespace std;
 
 #define MAXN 1005
@@ -421,7 +421,7 @@ struct node
 };
 int cmp(const void * a, const void * b)
 {
-    return((*(PTYPE*)a-*(PTYPE*)b&amp;gt;0)?1:-1);
+    return((*(PTYPE*)a-*(PTYPE*)b>0)?1:-1);
 }
 node numK[MAXN * MAXN / 2];
 point pt[MAXN];
@@ -429,38 +429,38 @@ int main()
 {
 
     int n , maxNum = 1 , tmpNum = 0;
-    while(scanf(&amp;#34;%d&amp;#34;,&amp;amp;n),n)
+    while(scanf("%d",&n),n)
     {
-        for(int i = 0 ; i &amp;lt; n ; i &#43;&#43;)
-            scanf(&amp;#34;%lf %lf&amp;#34;,&amp;amp;pt[i].x,&amp;amp;pt[i].y);
-        for(int i = 0 ; i &amp;lt;  n ; i &#43;&#43;)
+        for(int i = 0 ; i < n ; i ++)
+            scanf("%lf %lf",&pt[i].x,&pt[i].y);
+        for(int i = 0 ; i <  n ; i ++)
         {
             int pos = 0;
-            for(int j = i &#43; 1 ; j &amp;lt; n ; j &#43;&#43;)
-                if((pt[i].x - pt[j].x) &amp;gt; EPS)
-                    numK[pos &#43;&#43;].k = (pt[j].y - pt[i].y) / (pt[j].x - pt[i].x);
+            for(int j = i + 1 ; j < n ; j ++)
+                if((pt[i].x - pt[j].x) > EPS)
+                    numK[pos ++].k = (pt[j].y - pt[i].y) / (pt[j].x - pt[i].x);
                 else
-                    numK[pos &#43;&#43;].k = 100000;
+                    numK[pos ++].k = 100000;
 
             qsort(numK,pos,sizeof(numK[0]),cmp);
             int tmpNum = 2;
-            for(int j = 1 ; j &amp;lt; pos ; j &#43;&#43;)
+            for(int j = 1 ; j < pos ; j ++)
             {
                 if(numK[j].k == numK[j - 1].k)
-                    tmpNum &#43;&#43;;
+                    tmpNum ++;
                 else
                 {
-                    if(tmpNum &amp;gt; maxNum)
+                    if(tmpNum > maxNum)
                         maxNum = tmpNum;
                     tmpNum = 2;
                 }
             }
-            if(tmpNum &amp;gt; maxNum)
+            if(tmpNum > maxNum)
                 maxNum = tmpNum;
         }
 
 
-        printf(&amp;#34;%d\n&amp;#34;,maxNum);
+        printf("%d\n",maxNum);
         maxNum = 1;
     }
     return 0;
@@ -479,11 +479,11 @@ B题的DP方法比较诡异(起码我理解了很久)
     do
     {
         x0 = x;
-        f0 = ((a * x &#43; b) * x &#43; c) * x &#43; d;
-        f0d = ( 3 * a * x &#43; 2 * b ) * x &#43; c;
+        f0 = ((a * x + b) * x + c) * x + d;
+        f0d = ( 3 * a * x + 2 * b ) * x + c;
         x = x0 - f0 / f0d;
     }
-    while(fabs(f0) &amp;gt;= 1e-12);
+    while(fabs(f0) >= 1e-12);
     return x;
 }</code></pre><p>牛顿迭代法</p></div><div class=article-more><a href=//owent.net/2009/83.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2009-08-05T16:27:32.000+00:00 itemprop=datePublished>2009-08-05</time></div></div></article><article class="article-panel archive-article archive-type-84"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/84.html target=_blank itemprop=url>ECUST 09年 校赛个人赛第三场部分解题报告(A,D,F,I)</a></h1></header><div class=article-summary><p>校赛个人赛第三场部分解题报告（A,D,F,I）</p><p>这次我完成了四道题分别是A,D,F,I</p><p>一大半时间我都花在了A上，我犯了很究级的错误</p><p>首先是VC6.0的algorithm里没有min函数，而我用min做变量名导致CE4次，找了半天才找出来</p></div><div class=article-more><a href=//owent.net/2009/84.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2009-07-30T09:58:51.000+00:00 itemprop=datePublished>2009-07-30</time></div></div></article><article class="article-panel archive-article archive-type-85"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/85.html target=_blank itemprop=url>ECUST 09年 校赛个人赛第六，七场总结</a></h1></header><div class=article-summary><p>校赛个人赛第六，七场总结</p><p>这两场比赛体现了英文水平的重要性</p><p>第六场的题目超长，用词还诡异，话了很长时间才看懂</p><p>这两场题目都比较有难度，第六场我只出了2题</p><h2 id=a-grey-area>A Grey Area</h2><p>A题是很诡异的统计，是一道纯模拟就能过的题，其他的不多说了</p></div><div class=article-more><a href=//owent.net/2009/85.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2009-07-30T09:58:00.000+00:00 itemprop=datePublished>2009-07-30</time></div></div></article><article class="article-panel archive-article archive-type-88"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/88.html target=_blank itemprop=url>POJ 2606 Rabbit hunt 2780 Linearity 1118 Lining Up 解题报告</a></h1></header><div class=article-summary><p>POJ打破传统,以前是做一题送一题,现在是做一题送两题,那么我们就不用客气了</p><p>言归正传 题号:<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=2606">2606 Rabbit hunt</a> <a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=2780">2780 Linearity</a> <a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=1118">1118 Lining Up</a></p><p>大致题意是输入N个点.计算能穿过最多的点的直线,并输出最大点的个数</p></div><div class=article-more><a href=//owent.net/2009/88.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2009-07-20T14:50:15.000+00:00 itemprop=datePublished>2009-07-20</time></div></div></article><article class="article-panel archive-article archive-type-90"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/90.html target=_blank itemprop=url>POJ 3267 The Cow Lexicon 解题报告</a></h1></header><div class=article-summary><p><a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3267">POJ 3267 The Cow Lexicon</a></p><p>这题是一道DP问题,我的想法如下:</p><p>1.可以令
 deleteNum[pos]为输入字符串在pos处需要删除的最少字符数量;</p><p>2.如果输入字符串长度为len,则初始化deleteNum[len] = 0;(字符串由0开始计数)</p></div><div class=article-more><a href=//owent.net/2009/90.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2009-07-15T15:51:39.000+00:00 itemprop=datePublished>2009-07-15</time></div></div></article><article class="article-panel archive-article archive-type-91"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/91.html target=_blank itemprop=url>并查集 模板</a></h1></header><div class=article-summary><pre><code class=language-cpp>//并查集
@@ -491,7 +491,7 @@ deleteNum[pos]为输入字符串在pos处需要删除的最少字符数量;</p><
 const int maxn = 100002;
 int DSet[maxn];
 void init(int n) {
-    for(int i = 0 ; i &amp;lt;= n ; i &#43;&#43;)
+    for(int i = 0 ; i <= n ; i ++)
         DSet[i] = i;
 }
 int findP(int id) {
@@ -503,7 +503,7 @@ if(DSet[id] != id)
 int UnionEle(int a,int b) {
     a = findP(a);
     b = findP(b);
-    if(a &amp;gt; b)
+    if(a > b)
         a ^= b ^= a ^= b;
     DSet[b] = a;
     return a;

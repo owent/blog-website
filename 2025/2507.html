@@ -41,104 +41,104 @@ public static bool GetDefaultBoolValueFromEnvVar(string VarName)
     string? env = Environment.GetEnvironmentVariable(VarName);
     if (!string.IsNullOrWhiteSpace(env))
     {
-        return !string.Equals(env.Trim(), &amp;#34;0&amp;#34;, StringComparison.OrdinalIgnoreCase);
+        return !string.Equals(env.Trim(), "0", StringComparison.OrdinalIgnoreCase);
     }
     return false;
 }
 
 public static bool GetDefaultForceUseSystemCompiler()
 {
-    return GetDefaultBoolValueFromEnvVar(&amp;#34;UE_FORCE_USE_SYSTEM_COMPILER&amp;#34;);
+    return GetDefaultBoolValueFromEnvVar("UE_FORCE_USE_SYSTEM_COMPILER");
 }</code></pre><h3 id=linuxtoolchaincs-修改>LinuxToolChain.cs 修改</h3><p>文件路径: <strong>Engine/Source/Programs/UnrealBuildTool/Platform/Linux/LinuxToolChain.cs</strong></p><blockquote><p><strong>注意</strong>：以下修改仅适用于 UE 5.6 以下版本。引擎组某些定制化的组件存在循环依赖，在实际解决之前可以先用这种方式适配。</p></blockquote><p>主要改动有几处：</p><h4 id=1-启用依赖修复>1. 启用依赖修复</h4><p>修改 <code>bUseFixdeps</code> 的赋值，增加环境变量控制：</p><pre><code class=language-csharp>// 方式一：仅通过环境变量控制
-bUseFixdeps = LinuxCommon.GetDefaultBoolValueFromEnvVar(&amp;#34;UE_LINUX_USE_FIX_DEPS&amp;#34;);
+bUseFixdeps = LinuxCommon.GetDefaultBoolValueFromEnvVar("UE_LINUX_USE_FIX_DEPS");
 
 // 方式二：Windows 交叉编译时默认启用，其他情况通过环境变量控制
 bUseFixdeps = BuildHostPlatform.Current.Platform == UnrealTargetPlatform.Win64 
-    || LinuxCommon.GetDefaultBoolValueFromEnvVar(&amp;#34;UE_LINUX_USE_FIX_DEPS&amp;#34;);</code></pre><h4 id=2-系统-libc-支持>2. 系统 libc++ 支持</h4><p>在 <code>ShouldUseLibcxx()</code> 函数处按需加上环境变量判断。</p><blockquote><p>⚠️ <strong>ABI 兼容性警告</strong></p><p>这部分要注意 ABI 兼容性问题。UE 自带的第三方库都是用自带的 STL 版本编译的，所以最好使用 UE 的 libc++ 版本。</p><p>如果你自编译了 LLVM 套件，且 STL 的 ABI 版本不同（如改成了 v2），会导致符号对不上。推荐方案是：<strong>高版本编译器 + 低版本 libc++</strong>。</p></blockquote><p>如果需要修改，参考以下改动：</p><p><strong>GetCompileArguments_Global 函数</strong>：</p><pre><code class=language-csharp>if (ShouldUseLibcxx() &amp;amp;&amp;amp; !LinuxCommon.GetDefaultBoolValueFromEnvVar(&amp;#34;UE_LINUX_USE_SYSTEM_LIBCXX&amp;#34;))
+    || LinuxCommon.GetDefaultBoolValueFromEnvVar("UE_LINUX_USE_FIX_DEPS");</code></pre><h4 id=2-系统-libc-支持>2. 系统 libc++ 支持</h4><p>在 <code>ShouldUseLibcxx()</code> 函数处按需加上环境变量判断。</p><blockquote><p>⚠️ <strong>ABI 兼容性警告</strong></p><p>这部分要注意 ABI 兼容性问题。UE 自带的第三方库都是用自带的 STL 版本编译的，所以最好使用 UE 的 libc++ 版本。</p><p>如果你自编译了 LLVM 套件，且 STL 的 ABI 版本不同（如改成了 v2），会导致符号对不上。推荐方案是：<strong>高版本编译器 + 低版本 libc++</strong>。</p></blockquote><p>如果需要修改，参考以下改动：</p><p><strong>GetCompileArguments_Global 函数</strong>：</p><pre><code class=language-csharp>if (ShouldUseLibcxx() && !LinuxCommon.GetDefaultBoolValueFromEnvVar("UE_LINUX_USE_SYSTEM_LIBCXX"))
 {
-    // 使用 UE 自带的 libc&#43;&#43; 头文件
+    // 使用 UE 自带的 libc++ 头文件
     // ...原有逻辑...
 }</code></pre><p><strong>链接库位置修改</strong>：</p><pre><code class=language-csharp>if (ShouldUseLibcxx())
 {
-    // libc&#43;&#43; and its abi lib
-    LinkCommandString &#43;= &amp;#34; -nodefaultlibs&amp;#34;;
-    if (LinuxCommon.GetDefaultBoolValueFromEnvVar(&amp;#34;UE_LINUX_USE_SYSTEM_LIBCXX&amp;#34;))
+    // libc++ and its abi lib
+    LinkCommandString += " -nodefaultlibs";
+    if (LinuxCommon.GetDefaultBoolValueFromEnvVar("UE_LINUX_USE_SYSTEM_LIBCXX"))
     {
-        LinkCommandString &#43;= &amp;#34; -lc&#43;&#43;&amp;#34;;
-        LinkCommandString &#43;= &amp;#34; -lc&#43;&#43;abi&amp;#34;;
+        LinkCommandString += " -lc++";
+        LinkCommandString += " -lc++abi";
     }
     else
     {
-        LinkCommandString &#43;= &amp;#34; -L&amp;#34; &#43; &amp;#34;ThirdParty/Unix/LibCxx/lib/Unix/&amp;#34; &#43; LinkEnvironment.Architecture.LinuxName &#43; &amp;#34;/&amp;#34;;
-        LinkCommandString &#43;= &amp;#34; &amp;#34; &#43; &amp;#34;ThirdParty/Unix/LibCxx/lib/Unix/&amp;#34; &#43; LinkEnvironment.Architecture.LinuxName &#43; &amp;#34;/libc&#43;&#43;.a&amp;#34;;
-        LinkCommandString &#43;= &amp;#34; &amp;#34; &#43; &amp;#34;ThirdParty/Unix/LibCxx/lib/Unix/&amp;#34; &#43; LinkEnvironment.Architecture.LinuxName &#43; &amp;#34;/libc&#43;&#43;abi.a&amp;#34;;
+        LinkCommandString += " -L" + "ThirdParty/Unix/LibCxx/lib/Unix/" + LinkEnvironment.Architecture.LinuxName + "/";
+        LinkCommandString += " " + "ThirdParty/Unix/LibCxx/lib/Unix/" + LinkEnvironment.Architecture.LinuxName + "/libc++.a";
+        LinkCommandString += " " + "ThirdParty/Unix/LibCxx/lib/Unix/" + LinkEnvironment.Architecture.LinuxName + "/libc++abi.a";
     }
     // ...其他链接库...
 }</code></pre><h3 id=clangwarningscs-修改>ClangWarnings.cs 修改</h3><p>文件路径: <strong>Engine/Source/Programs/UnrealBuildTool/ToolChain/ClangWarnings.cs</strong></p><p>高版本 Clang 会引入新的 warning 或将某些 warning 提升为 error。为了让 UE 项目能够正常编译，需要在 <code>GetDisabledWarnings</code> 函数中关闭这些诊断：</p><pre><code class=language-csharp>// 通用 warning 关闭
-Arguments.Add(&amp;#34;-Wno-misleading-indentation&amp;#34;);
-Arguments.Add(&amp;#34;-Wno-vexing-parse&amp;#34;);
-Arguments.Add(&amp;#34;-Wno-error=macro-redefined&amp;#34;);
-Arguments.Add(&amp;#34;-Wno-error=shorten-64-to-32&amp;#34;);
-Arguments.Add(&amp;#34;-Wno-error=shadow&amp;#34;);
-Arguments.Add(&amp;#34;-Wno-error=logical-op-parentheses&amp;#34;);
-Arguments.Add(&amp;#34;-Wno-error=unused-value&amp;#34;);
-Arguments.Add(&amp;#34;-Wno-error=extra-qualification&amp;#34;);
-Arguments.Add(&amp;#34;-Wno-error=range-loop-construct&amp;#34;);
-Arguments.Add(&amp;#34;-Wno-error=comment&amp;#34;);
-Arguments.Add(&amp;#34;-Wno-error=reorder-ctor&amp;#34;);
-Arguments.Add(&amp;#34;-Wno-error=deprecated-comma-subscript&amp;#34;);
-Arguments.Add(&amp;#34;-Wno-error=c&#43;&#43;20-extensions&amp;#34;);
-Arguments.Add(&amp;#34;-Wno-error=single-bit-bitfield-constant-conversion&amp;#34;);
-Arguments.Add(&amp;#34;-Wno-error=null-conversion&amp;#34;);
-Arguments.Add(&amp;#34;-Wno-error=dangling&amp;#34;);
+Arguments.Add("-Wno-misleading-indentation");
+Arguments.Add("-Wno-vexing-parse");
+Arguments.Add("-Wno-error=macro-redefined");
+Arguments.Add("-Wno-error=shorten-64-to-32");
+Arguments.Add("-Wno-error=shadow");
+Arguments.Add("-Wno-error=logical-op-parentheses");
+Arguments.Add("-Wno-error=unused-value");
+Arguments.Add("-Wno-error=extra-qualification");
+Arguments.Add("-Wno-error=range-loop-construct");
+Arguments.Add("-Wno-error=comment");
+Arguments.Add("-Wno-error=reorder-ctor");
+Arguments.Add("-Wno-error=deprecated-comma-subscript");
+Arguments.Add("-Wno-error=c++20-extensions");
+Arguments.Add("-Wno-error=single-bit-bitfield-constant-conversion");
+Arguments.Add("-Wno-error=null-conversion");
+Arguments.Add("-Wno-error=dangling");
 
-// Clang 18&#43; 特有的 warning
-if (ClangVersion &amp;gt;= new VersionNumber(18))
+// Clang 18+ 特有的 warning
+if (ClangVersion >= new VersionNumber(18))
 {
-    Arguments.Add(&amp;#34;-Wno-deprecated-this-capture&amp;#34;);          // https://clang.llvm.org/docs/DiagnosticsReference.html#wdeprecated-this-capture
-    if (ClangVersion &amp;lt;= new VersionNumber(19))
+    Arguments.Add("-Wno-deprecated-this-capture");          // https://clang.llvm.org/docs/DiagnosticsReference.html#wdeprecated-this-capture
+    if (ClangVersion <= new VersionNumber(19))
     {
-        Arguments.Add(&amp;#34;-Wno-enum-constexpr-conversion&amp;#34;);    // https://clang.llvm.org/docs/DiagnosticsReference.html#wenum-constexpr-conversion
+        Arguments.Add("-Wno-enum-constexpr-conversion");    // https://clang.llvm.org/docs/DiagnosticsReference.html#wenum-constexpr-conversion
     }
-    Arguments.Add(&amp;#34;-Wno-deprecated-literal-operator&amp;#34;);
-    Arguments.Add(&amp;#34;-Wno-vla-cxx-extension&amp;#34;);
-    Arguments.Add(&amp;#34;-Wno-invalid-unevaluated-string&amp;#34;);
-    Arguments.Add(&amp;#34;-Wno-error=nontrivial-memcall&amp;#34;);
+    Arguments.Add("-Wno-deprecated-literal-operator");
+    Arguments.Add("-Wno-vla-cxx-extension");
+    Arguments.Add("-Wno-invalid-unevaluated-string");
+    Arguments.Add("-Wno-error=nontrivial-memcall");
 }
 
-// Clang 19&#43; 特有的 warning
-if (ClangVersion &amp;gt;= new VersionNumber(19))
+// Clang 19+ 特有的 warning
+if (ClangVersion >= new VersionNumber(19))
 {
-    Arguments.Add(&amp;#34;-Wno-error=missing-template-arg-list-after-template-kw&amp;#34;);
+    Arguments.Add("-Wno-error=missing-template-arg-list-after-template-kw");
 }
 
 // 如果有遗漏，按实际编译错误添加即可</code></pre><h2 id=构建与分析流程>构建与分析流程</h2><p>完成 UBT 改造后，就可以开始执行静态分析了。整个流程分为以下几个步骤：</p><h3 id=第一步生成编译数据库>第一步：生成编译数据库</h3><p>使用 CodeChecker 的 <code>log</code> 命令包装构建过程，生成 <code>compile_commands.json</code>：</p><pre><code class=language-bash>env UE_FORCE_USE_SYSTEM_COMPILER=1 UE_LINUX_USE_FIX_DEPS=1 \
     CodeChecker log -o compile_commands.json \
-    -b &amp;#39;make LyraServer ARGS=&amp;#34;-ForceUseSystemCompiler -StaticAnalyzer=Clang -StaticAnalyzerMode=deep -StaticAnalyzerOutputType=html&amp;#34;&amp;#39; \
-    2&amp;gt;&amp;amp;1 | tee build.game.log</code></pre><blockquote><p><strong>参数说明</strong>：</p><ul><li><code>-ForceUseSystemCompiler</code>：强制使用系统编译器</li><li><code>-StaticAnalyzer=Clang</code>：启用 Clang 静态分析器</li><li><code>-StaticAnalyzerMode=deep</code>：深度分析模式</li><li><code>-StaticAnalyzerOutputType=html</code>：输出 HTML 格式报告</li></ul></blockquote><h3 id=第二步查找-pch-文件>第二步：查找 PCH 文件</h3><p>UE 使用共享 PCH（Precompiled Header）来加速编译。静态分析时需要正确包含 PCH 文件：</p><pre><code class=language-bash># 按优先级查找 SharedPCH 文件
-FIND_PCH_FILE=$(find $PWD/Projects/Intermediate/Build/Linux/x64/LyraServer/Development/Engine -name &amp;#34;SharedPCH.*Exceptions.*.h&amp;#34; | head -n 1)
-if [[ -z &amp;#34;$FIND_PCH_FILE&amp;#34; ]]; then
-    FIND_PCH_FILE=$(find $PWD/Projects/Intermediate/Build/Linux/x64/LyraServer/Development/Core -name &amp;#34;SharedPCH.*Exceptions.*.h&amp;#34; | head -n 1)
+    -b 'make LyraServer ARGS="-ForceUseSystemCompiler -StaticAnalyzer=Clang -StaticAnalyzerMode=deep -StaticAnalyzerOutputType=html"' \
+    2>&1 | tee build.game.log</code></pre><blockquote><p><strong>参数说明</strong>：</p><ul><li><code>-ForceUseSystemCompiler</code>：强制使用系统编译器</li><li><code>-StaticAnalyzer=Clang</code>：启用 Clang 静态分析器</li><li><code>-StaticAnalyzerMode=deep</code>：深度分析模式</li><li><code>-StaticAnalyzerOutputType=html</code>：输出 HTML 格式报告</li></ul></blockquote><h3 id=第二步查找-pch-文件>第二步：查找 PCH 文件</h3><p>UE 使用共享 PCH（Precompiled Header）来加速编译。静态分析时需要正确包含 PCH 文件：</p><pre><code class=language-bash># 按优先级查找 SharedPCH 文件
+FIND_PCH_FILE=$(find $PWD/Projects/Intermediate/Build/Linux/x64/LyraServer/Development/Engine -name "SharedPCH.*Exceptions.*.h" | head -n 1)
+if [[ -z "$FIND_PCH_FILE" ]]; then
+    FIND_PCH_FILE=$(find $PWD/Projects/Intermediate/Build/Linux/x64/LyraServer/Development/Core -name "SharedPCH.*Exceptions.*.h" | head -n 1)
 fi
-if [[ -z &amp;#34;$FIND_PCH_FILE&amp;#34; ]]; then
-    FIND_PCH_FILE=$(find $PWD/Projects/Intermediate/Build/Linux/x64/LyraServer/Development -name &amp;#34;SharedPCH.*Exceptions.*.h&amp;#34; | head -n 1)
+if [[ -z "$FIND_PCH_FILE" ]]; then
+    FIND_PCH_FILE=$(find $PWD/Projects/Intermediate/Build/Linux/x64/LyraServer/Development -name "SharedPCH.*Exceptions.*.h" | head -n 1)
 fi
 # 降级查找不带 Exceptions 的版本
-if [[ -z &amp;#34;$FIND_PCH_FILE&amp;#34; ]]; then
-    FIND_PCH_FILE=$(find $PWD/Projects/Intermediate/Build/Linux/x64/LyraServer/Development/Engine -name &amp;#34;SharedPCH.*.h&amp;#34; | head -n 1)
+if [[ -z "$FIND_PCH_FILE" ]]; then
+    FIND_PCH_FILE=$(find $PWD/Projects/Intermediate/Build/Linux/x64/LyraServer/Development/Engine -name "SharedPCH.*.h" | head -n 1)
 fi
-if [[ -z &amp;#34;$FIND_PCH_FILE&amp;#34; ]]; then
-    FIND_PCH_FILE=$(find $PWD/Projects/Intermediate/Build/Linux/x64/LyraServer/Development/Core -name &amp;#34;SharedPCH.*.h&amp;#34; | head -n 1)
+if [[ -z "$FIND_PCH_FILE" ]]; then
+    FIND_PCH_FILE=$(find $PWD/Projects/Intermediate/Build/Linux/x64/LyraServer/Development/Core -name "SharedPCH.*.h" | head -n 1)
 fi
-if [[ -z &amp;#34;$FIND_PCH_FILE&amp;#34; ]]; then
-    FIND_PCH_FILE=$(find $PWD/Projects/Intermediate/Build/Linux/x64/LyraServer/Development -name &amp;#34;SharedPCH.*.h&amp;#34; | head -n 1)
+if [[ -z "$FIND_PCH_FILE" ]]; then
+    FIND_PCH_FILE=$(find $PWD/Projects/Intermediate/Build/Linux/x64/LyraServer/Development -name "SharedPCH.*.h" | head -n 1)
 fi
 
-echo &amp;#34;Found PCH file: $FIND_PCH_FILE&amp;#34;</code></pre><h3 id=第三步修复编译数据库>第三步：修复编译数据库</h3><p>UBT 生成的 <code>compile_commands.json</code> 存在一些问题，需要通过 <code>FixClangDatabase.py</code> 进行后处理：</p><pre><code class=language-bash>python3 Projects/Script/FixClangDatabase.py \
+echo "Found PCH file: $FIND_PCH_FILE"</code></pre><h3 id=第三步修复编译数据库>第三步：修复编译数据库</h3><p>UBT 生成的 <code>compile_commands.json</code> 存在一些问题，需要通过 <code>FixClangDatabase.py</code> 进行后处理：</p><pre><code class=language-bash>python3 Projects/Script/FixClangDatabase.py \
     -i compile_commands.json \
-    --pch &amp;#34;$FIND_PCH_FILE&amp;#34; \
-    --include-path &amp;#34;Projects/Source/LyraGame&amp;#34; \
-    --include-path &amp;#34;LyraGame/Module.LyraGame&amp;#34;
+    --pch "$FIND_PCH_FILE" \
+    --include-path "Projects/Source/LyraGame" \
+    --include-path "LyraGame/Module.LyraGame"
 
 # 备份原文件并使用修复后的版本
 mv -f compile_commands.json compile_commands.json.bak
@@ -147,7 +147,7 @@ mv -f compile_commands.fixed.json compile_commands.json</code></pre><h3 id=第�
     -i Projects/Plugins/ClangSA/Source/ClangSA/.codechecker.skipfile \
     -j 30 \
     -o codechecker-result \
-    compile_commands.json 2&amp;gt;&amp;amp;1 | tee build.game.log</code></pre><blockquote><p><strong>参数说明</strong>：</p><ul><li><code>--config</code>：分析配置文件，定义启用的 checker 和选项</li><li><code>-i</code>：跳过文件列表，排除不需要分析的文件</li><li><code>-j 30</code>：并行度，根据机器配置调整</li><li><code>-o</code>：输出目录</li></ul></blockquote><h3 id=第五步生成报告>第五步：生成报告</h3><p>将分析结果转换为 HTML 格式的可视化报告：</p><pre><code class=language-bash>CodeChecker parse -e html ./codechecker-result -o ./codechecker-html || true</code></pre><h2 id=工具脚本详解>工具脚本详解</h2><p>本节详细介绍各个辅助工具的实现原理和使用方法。</p><h3 id=clangsa-模块规则配置>ClangSA 模块规则配置</h3><p>为了让静态分析的检查规则能够按模块粒度灵活配置，我们创建了一个 UE 模块 <code>ClangSA</code>。它通过读取目录下的配置文件来决定每个模块启用哪些 checker。</p><h4 id=配置文件>配置文件</h4><table><thead><tr><th>文件名</th><th>作用</th></tr></thead><tbody><tr><td><code>.clang-sa.enable</code></td><td>启用的 checker 列表，每行一个</td></tr><tr><td><code>.clang-sa.disable</code></td><td>禁用的 checker 列表，每行一个</td></tr><tr><td><code>.clang-tidy</code></td><td>clang-tidy 配置文件</td></tr><tr><td><code>.codechecker.yaml</code></td><td>CodeChecker 配置文件</td></tr><tr><td><code>.codechecker.skipfile</code></td><td>跳过分析的文件列表</td></tr></tbody></table><h4 id=配置继承机制>配置继承机制</h4><p>配置文件支持目录层级继承：</p><pre class=mermaid>
+    compile_commands.json 2>&1 | tee build.game.log</code></pre><blockquote><p><strong>参数说明</strong>：</p><ul><li><code>--config</code>：分析配置文件，定义启用的 checker 和选项</li><li><code>-i</code>：跳过文件列表，排除不需要分析的文件</li><li><code>-j 30</code>：并行度，根据机器配置调整</li><li><code>-o</code>：输出目录</li></ul></blockquote><h3 id=第五步生成报告>第五步：生成报告</h3><p>将分析结果转换为 HTML 格式的可视化报告：</p><pre><code class=language-bash>CodeChecker parse -e html ./codechecker-result -o ./codechecker-html || true</code></pre><h2 id=工具脚本详解>工具脚本详解</h2><p>本节详细介绍各个辅助工具的实现原理和使用方法。</p><h3 id=clangsa-模块规则配置>ClangSA 模块规则配置</h3><p>为了让静态分析的检查规则能够按模块粒度灵活配置，我们创建了一个 UE 模块 <code>ClangSA</code>。它通过读取目录下的配置文件来决定每个模块启用哪些 checker。</p><h4 id=配置文件>配置文件</h4><table><thead><tr><th>文件名</th><th>作用</th></tr></thead><tbody><tr><td><code>.clang-sa.enable</code></td><td>启用的 checker 列表，每行一个</td></tr><tr><td><code>.clang-sa.disable</code></td><td>禁用的 checker 列表，每行一个</td></tr><tr><td><code>.clang-tidy</code></td><td>clang-tidy 配置文件</td></tr><tr><td><code>.codechecker.yaml</code></td><td>CodeChecker 配置文件</td></tr><tr><td><code>.codechecker.skipfile</code></td><td>跳过分析的文件列表</td></tr></tbody></table><h4 id=配置继承机制>配置继承机制</h4><p>配置文件支持目录层级继承：</p><pre class=mermaid>
 flowchart TB
     A["ClangSA Plugin<br>(默认配置)"] --> B["Projects/<br>(项目级配置)"]
     B --> C["Projects/Plugins/XXX/<br>(插件级配置)"]
@@ -174,7 +174,7 @@ public class ClangSA : ModuleRules
     public ArrayList EnableCheckers;
     public ArrayList DisableCheckers;
 
-    public HashSet&amp;lt;String&amp;gt; FinalCheckers;
+    public HashSet<string> FinalCheckers;
 
     public CheckerRules() {
       Configured = false;
@@ -184,7 +184,7 @@ public class ClangSA : ModuleRules
     }
   }
 
-  static private Dictionary&amp;lt;string, CheckerRules&amp;gt; RulesInDirectory = new Dictionary&amp;lt;string, CheckerRules&amp;gt;();
+  static private Dictionary<string, checkerrules> RulesInDirectory = new Dictionary<string, checkerrules>();
 
   public ClangSA(ReadOnlyTargetRules Target) : base(Target)
     {
@@ -193,16 +193,16 @@ public class ClangSA : ModuleRules
 
   static public string GetClangSAEnableFilePath(String DirectoryPath)
   {
-    return Path.Combine(DirectoryPath, &amp;#34;.clang-sa.enable&amp;#34;);
+    return Path.Combine(DirectoryPath, ".clang-sa.enable");
   }
 
   static public string GetClangSADisableFilePath(String DirectoryPath)
   {
-    return Path.Combine(DirectoryPath, &amp;#34;.clang-sa.disable&amp;#34;);
+    return Path.Combine(DirectoryPath, ".clang-sa.disable");
   }
 
   static public string GetClangSAEnableFilePath(ReadOnlyTargetRules Target) {
-    return GetClangSAEnableFilePath(Path.Combine(Target.ProjectFile.Directory.FullName, &amp;#34;Plugins&amp;#34;, &amp;#34;ClangSA&amp;#34;, &amp;#34;Source&amp;#34;, &amp;#34;ClangSA&amp;#34;));
+    return GetClangSAEnableFilePath(Path.Combine(Target.ProjectFile.Directory.FullName, "Plugins", "ClangSA", "Source", "ClangSA"));
   }
 
   static public CheckerRules GetCheckRules(String DirectoryPath) {
@@ -222,9 +222,9 @@ public class ClangSA : ModuleRules
       string[] checkers = File.ReadAllLines(enableFilePath);
       foreach (string checker in checkers)
       {
-        int comment = checker.IndexOf(&amp;#39;#&amp;#39;);
+        int comment = checker.IndexOf('#');
         string trimmedChecker;
-        if (comment &amp;gt;= 0)
+        if (comment >= 0)
         {
           trimmedChecker = checker.Substring(0, comment).Trim();
         }
@@ -247,9 +247,9 @@ public class ClangSA : ModuleRules
       string[] checkers = File.ReadAllLines(disableFilePath);
       foreach (string checker in checkers)
       {
-        int comment = checker.IndexOf(&amp;#39;#&amp;#39;);
+        int comment = checker.IndexOf('#');
         string trimmedChecker;
-        if (comment &amp;gt;= 0)
+        if (comment >= 0)
         {
           trimmedChecker = checker.Substring(0, comment).Trim();
         }
@@ -276,7 +276,7 @@ public class ClangSA : ModuleRules
   static public CheckerRules GetClangSACheckers(ReadOnlyTargetRules Target, String DirectoryFullName)
   {
     String ProjectFullName = Target.ProjectFile.Directory.FullName;
-    String PluginFullName = Path.Combine(Target.ProjectFile.Directory.FullName, &amp;#34;Plugins&amp;#34;, &amp;#34;ClangSA&amp;#34;, &amp;#34;Source&amp;#34;, &amp;#34;ClangSA&amp;#34;);
+    String PluginFullName = Path.Combine(Target.ProjectFile.Directory.FullName, "Plugins", "ClangSA", "Source", "ClangSA");
     String ParentFullName = Path.GetDirectoryName(DirectoryFullName);
 
     CheckerRules CurrentRules = GetCheckRules(DirectoryFullName);
@@ -284,8 +284,8 @@ public class ClangSA : ModuleRules
       return CurrentRules;
     }
 
-    CurrentRules.FinalCheckers = new HashSet&amp;lt;string&amp;gt; { };
-    if (!DirectoryFullName.Equals(PluginFullName) &amp;amp;&amp;amp; !string.IsNullOrEmpty(ParentFullName) &amp;amp;&amp;amp; !ParentFullName.Equals(DirectoryFullName))
+    CurrentRules.FinalCheckers = new HashSet<string> { };
+    if (!DirectoryFullName.Equals(PluginFullName) && !string.IsNullOrEmpty(ParentFullName) && !ParentFullName.Equals(DirectoryFullName))
     {
       CheckerRules ParentRules;
       if (DirectoryFullName.Equals(ProjectFullName))
@@ -327,36 +327,36 @@ public class ClangSA : ModuleRules
 
   static public void SetupClangUESA(ReadOnlyTargetRules Target, ModuleRules Module)
   {
-    if (Target.StaticAnalyzer != StaticAnalyzer.Clang &amp;amp;&amp;amp; Target.StaticAnalyzer != StaticAnalyzer.Default)
+    if (Target.StaticAnalyzer != StaticAnalyzer.Clang && Target.StaticAnalyzer != StaticAnalyzer.Default)
     {
-      System.Console.WriteLine($&amp;#34;-------------- Disable UE Static Analysis For {Module.Name} because whole disabled --------------&amp;#34;);
+      System.Console.WriteLine($"-------------- Disable UE Static Analysis For {Module.Name} because whole disabled --------------");
       return;
     }
 
     CheckerRules Rules = GetClangSACheckers(Target, Module);
     if (!Rules.Configured)
     {
-      System.Console.WriteLine($&amp;#34;-------------- Disable UE Static Analysis For {Module.Name} because no rules --------------&amp;#34;);
+      System.Console.WriteLine($"-------------- Disable UE Static Analysis For {Module.Name} because no rules --------------");
       return;
     }
 
     if (Rules.FinalCheckers == null)
     {
-      System.Console.WriteLine($&amp;#34;-------------- Disable UE Static Analysis For {Module.Name} because no rules --------------&amp;#34;);
+      System.Console.WriteLine($"-------------- Disable UE Static Analysis For {Module.Name} because no rules --------------");
       return;
     }
 
     if (Rules.FinalCheckers.Count == 0)
     {
-      System.Console.WriteLine($&amp;#34;-------------- Disable UE Static Analysis For {Module.Name} because no rules --------------&amp;#34;);
+      System.Console.WriteLine($"-------------- Disable UE Static Analysis For {Module.Name} because no rules --------------");
       return;
     }
 
     Module.bDisableStaticAnalysis = false;
     Module.StaticAnalyzerCheckers = Rules.FinalCheckers;
 
-    System.Console.WriteLine($&amp;#34;-------------- Enable UE Static Analysis For {Module.Name} --------------&amp;#34;);
-    System.Console.WriteLine($&amp;#34;-- Checkers: {string.Join(&amp;#34;,&amp;#34;, Rules.FinalCheckers)}&amp;#34;);
+    System.Console.WriteLine($"-------------- Enable UE Static Analysis For {Module.Name} --------------");
+    System.Console.WriteLine($"-- Checkers: {string.Join(",", Rules.FinalCheckers)}");
   }
 
   static private string GetClangTidyConfigureFile(ReadOnlyTargetRules Target, string DirectoryFullName, string FileName)
@@ -368,12 +368,12 @@ public class ClangSA : ModuleRules
     }
 
     string ProjectFullName = Target.ProjectFile.Directory.FullName;
-    string PluginFullName = Path.Combine(Target.ProjectFile.Directory.FullName, &amp;#34;Plugins&amp;#34;, &amp;#34;ClangSA&amp;#34;, &amp;#34;Source&amp;#34;, &amp;#34;ClangSA&amp;#34;);
+    string PluginFullName = Path.Combine(Target.ProjectFile.Directory.FullName, "Plugins", "ClangSA", "Source", "ClangSA");
     string FallbackFullName = Path.Combine(PluginFullName, FileName);
     string ParentFullName = Path.GetDirectoryName(DirectoryFullName);
 
-    if (!DirectoryFullName.Equals(PluginFullName) &amp;amp;&amp;amp; !DirectoryFullName.Equals(ProjectFullName)
-        &amp;amp;&amp;amp; !string.IsNullOrEmpty(ParentFullName) &amp;amp;&amp;amp; !ParentFullName.Equals(DirectoryFullName))
+    if (!DirectoryFullName.Equals(PluginFullName) && !DirectoryFullName.Equals(ProjectFullName)
+        && !string.IsNullOrEmpty(ParentFullName) && !ParentFullName.Equals(DirectoryFullName))
     {
       return GetClangTidyConfigureFile(Target, ParentFullName, FileName);
     }
@@ -385,7 +385,7 @@ public class ClangSA : ModuleRules
   {
     if (Module.Type == ModuleType.External)
     {
-      System.Console.WriteLine($&amp;#34;-------------- Disable ClangTidy For {Module.Name} because it&amp;#39;s external module --------------&amp;#34;);
+      System.Console.WriteLine($"-------------- Disable ClangTidy For {Module.Name} because it's external module --------------");
       return;
     }
 
@@ -399,24 +399,24 @@ public class ClangSA : ModuleRules
       Target.Configuration.ToString(), Module.ShortName ?? Module.Name).FullName;
     // string ModuleDirectory = Module.ModuleDirectory;
     string[] CopyFiles = new string[] {
-      &amp;#34;.codechecker.clang-tidy.args&amp;#34;,
-      &amp;#34;.codechecker.skipfile&amp;#34;,
-      &amp;#34;.codechecker.yaml&amp;#34;,
-      &amp;#34;.clang-tidy&amp;#34;,
+      ".codechecker.clang-tidy.args",
+      ".codechecker.skipfile",
+      ".codechecker.yaml",
+      ".clang-tidy",
     };
     string[] CopyToDirs = new string[] {
       GeneratedCodeDirectory,
       ModuleCodeDirectory,
     };
 
-    System.Console.WriteLine($&amp;#34;-------------- Setup ClangTidy For {Module.Name} --------------&amp;#34;);
+    System.Console.WriteLine($"-------------- Setup ClangTidy For {Module.Name} --------------");
     foreach (string CopyFile in CopyFiles)
     {
       string ConfigureFilePath = GetClangTidyConfigureFile(Target, Module.ModuleDirectory, CopyFile);
       foreach (string CopyToDir in CopyToDirs)
       {
         string TargetFilePath = Path.Combine(CopyToDir, CopyFile);
-        System.Console.WriteLine($&amp;#34;Setup ClangTidy: Copy {ConfigureFilePath} to {TargetFilePath}&amp;#34;);
+        System.Console.WriteLine($"Setup ClangTidy: Copy {ConfigureFilePath} to {TargetFilePath}");
         if (!Directory.Exists(CopyToDir))
         {
           Directory.CreateDirectory(CopyToDir);
@@ -440,13 +440,13 @@ public class ClangSA : ModuleRules
     switch (IntermediateEnvironment)
     {
       case UnrealIntermediateEnvironment.IWYU:
-        TargetFolderName &#43;= &amp;#34;IWYU&amp;#34;;
+        TargetFolderName += "IWYU";
         break;
       case UnrealIntermediateEnvironment.NonUnity:
-        TargetFolderName &#43;= &amp;#34;NU&amp;#34;;
+        TargetFolderName += "NU";
         break;
       case UnrealIntermediateEnvironment.Analyze:
-        TargetFolderName &#43;= &amp;#34;SA&amp;#34;;
+        TargetFolderName += "SA";
         break;
     }
     return TargetFolderName;
@@ -457,7 +457,7 @@ public class ClangSA : ModuleRules
   public static string GetPlatformIntermediateFolder(UnrealTargetPlatform Platform, UnrealArchitectures Architectures, bool External)
   {
     // now that we have the platform, we can set the intermediate path to include the platform/architecture name
-    string FolderPath = Path.Combine(&amp;#34;Intermediate&amp;#34;, External ? &amp;#34;External&amp;#34; : String.Empty, &amp;#34;Build&amp;#34;, Platform.ToString());
+    string FolderPath = Path.Combine("Intermediate", External ? "External" : String.Empty, "Build", Platform.ToString());
     if (Architectures != null)
     {
       FolderPath = Path.Combine(FolderPath, UnrealArchitectureConfig.ForPlatform(Platform).GetFolderNameForArchitectures(Architectures));
@@ -478,8 +478,8 @@ public class ClangSA : ModuleRules
       GeneratedCodeDirectory = Target.ProjectFile.Directory;
     // }
 
-    // Get the subfolder containing generated code - we don&amp;#39;t need architeceture information since these are shared between all arches for a platform
-    GeneratedCodeDirectory = DirectoryReference.Combine(GeneratedCodeDirectory, PlatformIntermediateFolderNoArch, GetTargetIntermediateFolderName(Target.Name, Target.IntermediateEnvironment), &amp;#34;Inc&amp;#34;);
+    // Get the subfolder containing generated code - we don't need architeceture information since these are shared between all arches for a platform
+    GeneratedCodeDirectory = DirectoryReference.Combine(GeneratedCodeDirectory, PlatformIntermediateFolderNoArch, GetTargetIntermediateFolderName(Target.Name, Target.IntermediateEnvironment), "Inc");
 
     // Append the binaries subfolder, if present. We rely on this to ensure that build products can be filtered correctly.
     if (Module.BinariesSubFolder != null)
@@ -512,16 +512,16 @@ import sys
 import json
 from typing import List, Tuple, Set, Optional, Dict
 
-__VERSION__ = &amp;#34;1.0.0&amp;#34;
+__VERSION__ = "1.0.0"
 
-CLANG_DATABASE_IGNORE_OPTIONS = set([&amp;#34;-c&amp;#34;])
+CLANG_DATABASE_IGNORE_OPTIONS = set(["-c"])
 
 
 def try_read_file(file_path):
     _err = None
-    for try_encoding in [&amp;#34;utf-8&amp;#34;, &amp;#34;utf-8-sig&amp;#34;, &amp;#34;GB18030&amp;#34;]:
+    for try_encoding in ["utf-8", "utf-8-sig", "GB18030"]:
         try:
-            ret = codecs.open(file_path, &amp;#34;r&amp;#34;, encoding=try_encoding)
+            ret = codecs.open(file_path, "r", encoding=try_encoding)
             return ret
         except Exception as e:
             if _err is None:
@@ -563,17 +563,17 @@ class ClangDatabaseProcessor:
             if not self._should_include(item):
                 continue
             if self.verbose:
-                print(f&amp;#34;Processing command for file: {item[&amp;#39;file&amp;#39;]}&amp;#34;)
+                print(f"Processing command for file: {item['file']}")
             result.append(self._resolve_item(item))
         json.dump(result, self.output_file, indent=2)
 
     def _parse_flag_with_file(self, token, previous_token, flag):
         if previous_token == flag:
             file_path = token
-            prefix = &amp;#34;&amp;#34;
-            suffix = &amp;#34;&amp;#34;
-            if (file_path.startswith(&amp;#39;&amp;#34;&amp;#39;) and file_path.endswith(&amp;#39;&amp;#34;&amp;#39;)) or (
-                file_path.startswith(&amp;#34;&amp;#39;&amp;#34;) and file_path.endswith(&amp;#34;&amp;#39;&amp;#34;)
+            prefix = ""
+            suffix = ""
+            if (file_path.startswith('"') and file_path.endswith('"')) or (
+                file_path.startswith("'") and file_path.endswith("'")
             ):
                 file_path = file_path[1:-1]
                 prefix = token[:1]
@@ -585,43 +585,43 @@ class ClangDatabaseProcessor:
 
         flag_len = len(flag)
         prefix = token[:flag_len]
-        suffix = &amp;#34;&amp;#34;
+        suffix = ""
         file_path = token[flag_len:]
-        if (file_path.startswith(&amp;#39;&amp;#34;&amp;#39;) and file_path.endswith(&amp;#39;&amp;#34;&amp;#39;)) or (
-            file_path.startswith(&amp;#34;&amp;#39;&amp;#34;) and file_path.endswith(&amp;#34;&amp;#39;&amp;#34;)
+        if (file_path.startswith('"') and file_path.endswith('"')) or (
+            file_path.startswith("'") and file_path.endswith("'")
         ):
             file_path = file_path[1:-1]
-            prefix = token[: (flag_len &#43; 1)]
-            suffix = token[flag_len : (flag_len &#43; 1)]
+            prefix = token[: (flag_len + 1)]
+            suffix = token[flag_len : (flag_len + 1)]
         return (file_path, prefix, suffix)
 
     def _resolve_token(self, token, previous_token):
         (file_path, prefix, suffix) = self._parse_flag_with_file(
-            token, previous_token, &amp;#34;@&amp;#34;
+            token, previous_token, "@"
         )
         if file_path:
             return self._resolve_response(file_path)
 
         (file_path, prefix, suffix) = self._parse_flag_with_file(
-            token, previous_token, &amp;#34;-I&amp;#34;
+            token, previous_token, "-I"
         )
         if file_path:
             return self._resolve_flag_with_file_path(file_path, prefix, suffix)
 
         (file_path, prefix, suffix) = self._parse_flag_with_file(
-            token, previous_token, &amp;#34;-isystem&amp;#34;
+            token, previous_token, "-isystem"
         )
         if file_path:
             return self._resolve_flag_with_file_path(file_path, prefix, suffix)
 
         (file_path, prefix, suffix) = self._parse_flag_with_file(
-            token, previous_token, &amp;#34;-MF&amp;#34;
+            token, previous_token, "-MF"
         )
         if file_path:
             return self._resolve_flag_with_file_path(file_path, prefix, suffix)
 
         (file_path, prefix, suffix) = self._parse_flag_with_file(
-            token, previous_token, &amp;#34;-o&amp;#34;
+            token, previous_token, "-o"
         )
         if file_path:
             return self._resolve_flag_with_file_path(file_path, prefix, suffix)
@@ -636,7 +636,7 @@ class ClangDatabaseProcessor:
         expanded_paths = []
         try:
             with try_read_file(file_path) as rsp_file:
-                previous_token = &amp;#34;&amp;#34;
+                previous_token = ""
                 for line in rsp_file:
                     line = line.strip()
                     if not line:
@@ -651,42 +651,42 @@ class ClangDatabaseProcessor:
             self.expanded_cache[file_path] = expanded_paths
             if self.verbose:
                 print(
-                    f&amp;#34;  - Expand response file &amp;#39;{file_path}&amp;#39; to {len(expanded_paths)} args&amp;#34;
+                    f"  - Expand response file '{file_path}' to {len(expanded_paths)} args"
                 )
         except Exception as e:
             print(
-                f&amp;#34;  - Error reading response file &amp;#39;{file_path}&amp;#39;: {e}&amp;#34;, file=sys.stderr
+                f"  - Error reading response file '{file_path}': {e}", file=sys.stderr
             )
-            return [f&amp;#39;@&amp;#34;{file_path}&amp;#34;&amp;#39;]
+            return [f'@"{file_path}"']
         return expanded_paths
 
     def _resolve_flag_with_file_path(self, file_path, prefix, suffix):
         if not os.path.isabs(file_path):
             file_path = os.path.realpath(os.path.join(self.engine_source, file_path))
-        return [f&amp;#34;{prefix}{file_path}{suffix}&amp;#34;]
+        return [f"{prefix}{file_path}{suffix}"]
 
     def _next_token(self, input, start_idx):
         sz = len(input)
-        while start_idx &amp;lt; sz and input[start_idx].isspace():
-            start_idx &#43;= 1
+        while start_idx < sz and input[start_idx].isspace():
+            start_idx += 1
 
-        if start_idx &amp;gt;= sz:
+        if start_idx >= sz:
             return (None, sz)
 
         string_quote = None
         end_idx = start_idx
-        while end_idx &amp;lt; sz and not input[end_idx].isspace():
-            if input[end_idx] == &amp;#39;&amp;#34;&amp;#39; or input[end_idx] == &amp;#34;&amp;#39;&amp;#34;:
+        while end_idx < sz and not input[end_idx].isspace():
+            if input[end_idx] == '"' or input[end_idx] == "'":
                 string_quote = input[end_idx]
-                end_idx &#43;= 1
+                end_idx += 1
                 ignore_next = False
-                while end_idx &amp;lt; sz and (ignore_next or input[end_idx] != string_quote):
-                    ignore_next = input[end_idx] == &amp;#34;\\&amp;#34;
-                    end_idx &#43;= 1
-                if end_idx &amp;lt; sz:
-                    end_idx &#43;= 1
+                while end_idx < sz and (ignore_next or input[end_idx] != string_quote):
+                    ignore_next = input[end_idx] == "\\"
+                    end_idx += 1
+                if end_idx < sz:
+                    end_idx += 1
             else:
-                end_idx &#43;= 1
+                end_idx += 1
         return (input[start_idx:end_idx], end_idx)
 
     def _split_tokens(self, input):
@@ -694,7 +694,7 @@ class ClangDatabaseProcessor:
         idx = 0
         sz = len(input)
         ret = []
-        while idx &amp;lt; sz:
+        while idx < sz:
             token, end_idx = self._next_token(input, idx)
             if token is not None:
                 ret.append(token)
@@ -706,8 +706,8 @@ class ClangDatabaseProcessor:
 
         checked_pch = False
         # Resolve response files
-        tokens = self._split_tokens(item[&amp;#34;command&amp;#34;])
-        previous_token = &amp;#34;&amp;#34;
+        tokens = self._split_tokens(item["command"])
+        previous_token = ""
         for token in tokens:
             if token in CLANG_DATABASE_IGNORE_OPTIONS:
                 continue
@@ -717,30 +717,30 @@ class ClangDatabaseProcessor:
             if not checked_pch:
                 checked_pch = True
                 if self.pch and self.pch.strip():
-                    command_args.extend([&amp;#34;-include&amp;#34;, f&amp;#39;&amp;#34;{self.pch}&amp;#34;&amp;#39;])
+                    command_args.extend(["-include", f'"{self.pch}"'])
 
-        if &amp;#34;-Wno-unused-command-line-argument&amp;#34; not in command_args:
-            command_args.append(&amp;#34;-Wno-unused-command-line-argument&amp;#34;)
+        if "-Wno-unused-command-line-argument" not in command_args:
+            command_args.append("-Wno-unused-command-line-argument")
 
         if self.verbose:
             print(
-                f&amp;#34;  * Resolve command for file: {item[&amp;#39;file&amp;#39;]} from {len(tokens)} args to {len(command_args)} args&amp;#34;
+                f"  * Resolve command for file: {item['file']} from {len(tokens)} args to {len(command_args)} args"
             )
 
-        item[&amp;#34;command&amp;#34;] = &amp;#34; &amp;#34;.join(command_args)
+        item["command"] = " ".join(command_args)
         # Patch file
-        file_path = item[&amp;#34;file&amp;#34;]
-        if file_path.startswith(&amp;#34;@&amp;#34;):
+        file_path = item["file"]
+        if file_path.startswith("@"):
             file_path = file_path[1:]
-            if file_path.endswith(&amp;#34;.d.rsp&amp;#34;):
-                file_path = file_path[: -len(&amp;#34;.d.rsp&amp;#34;)]
-            item[&amp;#34;file&amp;#34;] = file_path
+            if file_path.endswith(".d.rsp"):
+                file_path = file_path[: -len(".d.rsp")]
+            item["file"] = file_path
         return item
 
     def _should_include(self, item):
-        if &amp;#34;file&amp;#34; not in item or &amp;#34;command&amp;#34; not in item:
+        if "file" not in item or "command" not in item:
             return False
-        file_param = item[&amp;#34;file&amp;#34;]
+        file_param = item["file"]
         if self.include_path:
             if not any(p.search(file_param) for p in self.include_path):
                 return False
@@ -757,94 +757,94 @@ class ClangDatabaseProcessor:
 def main():
     global __VERSION__
 
-    parser = argparse.ArgumentParser(usage=&amp;#34;%(prog)s [options...]&amp;#34;)
-    parser.add_argument(&amp;#34;REMAINDER&amp;#34;, nargs=argparse.REMAINDER, help=&amp;#34;task names&amp;#34;)
+    parser = argparse.ArgumentParser(usage="%(prog)s [options...]")
+    parser.add_argument("REMAINDER", nargs=argparse.REMAINDER, help="task names")
     parser.add_argument(
-        &amp;#34;-v&amp;#34;,
-        &amp;#34;--version&amp;#34;,
-        action=&amp;#34;store_true&amp;#34;,
-        help=&amp;#34;show version and exit&amp;#34;,
-        dest=&amp;#34;version&amp;#34;,
+        "-v",
+        "--version",
+        action="store_true",
+        help="show version and exit",
+        dest="version",
         default=False,
     )
 
     parser.add_argument(
-        &amp;#34;-V&amp;#34;,
-        &amp;#34;--verbose&amp;#34;,
-        action=&amp;#34;store_true&amp;#34;,
-        help=&amp;#34;show verbose&amp;#34;,
-        dest=&amp;#34;verbose&amp;#34;,
+        "-V",
+        "--verbose",
+        action="store_true",
+        help="show verbose",
+        dest="verbose",
         default=False,
     )
 
     parser.add_argument(
-        &amp;#34;-i&amp;#34;,
-        &amp;#34;--input&amp;#34;,
-        action=&amp;#34;store&amp;#34;,
-        help=&amp;#34;set input clang database build file (default: compile_commands.json)&amp;#34;,
-        dest=&amp;#34;input&amp;#34;,
-        default=&amp;#34;compile_commands.json&amp;#34;,
+        "-i",
+        "--input",
+        action="store",
+        help="set input clang database build file (default: compile_commands.json)",
+        dest="input",
+        default="compile_commands.json",
     )
 
     parser.add_argument(
-        &amp;#34;-o&amp;#34;,
-        &amp;#34;--output&amp;#34;,
-        action=&amp;#34;store&amp;#34;,
-        help=&amp;#34;set output clang database build file (default: compile_commands.json)&amp;#34;,
-        dest=&amp;#34;output&amp;#34;,
+        "-o",
+        "--output",
+        action="store",
+        help="set output clang database build file (default: compile_commands.json)",
+        dest="output",
         default=None,
     )
 
     parser.add_argument(
-        &amp;#34;--include-path&amp;#34;,
-        action=&amp;#34;append&amp;#34;,
-        help=&amp;#34;only keep files match include path(regex)&amp;#34;,
-        dest=&amp;#34;include_path&amp;#34;,
+        "--include-path",
+        action="append",
+        help="only keep files match include path(regex)",
+        dest="include_path",
         default=[],
     )
 
     parser.add_argument(
-        &amp;#34;--exclude-path&amp;#34;,
-        action=&amp;#34;append&amp;#34;,
-        help=&amp;#34;only keep files match exclude path(regex)&amp;#34;,
-        dest=&amp;#34;exclude_path&amp;#34;,
+        "--exclude-path",
+        action="append",
+        help="only keep files match exclude path(regex)",
+        dest="exclude_path",
         default=[],
     )
 
     parser.add_argument(
-        &amp;#34;--pch&amp;#34;,
-        action=&amp;#34;store&amp;#34;,
-        help=&amp;#34;set the pch file to include&amp;#34;,
-        dest=&amp;#34;pch&amp;#34;,
+        "--pch",
+        action="store",
+        help="set the pch file to include",
+        dest="pch",
         default=None,
     )
 
     if os.path.exists(
-        os.path.join(os.getcwd(), &amp;#34;Engine&amp;#34;, &amp;#34;Source&amp;#34;, &amp;#34;UnrealGame.Target.cs&amp;#34;)
+        os.path.join(os.getcwd(), "Engine", "Source", "UnrealGame.Target.cs")
     ):
-        find_default_engine_source = os.path.join(os.getcwd(), &amp;#34;Engine&amp;#34;, &amp;#34;Source&amp;#34;)
+        find_default_engine_source = os.path.join(os.getcwd(), "Engine", "Source")
     elif os.path.exists(
-        os.path.join(os.getcwd(), &amp;#34;..&amp;#34;, &amp;#34;Engine&amp;#34;, &amp;#34;Source&amp;#34;, &amp;#34;UnrealGame.Target.cs&amp;#34;)
+        os.path.join(os.getcwd(), "..", "Engine", "Source", "UnrealGame.Target.cs")
     ):
         find_default_engine_source = os.path.realpath(
-            os.path.join(os.getcwd(), &amp;#34;..&amp;#34;, &amp;#34;Engine&amp;#34;, &amp;#34;Source&amp;#34;)
+            os.path.join(os.getcwd(), "..", "Engine", "Source")
         )
     elif os.path.exists(
         os.path.join(
-            os.getcwd(), &amp;#34;..&amp;#34;, &amp;#34;..&amp;#34;, &amp;#34;Engine&amp;#34;, &amp;#34;Source&amp;#34;, &amp;#34;UnrealGame.Target.cs&amp;#34;
+            os.getcwd(), "..", "..", "Engine", "Source", "UnrealGame.Target.cs"
         )
     ):
         find_default_engine_source = os.path.realpath(
-            os.path.join(os.getcwd(), &amp;#34;..&amp;#34;, &amp;#34;..&amp;#34;, &amp;#34;Engine&amp;#34;, &amp;#34;Source&amp;#34;)
+            os.path.join(os.getcwd(), "..", "..", "Engine", "Source")
         )
     else:
         find_default_engine_source = os.getcwd()
     parser.add_argument(
-        &amp;#34;-e&amp;#34;,
-        &amp;#34;--engine-source&amp;#34;,
-        action=&amp;#34;store&amp;#34;,
-        help=&amp;#34;set path of Engine/Source, it will be used to convert relative paths&amp;#34;,
-        dest=&amp;#34;engine_source&amp;#34;,
+        "-e",
+        "--engine-source",
+        action="store",
+        help="set path of Engine/Source, it will be used to convert relative paths",
+        dest="engine_source",
         default=find_default_engine_source,
     )
 
@@ -853,7 +853,7 @@ def main():
         print(__VERSION__)
         return 0
 
-    if options.input.strip() == &amp;#34;-&amp;#34;:
+    if options.input.strip() == "-":
         input_file = sys.stdin
     else:
         input_file = try_read_file(options.input)
@@ -862,27 +862,27 @@ def main():
     if output_file_path is None:
         (input_base, input_ext) = os.path.splitext(options.input)
         if input_ext:
-            output_file_path = input_base &#43; &amp;#34;.fixed&amp;#34; &#43; input_ext
+            output_file_path = input_base + ".fixed" + input_ext
         else:
-            output_file_path = input_base &#43; &amp;#34;.fixed&amp;#34;
+            output_file_path = input_base + ".fixed"
 
     processor = ClangDatabaseProcessor(
         engine_source=options.engine_source,
         input_file=input_file,
-        output_file=codecs.open(output_file_path, &amp;#34;w&amp;#34;, encoding=&amp;#34;utf-8&amp;#34;),
+        output_file=codecs.open(output_file_path, "w", encoding="utf-8"),
         include_path=options.include_path,
         exclude_path=options.exclude_path,
         pch=options.pch,
         verbose=options.verbose,
     )
-    print(f&amp;#34;[FixClangDatabase]: Using engine source at {options.engine_source}&amp;#34;)
-    print(f&amp;#34;[FixClangDatabase]: Process {options.input} -&amp;gt; {output_file_path}&amp;#34;)
+    print(f"[FixClangDatabase]: Using engine source at {options.engine_source}")
+    print(f"[FixClangDatabase]: Process {options.input} -> {output_file_path}")
     processor.process()
 
     return 0
 
 
-if __name__ == &amp;#34;__main__&amp;#34;:
+if __name__ == "__main__":
     exit(main())</code></pre></details><h4 id=命令行参数说明>命令行参数说明</h4><table><thead><tr><th>参数</th><th>说明</th><th>默认值</th></tr></thead><tbody><tr><td><code>-i, --input</code></td><td>输入的编译数据库文件</td><td><code>compile_commands.json</code></td></tr><tr><td><code>-o, --output</code></td><td>输出的编译数据库文件</td><td><code>&lt;input>.fixed.json</code></td></tr><tr><td><code>--include-path</code></td><td>只保留匹配的文件路径（正则）</td><td>无</td></tr><tr><td><code>--exclude-path</code></td><td>排除匹配的文件路径（正则）</td><td>无</td></tr><tr><td><code>--pch</code></td><td>要包含的 PCH 文件路径</td><td>无</td></tr><tr><td><code>-e, --engine-source</code></td><td>引擎源码路径，用于转换相对路径</td><td>自动检测</td></tr></tbody></table><h3 id=extractnotificationpy问题报告生成>ExtractNotification.py：问题报告生成</h3><p>静态分析会生成大量诊断信息，但并非所有问题都需要立即处理。<code>ExtractNotification.py</code> 用于提取需要重点关注的严重问题，并通过 VCS（p4/git）查找每行代码的最后提交人。</p><h4 id=工作流程>工作流程</h4><pre class=mermaid>
 flowchart LR
     A[plist 诊断文件] --> B[解析 XML/plist]
@@ -904,7 +904,7 @@ import subprocess
 
 from typing import List, Any, Optional
 
-__VERSION__ = &amp;#34;1.0.0&amp;#34;
+__VERSION__ = "1.0.0"
 
 
 class ClangSANotificationFilter:
@@ -918,16 +918,16 @@ CLANG_SA_NOTIFICATION_CHECKERS = dict()
 CLANG_SA_NOTIFICATION_CHECKERS_LOWERCASE = dict()
 for checker in [
     ClangSANotificationFilter(
-        &amp;#34;clang-analyzer-core.CallAndMessage&amp;#34;,
-        [re.compile(r&amp;#34;object\s&#43;pointer\s&#43;is\s&#43;null&amp;#34;, re.IGNORECASE)],
+        "clang-analyzer-core.CallAndMessage",
+        [re.compile(r"object\s+pointer\s+is\s+null", re.IGNORECASE)],
     ),
-    ClangSANotificationFilter(&amp;#34;clang-analyzer-core.NonNullParamChecker&amp;#34;),
-    ClangSANotificationFilter(&amp;#34;clang-analyzer-core.NullDereference&amp;#34;),
-    ClangSANotificationFilter(&amp;#34;clang-diagnostic-shorten-64-to-32&amp;#34;),
-    ClangSANotificationFilter(&amp;#34;bugprone-use-after-move&amp;#34;),
-    ClangSANotificationFilter(&amp;#34;bugprone-swapped-arguments&amp;#34;),
-    ClangSANotificationFilter(&amp;#34;bugprone-suspicious-enum-usage&amp;#34;),
-    ClangSANotificationFilter(&amp;#34;clang-diagnostic-error&amp;#34;),
+    ClangSANotificationFilter("clang-analyzer-core.NonNullParamChecker"),
+    ClangSANotificationFilter("clang-analyzer-core.NullDereference"),
+    ClangSANotificationFilter("clang-diagnostic-shorten-64-to-32"),
+    ClangSANotificationFilter("bugprone-use-after-move"),
+    ClangSANotificationFilter("bugprone-swapped-arguments"),
+    ClangSANotificationFilter("bugprone-suspicious-enum-usage"),
+    ClangSANotificationFilter("clang-diagnostic-error"),
 ]:
     CLANG_SA_NOTIFICATION_CHECKERS[checker.checker_name] = checker
     CLANG_SA_NOTIFICATION_CHECKERS_LOWERCASE[checker.checker_name_lowercase] = checker
@@ -935,34 +935,34 @@ for checker in [
 CLANG_SA_DEFAULT_IGNORE_RULES = [
     # 忽略引擎核心模块的问题（这些通常不是项目代码）
     re.compile(
-        r&amp;#34;Engine/Source/Runtime/(Core|CoreUObject|Engine|SlateCore)&amp;#34;, re.IGNORECASE
+        r"Engine/Source/Runtime/(Core|CoreUObject|Engine|SlateCore)", re.IGNORECASE
     ),
     # 忽略第三方库
-    re.compile(r&amp;#34;Projects/Plugins/UnLua/Source/ThirdParty&amp;#34;, re.IGNORECASE),
-    re.compile(r&amp;#34;deps/third_party/install&amp;#34;, re.IGNORECASE),
+    re.compile(r"Projects/Plugins/UnLua/Source/ThirdParty", re.IGNORECASE),
+    re.compile(r"deps/third_party/install", re.IGNORECASE),
 ]
 
-# 匹配 C/C&#43;&#43; 源文件的正则表达式
-CLANG_SA_SOURCE_FILE_PATTERN = re.compile(r&amp;#34;^.*\.(cc|cxx|cpp|c)$&amp;#34;, re.IGNORECASE)
+# 匹配 C/C++ 源文件的正则表达式
+CLANG_SA_SOURCE_FILE_PATTERN = re.compile(r"^.*\.(cc|cxx|cpp|c)$", re.IGNORECASE)
 
 
 class ClangSANotificationFile:
-    &amp;#34;&amp;#34;&amp;#34;表示一个需要通知的问题文件位置&amp;#34;&amp;#34;&amp;#34;
+    """表示一个需要通知的问题文件位置"""
     def __init__(self, file_path: str, column: int, line: int):
-        self.file_path = file_path.replace(&amp;#34;\\&amp;#34;, &amp;#34;/&amp;#34;)  # 统一使用 Unix 风格路径
+        self.file_path = file_path.replace("\\", "/")  # 统一使用 Unix 风格路径
         self.column = column
         self.line = line
         self.notifications = []
 
 
 def try_read_file(file_path):
-    &amp;#34;&amp;#34;&amp;#34;尝试以多种编码读取文件，自动检测编码&amp;#34;&amp;#34;&amp;#34;
+    """尝试以多种编码读取文件，自动检测编码"""
     _err = None
     if not os.path.isabs(file_path):
         file_path = os.path.join(file_path)
-    for try_encoding in [&amp;#34;utf-8&amp;#34;, &amp;#34;utf-8-sig&amp;#34;, &amp;#34;GB18030&amp;#34;]:
+    for try_encoding in ["utf-8", "utf-8-sig", "GB18030"]:
         try:
-            ret = codecs.open(file_path, &amp;#34;r&amp;#34;, encoding=try_encoding)
+            ret = codecs.open(file_path, "r", encoding=try_encoding)
             return ret
         except Exception as e:
             if _err is None:
@@ -973,17 +973,17 @@ def try_read_file(file_path):
 
 
 def try_decode_buffer(buffer):
-    &amp;#34;&amp;#34;&amp;#34;尝试以多种编码解码字节buffer&amp;#34;&amp;#34;&amp;#34;
-    for try_encoding in [&amp;#34;utf-8&amp;#34;, &amp;#34;utf-8-sig&amp;#34;, &amp;#34;GB18030&amp;#34;]:
+    """尝试以多种编码解码字节buffer"""
+    for try_encoding in ["utf-8", "utf-8-sig", "GB18030"]:
         try:
             return buffer.decode(try_encoding)
         except Exception:
             continue
-    return buffer.decode(sys.getfilesystemencoding(), errors=&amp;#34;ignore&amp;#34;)
+    return buffer.decode(sys.getfilesystemencoding(), errors="ignore")
 
 
 def _check_notification_file(file_path: str, ignore_path: List[Any]):
-    &amp;#34;&amp;#34;&amp;#34;检查文件路径是否应该被忽略&amp;#34;&amp;#34;&amp;#34;
+    """检查文件路径是否应该被忽略"""
     for rule in ignore_path:
         if re.search(rule, file_path):
             return False
@@ -992,24 +992,24 @@ def _check_notification_file(file_path: str, ignore_path: List[Any]):
 
 def _find_notification_file(
     data: dict, ignore_path: List[Any]
-) -&amp;gt; Optional[ClangSANotificationFile]:
-    &amp;#34;&amp;#34;&amp;#34;
+) -> Optional[ClangSANotificationFile]:
+    """
     从诊断数据中查找问题所在的源文件位置
     优先返回 .cpp/.c 源文件，如果没有则返回头文件
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     fallback_header_file = None
     # 首先检查直接的 location 字段
-    if &amp;#34;location&amp;#34; in data:
-        location = data[&amp;#34;location&amp;#34;]
+    if "location" in data:
+        location = data["location"]
         if (
             isinstance(location, dict)
-            and &amp;#34;file&amp;#34; in location
-            and &amp;#34;line&amp;#34; in location
-            and &amp;#34;col&amp;#34; in location
+            and "file" in location
+            and "line" in location
+            and "col" in location
         ):
-            file_path = location[&amp;#34;file&amp;#34;]
-            line = location[&amp;#34;line&amp;#34;]
-            column = location[&amp;#34;col&amp;#34;]
+            file_path = location["file"]
+            line = location["line"]
+            column = location["col"]
             if _check_notification_file(file_path, ignore_path):
                 if CLANG_SA_SOURCE_FILE_PATTERN.match(file_path):
                     return ClangSANotificationFile(file_path, column, line)
@@ -1018,21 +1018,21 @@ def _find_notification_file(
                         file_path, column, line
                     )
 
-    if &amp;#34;path&amp;#34; in data:
-        path_nodes = data[&amp;#34;path&amp;#34;]
+    if "path" in data:
+        path_nodes = data["path"]
         # 倒序找文件，优先使用源文件
         for path_node in reversed(path_nodes):
-            if &amp;#34;location&amp;#34; in path_node:
-                location = path_node[&amp;#34;location&amp;#34;]
+            if "location" in path_node:
+                location = path_node["location"]
                 if (
                     isinstance(location, dict)
-                    and &amp;#34;file&amp;#34; in location
-                    and &amp;#34;line&amp;#34; in location
-                    and &amp;#34;col&amp;#34; in location
+                    and "file" in location
+                    and "line" in location
+                    and "col" in location
                 ):
-                    file_path = location[&amp;#34;file&amp;#34;]
-                    line = location[&amp;#34;line&amp;#34;]
-                    column = location[&amp;#34;col&amp;#34;]
+                    file_path = location["file"]
+                    line = location["line"]
+                    column = location["col"]
                     if _check_notification_file(file_path, ignore_path):
                         if CLANG_SA_SOURCE_FILE_PATTERN.match(file_path):
                             return ClangSANotificationFile(file_path, column, line)
@@ -1045,48 +1045,48 @@ def _find_notification_file(
 
 
 class ClangSANotificationInfo:
-    &amp;#34;&amp;#34;&amp;#34;封装单个诊断通知的完整信息&amp;#34;&amp;#34;&amp;#34;
+    """封装单个诊断通知的完整信息"""
     def __init__(self, data: dict, ignore_path: List[Any]):
         self.data = data
-        self.check_name = data.get(&amp;#34;check_name&amp;#34;, &amp;#34;&amp;#34;)
-        self.description = data.get(&amp;#34;description&amp;#34;, &amp;#34;&amp;#34;)
+        self.check_name = data.get("check_name", "")
+        self.description = data.get("description", "")
         # 对编译错误添加额外说明
-        if self.check_name == &amp;#34;clang-diagnostic-error&amp;#34;:
-            self.description &#43;= &amp;#34;（编译失败，通常是由于头文件依赖不严谨）&amp;#34;
-        self.category = data.get(&amp;#34;category&amp;#34;, &amp;#34;&amp;#34;)
+        if self.check_name == "clang-diagnostic-error":
+            self.description += "（编译失败，通常是由于头文件依赖不严谨）"
+        self.category = data.get("category", "")
         # issue_hash 用于去重和生成报告链接
-        self.issue_hash = data.get(&amp;#34;issue_hash_content_of_line_in_context&amp;#34;, &amp;#34;&amp;#34;)
-        self.plist_file_path = data.get(&amp;#34;plist_file_path&amp;#34;, &amp;#34;&amp;#34;)
+        self.issue_hash = data.get("issue_hash_content_of_line_in_context", "")
+        self.plist_file_path = data.get("plist_file_path", "")
         # 查找问题所在的源文件
         self.issue_file = _find_notification_file(data, ignore_path)
         self.last_committer = None  # 稍后通过 VCS 查询填充
         self.location = None
-        if &amp;#34;location&amp;#34; in data:
-            location = data[&amp;#34;location&amp;#34;]
+        if "location" in data:
+            location = data["location"]
             if (
                 isinstance(location, dict)
-                and &amp;#34;file&amp;#34; in location
-                and &amp;#34;line&amp;#34; in location
-                and &amp;#34;col&amp;#34; in location
+                and "file" in location
+                and "line" in location
+                and "col" in location
             ):
                 self.location = ClangSANotificationFile(
-                    location[&amp;#34;file&amp;#34;], location[&amp;#34;col&amp;#34;], location[&amp;#34;line&amp;#34;]
+                    location["file"], location["col"], location["line"]
                 )
 
     def is_valid(self):
-        &amp;#34;&amp;#34;&amp;#34;检查通知信息是否有效（必须有文件位置信息）&amp;#34;&amp;#34;&amp;#34;
+        """检查通知信息是否有效（必须有文件位置信息）"""
         return self.issue_file is not None and self.location is not None
 
 
 class VCS_MODE:
-    &amp;#34;&amp;#34;&amp;#34;版本控制系统模式枚举&amp;#34;&amp;#34;&amp;#34;
+    """版本控制系统模式枚举"""
     NONE = None
-    GIT = &amp;#34;git&amp;#34;
-    P4 = &amp;#34;p4&amp;#34;
+    GIT = "git"
+    P4 = "p4"
 
 
 def build_array_element(node: xml.dom.minidom.Element):
-    &amp;#34;&amp;#34;&amp;#34;解析 plist 的 array 元素，返回 Python 列表&amp;#34;&amp;#34;&amp;#34;
+    """解析 plist 的 array 元素，返回 Python 列表"""
     ret = []
     for child in node.childNodes:
         if child.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
@@ -1098,7 +1098,7 @@ def build_array_element(node: xml.dom.minidom.Element):
 
 
 def build_dict_element(node: xml.dom.minidom.Element):
-    &amp;#34;&amp;#34;&amp;#34;解析 plist 的 dict 元素，返回 Python 字典&amp;#34;&amp;#34;&amp;#34;
+    """解析 plist 的 dict 元素，返回 Python 字典"""
     ret = {}
     current_key = None
 
@@ -1106,12 +1106,12 @@ def build_dict_element(node: xml.dom.minidom.Element):
         if child.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
             continue
 
-        if child.nodeName == &amp;#34;key&amp;#34;:
+        if child.nodeName == "key":
             # 提取 key 的文本内容
-            current_key = &amp;#34;&amp;#34;
+            current_key = ""
             for text_node in child.childNodes:
                 if text_node.nodeType == xml.dom.minidom.Node.TEXT_NODE:
-                    current_key &#43;= text_node.nodeValue
+                    current_key += text_node.nodeValue
         else:
             # 当前节点是 key 对应的值
             if current_key is not None:
@@ -1124,64 +1124,64 @@ def build_dict_element(node: xml.dom.minidom.Element):
 
 
 def get_text_content(node: xml.dom.minidom.Element):
-    &amp;#34;&amp;#34;&amp;#34;提取 XML 元素的文本内容&amp;#34;&amp;#34;&amp;#34;
-    text = &amp;#34;&amp;#34;
+    """提取 XML 元素的文本内容"""
+    text = ""
     for child in node.childNodes:
         if child.nodeType == xml.dom.minidom.Node.TEXT_NODE:
-            text &#43;= child.nodeValue
+            text += child.nodeValue
     return text
 
 
 def build_object_element(node: xml.dom.minidom.Element):
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     根据 plist DTD 规范解析各种类型的元素
     @see http://www.apple.com/DTDs/PropertyList-1.0.dtd
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     tag_name = node.nodeName
 
-    if tag_name == &amp;#34;array&amp;#34;:
+    if tag_name == "array":
         return build_array_element(node)
-    elif tag_name == &amp;#34;dict&amp;#34;:
+    elif tag_name == "dict":
         return build_dict_element(node)
-    elif tag_name == &amp;#34;string&amp;#34;:
+    elif tag_name == "string":
         return get_text_content(node)
-    elif tag_name == &amp;#34;integer&amp;#34;:
+    elif tag_name == "integer":
         text = get_text_content(node).strip()
         try:
             return int(text)
         except ValueError:
             return text
-    elif tag_name == &amp;#34;real&amp;#34;:
+    elif tag_name == "real":
         text = get_text_content(node).strip()
         try:
             return float(text)
         except ValueError:
             return text
-    elif tag_name == &amp;#34;true&amp;#34;:
+    elif tag_name == "true":
         return True
-    elif tag_name == &amp;#34;false&amp;#34;:
+    elif tag_name == "false":
         return False
-    elif tag_name == &amp;#34;data&amp;#34;:
+    elif tag_name == "data":
         # Base64 encoded data
         return get_text_content(node).strip()
-    elif tag_name == &amp;#34;date&amp;#34;:
+    elif tag_name == "date":
         # ISO 8601 date string
         return get_text_content(node).strip()
 
     return None
 
 
-def rebuild_diagnostic(diagnostic: dict | list, file_indexes: List[str]) -&amp;gt; dict | list:
-    &amp;#34;&amp;#34;&amp;#34;
+def rebuild_diagnostic(diagnostic: dict | list, file_indexes: List[str]) -> dict | list:
+    """
     重建诊断数据结构，将文件索引替换为实际的文件路径
     plist 中的 file 字段存储的是索引号，需要通过 file_indexes 映射为路径
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     if isinstance(diagnostic, list):
         return [rebuild_diagnostic(item, file_indexes) for item in diagnostic]
     ret = {}
     for k in diagnostic:
         v = diagnostic[k]
-        if k == &amp;#34;file&amp;#34; and isinstance(v, int):
+        if k == "file" and isinstance(v, int):
             # 将文件索引映射为实际的文件路径
             ret[k] = file_indexes[v]
         elif isinstance(v, dict):
@@ -1197,11 +1197,11 @@ def rebuild_diagnostic(diagnostic: dict | list, file_indexes: List[str]) -&amp;g
 
 def build_plist_element(
     node: xml.dom.minidom.Element, shared_index: dict
-) -&amp;gt; List[dict]:
-    &amp;#34;&amp;#34;&amp;#34;
+) -> List[dict]:
+    """
     解析 plist 根元素，提取所有诊断信息
-    shared_index 用于跨文件去重（相同 checker &#43; issue_hash 的问题只保留一个）
-    &amp;#34;&amp;#34;&amp;#34;
+    shared_index 用于跨文件去重（相同 checker + issue_hash 的问题只保留一个）
+    """
     ret = []
     for child in node.childNodes:
         if child.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
@@ -1210,22 +1210,22 @@ def build_plist_element(
         # plist 必须包含 files（文件路径列表）和 diagnostics（诊断列表）
         if (
             not plist_data
-            or &amp;#34;files&amp;#34; not in plist_data
-            or &amp;#34;diagnostics&amp;#34; not in plist_data
+            or "files" not in plist_data
+            or "diagnostics" not in plist_data
         ):
             continue
-        file_indexes = plist_data[&amp;#34;files&amp;#34;]  # 文件路径索引表
-        diagnostics = plist_data[&amp;#34;diagnostics&amp;#34;]
+        file_indexes = plist_data["files"]  # 文件路径索引表
+        diagnostics = plist_data["diagnostics"]
         for diagnostic in diagnostics:
             # 必须有 checker 名称和 issue hash 才能处理
             if (
-                &amp;#34;check_name&amp;#34; not in diagnostic
-                or &amp;#34;issue_hash_content_of_line_in_context&amp;#34; not in diagnostic
+                "check_name" not in diagnostic
+                or "issue_hash_content_of_line_in_context" not in diagnostic
             ):
                 continue
-            check_name = diagnostic[&amp;#34;check_name&amp;#34;]
-            issue_hash = diagnostic[&amp;#34;issue_hash_content_of_line_in_context&amp;#34;]
-            # 使用 checker 名称 &#43; issue hash 作为去重 key
+            check_name = diagnostic["check_name"]
+            issue_hash = diagnostic["issue_hash_content_of_line_in_context"]
+            # 使用 checker 名称 + issue hash 作为去重 key
             if check_name not in shared_index:
                 shared_index[check_name] = dict()
             check_name_map = shared_index[check_name]
@@ -1239,36 +1239,36 @@ def build_plist_element(
     return ret
 
 
-def build_plist_data(file_path: str, shared_index: dict) -&amp;gt; List[dict]:
-    &amp;#34;&amp;#34;&amp;#34;解析单个 plist 文件，返回诊断信息列表&amp;#34;&amp;#34;&amp;#34;
+def build_plist_data(file_path: str, shared_index: dict) -> List[dict]:
+    """解析单个 plist 文件，返回诊断信息列表"""
     doc = xml.dom.minidom.parseString(try_read_file(file_path).read())
     ret = []
     for node in doc.childNodes:
         if node.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
             continue
-        if node.nodeName == &amp;#34;plist&amp;#34;:
+        if node.nodeName == "plist":
             res = build_plist_element(node, shared_index)
             for item in res:
-                item[&amp;#34;plist_file_path&amp;#34;] = file_path
+                item["plist_file_path"] = file_path
             ret.extend(res)
         else:
             child = build_object_element(node)
             if child:
-                child[&amp;#34;plist_file_path&amp;#34;] = file_path
+                child["plist_file_path"] = file_path
                 ret.append(child)
     return ret
 
 
-def filter_notification_diagnostics(diagnostics: List[dict]) -&amp;gt; List[dict]:
-    &amp;#34;&amp;#34;&amp;#34;
+def filter_notification_diagnostics(diagnostics: List[dict]) -> List[dict]:
+    """
     过滤诊断信息，只保留需要通知的重要问题
     根据 CLANG_SA_NOTIFICATION_CHECKERS 定义的 checker 列表过滤
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     ret = []
     for diagnostic in diagnostics:
-        if &amp;#34;check_name&amp;#34; not in diagnostic:
+        if "check_name" not in diagnostic:
             continue
-        check_name = diagnostic[&amp;#34;check_name&amp;#34;].lower()
+        check_name = diagnostic["check_name"].lower()
         # 检查是否是需要通知的 checker
         if check_name not in CLANG_SA_NOTIFICATION_CHECKERS_LOWERCASE:
             continue
@@ -1277,7 +1277,7 @@ def filter_notification_diagnostics(diagnostics: List[dict]) -&amp;gt; List[dict
         # 如果 checker 有消息过滤规则，还需要匹配消息内容
         if filter.message_filter:
             selected = False
-            description = diagnostic.get(&amp;#34;description&amp;#34;, &amp;#34;&amp;#34;)
+            description = diagnostic.get("description", "")
             for pattern in filter.message_filter:
                 if re.search(pattern, description):
                     selected = True
@@ -1291,8 +1291,8 @@ def filter_notification_diagnostics(diagnostics: List[dict]) -&amp;gt; List[dict
 
 def build_notification_list(
     notification_diagnostics: List[dict], ignore_path: List[Any]
-) -&amp;gt; List[ClangSANotificationInfo]:
-    &amp;#34;&amp;#34;&amp;#34;将过滤后的诊断信息转换为通知对象列表&amp;#34;&amp;#34;&amp;#34;
+) -> List[ClangSANotificationInfo]:
+    """将过滤后的诊断信息转换为通知对象列表"""
     ret = []
     for diagnostic in notification_diagnostics:
         notification_info = ClangSANotificationInfo(diagnostic, ignore_path)
@@ -1303,21 +1303,21 @@ def build_notification_list(
 
 def patch_statistics_body_dom(
     node: xml.dom.minidom.Node, url_prefix: str
-) -&amp;gt; xml.dom.minidom.Node:
-    &amp;#34;&amp;#34;&amp;#34;修补统计 HTML 中的链接，添加 URL 前缀&amp;#34;&amp;#34;&amp;#34;
-    if node.nodeName == &amp;#34;a&amp;#34;:
-        href = node.getAttribute(&amp;#34;href&amp;#34;)
+) -> xml.dom.minidom.Node:
+    """修补统计 HTML 中的链接，添加 URL 前缀"""
+    if node.nodeName == "a":
+        href = node.getAttribute("href")
         # 跳过绝对 URL
-        if href.startswith(&amp;#34;http://&amp;#34;) or href.startswith(&amp;#34;https://&amp;#34;):
+        if href.startswith("http://") or href.startswith("https://"):
             return node
-        if not href.startswith(&amp;#34;/&amp;#34;):
-            href = &amp;#34;/&amp;#34; &#43; href
+        if not href.startswith("/"):
+            href = "/" + href
         # 添加 URL 前缀
         if url_prefix:
-            if not url_prefix.endswith(&amp;#34;/&amp;#34;):
-                node.setAttribute(&amp;#34;href&amp;#34;, url_prefix &#43; href)
+            if not url_prefix.endswith("/"):
+                node.setAttribute("href", url_prefix + href)
             else:
-                node.setAttribute(&amp;#34;href&amp;#34;, url_prefix &#43; href[1:])
+                node.setAttribute("href", url_prefix + href[1:])
     # 递归处理子节点
     for child_node in node.childNodes:
         if child_node.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
@@ -1328,41 +1328,41 @@ def patch_statistics_body_dom(
 
 def scan_statistics_body_dom(
     node: xml.dom.minidom.Node, url_prefix: str
-) -&amp;gt; Optional[str]:
-    &amp;#34;&amp;#34;&amp;#34;扫描并修补统计页面的 body 内容&amp;#34;&amp;#34;&amp;#34;
+) -> Optional[str]:
+    """扫描并修补统计页面的 body 内容"""
     res = []
     for child_node in node.childNodes:
         if child_node.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
             res.append(child_node.toxml())
             continue
         res.append(patch_statistics_body_dom(child_node, url_prefix).toxml())
-    return &amp;#34;&amp;#34;.join(res) if res else None
+    return "".join(res) if res else None
 
 
 def pick_statistics_html_file(
     statistics: Optional[str], url_prefix: str
-) -&amp;gt; Optional[str]:
-    &amp;#34;&amp;#34;&amp;#34;
+) -> Optional[str]:
+    """
     从 CodeChecker 生成的统计 HTML 文件中提取 body 内容
     用于嵌入到 Markdown 报告中
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     if not statistics or not os.path.exists(statistics):
         return None
     with try_read_file(statistics) as f:
         html_content = f.read()
-        # 提取 &amp;lt;body&amp;gt;...&amp;lt;/body&amp;gt; 之间的内容
-        body_begin = html_content.find(&amp;#34;&amp;lt;body&amp;gt;&amp;#34;)
-        body_end = html_content.find(&amp;#34;&amp;lt;/body&amp;gt;&amp;#34;)
+        # 提取 <body>...</body> 之间的内容
+        body_begin = html_content.find("<body>")
+        body_end = html_content.find("</body>")
         body_content = (
-            html_content[body_begin &#43; 6 : body_end]
+            html_content[body_begin + 6 : body_end]
             if body_begin != -1 and body_end != -1
-            else &amp;#34;&amp;#34;
+            else ""
         )
         if not body_content:
             return None
         # 去除换行，便于解析
-        body_content = &amp;#34;&amp;#34;.join([x.strip() for x in body_content.splitlines()])
-        doc = xml.dom.minidom.parseString(f&amp;#34;&amp;lt;body&amp;gt;{body_content}&amp;lt;/body&amp;gt;&amp;#34;)
+        body_content = "".join([x.strip() for x in body_content.splitlines()])
+        doc = xml.dom.minidom.parseString(f"<body>{body_content}</body>")
         for node in doc.childNodes:
             if node.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
                 continue
@@ -1373,40 +1373,40 @@ def pick_statistics_html_file(
 
 
 # ============ VCS 相关的缓存和正则表达式 ============
-CLANG_SA_LAST_COMMITTER_CACHE = dict()           # 最终结果缓存: file:line -&amp;gt; committer
+CLANG_SA_LAST_COMMITTER_CACHE = dict()           # 最终结果缓存: file:line -> committer
 CLANG_SA_LAST_COMMITTER_P4_FILE_CACHE = dict()   # P4 文件级缓存
 CLANG_SA_LAST_COMMITTER_GIT_FILE_CACHE = dict()  # Git 行级缓存
 CLANG_SA_LAST_COMMITTER_GIT_FILE_NOT_FOUND = set()  # 找不到的文件集合
-CLANG_SA_GIT_IGNORE_COMMITTERS = set([&amp;#34;europa_server&amp;#34;])  # 忽略的提交者（如自动化账号）
+CLANG_SA_GIT_IGNORE_COMMITTERS = set(["europa_server"])  # 忽略的提交者（如自动化账号）
 
 # Git blame 输出解析用的正则表达式
-CLANG_SA_GIT_SHA_RULE = re.compile(&amp;#34;^[0-9a-fA-F]&#43;&amp;#34;)
-CLANG_SA_GIT_AUTHOR_RULE = re.compile(&amp;#34;^author\s&#43;(?P&amp;lt;AUTHOR&amp;gt;.&#43;)$&amp;#34;)
-CLANG_SA_GIT_COMMITTER_RULE = re.compile(&amp;#34;^committer\s&#43;(?P&amp;lt;COMMITTER&amp;gt;.&#43;)$&amp;#34;)
-CLANG_SA_GIT_SUMMARY_RULE = re.compile(&amp;#34;^summary\s&#43;(?P&amp;lt;SUMMARY&amp;gt;.&#43;)$&amp;#34;)
+CLANG_SA_GIT_SHA_RULE = re.compile("^[0-9a-fA-F]+")
+CLANG_SA_GIT_AUTHOR_RULE = re.compile("^author\s+(?P<author>.+)$")
+CLANG_SA_GIT_COMMITTER_RULE = re.compile("^committer\s+(?P<committer>.+)$")
+CLANG_SA_GIT_SUMMARY_RULE = re.compile("^summary\s+(?P<summary>.+)$")
 
 
-def parse_p4_annotate_line(line: str) -&amp;gt; Optional[str]:
-    &amp;#34;&amp;#34;&amp;#34;
+def parse_p4_annotate_line(line: str) -> Optional[str]:
+    """
     解析 p4 annotate 输出的单行
     格式: changelist: username content
-    &amp;#34;&amp;#34;&amp;#34;
-    pattern = r&amp;#34;^(\d&#43;):\s&#43;(\S&#43;)\s&#43;(.*)$&amp;#34;
+    """
+    pattern = r"^(\d+):\s+(\S+)\s+(.*)$"
     match = re.match(pattern, line)
     if match:
         return {
-            &amp;#34;changelist&amp;#34;: int(match.group(1)),
-            &amp;#34;username&amp;#34;: match.group(2),
-            &amp;#34;content&amp;#34;: match.group(3),
+            "changelist": int(match.group(1)),
+            "username": match.group(2),
+            "content": match.group(3),
         }
     return None
 
 
-def parse_git_blame_lines(lines: List[str]) -&amp;gt; Optional[dict]:
-    &amp;#34;&amp;#34;&amp;#34;
+def parse_git_blame_lines(lines: List[str]) -> Optional[dict]:
+    """
     解析 git blame --line-porcelain 的输出
     提取 commit hash、author 和 summary 信息
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     if not lines:
         return None
     first_line = lines[0]
@@ -1423,17 +1423,17 @@ def parse_git_blame_lines(lines: List[str]) -&amp;gt; Optional[dict]:
         if author is None:
             author_match = CLANG_SA_GIT_AUTHOR_RULE.match(line)
             if author_match:
-                author = author_match.group(&amp;#34;AUTHOR&amp;#34;)
+                author = author_match.group("AUTHOR")
                 continue
         if content is None:
             content_match = CLANG_SA_GIT_SUMMARY_RULE.match(line)
             if content_match:
-                content = content_match.group(&amp;#34;SUMMARY&amp;#34;)
+                content = content_match.group("SUMMARY")
                 continue
         if committer is None:
             committer_match = CLANG_SA_GIT_COMMITTER_RULE.match(line)
             if committer_match:
-                committer = committer_match.group(&amp;#34;COMMITTER&amp;#34;)
+                committer = committer_match.group("COMMITTER")
                 continue
 
     # 如果没有 author，使用 committer
@@ -1441,20 +1441,20 @@ def parse_git_blame_lines(lines: List[str]) -&amp;gt; Optional[dict]:
         author = committer
     if sha_hash and author and content:
         return {
-            &amp;#34;commit&amp;#34;: sha_hash,
-            &amp;#34;username&amp;#34;: author,
-            &amp;#34;content&amp;#34;: content,
+            "commit": sha_hash,
+            "username": author,
+            "content": content,
         }
     return None
 
 
 def find_last_committer_p4_file_cache(
     file: ClangSANotificationFile, rel_file_path: str, rewrite_vcs_root: Optional[str]
-) -&amp;gt; List[str]:
-    &amp;#34;&amp;#34;&amp;#34;
+) -> List[str]:
+    """
     通过 p4 annotate 获取文件每行的最后提交信息
     结果会缓存以避免重复查询
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     global CLANG_SA_LAST_COMMITTER_P4_FILE_CACHE
     if file.file_path in CLANG_SA_LAST_COMMITTER_P4_FILE_CACHE:
         return CLANG_SA_LAST_COMMITTER_P4_FILE_CACHE[file.file_path]
@@ -1462,17 +1462,17 @@ def find_last_committer_p4_file_cache(
     try:
         # 执行 p4 annotate 命令，使用 -c 和 -u 参数
         if rel_file_path and rewrite_vcs_root:
-            cmd = [&amp;#34;p4&amp;#34;, &amp;#34;annotate&amp;#34;, &amp;#34;-c&amp;#34;, &amp;#34;-u&amp;#34;, f&amp;#34;{rewrite_vcs_root}/{rel_file_path}&amp;#34;]
+            cmd = ["p4", "annotate", "-c", "-u", f"{rewrite_vcs_root}/{rel_file_path}"]
         else:
-            cmd = [&amp;#34;p4&amp;#34;, &amp;#34;annotate&amp;#34;, &amp;#34;-c&amp;#34;, &amp;#34;-u&amp;#34;, file.file_path]
-        cmd_str = &amp;#39;&amp;#34;&amp;#39; &#43; &amp;#39;&amp;#34; &amp;#34;&amp;#39;.join(cmd) &#43; &amp;#39;&amp;#34;&amp;#39;
-        print(f&amp;#34;Running command: {cmd_str}&amp;#34;)
+            cmd = ["p4", "annotate", "-c", "-u", file.file_path]
+        cmd_str = '"' + '" "'.join(cmd) + '"'
+        print(f"Running command: {cmd_str}")
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=30, encoding=&amp;#34;utf-8&amp;#34;
+            cmd, capture_output=True, text=True, timeout=30, encoding="utf-8"
         )
 
         if result.returncode != 0:
-            print(f&amp;#34;P4 annotate failed: {result.stderr}&amp;#34;, file=sys.stderr)
+            print(f"P4 annotate failed: {result.stderr}", file=sys.stderr)
         else:
             # 解析每行的 annotate 信息
             ret = [parse_p4_annotate_line(x) for x in result.stdout.splitlines()]
@@ -1480,9 +1480,9 @@ def find_last_committer_p4_file_cache(
             return ret
 
     except subprocess.TimeoutExpired:
-        print(&amp;#34;P4 annotate command timeout&amp;#34;, file=sys.stderr)
+        print("P4 annotate command timeout", file=sys.stderr)
     except Exception as e:
-        print(f&amp;#34;Error executing p4 annotate: {e}&amp;#34;, file=sys.stderr)
+        print(f"Error executing p4 annotate: {e}", file=sys.stderr)
     # 失败时缓存空列表，避免重复查询
     CLANG_SA_LAST_COMMITTER_P4_FILE_CACHE[file.file_path] = []
     return []
@@ -1490,15 +1490,15 @@ def find_last_committer_p4_file_cache(
 
 def find_last_committer_git_file_cache(
     file: ClangSANotificationFile, rel_file_path: str, rewrite_vcs_root: Optional[str]
-) -&amp;gt; List[str]:
-    &amp;#34;&amp;#34;&amp;#34;
+) -> List[str]:
+    """
     通过 git blame 获取指定行的最后提交信息
     支持重试机制：如果当前提交者在忽略列表中，会尝试查询更早的提交
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     global CLANG_SA_LAST_COMMITTER_GIT_FILE_CACHE
     global CLANG_SA_LAST_COMMITTER_GIT_FILE_NOT_FOUND
 
-    key = f&amp;#34;{file.file_path}:{file.line}&amp;#34;
+    key = f"{file.file_path}:{file.line}"
     # 检查缓存
     if key in CLANG_SA_LAST_COMMITTER_GIT_FILE_CACHE:
         return CLANG_SA_LAST_COMMITTER_GIT_FILE_CACHE[key]
@@ -1509,57 +1509,57 @@ def find_last_committer_git_file_cache(
         # 最多回溯 10 个版本，跳过自动化账号的提交
         for retry_revision_depth in range(10):
             if retry_revision_depth == 0:
-                REVISION = &amp;#34;HEAD&amp;#34;
+                REVISION = "HEAD"
             else:
-                REVISION = f&amp;#34;HEAD~{retry_revision_depth}&amp;#34;
+                REVISION = f"HEAD~{retry_revision_depth}"
             # 构建 git blame 命令
             if rel_file_path and rewrite_vcs_root:
                 cmd = [
-                    &amp;#34;git&amp;#34;,
-                    &amp;#34;blame&amp;#34;,
-                    &amp;#34;-L&amp;#34;,
-                    f&amp;#34;{file.line},{file.line}&amp;#34;,  # 只查询指定行
-                    &amp;#34;--line-porcelain&amp;#34;,           # 详细输出格式
+                    "git",
+                    "blame",
+                    "-L",
+                    f"{file.line},{file.line}",  # 只查询指定行
+                    "--line-porcelain",           # 详细输出格式
                     REVISION,
-                    &amp;#34;--&amp;#34;,
-                    f&amp;#34;{rewrite_vcs_root}/{rel_file_path}&amp;#34;,
+                    "--",
+                    f"{rewrite_vcs_root}/{rel_file_path}",
                 ]
             else:
                 cmd = [
-                    &amp;#34;git&amp;#34;,
-                    &amp;#34;blame&amp;#34;,
-                    &amp;#34;-L&amp;#34;,
-                    f&amp;#34;{file.line},{file.line}&amp;#34;,
-                    &amp;#34;-u&amp;#34;,
-                    &amp;#34;--line-porcelain&amp;#34;,
+                    "git",
+                    "blame",
+                    "-L",
+                    f"{file.line},{file.line}",
+                    "-u",
+                    "--line-porcelain",
                     REVISION,
-                    &amp;#34;--&amp;#34;,
+                    "--",
                     file.file_path,
                 ]
-            cmd_str = &amp;#39;&amp;#34;&amp;#39; &#43; &amp;#39;&amp;#34; &amp;#34;&amp;#39;.join(cmd) &#43; &amp;#39;&amp;#34;&amp;#39;
-            print(f&amp;#34;Running command: {cmd_str}&amp;#34;)
+            cmd_str = '"' + '" "'.join(cmd) + '"'
+            print(f"Running command: {cmd_str}")
             result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=30, encoding=&amp;#34;utf-8&amp;#34;
+                cmd, capture_output=True, text=True, timeout=30, encoding="utf-8"
             )
 
             if result.returncode != 0:
                 # 文件不存在，记录下来避免重复查询
-                if result.stderr.find(&amp;#34;no such path&amp;#34;) &amp;gt;= 0:
+                if result.stderr.find("no such path") >= 0:
                     CLANG_SA_LAST_COMMITTER_GIT_FILE_NOT_FOUND.add(file.file_path)
                     return None
-                print(f&amp;#34;git blame failed: {result.stderr}&amp;#34;, file=sys.stderr)
+                print(f"git blame failed: {result.stderr}", file=sys.stderr)
             else:
                 ret = parse_git_blame_lines(result.stdout.splitlines())
                 # 如果提交者在忽略列表中，继续查找更早的提交
-                if ret and ret[&amp;#34;username&amp;#34;] in CLANG_SA_GIT_IGNORE_COMMITTERS:
+                if ret and ret["username"] in CLANG_SA_GIT_IGNORE_COMMITTERS:
                     continue
                 CLANG_SA_LAST_COMMITTER_GIT_FILE_CACHE[key] = ret
                 return ret
 
     except subprocess.TimeoutExpired:
-        print(&amp;#34;git blame command timeout&amp;#34;, file=sys.stderr)
+        print("git blame command timeout", file=sys.stderr)
     except Exception as e:
-        print(f&amp;#34;Error executing git blame: {e}&amp;#34;, file=sys.stderr)
+        print(f"Error executing git blame: {e}", file=sys.stderr)
     CLANG_SA_LAST_COMMITTER_GIT_FILE_CACHE[key] = None
     return None
 
@@ -1569,13 +1569,13 @@ def find_last_committer(
     rel_file_path: str,
     vcs_mode: VCS_MODE,
     rewrite_vcs_root: Optional[str],
-) -&amp;gt; Optional[str]:
-    &amp;#34;&amp;#34;&amp;#34;
+) -> Optional[str]:
+    """
     查找指定文件行的最后提交人
     根据 vcs_mode 选择使用 p4 或 git
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     global CLANG_SA_LAST_COMMITTER_CACHE
-    key = f&amp;#34;{file.file_path}:{file.line}&amp;#34;
+    key = f"{file.file_path}:{file.line}"
     # 检查结果缓存
     if key in CLANG_SA_LAST_COMMITTER_CACHE:
         return CLANG_SA_LAST_COMMITTER_CACHE[key]
@@ -1583,24 +1583,24 @@ def find_last_committer(
         p4_cache = find_last_committer_p4_file_cache(
             file, rel_file_path, rewrite_vcs_root
         )
-        if file.line &amp;gt; len(p4_cache):
-            CLANG_SA_LAST_COMMITTER_CACHE[key] = &amp;#34;&amp;#34;
-            value = &amp;#34;&amp;#34;
+        if file.line > len(p4_cache):
+            CLANG_SA_LAST_COMMITTER_CACHE[key] = ""
+            value = ""
         else:
             p4_annotate = p4_cache[file.line - 1]
             if p4_annotate:
-                value = p4_annotate[&amp;#34;username&amp;#34;]
+                value = p4_annotate["username"]
             else:
-                value = &amp;#34;&amp;#34;
+                value = ""
     elif vcs_mode == VCS_MODE.GIT:
         # 使用 git blame 查询
         git_cache = find_last_committer_git_file_cache(
             file, rel_file_path, rewrite_vcs_root
         )
         if git_cache:
-            value = git_cache[&amp;#34;username&amp;#34;]
+            value = git_cache["username"]
         else:
-            value = &amp;#34;&amp;#34;
+            value = ""
     CLANG_SA_LAST_COMMITTER_CACHE[key] = value
     return value
 
@@ -1612,27 +1612,27 @@ def build_notification_markdown(
     statistics: Optional[str],
     vcs_mode: VCS_MODE,
     rewrite_vcs_root: Optional[str],
-) -&amp;gt; str:
-    &amp;#34;&amp;#34;&amp;#34;
+) -> str:
+    """
     生成 Markdown 格式的问题报告
     包含问题列表表格、详情链接和统计信息
-    &amp;#34;&amp;#34;&amp;#34;
-    md_lines = [&amp;#34;# 静态分析报告&amp;#34;, &amp;#34;&amp;#34;]
+    """
+    md_lines = ["# 静态分析报告", ""]
 
     if notification_list:
         # 生成问题表格
-        md_lines.extend([&amp;#34;## 严重问题列表&amp;#34;, &amp;#34;&amp;#34;])
-        md_lines.append(&amp;#34;|  文件  | Checker分类 |  Checker Name  | 详情 | 最后提交人 |&amp;#34;)
-        md_lines.append(&amp;#34;|--------|-------------|----------------|------|------------|&amp;#34;)
+        md_lines.extend(["## 严重问题列表", ""])
+        md_lines.append("|  文件  | Checker分类 |  Checker Name  | 详情 | 最后提交人 |")
+        md_lines.append("|--------|-------------|----------------|------|------------|")
     else:
-        md_lines.extend([&amp;#34;## 🎉🎉无严重问题🎉🎉&amp;#34;, &amp;#34;&amp;#34;])
+        md_lines.extend(["## 🎉🎉无严重问题🎉🎉", ""])
 
     # 处理 URL 前缀
     if url_prefix:
-        if url_prefix.endswith(&amp;#34;/&amp;#34;):
+        if url_prefix.endswith("/"):
             _url_prefix = url_prefix
         else:
-            _url_prefix = url_prefix &#43; &amp;#34;/&amp;#34;
+            _url_prefix = url_prefix + "/"
     else:
         _url_prefix = None
 
@@ -1642,141 +1642,141 @@ def build_notification_markdown(
         # 从完整路径中提取相对路径
         if depot_root:
             dpidx = file_path.find(depot_root)
-            if dpidx &amp;gt;= 0:
-                file_path = file_path[dpidx &#43; len(depot_root) &#43; 1 :]
+            if dpidx >= 0:
+                file_path = file_path[dpidx + len(depot_root) + 1 :]
         # 生成带链接的文件路径（指向 HTML 报告）
         if _url_prefix and notification.plist_file_path:
-            file_url = f&amp;#34;[{file_path}:{notification.issue_file.line}]({_url_prefix}{os.path.basename(notification.plist_file_path)}.html#reportHash={notification.issue_hash})&amp;#34;
+            file_url = f"[{file_path}:{notification.issue_file.line}]({_url_prefix}{os.path.basename(notification.plist_file_path)}.html#reportHash={notification.issue_hash})"
         else:
-            file_url = f&amp;#34;{file_path}:{notification.issue_file.line}&amp;#34;
+            file_url = f"{file_path}:{notification.issue_file.line}"
         # 查询最后提交人
         if notification.last_committer is None:
             notification.last_committer = find_last_committer(
                 notification.issue_file, file_path, vcs_mode, rewrite_vcs_root
             )
         md_lines.append(
-            f&amp;#34;| {file_url} | {notification.category} | {notification.check_name} | {notification.description} | {notification.last_committer} |&amp;#34;
+            f"| {file_url} | {notification.category} | {notification.check_name} | {notification.description} | {notification.last_committer} |"
         )
 
     # 添加详情链接
     if _url_prefix:
         md_lines.extend(
             [
-                &amp;#34;&amp;#34;,
-                &amp;#34;## 详情链接&amp;#34;,
-                &amp;#34;&amp;#34;,
-                f&amp;#34;- 问题列表: &amp;lt;{_url_prefix}index.html&amp;gt;&amp;#34;,
-                f&amp;#34;- 问题统计: &amp;lt;{_url_prefix}statistics.html&amp;gt;&amp;#34;,
+                "",
+                "## 详情链接",
+                "",
+                f"- 问题列表: <{_url_prefix}index.html>",
+                f"- 问题统计: <{_url_prefix}statistics.html>",
             ]
         )
 
     # 添加统计信息（从 HTML 中提取）
     statistics_html = pick_statistics_html_file(statistics, url_prefix)
     if statistics_html:
-        md_lines.extend([&amp;#34;&amp;#34;, &amp;#34;## 统计信息&amp;#34;, &amp;#34;&amp;#34;])
+        md_lines.extend(["", "## 统计信息", ""])
         md_lines.append(statistics_html)
 
-    md_lines.append(&amp;#34;&amp;#34;)
-    return &amp;#34;\n&amp;#34;.join(md_lines)
+    md_lines.append("")
+    return "\n".join(md_lines)
 
 
 def main():
     global __VERSION__
 
-    parser = argparse.ArgumentParser(usage=&amp;#34;%(prog)s [options...]&amp;#34;)
-    parser.add_argument(&amp;#34;REMAINDER&amp;#34;, nargs=argparse.REMAINDER, help=&amp;#34;task names&amp;#34;)
+    parser = argparse.ArgumentParser(usage="%(prog)s [options...]")
+    parser.add_argument("REMAINDER", nargs=argparse.REMAINDER, help="task names")
     parser.add_argument(
-        &amp;#34;-v&amp;#34;,
-        &amp;#34;--version&amp;#34;,
-        action=&amp;#34;store_true&amp;#34;,
-        help=&amp;#34;show version and exit&amp;#34;,
-        dest=&amp;#34;version&amp;#34;,
+        "-v",
+        "--version",
+        action="store_true",
+        help="show version and exit",
+        dest="version",
         default=False,
     )
 
     parser.add_argument(
-        &amp;#34;-V&amp;#34;,
-        &amp;#34;--verbose&amp;#34;,
-        action=&amp;#34;store_true&amp;#34;,
-        help=&amp;#34;show verbose&amp;#34;,
-        dest=&amp;#34;verbose&amp;#34;,
+        "-V",
+        "--verbose",
+        action="store_true",
+        help="show verbose",
+        dest="verbose",
         default=False,
     )
 
     parser.add_argument(
-        &amp;#34;-p&amp;#34;,
-        &amp;#34;--plist&amp;#34;,
-        action=&amp;#34;store&amp;#34;,
-        help=&amp;#34;set directory of plist files&amp;#34;,
-        dest=&amp;#34;plist&amp;#34;,
+        "-p",
+        "--plist",
+        action="store",
+        help="set directory of plist files",
+        dest="plist",
         default=None,
     )
 
     parser.add_argument(
-        &amp;#34;-u&amp;#34;,
-        &amp;#34;--url-prefix&amp;#34;,
-        action=&amp;#34;store&amp;#34;,
-        help=&amp;#34;set URL prefix for html files&amp;#34;,
-        dest=&amp;#34;url_prefix&amp;#34;,
+        "-u",
+        "--url-prefix",
+        action="store",
+        help="set URL prefix for html files",
+        dest="url_prefix",
         default=None,
     )
 
     parser.add_argument(
-        &amp;#34;-d&amp;#34;,
-        &amp;#34;--depot-root&amp;#34;,
-        action=&amp;#34;store&amp;#34;,
-        help=&amp;#34;search string to find depot root for files&amp;#34;,
-        dest=&amp;#34;depot_root&amp;#34;,
-        default=&amp;#34;ProjectDepot/Stream_Depot&amp;#34;,
+        "-d",
+        "--depot-root",
+        action="store",
+        help="search string to find depot root for files",
+        dest="depot_root",
+        default="ProjectDepot/Stream_Depot",
     )
 
     parser.add_argument(
-        &amp;#34;-i&amp;#34;,
-        &amp;#34;--ignore-path&amp;#34;,
-        action=&amp;#34;append&amp;#34;,
-        help=&amp;#34;file path rules to ignore&amp;#34;,
-        dest=&amp;#34;ignore_path&amp;#34;,
+        "-i",
+        "--ignore-path",
+        action="append",
+        help="file path rules to ignore",
+        dest="ignore_path",
         default=[],
     )
 
     parser.add_argument(
-        &amp;#34;--statistics&amp;#34;,
-        action=&amp;#34;store&amp;#34;,
-        help=&amp;#34;set statistics file&amp;#34;,
-        dest=&amp;#34;statistics&amp;#34;,
+        "--statistics",
+        action="store",
+        help="set statistics file",
+        dest="statistics",
         default=None,
     )
 
     parser.add_argument(
-        &amp;#34;-o&amp;#34;,
-        &amp;#34;--output&amp;#34;,
-        action=&amp;#34;store&amp;#34;,
-        help=&amp;#34;set output file path&amp;#34;,
-        dest=&amp;#34;output&amp;#34;,
-        default=&amp;#34;diagnostic_notification.md&amp;#34;,
+        "-o",
+        "--output",
+        action="store",
+        help="set output file path",
+        dest="output",
+        default="diagnostic_notification.md",
     )
 
     parser.add_argument(
-        &amp;#34;--with-p4&amp;#34;,
-        action=&amp;#34;store_true&amp;#34;,
-        help=&amp;#34;enable P4 support&amp;#34;,
-        dest=&amp;#34;with_p4&amp;#34;,
+        "--with-p4",
+        action="store_true",
+        help="enable P4 support",
+        dest="with_p4",
         default=False,
     )
 
     parser.add_argument(
-        &amp;#34;--with-git&amp;#34;,
-        action=&amp;#34;store_true&amp;#34;,
-        help=&amp;#34;enable git support&amp;#34;,
-        dest=&amp;#34;with_git&amp;#34;,
+        "--with-git",
+        action="store_true",
+        help="enable git support",
+        dest="with_git",
         default=False,
     )
 
     parser.add_argument(
-        &amp;#34;--rewrite-vcs-root&amp;#34;,
-        action=&amp;#34;store&amp;#34;,
-        help=&amp;#34;rewrite VCS root path&amp;#34;,
-        dest=&amp;#34;rewrite_vcs_root&amp;#34;,
+        "--rewrite-vcs-root",
+        action="store",
+        help="rewrite VCS root path",
+        dest="rewrite_vcs_root",
         default=None,
     )
 
@@ -1789,14 +1789,14 @@ def main():
         parser.print_help()
         return 1
 
-    # metadata_file = os.path.join(options.plist, &amp;#34;metadata.json&amp;#34;)
+    # metadata_file = os.path.join(options.plist, "metadata.json")
     # if not os.path.exists(metadata_file):
-    #     print(f&amp;#34;Can not find {metadata_file}&amp;#34;)
+    #     print(f"Can not find {metadata_file}")
     #     return 1
 
-    plist_files = glob.glob(os.path.join(options.plist, &amp;#34;*.plist&amp;#34;))
+    plist_files = glob.glob(os.path.join(options.plist, "*.plist"))
     if not plist_files:
-        print(f&amp;#34;Can not find any plist files in {options.plist}&amp;#34;)
+        print(f"Can not find any plist files in {options.plist}")
         return 0
 
     # Process each plist file
@@ -1805,9 +1805,9 @@ def main():
     plist_file_idx = 0
     shared_index = dict()
     for plist_file in plist_files:
-        plist_file_idx &#43;= 1
+        plist_file_idx += 1
         if options.verbose:
-            print(f&amp;#34;[{plist_file_idx}/{len(plist_files)}] Processing {plist_file}&amp;#34;)
+            print(f"[{plist_file_idx}/{len(plist_files)}] Processing {plist_file}")
 
         try:
             current_plist_data = build_plist_data(plist_file, shared_index)
@@ -1815,22 +1815,22 @@ def main():
                 current_plist_data
             )
             print(
-                f&amp;#34;[{plist_file_idx}/{len(plist_files)}] Processed {plist_file}: {len(current_plist_data)} diagnostics, {len(current_notification_diagnostics)} need notifications&amp;#34;
+                f"[{plist_file_idx}/{len(plist_files)}] Processed {plist_file}: {len(current_plist_data)} diagnostics, {len(current_notification_diagnostics)} need notifications"
             )
             plist_data.extend(current_plist_data)
             notification_diagnostics.extend(current_notification_diagnostics)
         except Exception as e:
-            print(f&amp;#34;Error processing {plist_file}: {e}&amp;#34;)
+            print(f"Error processing {plist_file}: {e}")
             continue
 
     print(
-        f&amp;#34;Parsed {len(plist_data)} diagnostics from {len(plist_files)} files, {len(notification_diagnostics)} need notifications&amp;#34;
+        f"Parsed {len(plist_data)} diagnostics from {len(plist_files)} files, {len(notification_diagnostics)} need notifications"
     )
     if options.verbose:
         if notification_diagnostics:
-            print(f&amp;#34;Filtered notifications:&amp;#34;)
+            print(f"Filtered notifications:")
         for diagnostic in notification_diagnostics:
-            print(f&amp;#34;  - {diagnostic}&amp;#34;)
+            print(f"  - {diagnostic}")
 
     if options.ignore_path:
         ignore_path = [re.compile(p, re.IGNORECASE) for p in options.ignore_path]
@@ -1843,9 +1843,9 @@ def main():
         vcs_mode = VCS_MODE.P4
     elif options.with_git:
         vcs_mode = VCS_MODE.GIT
-    depot_root = options.depot_root.replace(&amp;#34;\\&amp;#34;, &amp;#34;/&amp;#34;) if options.depot_root else None
+    depot_root = options.depot_root.replace("\\", "/") if options.depot_root else None
     if options.output:
-        with codecs.open(options.output, &amp;#34;w&amp;#34;, encoding=&amp;#34;utf-8&amp;#34;) as f:
+        with codecs.open(options.output, "w", encoding="utf-8") as f:
             f.write(
                 build_notification_markdown(
                     notification_list,
@@ -1856,25 +1856,25 @@ def main():
                     options.rewrite_vcs_root,
                 )
             )
-            print(f&amp;#34;Notification markdown written to {options.output}&amp;#34;)
+            print(f"Notification markdown written to {options.output}")
 
     return 0
 
 
-if __name__ == &amp;#34;__main__&amp;#34;:
+if __name__ == "__main__":
     exit(main())</code></pre></details><h4 id=命令行参数说明-1>命令行参数说明</h4><table><thead><tr><th>参数</th><th>说明</th><th>默认值</th></tr></thead><tbody><tr><td><code>-p, --plist</code></td><td>plist 诊断文件目录</td><td>必填</td></tr><tr><td><code>-u, --url-prefix</code></td><td>HTML 报告的 URL 前缀</td><td>无</td></tr><tr><td><code>-d, --depot-root</code></td><td>仓库根目录标识字符串</td><td><code>ProjectDepot/Stream_Depot</code></td></tr><tr><td><code>-i, --ignore-path</code></td><td>忽略的文件路径规则（正则）</td><td>默认忽略引擎核心模块</td></tr><tr><td><code>--statistics</code></td><td>统计信息文件路径</td><td>无</td></tr><tr><td><code>-o, --output</code></td><td>输出 Markdown 文件路径</td><td><code>diagnostic_notification.md</code></td></tr><tr><td><code>--with-p4</code></td><td>启用 Perforce 支持</td><td><code>false</code></td></tr><tr><td><code>--with-git</code></td><td>启用 Git 支持</td><td><code>false</code></td></tr><tr><td><code>--rewrite-vcs-root</code></td><td>重写 VCS 根路径</td><td>无</td></tr></tbody></table><h4 id=使用示例>使用示例</h4><pre><code class=language-bash># 使用 Git blame 查找提交人
 python3 ExtractNotification.py \
     -p ./codechecker-result \
-    -u &amp;#34;https://ci.example.com/static-analysis/&amp;#34; \
+    -u "https://ci.example.com/static-analysis/" \
     --with-git \
     -o notification.md
 
 # 使用 P4 annotate 查找提交人
 python3 ExtractNotification.py \
     -p ./codechecker-result \
-    -u &amp;#34;https://ci.example.com/static-analysis/&amp;#34; \
+    -u "https://ci.example.com/static-analysis/" \
     --with-p4 \
-    --rewrite-vcs-root &amp;#34;//depot/main&amp;#34; \
+    --rewrite-vcs-root "//depot/main" \
     -o notification.md</code></pre><h4 id=输出报告示例>输出报告示例</h4><p>生成的 Markdown 报告格式如下：</p><pre><code class=language-markdown># 静态分析报告
 
 ## 严重问题列表
@@ -1882,12 +1882,12 @@ python3 ExtractNotification.py \
 |  文件  | Checker分类 |  Checker Name  | 详情 | 最后提交人 |
 |--------|-------------|----------------|------|------------|
 | [GameMode.cpp:123](url#hash) | Logic error | clang-analyzer-core.NullDereference | Dereference of null pointer | zhangsan |
-| [PlayerController.cpp:456](url#hash) | Logic error | bugprone-use-after-move | &amp;#39;ptr&amp;#39; used after it was moved | lisi |
+| [PlayerController.cpp:456](url#hash) | Logic error | bugprone-use-after-move | 'ptr' used after it was moved | lisi |
 
 ## 详情链接
 
-- 问题列表: &amp;lt;https://ci.example.com/static-analysis/index.html&amp;gt;
-- 问题统计: &amp;lt;https://ci.example.com/static-analysis/statistics.html&amp;gt;</code></pre><h2 id=最佳实践>最佳实践</h2><h3 id=cicd-集成>CI/CD 集成</h3><p>建议将静态分析集成到 CI/CD 流程中，实现自动化检测：</p><pre class=mermaid>
+- 问题列表: <https://ci.example.com/static-analysis/index.html>
+- 问题统计: <https://ci.example.com/static-analysis/statistics.html></code></pre><h2 id=最佳实践>最佳实践</h2><h3 id=cicd-集成>CI/CD 集成</h3><p>建议将静态分析集成到 CI/CD 流程中，实现自动化检测：</p><pre class=mermaid>
 flowchart LR
     subgraph CI Pipeline
         A[代码提交] --> B[构建触发]
@@ -1906,12 +1906,12 @@ checker_config:
   - clang-tidy:WarningsAsErrors=
   - clang-analyzer-core.NullDereference:Enabled=true
   - clang-analyzer-core.CallAndMessage:Enabled=true</code></pre><h4 id=codecheckerskipfile-示例>.codechecker.skipfile 示例</h4><pre><code class=language-text># 跳过第三方库
-&#43;*/ThirdParty/*
-&#43;*/Intermediate/*
-&#43;*/Generated/*
++*/ThirdParty/*
++*/Intermediate/*
++*/Generated/*
 
 # 跳过测试代码（可选）
-&#43;*/Tests/*</code></pre><h2 id=总结>总结</h2><p>本文介绍了在 UE 项目中集成 CodeChecker 和 clang-tidy 进行静态分析的完整方案：</p><ol><li><strong>UBT 改造</strong>：通过环境变量控制编译器版本和工具链配置，支持使用系统高版本 Clang</li><li><strong>编译数据库处理</strong>：使用 <code>FixClangDatabase.py</code> 修复 UBT 生成的编译数据库</li><li><strong>模块化配置</strong>：通过 <code>ClangSA</code> 模块实现按目录层级的 checker 配置继承</li><li><strong>问题报告生成</strong>：使用 <code>ExtractNotification.py</code> 提取重要问题并查找代码提交人</li></ol><p>这套方案已在我们的项目中稳定运行，帮助团队在 CI 阶段发现了大量潜在问题，显著提升了代码质量。</p><h2 id=参考资料>参考资料</h2><ul><li><a href=https://codechecker.readthedocs.io/>CodeChecker 官方文档</a></li><li><a href=https://clang.llvm.org/extra/clang-tidy/checks/list.html>clang-tidy Checks 列表</a></li><li><a href=https://clang-analyzer.llvm.org/>Clang Static Analyzer</a></li><li><a href=https://docs.unrealengine.com/5.0/en-US/static-code-analysis-in-unreal-engine/>UE 官方文档 - Static Analysis</a></li></ul><p>欢迎有相关需求的同学一起交流讨论。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2025-12-22T00:15:45.000+00:00 itemprop=datePublished>2025-12-22</time></span>
++*/Tests/*</code></pre><h2 id=总结>总结</h2><p>本文介绍了在 UE 项目中集成 CodeChecker 和 clang-tidy 进行静态分析的完整方案：</p><ol><li><strong>UBT 改造</strong>：通过环境变量控制编译器版本和工具链配置，支持使用系统高版本 Clang</li><li><strong>编译数据库处理</strong>：使用 <code>FixClangDatabase.py</code> 修复 UBT 生成的编译数据库</li><li><strong>模块化配置</strong>：通过 <code>ClangSA</code> 模块实现按目录层级的 checker 配置继承</li><li><strong>问题报告生成</strong>：使用 <code>ExtractNotification.py</code> 提取重要问题并查找代码提交人</li></ol><p>这套方案已在我们的项目中稳定运行，帮助团队在 CI 阶段发现了大量潜在问题，显著提升了代码质量。</p><h2 id=参考资料>参考资料</h2><ul><li><a href=https://codechecker.readthedocs.io/>CodeChecker 官方文档</a></li><li><a href=https://clang.llvm.org/extra/clang-tidy/checks/list.html>clang-tidy Checks 列表</a></li><li><a href=https://clang-analyzer.llvm.org/>Clang Static Analyzer</a></li><li><a href=https://docs.unrealengine.com/5.0/en-US/static-code-analysis-in-unreal-engine/>UE 官方文档 - Static Analysis</a></li></ul><p>欢迎有相关需求的同学一起交流讨论。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2025-12-22T00:15:45.000+00:00 itemprop=datePublished>2025-12-22</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/ue.html>UE</a></li><li class=article-tag-list-item><a href=//owent.net/tags/unreal-engine.html>Unreal Engine</a></li><li class=article-tag-list-item><a href=//owent.net/tags/codechecker.html>CodeChecker</a></li><li class=article-tag-list-item><a href=//owent.net/tags/clang-tidy.html>clang-tidy</a></li><li class=article-tag-list-item><a href=//owent.net/tags/clang-analyzer.html>clang-analyzer</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E9%9D%99%E6%80%81%E5%88%86%E6%9E%90.html>静态分析</a></li><li class=article-tag-list-item><a href=//owent.net/tags/static-analysis.html>Static Analysis</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2026/2601.html>上一篇<strong>给内网部署Squid-通用HTTP下载缓存</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2025/2506.html>下一篇<strong>找出UE的循环依赖</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;owent
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,

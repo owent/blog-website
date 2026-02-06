@@ -3,59 +3,59 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-309529f280e7884321ae82bd607c0f09 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2025/2501.html target=_blank itemprop=url>通用RPC代码生成器</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#背景>背景</a></li><li><a href=#使用上手文档>使用上手文档</a></li><li><a href=#设计文档>设计文档</a><ul><li><a href=#代码生成器引擎版本和配置>代码生成器引擎版本和配置</a></li><li><a href=#模板引擎语法参考>模板引擎语法参考</a></li><li><a href=#cmake接口>CMake接口</a></li><li><a href=#技术白皮书>技术白皮书</a></li><li><a href=#自动注入的模板变量和接口>自动注入的模板变量和接口</a></li><li><a href=#中间配置结构>中间配置结构</a></li></ul></li><li><a href=#最后>最后</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><h2 id=背景>背景</h2><p>我们项目组需要接入多种RPC接入和工具转换流程，并且每种接入层有自己的扩展和定制需求。为了提高开发效率，我们需要一个通用的RPC代码生成器，能够支持多种RPC接入层级的代码生成，同时支持自定义插件和模板。并且自由增加自定义插件而不需要变更构建系统流程。以便提供最佳的灵活性且能支持protobuf的所有特性。</p><h2 id=使用上手文档>使用上手文档</h2><p>目前仅提供了Jinja2模板引擎的cmake接口封装（service-rpc层级），如果有需要Mako模板引擎封装接口或者增加message-field层级、enum-enumvalue层级、fileset-file层级或者global层级的接口入口可以联系 @owentou 。</p><p>首先添加Proto查找路径：</p><pre><code class=language-cmake>generate_for_pb_add_proto_path(&amp;#34;${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/private&amp;#34;
-                               &amp;#34;${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/public&amp;#34;)</code></pre><p>添加Proto：</p><pre><code class=language-cmake>generate_for_pb_add_proto_file(
-  &amp;#34;${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/private/protocol/extension/svr.*.proto&amp;#34;
-  &amp;#34;${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/private/protocol/common/svr.*.proto&amp;#34;
-  &amp;#34;${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/private/protocol/config/svr.*.proto&amp;#34;
-  &amp;#34;${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/private/protocol/pbdesc/svr.*.proto&amp;#34;
-  &amp;#34;${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/public/protocol/extension/*.proto&amp;#34;
-  &amp;#34;${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/public/protocol/common/*.proto&amp;#34;
-  &amp;#34;${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/public/protocol/config/*.proto&amp;#34;
-  &amp;#34;${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/public/protocol/pbdesc/*.proto&amp;#34;)</code></pre><p>（可选）注册服务器间通信服务:</p><pre><code class=language-cmake>generate_for_pb_add_ss_service(
-  &amp;#34;${PROJECT_NAMESPACE}.LogicCommonService&amp;#34;
-  &amp;#34;${CMAKE_CURRENT_LIST_DIR}/server_frame&amp;#34;
-  TASK_PATH_PREFIX &amp;#34;logic&amp;#34;
-  HANDLE_PATH_PREFIX &amp;#34;logic&amp;#34;
-  PROJECT_NAMESPACE &amp;#34;${PROJECT_NAMESPACE}&amp;#34;
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-309529f280e7884321ae82bd607c0f09 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2025/2501.html target=_blank itemprop=url>通用RPC代码生成器</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#背景>背景</a></li><li><a href=#使用上手文档>使用上手文档</a></li><li><a href=#设计文档>设计文档</a><ul><li><a href=#代码生成器引擎版本和配置>代码生成器引擎版本和配置</a></li><li><a href=#模板引擎语法参考>模板引擎语法参考</a></li><li><a href=#cmake接口>CMake接口</a></li><li><a href=#技术白皮书>技术白皮书</a></li><li><a href=#自动注入的模板变量和接口>自动注入的模板变量和接口</a></li><li><a href=#中间配置结构>中间配置结构</a></li></ul></li><li><a href=#最后>最后</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><h2 id=背景>背景</h2><p>我们项目组需要接入多种RPC接入和工具转换流程，并且每种接入层有自己的扩展和定制需求。为了提高开发效率，我们需要一个通用的RPC代码生成器，能够支持多种RPC接入层级的代码生成，同时支持自定义插件和模板。并且自由增加自定义插件而不需要变更构建系统流程。以便提供最佳的灵活性且能支持protobuf的所有特性。</p><h2 id=使用上手文档>使用上手文档</h2><p>目前仅提供了Jinja2模板引擎的cmake接口封装（service-rpc层级），如果有需要Mako模板引擎封装接口或者增加message-field层级、enum-enumvalue层级、fileset-file层级或者global层级的接口入口可以联系 @owentou 。</p><p>首先添加Proto查找路径：</p><pre><code class=language-cmake>generate_for_pb_add_proto_path("${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/private"
+                               "${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/public")</code></pre><p>添加Proto：</p><pre><code class=language-cmake>generate_for_pb_add_proto_file(
+  "${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/private/protocol/extension/svr.*.proto"
+  "${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/private/protocol/common/svr.*.proto"
+  "${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/private/protocol/config/svr.*.proto"
+  "${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/private/protocol/pbdesc/svr.*.proto"
+  "${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/public/protocol/extension/*.proto"
+  "${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/public/protocol/common/*.proto"
+  "${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/public/protocol/config/*.proto"
+  "${PROJECT_SERVER_FRAME_PROTOCOL_DIR}/public/protocol/pbdesc/*.proto")</code></pre><p>（可选）注册服务器间通信服务:</p><pre><code class=language-cmake>generate_for_pb_add_ss_service(
+  "${PROJECT_NAMESPACE}.LogicCommonService"
+  "${CMAKE_CURRENT_LIST_DIR}/server_frame"
+  TASK_PATH_PREFIX "logic"
+  HANDLE_PATH_PREFIX "logic"
+  PROJECT_NAMESPACE "${PROJECT_NAMESPACE}"
   SERVICE_DLLEXPORT_DECL SERVER_FRAME_API
   RPC_DLLEXPORT_DECL SERVER_FRAME_API)</code></pre><p>（可选）注册CS通信服务和CS协议模拟工具接口:</p><pre><code class=language-cmake># 注册CS通信服务
 generate_for_pb_add_cs_service(
-  &amp;#34;${PROJECT_NAMESPACE}.GameClientService&amp;#34;
-  &amp;#34;${CMAKE_CURRENT_LIST_DIR}/gamesvr&amp;#34;
+  "${PROJECT_NAMESPACE}.GameClientService"
+  "${CMAKE_CURRENT_LIST_DIR}/gamesvr"
   RPC_IGNORE_EMPTY_REQUEST
-  TASK_PATH_PREFIX &amp;#34;logic&amp;#34;
-  HANDLE_PATH_PREFIX &amp;#34;app&amp;#34;
-  PROJECT_NAMESPACE &amp;#34;${PROJECT_NAMESPACE}&amp;#34;
+  TASK_PATH_PREFIX "logic"
+  HANDLE_PATH_PREFIX "app"
+  PROJECT_NAMESPACE "${PROJECT_NAMESPACE}"
   SERVICE_DLLEXPORT_DECL GAMECLIENT_SERVICE_API
   RPC_DLLEXPORT_DECL GAMECLIENT_RPC_API)
 
 # 注册CS协议模拟工具接口
 generate_for_pb_add_simulator_cs_api(
-  &amp;#34;${PROJECT_NAMESPACE}.GameClientService&amp;#34;
-  &amp;#34;${CMAKE_CURRENT_LIST_DIR}/tools/simulator&amp;#34;
+  "${PROJECT_NAMESPACE}.GameClientService"
+  "${CMAKE_CURRENT_LIST_DIR}/tools/simulator"
   RPC_IGNORE_EMPTY_REQUEST
-  PROJECT_NAMESPACE &amp;#34;${PROJECT_NAMESPACE}&amp;#34;
+  PROJECT_NAMESPACE "${PROJECT_NAMESPACE}"
   SERVICE_DLLEXPORT_DECL GAMECLIENT_SERVICE_API
   RPC_DLLEXPORT_DECL GAMECLIENT_RPC_API)</code></pre><p>（可选）注册自定义配置</p><pre><code class=language-cmake>generate_for_pb_add_custom_configure(
-  &amp;#34;
+  "
 # ${PROJECT_NAMESPACE}.ace.AntiCheatExpertService
 - service:
-    name: &amp;#39;${PROJECT_NAMESPACE}.ace.AntiCheatExpertService&amp;#39;
+    name: '${PROJECT_NAMESPACE}.ace.AntiCheatExpertService'
     overwrite: false
-    output_directory: &amp;#39;${CMAKE_CURRENT_LIST_DIR}/sdk&amp;#39;
-    service_dllexport_decl: &amp;#39;ACE_SERVICE_API&amp;#39;
-    rpc_dllexport_decl: &amp;#39;ACE_SDK_API&amp;#39;
+    output_directory: '${CMAKE_CURRENT_LIST_DIR}/sdk'
+    service_dllexport_decl: 'ACE_SERVICE_API'
+    rpc_dllexport_decl: 'ACE_SDK_API'
     custom_variables:
-      project_namespace: &amp;#39;${PROJECT_NAMESPACE}&amp;#39;
+      project_namespace: '${PROJECT_NAMESPACE}'
       include_headers: [ ]
     service_template:
       - overwrite: true
-        input: &amp;#39;${GENERATE_FOR_PB_SOURCE_DIR}/templates/ace_http_apis.h.mako&amp;#39;
-        output: &amp;#39;include/rpc/ace/ace_http_apis.h&amp;#39;
+        input: '${GENERATE_FOR_PB_SOURCE_DIR}/templates/ace_http_apis.h.mako'
+        output: 'include/rpc/ace/ace_http_apis.h'
       - overwrite: true
-        input: &amp;#39;${GENERATE_FOR_PB_SOURCE_DIR}/templates/ace_http_apis.cpp.mako&amp;#39;
-        output: &amp;#39;src/rpc/ace/ace_http_apis.cpp&amp;#39;&amp;#34;)</code></pre><p>最后执行启动生成:</p><pre><code class=language-cmake># Run generator finally
+        input: '${GENERATE_FOR_PB_SOURCE_DIR}/templates/ace_http_apis.cpp.mako'
+        output: 'src/rpc/ace/ace_http_apis.cpp'")</code></pre><p>最后执行启动生成:</p><pre><code class=language-cmake># Run generator finally
 generate_for_pb_run_generator()</code></pre><p>模板内自动注入的变量参见下面 <a href=#%E8%87%AA%E5%8A%A8%E6%B3%A8%E5%85%A5%E7%9A%84%E6%A8%A1%E6%9D%BF%E5%8F%98%E9%87%8F%E5%92%8C%E6%8E%A5%E5%8F%A3>自动注入的模板变量和接口</a> 章节。</p><p>模板引擎语法参见下面 <a href=#%E6%A8%A1%E6%9D%BF%E5%BC%95%E6%93%8E%E8%AF%AD%E6%B3%95%E5%8F%82%E8%80%83>模板引擎语法参考</a> 章节。</p><p>CMake接口说明参见下面 <a href=#CMake%E6%8E%A5%E5%8F%A3>CMake接口</a> 章节。</p><h2 id=设计文档>设计文档</h2><h3 id=代码生成器引擎版本和配置>代码生成器引擎版本和配置</h3><p>目前 <strong>通用RPC代码生成器</strong> 有两个版本:</p><ul><li>Jinja2模板引擎: <a href=https://github.com/atframework/atsf4g-co/blob/main/src/tools/generate-for-pb/jinja2-generator.py>src/tools/generate-for-pb/jinja2-generator.py</a><ul><li>CMake变量: <code>${GENERATE_FOR_PB_JINJA2_PY}</code></li></ul></li><li>Mako模板引擎: <a href=https://github.com/atframework/atsf4g-co/blob/main/src/tools/generate-for-pb/mako-generator.py>src/tools/generate-for-pb/mako-generator.py</a><ul><li>对应CMake变量: <code>${GENERATE_FOR_PB_MAKO_PY}</code></li></ul></li><li>中间配置参考: <a href=https://github.com/atframework/atsf4g-co/blob/main/src/tools/generate-for-pb/generate-for-pb.conf.yaml>src/tools/generate-for-pb/generate-for-pb.conf.yaml</a></li></ul><blockquote><p>Mako模板引擎有更好的灵活性，可以自由引入Python的全部组件。Jinja2的限定比较严格，目前仅导入了 <code>os</code>,<code>re</code>,<code>sys</code>,<code>re</code> 几个系统组件。
 如果需要增加的话需要改模板引擎脚本。</p></blockquote><h3 id=模板引擎语法参考>模板引擎语法参考</h3><ul><li>Jinja模板语法: <a href=https://jinja.palletsprojects.com/en/stable/templates/>https://jinja.palletsprojects.com/en/stable/templates/</a></li><li>Mako模板语法: <a href=https://docs.makotemplates.org/en/latest/>https://docs.makotemplates.org/en/latest/</a></li></ul><h3 id=cmake接口>CMake接口</h3><pre><code class=language-cmake># 添加Proto查找路径
 generate_for_pb_add_proto_path([proto文件查找路径...])
@@ -64,51 +64,51 @@ generate_for_pb_add_proto_path([proto文件查找路径...])
 generate_for_pb_add_proto_file([proto文件...])
 
 # 添加自定义配置组(结构见中间配置结构的Rules部分)
-generate_for_pb_add_custom_configure(&amp;#34;YAML配置内容&amp;#34;)
+generate_for_pb_add_custom_configure("YAML配置内容")
 
 # 注册服务间通信服务
-generate_for_pb_add_ss_service(&amp;#34;服务名&amp;#34; &amp;#34;输出目录&amp;#34;
+generate_for_pb_add_ss_service("服务名" "输出目录"
   [RPC_IGNORE_EMPTY_REQUEST]        # 是否忽略 google.protobuf.Empty 类型请求
   [NO_RPC]                          # 不生成RPC模板
   [NO_SERVICE_TASK]                 # 不生成Service模板
-  [TASK_PATH_PREFIX &amp;lt;value&amp;gt;]        # 输出的任务代码路径前缀
-  [HANDLE_PATH_PREFIX &amp;lt;value&amp;gt;]      # 输出的handle注册代码路径前缀
-  [PROJECT_NAMESPACE &amp;lt;value&amp;gt;]       # 项目命名空间
-  [RPC_ROOT_DIR &amp;lt;value&amp;gt;]            # 输出的RPC模板渲染文件目录
-  [SERVICE_DLLEXPORT_DECL &amp;lt;value&amp;gt;]  # Service模板符号导出宏
-  [RPC_DLLEXPORT_DECL &amp;lt;value&amp;gt;]      # RPC模板符号导出宏
-  [INCLUDE_HEADERS &amp;lt;values...&amp;gt;]     # 额外包含的头文件
+  [TASK_PATH_PREFIX <value>]        # 输出的任务代码路径前缀
+  [HANDLE_PATH_PREFIX <value>]      # 输出的handle注册代码路径前缀
+  [PROJECT_NAMESPACE <value>]       # 项目命名空间
+  [RPC_ROOT_DIR <value>]            # 输出的RPC模板渲染文件目录
+  [SERVICE_DLLEXPORT_DECL <value>]  # Service模板符号导出宏
+  [RPC_DLLEXPORT_DECL <value>]      # RPC模板符号导出宏
+  [INCLUDE_HEADERS <values...>]     # 额外包含的头文件
 )
 
 # 注册CS通信服务
-generate_for_pb_add_cs_service(&amp;#34;服务名&amp;#34; &amp;#34;输出目录&amp;#34;
+generate_for_pb_add_cs_service("服务名" "输出目录"
   [RPC_IGNORE_EMPTY_REQUEST]        # 是否忽略 google.protobuf.Empty 类型请求
-  [TASK_PATH_PREFIX &amp;lt;value&amp;gt;]        # 输出的任务代码路径前缀
-  [HANDLE_PATH_PREFIX &amp;lt;value&amp;gt;]      # 输出的handle注册代码路径前缀
-  [PROJECT_NAMESPACE &amp;lt;value&amp;gt;]       # 项目命名空间
-  [SERVICE_DLLEXPORT_DECL &amp;lt;value&amp;gt;]  # Service模板符号导出宏
-  [RPC_DLLEXPORT_DECL &amp;lt;value&amp;gt;]      # RPC模板符号导出宏
-  [INCLUDE_HEADERS &amp;lt;values...&amp;gt;]     # 额外包含的头文件
+  [TASK_PATH_PREFIX <value>]        # 输出的任务代码路径前缀
+  [HANDLE_PATH_PREFIX <value>]      # 输出的handle注册代码路径前缀
+  [PROJECT_NAMESPACE <value>]       # 项目命名空间
+  [SERVICE_DLLEXPORT_DECL <value>]  # Service模板符号导出宏
+  [RPC_DLLEXPORT_DECL <value>]      # RPC模板符号导出宏
+  [INCLUDE_HEADERS <values...>]     # 额外包含的头文件
 )
 
 # 注册CS协议模拟工具接口
-generate_for_pb_add_simulator_cs_api(&amp;#34;服务名&amp;#34; &amp;#34;输出目录&amp;#34;
+generate_for_pb_add_simulator_cs_api("服务名" "输出目录"
   [RPC_IGNORE_EMPTY_REQUEST]        # 是否忽略 google.protobuf.Empty 类型请求
-  [PROJECT_NAMESPACE &amp;lt;value&amp;gt;]       # 项目命名空间
-  [SERVICE_DLLEXPORT_DECL &amp;lt;value&amp;gt;]  # Service模板符号导出宏
-  [RPC_DLLEXPORT_DECL &amp;lt;value&amp;gt;]      # RPC模板符号导出宏
-  [INCLUDE_HEADERS &amp;lt;values...&amp;gt;]     # 额外包含的头文件
+  [PROJECT_NAMESPACE <value>]       # 项目命名空间
+  [SERVICE_DLLEXPORT_DECL <value>]  # Service模板符号导出宏
+  [RPC_DLLEXPORT_DECL <value>]      # RPC模板符号导出宏
+  [INCLUDE_HEADERS <values...>]     # 额外包含的头文件
 )
 
 # 执行生成
 generate_for_pb_run_generator()</code></pre><p>还可以根据需要扩展更多的自定义服务流程</p><h3 id=技术白皮书>技术白皮书</h3><p>为了降低重复解析pb和建立符号表带来的CPU开销导致的流程缓慢。整个模板引擎的RPC流程尽量采用统一配置文件，加载多个pb file的方式。然后通过配置多组生成组来生成不同的服务和模板。</p><div class=bg-dark><p><img src=2501.01.png alt=2501.01.png loading=lazy></p></div><p>代码生成的层级分为两类，第一类是全局模板。对应配置中的 <code>- global:</code> 。另一类是层级模板，分为外层和里层。外层会对每个模板执行一次渲染，里层模板会对每个内部子结构分别做一次渲染。</p><ul><li>对于service模板，外层是service本身，里层是rpc。</li><li>对于message模板，外层是message本身，里层是每个字段。</li><li>对于enum模板，外层是enum本身，里层是每个枚举项。</li><li>对于fileset模板，外层是pb文件本身的描述，里层是每个文件。</li></ul><p>比如我们要对以下服务应用模板渲染:</p><pre><code class=language-proto>service FriendsvrService {
   option (atframework.service_options) = {
-    module_name: &amp;#34;friend_api&amp;#34;
+    module_name: "friend_api"
   };
 
   rpc get_all(SSFriendGetAllReq) returns (SSFriendGetAllRsp) {
     option (atframework.rpc_options) = {
-      api_name: &amp;#34;拉取好友信息&amp;#34;
+      api_name: "拉取好友信息"
       router_rpc: true
       user_rpc: true
     };
@@ -116,7 +116,7 @@ generate_for_pb_run_generator()</code></pre><p>还可以根据需要扩展更多
 
   rpc echo(SSFriendEchoReq) returns (SSFriendEchoRsp) {
     option (atframework.rpc_options) = {
-      api_name: &amp;#34;Benchmark接口-用于请求放大&amp;#34;
+      api_name: "Benchmark接口-用于请求放大"
       router_rpc: true
       user_rpc: true
     };
@@ -124,95 +124,95 @@ generate_for_pb_run_generator()</code></pre><p>还可以根据需要扩展更多
 }</code></pre><p>对 <code>service.c.template</code> 输入 <code>FriendsvrService</code> 渲染输出一个文件 <code>friendsvr_service.c</code> ，然后对每个RPC分别应用 <code>rpc.c.template</code> 渲染除 <code>rpc_get_all.c</code> 和 <code>rpc_echo.c</code> 。
 那么就是使用service模板， <code>service.c.template</code> 作为外层模板，<code>rpc.c.template</code> 作为内层模板。</p><p>显然这里我们输出的文件名也是根据外层或内层的结构动态生成的。所以我们的文件名输出也支持模板渲染参数。
 这个例子里 <code>service.c.template</code> 的输出可以设置为 <code>{{ service.get_name_lower_rule() }}.c</code> 。<code>rpc.c.template</code> 的输出可以设置为 <code>rpc_{{ rpc.get_name_lower_rule() }}.c</code></p><p>所有的输出均会检查变更，未变更不写出。这样不会破坏编译缓存命中。</p><h3 id=自动注入的模板变量和接口>自动注入的模板变量和接口</h3><h4 id=全局模板>全局模板</h4><pre><code class=language-javascript>{
-    &amp;#34;generator&amp;#34;: &amp;#34;代码生成器路径&amp;#34;,
-    &amp;#34;local_vcs_user_name&amp;#34;: &amp;#34;当前操作者用户名&amp;#34;,
-    &amp;#34;output_file_path&amp;#34;: &amp;#34;输出文件路径&amp;#34;,
-    &amp;#34;output_render_path&amp;#34;: &amp;#34;输出文件路径渲染结果&amp;#34;,
-    &amp;#34;database&amp;#34;: PbDatabase(), // PbDatabase 对象
-    &amp;#34;global_dllexport_decl&amp;#34;: &amp;#34;符号导出宏&amp;#34;,
-    &amp;#34;PbConvertRule&amp;#34;: PbConvertRule // PbConvertRule里包含了一些命名转换定义
+    "generator": "代码生成器路径",
+    "local_vcs_user_name": "当前操作者用户名",
+    "output_file_path": "输出文件路径",
+    "output_render_path": "输出文件路径渲染结果",
+    "database": PbDatabase(), // PbDatabase 对象
+    "global_dllexport_decl": "符号导出宏",
+    "PbConvertRule": PbConvertRule // PbConvertRule里包含了一些命名转换定义
 }</code></pre><h4 id=service模板>Service模板</h4><p>外层模板参数:</p><pre><code class=language-javascript>{
-    &amp;#34;generator&amp;#34;: &amp;#34;代码生成器路径&amp;#34;,
-    &amp;#34;local_vcs_user_name&amp;#34;: &amp;#34;当前操作者用户名&amp;#34;,
-    &amp;#34;service&amp;#34;: PbService(), // 对应的PbService对象
-    &amp;#34;rpcs&amp;#34;: {&amp;#34;rpc name&amp;#34;: PbRpc()}, // Service内的rpc集合
-    &amp;#34;output_file_path&amp;#34;: &amp;#34;输出文件路径&amp;#34;,
-    &amp;#34;output_render_path&amp;#34;: &amp;#34;输出文件路径渲染结果&amp;#34;,
-    &amp;#34;current_instance&amp;#34;: PbService(), // service的别名
-    &amp;#34;service_dllexport_decl&amp;#34;: &amp;#34;Service模板符号导出宏&amp;#34;,
-    &amp;#34;rpc_dllexport_decl&amp;#34;: &amp;#34;RPC模板符号导出宏&amp;#34;,
-    &amp;#34;PbConvertRule&amp;#34;: PbConvertRule // PbConvertRule里包含了一些命名转换定义
+    "generator": "代码生成器路径",
+    "local_vcs_user_name": "当前操作者用户名",
+    "service": PbService(), // 对应的PbService对象
+    "rpcs": {"rpc name": PbRpc()}, // Service内的rpc集合
+    "output_file_path": "输出文件路径",
+    "output_render_path": "输出文件路径渲染结果",
+    "current_instance": PbService(), // service的别名
+    "service_dllexport_decl": "Service模板符号导出宏",
+    "rpc_dllexport_decl": "RPC模板符号导出宏",
+    "PbConvertRule": PbConvertRule // PbConvertRule里包含了一些命名转换定义
 }</code></pre><p>内层模板参数:</p><pre><code class=language-javascript>{
-    &amp;#34;generator&amp;#34;: &amp;#34;代码生成器路径&amp;#34;,
-    &amp;#34;local_vcs_user_name&amp;#34;: &amp;#34;当前操作者用户名&amp;#34;,
-    &amp;#34;service&amp;#34;: PbService(), // 对应的PbService对象
-    &amp;#34;rpcs&amp;#34;: {&amp;#34;rpc name&amp;#34;: PbRpc()}, // Service内的rpc集合
-    &amp;#34;rpc&amp;#34;: PbRpc(), // 当前渲染的rpc对象
-    &amp;#34;output_file_path&amp;#34;: &amp;#34;输出文件路径&amp;#34;,
-    &amp;#34;output_render_path&amp;#34;: &amp;#34;输出文件路径渲染结果&amp;#34;,
-    &amp;#34;current_instance&amp;#34;: PbRpc(), // rpc的别名
-    &amp;#34;service_dllexport_decl&amp;#34;: &amp;#34;Service模板符号导出宏&amp;#34;,
-    &amp;#34;rpc_dllexport_decl&amp;#34;: &amp;#34;RPC模板符号导出宏&amp;#34;,
-    &amp;#34;PbConvertRule&amp;#34;: PbConvertRule // PbConvertRule里包含了一些命名转换定义
+    "generator": "代码生成器路径",
+    "local_vcs_user_name": "当前操作者用户名",
+    "service": PbService(), // 对应的PbService对象
+    "rpcs": {"rpc name": PbRpc()}, // Service内的rpc集合
+    "rpc": PbRpc(), // 当前渲染的rpc对象
+    "output_file_path": "输出文件路径",
+    "output_render_path": "输出文件路径渲染结果",
+    "current_instance": PbRpc(), // rpc的别名
+    "service_dllexport_decl": "Service模板符号导出宏",
+    "rpc_dllexport_decl": "RPC模板符号导出宏",
+    "PbConvertRule": PbConvertRule // PbConvertRule里包含了一些命名转换定义
 }</code></pre><h4 id=message模板>Message模板</h4><p>外层模板参数:</p><pre><code class=language-javascript>{
-    &amp;#34;generator&amp;#34;: &amp;#34;代码生成器路径&amp;#34;,
-    &amp;#34;local_vcs_user_name&amp;#34;: &amp;#34;当前操作者用户名&amp;#34;,
-    &amp;#34;message&amp;#34;: PbMessage(), // 对应的PbMessage对象
-    &amp;#34;fields&amp;#34;: {&amp;#34;field name&amp;#34;: PbField()}, // Message内的字段集合
-    &amp;#34;output_file_path&amp;#34;: &amp;#34;输出文件路径&amp;#34;,
-    &amp;#34;output_render_path&amp;#34;: &amp;#34;输出文件路径渲染结果&amp;#34;,
-    &amp;#34;current_instance&amp;#34;: PbMessage(), // message的别名
-    &amp;#34;message_dllexport_decl&amp;#34;: &amp;#34;Message模板符号导出宏&amp;#34;,
-    &amp;#34;field_dllexport_decl&amp;#34;: &amp;#34;字段模板符号导出宏&amp;#34;,
-    &amp;#34;PbConvertRule&amp;#34;: PbConvertRule // PbConvertRule里包含了一些命名转换定义
+    "generator": "代码生成器路径",
+    "local_vcs_user_name": "当前操作者用户名",
+    "message": PbMessage(), // 对应的PbMessage对象
+    "fields": {"field name": PbField()}, // Message内的字段集合
+    "output_file_path": "输出文件路径",
+    "output_render_path": "输出文件路径渲染结果",
+    "current_instance": PbMessage(), // message的别名
+    "message_dllexport_decl": "Message模板符号导出宏",
+    "field_dllexport_decl": "字段模板符号导出宏",
+    "PbConvertRule": PbConvertRule // PbConvertRule里包含了一些命名转换定义
 }</code></pre><p>内层模板参数:</p><pre><code class=language-javascript>{
-    &amp;#34;generator&amp;#34;: &amp;#34;代码生成器路径&amp;#34;,
-    &amp;#34;local_vcs_user_name&amp;#34;: &amp;#34;当前操作者用户名&amp;#34;,
-    &amp;#34;message&amp;#34;: PbMessage(), // 对应的PbMessage对象
-    &amp;#34;fields&amp;#34;: {&amp;#34;field name&amp;#34;: PbField()}, // PbMessage内的字段集合
-    &amp;#34;field&amp;#34;: PbField(), // 当前渲染的字段对象
-    &amp;#34;output_file_path&amp;#34;: &amp;#34;输出文件路径&amp;#34;,
-    &amp;#34;output_render_path&amp;#34;: &amp;#34;输出文件路径渲染结果&amp;#34;,
-    &amp;#34;current_instance&amp;#34;: PbField(), // field的别名
-    &amp;#34;message_dllexport_decl&amp;#34;: &amp;#34;Message模板符号导出宏&amp;#34;,
-    &amp;#34;field_dllexport_decl&amp;#34;: &amp;#34;字段模板符号导出宏&amp;#34;,
-    &amp;#34;PbConvertRule&amp;#34;: PbConvertRule // PbConvertRule里包含了一些命名转换定义
+    "generator": "代码生成器路径",
+    "local_vcs_user_name": "当前操作者用户名",
+    "message": PbMessage(), // 对应的PbMessage对象
+    "fields": {"field name": PbField()}, // PbMessage内的字段集合
+    "field": PbField(), // 当前渲染的字段对象
+    "output_file_path": "输出文件路径",
+    "output_render_path": "输出文件路径渲染结果",
+    "current_instance": PbField(), // field的别名
+    "message_dllexport_decl": "Message模板符号导出宏",
+    "field_dllexport_decl": "字段模板符号导出宏",
+    "PbConvertRule": PbConvertRule // PbConvertRule里包含了一些命名转换定义
 }</code></pre><h4 id=enum模板>Enum模板</h4><p>外层模板参数:</p><pre><code class=language-javascript>{
-    &amp;#34;generator&amp;#34;: &amp;#34;代码生成器路径&amp;#34;,
-    &amp;#34;local_vcs_user_name&amp;#34;: &amp;#34;当前操作者用户名&amp;#34;,
-    &amp;#34;enum&amp;#34;: PbEnum(), // 对应的PbEnum对象
-    &amp;#34;enumvalues&amp;#34;: {&amp;#34;enumvalue name&amp;#34;: PbEnumValue()}, // Enum内的枚举项集合
-    &amp;#34;output_file_path&amp;#34;: &amp;#34;输出文件路径&amp;#34;,
-    &amp;#34;output_render_path&amp;#34;: &amp;#34;输出文件路径渲染结果&amp;#34;,
-    &amp;#34;current_instance&amp;#34;: PbEnum(), // enum的别名
-    &amp;#34;enum_dllexport_decl&amp;#34;: &amp;#34;Enum模板符号导出宏&amp;#34;,
-    &amp;#34;enumvalue_dllexport_decl&amp;#34;: &amp;#34;Enum值模板符号导出宏&amp;#34;,
-    &amp;#34;PbConvertRule&amp;#34;: PbConvertRule // PbConvertRule里包含了一些命名转换定义
+    "generator": "代码生成器路径",
+    "local_vcs_user_name": "当前操作者用户名",
+    "enum": PbEnum(), // 对应的PbEnum对象
+    "enumvalues": {"enumvalue name": PbEnumValue()}, // Enum内的枚举项集合
+    "output_file_path": "输出文件路径",
+    "output_render_path": "输出文件路径渲染结果",
+    "current_instance": PbEnum(), // enum的别名
+    "enum_dllexport_decl": "Enum模板符号导出宏",
+    "enumvalue_dllexport_decl": "Enum值模板符号导出宏",
+    "PbConvertRule": PbConvertRule // PbConvertRule里包含了一些命名转换定义
 }</code></pre><p>内层模板参数:</p><pre><code class=language-javascript>{
-    &amp;#34;generator&amp;#34;: &amp;#34;代码生成器路径&amp;#34;,
-    &amp;#34;local_vcs_user_name&amp;#34;: &amp;#34;当前操作者用户名&amp;#34;,
-    &amp;#34;enum&amp;#34;: PbEnum(), // 对应的PbEnum对象
-    &amp;#34;enumvalues&amp;#34;: {&amp;#34;enumvalue name&amp;#34;: PbEnumValue()}, // PbEnum内的枚举项集合
-    &amp;#34;enumvalue&amp;#34;: PbEnumValue(), // 当前渲染的枚举项对象
-    &amp;#34;output_file_path&amp;#34;: &amp;#34;输出文件路径&amp;#34;,
-    &amp;#34;output_render_path&amp;#34;: &amp;#34;输出文件路径渲染结果&amp;#34;,
-    &amp;#34;current_instance&amp;#34;: PbEnumValue(), // enumvalue的别名
-    &amp;#34;enum_dllexport_decl&amp;#34;: &amp;#34;Enum模板符号导出宏&amp;#34;,
-    &amp;#34;enumvalue_dllexport_decl&amp;#34;: &amp;#34;Enum值模板符号导出宏&amp;#34;,
-    &amp;#34;PbConvertRule&amp;#34;: PbConvertRule // PbConvertRule里包含了一些命名转换定义
+    "generator": "代码生成器路径",
+    "local_vcs_user_name": "当前操作者用户名",
+    "enum": PbEnum(), // 对应的PbEnum对象
+    "enumvalues": {"enumvalue name": PbEnumValue()}, // PbEnum内的枚举项集合
+    "enumvalue": PbEnumValue(), // 当前渲染的枚举项对象
+    "output_file_path": "输出文件路径",
+    "output_render_path": "输出文件路径渲染结果",
+    "current_instance": PbEnumValue(), // enumvalue的别名
+    "enum_dllexport_decl": "Enum模板符号导出宏",
+    "enumvalue_dllexport_decl": "Enum值模板符号导出宏",
+    "PbConvertRule": PbConvertRule // PbConvertRule里包含了一些命名转换定义
 }</code></pre><h4 id=fileset模板>FileSet模板</h4><p>内层模板参数:</p><pre><code class=language-javascript>{
-    &amp;#34;generator&amp;#34;: &amp;#34;代码生成器路径&amp;#34;,
-    &amp;#34;local_vcs_user_name&amp;#34;: &amp;#34;当前操作者用户名&amp;#34;,
-    &amp;#34;file_descriptor_set&amp;#34;: PbDatabase(), // PbDatabase 对象
-    &amp;#34;files&amp;#34;: {&amp;#34;文件路径&amp;#34;: PbFile()}, // PbEnum内的文件描述集合
-    &amp;#34;file&amp;#34;: PbFile(), // 当前渲染的文件描述对象
-    &amp;#34;output_file_path&amp;#34;: &amp;#34;输出文件路径&amp;#34;,
-    &amp;#34;output_render_path&amp;#34;: &amp;#34;输出文件路径渲染结果&amp;#34;,
-    &amp;#34;current_instance&amp;#34;: PbFile(), // file的别名
-    &amp;#34;file_dllexport_decl&amp;#34;: &amp;#34;文件模板符号导出宏&amp;#34;,
-    &amp;#34;PbConvertRule&amp;#34;: PbConvertRule // PbConvertRule里包含了一些命名转换定义
+    "generator": "代码生成器路径",
+    "local_vcs_user_name": "当前操作者用户名",
+    "file_descriptor_set": PbDatabase(), // PbDatabase 对象
+    "files": {"文件路径": PbFile()}, // PbEnum内的文件描述集合
+    "file": PbFile(), // 当前渲染的文件描述对象
+    "output_file_path": "输出文件路径",
+    "output_render_path": "输出文件路径渲染结果",
+    "current_instance": PbFile(), // file的别名
+    "file_dllexport_decl": "文件模板符号导出宏",
+    "PbConvertRule": PbConvertRule // PbConvertRule里包含了一些命名转换定义
 }</code></pre><h4 id=python对象接口>Python对象接口</h4><pre><code class=language-python>class PbConvertRule:
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     PbConvertRule is a class that defines constants for different naming conversion rules.
 
     Attributes:
@@ -221,7 +221,7 @@ generate_for_pb_run_generator()</code></pre><p>还可以根据需要扩展更多
         CONVERT_NAME_UPPERCASE (int): 命名风格转换： 转大写
         CONVERT_NAME_CAMEL_FIRST_LOWERCASE (int): 命名风格转换： 转首字母大写的驼峰式命名
         CONVERT_NAME_CAMEL_CAMEL (int): 命名风格转换： 转驼峰式命名
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     CONVERT_NAME_NOT_CHANGE = 0
     CONVERT_NAME_LOWERCASE = 1
     CONVERT_NAME_UPPERCASE = 2
@@ -230,18 +230,18 @@ generate_for_pb_run_generator()</code></pre><p>还可以根据需要扩展更多
 
 
 class PbObjectBase(object):
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     所有模板目标结构的基类.
 
     Attributes:
         descriptor: 原始的描述结构.
         refer_database: 指向 PbDatabase 结构，可以用这个访问其他描述信息.
-    &amp;#34;&amp;#34;&amp;#34;
+    """
 
     def __init__(self, descriptor, refer_database):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     输入标识符名字，按规则转换标识符名字
 
     Args:
@@ -251,11 +251,11 @@ class PbObjectBase(object):
 
     Returns:
         转换后的标识符名字
-    &amp;#34;&amp;#34;&amp;#34;
-    def get_identify_name(self, name, mode=PbConvertRule.CONVERT_NAME_LOWERCASE, package_seperator=&amp;#34;.&amp;#34;):
+    """
+    def get_identify_name(self, name, mode=PbConvertRule.CONVERT_NAME_LOWERCASE, package_seperator="."):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     输入标识符名字，转换成小写风格.
 
     Args:
@@ -263,11 +263,11 @@ class PbObjectBase(object):
 
     Returns:
         转换后的标识符名字
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_identify_lower_rule(self, name):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     输入标识符名字，转换成大写风格.
 
     Args:
@@ -275,29 +275,29 @@ class PbObjectBase(object):
 
     Returns:
         转换后的标识符名字
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_identify_upper_rule(self, name):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取小写风格的名字
 
     Returns:
         小写风格的名字
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_name_lower_rule(self):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取大写风格的名字
 
     Returns:
         小写风格的名字
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_name_upper_rule(self):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取插件对象
 
     Args:
@@ -306,11 +306,11 @@ class PbObjectBase(object):
 
     Returns:
         插件对象或default_value
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_extension(self, name, default_value=None):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取插件字段对象
 
     Args:
@@ -320,110 +320,110 @@ class PbObjectBase(object):
 
     Returns:
         插件对象或default_value
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_extension_field(self, name, fn, default_value=None):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     是否有效
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def is_valid(self, ignore_request):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取原始name
 
     Returns:
         原始name
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_name(self):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取完整name
 
     Returns:
         完整name
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_full_name(self):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
-    获取C&#43;&#43;类名
+    """
+    获取C++类名
 
     Returns:
-        C&#43;&#43;类名
-    &amp;#34;&amp;#34;&amp;#34;
+        C++类名
+    """
     def get_cpp_class_name(self):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
-    获取C&#43;&#43;命名空间起始声明
+    """
+    获取C++命名空间起始声明
 
     Args:
         full_name: 输入名字
         pretty_ident: 美化输出的缩进
 
     Returns:
-        C&#43;&#43;命名空间起始声明
-    &amp;#34;&amp;#34;&amp;#34;
-    def get_cpp_namespace_begin(self, full_name, pretty_ident=&amp;#34;&amp;#34;):
+        C++命名空间起始声明
+    """
+    def get_cpp_namespace_begin(self, full_name, pretty_ident=""):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
-    获取C&#43;&#43;命名空间结束声明
+    """
+    获取C++命名空间结束声明
 
     Args:
         full_name: 输入名字
         pretty_ident: 美化输出的缩进
 
     Returns:
-        C&#43;&#43;命名空间结束声明
-    &amp;#34;&amp;#34;&amp;#34;
-    def get_cpp_namespace_end(self, full_name, pretty_ident=&amp;#34;&amp;#34;):
+        C++命名空间结束声明
+    """
+    def get_cpp_namespace_end(self, full_name, pretty_ident=""):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
-    获取C&#43;&#43;命名空间代码前缀
+    """
+    获取C++命名空间代码前缀
 
     Args:
         full_name: 输入名字
 
     Returns:
-        C&#43;&#43;命名空间代码前缀
-    &amp;#34;&amp;#34;&amp;#34;
+        C++命名空间代码前缀
+    """
     def get_cpp_namespace_prefix(self, full_name):
-        return &amp;#34;::&amp;#34;.join(HANDLE_SPLIT_MODULE_RULE.split(full_name))
+        return "::".join(HANDLE_SPLIT_MODULE_RULE.split(full_name))
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取package
 
     Returns:
         package
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_package(self):
         return self.descriptor.file.package
 
 
 class PbFile(PbObjectBase):
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取去除后缀之后的文件路径
 
     Returns:
         去除后缀之后的文件路径
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_file_path_without_ext(self):
         full_name = self.get_full_name()
-        if full_name.endswith(&amp;#34;.proto&amp;#34;):
-            return full_name[:-len(&amp;#34;.proto&amp;#34;)]
+        if full_name.endswith(".proto"):
+            return full_name[:-len(".proto")]
         return full_name
 
 class PbField(PbObjectBase):
     pass
 
 class PbOneof(PbObjectBase):
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     Oneof结构表述.
 
     Attributes:
@@ -432,11 +432,11 @@ class PbOneof(PbObjectBase):
         fields: 包含字段 ([PbField])
         fields_by_name: 包含字段,名字集合 (PbField)
         fields_by_number: 包含字段,Field Number集合 (PbField)
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     pass
 
 class PbMessage(PbObjectBase):
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     Message 结构表述.
 
     Attributes:
@@ -446,22 +446,22 @@ class PbMessage(PbObjectBase):
         fields_by_number: 包含字段,Field Number集合 (PbField)
         oneofs: 包含oneof(PbOneof)
         oneofs_by_name: 包含oneof,名字集合 (PbOneof)
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     pass
 
 class PbEnumValue(PbObjectBase):
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     Enum枚举项结构表述.
 
     Attributes:
         file: 所属 PbFile
         container: 包含Enum (PbEnum)
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     pass
 
 
 class PbEnum(PbObjectBase):
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     Enum枚举项结构表述.
 
     Attributes:
@@ -469,47 +469,47 @@ class PbEnum(PbObjectBase):
         values: 包含字段 ([PbField])
         values_by_name: 包含字段,名字集合 (PbField)
         values_by_number: 包含字段,Field Number集合 (PbField)
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     pass
 
 
 class PbRpc(PbObjectBase):
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     RPC结构表述.
 
     Attributes:
         file: 所属 PbFile
         service: 所属 Service ([PbService])
-    &amp;#34;&amp;#34;&amp;#34;
+    """
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取所属的Service
 
     Returns:
         所属的Service
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_service(self):
         return self.service
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取请求结构描述
 
     Returns:
         请求结构描述
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_request(self):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取请求结构原始类型描述
 
     Returns:
         请求结构原始类型描述
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_request_descriptor(self):
         return self.get_request().descriptor
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取请求结构插件
 
     Args:
@@ -518,29 +518,29 @@ class PbRpc(PbObjectBase):
 
     Returns:
         插件或default_value
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_request_extension(self, name, default_value=None):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取回包结构描述
 
     Returns:
         回包结构描述
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_response(self):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取回包结构原始类型描述
 
     Returns:
         回包结构原始类型描述
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_response_descriptor(self):
         return self.get_response().descriptor
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取回包结构插件
 
     Args:
@@ -549,41 +549,41 @@ class PbRpc(PbObjectBase):
 
     Returns:
         插件或default_value
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_response_extension(self, name, default_value=None):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取请求是否是流式
 
     Returns:
         请求是否是流式
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def is_request_stream(self):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取回包是否是流式
 
     Returns:
         回包是否是流式
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def is_response_stream(self):
         pass
 
 
 class PbService(PbObjectBase):
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     Service结构表述.
 
     Attributes:
         file: 所属 PbFile
         rpcs: 包含的RPC集合，名字为Key (PbRpc)
-    &amp;#34;&amp;#34;&amp;#34;
+    """
 
 
 class PbDatabase(object):
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     符号数据库.
 
     Attributes:
@@ -591,9 +591,9 @@ class PbDatabase(object):
         raw_symbols: 包含的原始符号表描述
         default_factory: 初始注册表工厂（第一次建库，无自定义插件）
         extended_factory: 扩展注册表工厂（第二次建库，包含自定义插件）
-    &amp;#34;&amp;#34;&amp;#34;
+    """
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     加载pb文件
 
     Args:
@@ -602,20 +602,20 @@ class PbDatabase(object):
 
     Returns:
         插件或default_value
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def load(self, pb_file_path, external_pb_files):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取原始file描述集合
 
     Returns:
         获取原始file描述集合
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_raw_file_descriptors(self):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取原始符号描述
 
     Args:
@@ -623,11 +623,11 @@ class PbDatabase(object):
 
     Returns:
         原始符号描述
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_raw_symbol(self, full_name):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取PbFile
 
     Args:
@@ -635,11 +635,11 @@ class PbDatabase(object):
 
     Returns:
         PbFile
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_file(self, name):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取PbService
 
     Args:
@@ -647,11 +647,11 @@ class PbDatabase(object):
 
     Returns:
         PbFile
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_service(self, full_name):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取PbMessage
 
     Args:
@@ -659,11 +659,11 @@ class PbDatabase(object):
 
     Returns:
         PbMessage
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_message(self, full_name):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取PbEnum
 
     Args:
@@ -671,11 +671,11 @@ class PbDatabase(object):
 
     Returns:
         PbMessage
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_enum(self, full_name):
         pass
 
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     获取原始插件结构
 
     Args:
@@ -683,22 +683,22 @@ class PbDatabase(object):
 
     Returns:
         PbMessage
-    &amp;#34;&amp;#34;&amp;#34;
+    """
     def get_extension(self, full_name):
         pass</code></pre><h3 id=中间配置结构>中间配置结构</h3><pre><code class=language-yaml># 全局配置
 configure:
   # 输出文件编码
-  encoding: &amp;#34;UTF-8&amp;#34;
+  encoding: "UTF-8"
   # 默认输出目录
-  output_directory: &amp;#34;output directory&amp;#34;
+  output_directory: "output directory"
   # 默认是否覆盖已存在文件
-  overwrite: false # overwrite file if it&amp;#39;s already exists
+  overwrite: false # overwrite file if it's already exists
   # 额外的Python PATH
   paths: []
   # 额外的Python包路径
   package_prefix: []
   # protoc 路径（使用传入的pb时这个可以不用）
-  protoc: &amp;#34;path of protobuf protoc&amp;#34;
+  protoc: "path of protobuf protoc"
   # protoc 执行参数（使用传入的pb时这个可以不用）
   protoc_flags: []
   # protoc 执行包含目录（使用传入的pb时这个可以不用）
@@ -706,16 +706,16 @@ configure:
   # protoc 执行的 .proto 文件（使用传入的pb时这个可以不用）
   protocol_files: []
   # 输入的 .pb 文件
-  protocol_input_pb_file: &amp;#34;path of input pb file&amp;#34;
+  protocol_input_pb_file: "path of input pb file"
   # 如果执行了protoc，输出文件位置
-  protocol_output_pb_file: &amp;#34;path of output pb file&amp;#34;
+  protocol_output_pb_file: "path of output pb file"
   # 工程目录
-  protocol_project_directory: &amp;#34;path of project&amp;#34;
+  protocol_project_directory: "path of project"
   # 额外的依赖pb文件列表
   protocol_external_pb_files: [] # external pb fils to load
   # 自定义注入参数
   custom_variables:
-    key: &amp;#34;value&amp;#34; # custom variables of &amp;#34;key&amp;#34;
+    key: "value" # custom variables of "key"
 
 # 规则列表，内含多个规则
 rules:
@@ -724,95 +724,95 @@ rules:
       # 是否覆盖已存在文件
       overwrite: false # overwrite configure.overwrite
       # 输出目录
-      output_directory: &amp;#34;overwrite configure.output_directory&amp;#34;
+      output_directory: "overwrite configure.output_directory"
       # 自定义注入参数
       custom_variables:
-        key: &amp;#34;value&amp;#34; # overwrite configure.custom_variables.key
+        key: "value" # overwrite configure.custom_variables.key
       # 输入的模板路径
-      input: &amp;#34;input template path&amp;#34;
+      input: "input template path"
       # 输出的文件规则
-      output: &amp;#34;output path rule&amp;#34;
+      output: "output path rule"
   # Service模板
   - service:
       # Service完整名称
-      name: &amp;#34;service name&amp;#34;
+      name: "service name"
       # 默认是否覆盖已存在文件
       overwrite: false # overwrite configure.overwrite
       # 默认输出目录
-      output_directory: &amp;#34;overwrite configure.output_directory&amp;#34;
+      output_directory: "overwrite configure.output_directory"
       # 自定义注入参数
       custom_variables:
-        key: &amp;#34;value&amp;#34; # overwrite configure.custom_variables.key
+        key: "value" # overwrite configure.custom_variables.key
       # 外层模板： service
       service_template:
         # 是否覆盖已存在文件
         - overwrite: false
           # 输入的模板路径
-          input: &amp;#34;input template path&amp;#34;
+          input: "input template path"
           # 输出的文件规则
-          output: &amp;#34;output path rule&amp;#34;
+          output: "output path rule"
       # 内层模板： rpc
       rpc_template:
         - overwrite: false
-          input: &amp;#34;input template path&amp;#34;
-          output: &amp;#34;output path rule&amp;#34;
+          input: "input template path"
+          output: "output path rule"
       # 内存模板的包含规则（正则表达式）
-      rpc_include: &amp;#34;regex rule&amp;#34;
+      rpc_include: "regex rule"
       # 内存模板的排除规则（正则表达式）
-      rpc_exclude: &amp;#34;regex rule&amp;#34;
+      rpc_exclude: "regex rule"
       # 按请求类型忽略RPC（内层模板）
       rpc_ignore_request: [] # ignore request types for rpc template
   # Message模板，结构和上面类似，不再复述
   - message:
       # Message完整名称
-      name: &amp;#34;message name&amp;#34;
+      name: "message name"
       overwrite: false # overwrite configure.overwrite
-      output_directory: &amp;#34;overwrite configure.output_directory&amp;#34;
+      output_directory: "overwrite configure.output_directory"
       custom_variables:
-        key: &amp;#34;value&amp;#34; # overwrite configure.custom_variables.key
+        key: "value" # overwrite configure.custom_variables.key
       message_template:
         - overwrite: false
-          input: &amp;#34;input template path&amp;#34;
-          output: &amp;#34;output path rule&amp;#34;
+          input: "input template path"
+          output: "output path rule"
       field_template:
         - overwrite: false
-          input: &amp;#34;input template path&amp;#34;
-          output: &amp;#34;output path rule&amp;#34;
-      field_include: &amp;#34;regex rule&amp;#34;
-      field_exclude: &amp;#34;regex rule&amp;#34;
+          input: "input template path"
+          output: "output path rule"
+      field_include: "regex rule"
+      field_exclude: "regex rule"
       # 按字段类型忽略RPC（内层模板）
       field_ignore_type: [] # ignore types for field template
   # Enum模板，结构和上面类似，不再复述
   - enum:
       # Enum完整名称
-      name: &amp;#34;enum name&amp;#34;
+      name: "enum name"
       overwrite: false # overwrite configure.overwrite
-      output_directory: &amp;#34;overwrite configure.output_directory&amp;#34;
+      output_directory: "overwrite configure.output_directory"
       custom_variables:
-        key: &amp;#34;value&amp;#34; # overwrite configure.custom_variables.key
+        key: "value" # overwrite configure.custom_variables.key
       enum_template:
         - overwrite: false
-          input: &amp;#34;input template path&amp;#34;
-          output: &amp;#34;output path rule&amp;#34;
+          input: "input template path"
+          output: "output path rule"
       value_template:
         - overwrite: false
-          input: &amp;#34;input template path&amp;#34;
-          output: &amp;#34;output path rule&amp;#34;
-      value_include: &amp;#34;regex rule&amp;#34;
-      value_exclude: &amp;#34;regex rule&amp;#34;
+          input: "input template path"
+          output: "output path rule"
+      value_include: "regex rule"
+      value_exclude: "regex rule"
   # 文件集（.pb文件）模板，结构和上面类似，不再复述
   - file:
       overwrite: false # overwrite configure.overwrite
-      output_directory: &amp;#34;overwrite configure.output_directory&amp;#34;
+      output_directory: "overwrite configure.output_directory"
       custom_variables:
-        key: &amp;#34;value&amp;#34; # overwrite configure.custom_variables.key
+        key: "value" # overwrite configure.custom_variables.key
       # file_template 是内层模板，文件集没有外层模板
       file_template:
         - overwrite: false
-          input: &amp;#34;input template path&amp;#34;
-          output: &amp;#34;output path rule&amp;#34;
-      file_include: &amp;#34;regex rule&amp;#34;
-      file_exclude: &amp;#34;regex rule&amp;#34;
+          input: "input template path"
+          output: "output path rule"
+      file_include: "regex rule"
+      file_exclude: "regex rule"
       # 按package忽略file
       file_ignore_package: [] # ignore files by package</code></pre><h2 id=最后>最后</h2><p>工具和代码开源在 <a href=https://github.com/atframework/atsf4g-co/blob/main/src/generate_for_pb_utility.cmake>https://github.com/atframework/atsf4g-co/blob/main/src/generate_for_pb_utility.cmake</a> 和 <a href=https://github.com/atframework/atsf4g-co/tree/main/src/tools/generate-for-pb>https://github.com/atframework/atsf4g-co/tree/main/src/tools/generate-for-pb</a> 。
 欢迎有兴趣的同学互相交流。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2025-02-13T17:06:45.000+00:00 itemprop=datePublished>2025-02-13</time></span>

@@ -10,7 +10,7 @@
 modinfo tun;
 
 # EPEL源
-rpm -ivh &amp;#34;http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm&amp;#34;;
+rpm -ivh "http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm";
 
 # 安装软件包
 yum install -y easy-rsa openvpn;
@@ -23,12 +23,12 @@ cp -rf /usr/share/easy-rsa /etc/openvpn/ ;
 # 配置openvpn-startup.sh里要启动的VPN配置文件（最后几行）
 
 # 启动openvpn
-cd /etc/openvpn &amp;amp;&amp;amp; ./openvpn-startup.sh
+cd /etc/openvpn && ./openvpn-startup.sh
 # 关闭openvpn
-cd /etc/openvpn &amp;amp;&amp;amp; ./openvpn-shutdown.sh</code></pre><p><strong>建议尝试配置的过程中先使用虚拟机试一下</strong>，因为GFW灰常牛逼的可以按协议把握手包和丢掉。我就是卡在这非常久，UDP连接提示验证失败，TCP连接客户端和服务器都收到错误码为-1的断开连接报文。死活没连上，最后我换用国内的一个VPS同样的搭建方法就直接正常连上了。</p><h2 id=ppp和pptpd>PPP和PPTPD</h2><p>由于OpenVPN各种墙，所以我就想换一个支持度比较高的解决方案，使用pptp协议。CentOS 6 下大致过程如下：</p><pre><code class=language-bash>#!/bin/sh
+cd /etc/openvpn && ./openvpn-shutdown.sh</code></pre><p><strong>建议尝试配置的过程中先使用虚拟机试一下</strong>，因为GFW灰常牛逼的可以按协议把握手包和丢掉。我就是卡在这非常久，UDP连接提示验证失败，TCP连接客户端和服务器都收到错误码为-1的断开连接报文。死活没连上，最后我换用国内的一个VPS同样的搭建方法就直接正常连上了。</p><h2 id=ppp和pptpd>PPP和PPTPD</h2><p>由于OpenVPN各种墙，所以我就想换一个支持度比较高的解决方案，使用pptp协议。CentOS 6 下大致过程如下：</p><pre><code class=language-bash>#!/bin/sh
 # 1. 安装软件包
 # EPEL源
-rpm -ivh &amp;#34;http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm&amp;#34;;
+rpm -ivh "http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm";
 yum install ppp pptp pptpd pptp-setup -y;
 
 # 2. 配置
@@ -44,9 +44,9 @@ vim /etc/ppp/chap/secrets
 # 3. 启动模块和添加初始化启动模块
 modprobe ppp_mppe
 modprobe ip_gre
-echo &amp;#34;#!/bin/sh&amp;#34; &amp;gt; /etc/sysconfig/modules/pptpd.modules
-echo &amp;#34;modprobe ppp_mppe&amp;#34; &amp;gt;&amp;gt; /etc/sysconfig/modules/pptpd.modules
-echo &amp;#34;modprobe ip_gre&amp;#34; &amp;gt;&amp;gt; /etc/sysconfig/modules/pptpd.modules
+echo "#!/bin/sh" > /etc/sysconfig/modules/pptpd.modules
+echo "modprobe ppp_mppe" >> /etc/sysconfig/modules/pptpd.modules
+echo "modprobe ip_gre" >> /etc/sysconfig/modules/pptpd.modules
 
 # 4. pptpd启动和开机启动
 service pptpd start
@@ -68,46 +68,7 @@ vim  /etc/ipsec.conf
 # 编辑 virtual_private=%v4:10.0.0.0/8,%v4:192.168.11.0/24,%v4:172.16.0.0/12,%v4:25.0.0.0/8,%v6:fd00::/8,%v6:fe80::/10
 
 # /etc/ipsec.d/xl2tpd.conf
-cat &amp;gt; /etc/ipsec.d/xl2tpd.conf &amp;lt;&amp;lt;EOF
-# Add connections here
-
-# sample VPN connection
-# for more examples, see /etc/ipsec.d/examples/
-#conn sample
-#               # Left security gateway, subnet behind it, nexthop toward right.
-#               left=10.0.0.1
-#               leftsubnet=172.16.0.0/24
-#               leftnexthop=10.22.33.44
-#               # Right security gateway, subnet behind it, nexthop toward left.
-#               right=10.12.12.1
-#               rightsubnet=192.168.0.0/24
-#               rightnexthop=10.101.102.103
-#               # To authorize this connection, but not actually start it,
-#               # at startup, uncomment this.
-#               #auto=add
-
-conn L2TP-PSK-NAT
-    rightsubnet=vhost:%priv
-    also=L2TP-PSK-noNAT
-
-conn L2TP-PSK-noNAT
-    authby=secret
-    pfs=no
-    auto=add
-    keyingtries=3
-    rekey=no
-    ikelifetime=8h
-    keylife=1h
-    type=transport
-    left=[本机IP或域名] #这里写公网IP，没固定IP的就到花生壳弄个动态域名解析。
-    leftid=[本机IP或域名]
-    leftprotoport=17/1701
-    right=%any
-EOF;
-
-# 设置预共享密钥
-vim  /etc/ipsec.d/xl2tpd.secrets
-echo &amp;#39;: PSK &amp;#34;l2tpd.owent.net&amp;#34;&amp;#39; &amp;gt; /etc/ipsec.d/xl2tpd.secrets;
+cat > /etc/ipsec.d/xl2tpd.conf <<eof # add connections here # sample vpn connection # for more examples, see /etc/ipsec.d/examples/ #conn sample # # left security gateway, subnet behind it, nexthop toward right. # left=10.0.0.1 # leftsubnet=172.16.0.0/24 # leftnexthop=10.22.33.44 # # right security gateway, subnet behind it, nexthop toward left. # right=10.12.12.1 # rightsubnet=192.168.0.0/24 # rightnexthop=10.101.102.103 # # to authorize this connection, but not actually start it, # # at startup, uncomment this. # #auto=add conn l2tp-psk-nat rightsubnet=vhost:%priv also=L2TP-PSK-noNAT conn l2tp-psk-nonat authby=secret pfs=no auto=add keyingtries=3 rekey=no ikelifetime=8h keylife=1h type=transport left=[本机IP或域名] #这里写公网ip，没固定ip的就到花生壳弄个动态域名解析。 leftid=[本机IP或域名] leftprotoport=17/1701 right=%any eof; # 设置预共享密钥 vim /etc/ipsec.d/xl2tpd.secrets echo ': psk "l2tpd.owent.net"'> /etc/ipsec.d/xl2tpd.secrets;
 # 3. 网络设置
 sysctl -w net.ipv4.ip_forward=1
 sysctl -w net.ipv4.conf.default.rp_filter=0

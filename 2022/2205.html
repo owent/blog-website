@@ -15,31 +15,31 @@
 当时是基于 <a href=https://github.com/llvm/llvm-project.git>llvm-project</a> 12.0 的版本改的，后来升级到 13.0 的时候没做太大变化，只是常规地升级了版本。
 知道最近升级 14.0 后发现有些组件又有问题了，我就整体看了一下。好家伙变化真大。</p><p>所以我重新基于14.0版本里 Fuchsia 的配置重新梳理了一遍，顺便把改动的内容记录下来以便后面更新的时候照葫芦画瓢。</p><blockquote><p>目前已经看到的又一个变化是 Fuchsia 里main分支已经包含bolt了，但是14.0里还没有。
 以后肯定还是会再Merge的。</p></blockquote><p>首先我们和 <a href=https://github.com/owent-utils/bash-shell/tree/main/GCC%20Installer>GCC 工具链构建工具</a> 一样，我们也给 <a href=https://github.com/owent-utils/bash-shell/tree/main/LLVM%26Clang%20Installer>LLVM,Clang,libc++,libc++abi工具链构建工具</a> 增加了用于生成RPM包的配置。，然后基于 Fuchsia 的配置修改的内容如下:</p><ul><li><code>LLVM_TARGETS_TO_BUILD</code> 改为 <code>Native</code> : 目前没有交叉编译需求，有了再说吧。只编译Native可以加快编译速度。</li><li>注释掉所有的<code>set(*LIBCXX_ABI_VERSION 2*)</code> : ABI 2还未稳定</li><li><del><code>distribution-stage2.cmake</code> 里 <code>LLVM_INSTALL_TOOLCHAIN_ONLY</code> 改为 <code>OFF</code> : 我们需要开发包，这个ON的情况不能发布开发包。</del></li><li>[<code>distribution-stage1.cmake</code>][11] 的 <code>BOOTSTRAP_CMAKE_SYSTEM_NAME</code> 内和 [<code>distribution-stage2.cmake</code>][12]<ul><li><code>*LIBCXXABI_INSTALL_LIBRARY</code> 改为 <code>ON</code></li><li><code>*LIBUNWIND_INSTALL_LIBRARY</code> 改为 <code>ON</code></li></ul></li><li><code>distribution-stage1.cmake</code> 里 <code>CLANG_BOOTSTRAP_CMAKE_ARGS</code> 改为以下脚本: 只是为了更灵活一点</li></ul><pre><code class=language-cmake>if(STAGE2_CACHE_FILE)
-  set(CLANG_BOOTSTRAP_CMAKE_ARGS -C ${STAGE2_CACHE_FILE} CACHE STRING &amp;#34;&amp;#34;)
+  set(CLANG_BOOTSTRAP_CMAKE_ARGS -C ${STAGE2_CACHE_FILE} CACHE STRING "")
 else()
-  set(CLANG_BOOTSTRAP_CMAKE_ARGS -C ${CMAKE_CURRENT_LIST_DIR}/distribution-stage2.cmake CACHE STRING &amp;#34;&amp;#34;)
+  set(CLANG_BOOTSTRAP_CMAKE_ARGS -C ${CMAKE_CURRENT_LIST_DIR}/distribution-stage2.cmake CACHE STRING "")
 endif()</code></pre><ul><li><code>LLVM_ENABLE_PROJECTS</code> 增加 <code>lldb;libclc;mlir;pstl</code><blockquote><p>注意顺序要参考 [llvm/CMakeLists.txt][10] 内的 <code>LLVM_ALL_PROJECTS</code></p></blockquote></li><li><code>distribution-stage2.cmake</code> 中 <code>foreach(target *-linux-*)</code> 后的 <code>if(LINUX_${target}_SYSROOT)</code> 改为 <code>if(LINUX_${target}_SYSROOT OR target STREQUAL "${LINUX_NATIVE_TARGET}")</code> ，并在前面插入适配脚本</li></ul><pre><code class=language-cmake># Intel JIT API support
-if(CMAKE_HOST_SYSTEM_NAME MATCHES &amp;#34;Linux|Windows&amp;#34;)
-  set(LLVM_USE_INTEL_JITEVENTS ON CACHE BOOL &amp;#34;&amp;#34;)
+if(CMAKE_HOST_SYSTEM_NAME MATCHES "Linux|Windows")
+  set(LLVM_USE_INTEL_JITEVENTS ON CACHE BOOL "")
 endif()
 # Cross compiling
-if(&amp;#34;${LLVM_TARGETS_TO_BUILD}&amp;#34; MATCHES &amp;#34;Native|X86&amp;#34;)
-  if(CMAKE_HOST_SYSTEM_NAME STREQUAL &amp;#34;Linux&amp;#34;)
+if("${LLVM_TARGETS_TO_BUILD}" MATCHES "Native|X86")
+  if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
     cmake_host_system_information(RESULT LINUX_NATIVE_IS_64BIT QUERY IS_64BIT)
-    if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES &amp;#34;x86_64&amp;#34; OR (&amp;#34;${CMAKE_HOST_SYSTEM_PROCESSOR}&amp;#34; STREQUAL &amp;#34;&amp;#34;
+    if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "x86_64" OR ("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL ""
                                                         AND LINUX_NATIVE_IS_64BIT))
       set(LINUX_NATIVE_TARGET x86_64-unknown-linux-gnu)
-    elseif(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES &amp;#34;i386|i686|x86&amp;#34; OR &amp;#34;${CMAKE_HOST_SYSTEM_PROCESSOR}&amp;#34; STREQUAL &amp;#34;&amp;#34;)
+    elseif(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "i386|i686|x86" OR "${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "")
       set(LINUX_NATIVE_TARGET i386-unknown-linux-gnu)
     endif()
   endif()
 endif()
-message(STATUS &amp;#34;Stage2: CMAKE_HOST_SYSTEM_NAME=${CMAKE_HOST_SYSTEM_NAME}&amp;#34;)
-message(STATUS &amp;#34;Stage2: CMAKE_HOST_SYSTEM_PROCESSOR=${CMAKE_HOST_SYSTEM_PROCESSOR}&amp;#34;)
-message(STATUS &amp;#34;Stage2: CMAKE_HOST_SYSTEM_VERSION=${CMAKE_HOST_SYSTEM_VERSION}&amp;#34;)
-message(STATUS &amp;#34;Stage2: LLVM_TARGETS_TO_BUILD=${LLVM_TARGETS_TO_BUILD}&amp;#34;)
-message(STATUS &amp;#34;Stage2: LINUX_NATIVE_IS_64BIT=${LINUX_NATIVE_IS_64BIT}&amp;#34;)
-message(STATUS &amp;#34;Stage2: LINUX_NATIVE_TARGET=${LINUX_NATIVE_TARGET}&amp;#34;)</code></pre><p>首先JIT功能的选项是直接参考构建系统里的设置的，它只支持Linux和Windows。
+message(STATUS "Stage2: CMAKE_HOST_SYSTEM_NAME=${CMAKE_HOST_SYSTEM_NAME}")
+message(STATUS "Stage2: CMAKE_HOST_SYSTEM_PROCESSOR=${CMAKE_HOST_SYSTEM_PROCESSOR}")
+message(STATUS "Stage2: CMAKE_HOST_SYSTEM_VERSION=${CMAKE_HOST_SYSTEM_VERSION}")
+message(STATUS "Stage2: LLVM_TARGETS_TO_BUILD=${LLVM_TARGETS_TO_BUILD}")
+message(STATUS "Stage2: LINUX_NATIVE_IS_64BIT=${LINUX_NATIVE_IS_64BIT}")
+message(STATUS "Stage2: LINUX_NATIVE_TARGET=${LINUX_NATIVE_TARGET}")</code></pre><p>首先JIT功能的选项是直接参考构建系统里的设置的，它只支持Linux和Windows。
 然后这里对目标平台构建时要设置很多子组件。脚本原先是为在Fuchsia下跑的，编译到Linux的时候要指定SYSROOT。
 而且我们直接在Linux里编译Native版本是没有SYSROOT设置的，所以这里要把和自己当前架构一致的设置目标平台特设置了。</p><p>这个Cache文件是在cmake启动工程之前加载的，这时候 <code>CMAKE_SYSTEM_NAME</code> 还不可用。所以我们只能用 <code>CMAKE_HOST_SYSTEM_NAME</code> 。</p><ul><li><code>distribution-stage2.cmake</code> 内 <code>LLVM_TOOLCHAIN_TOOLS</code> 改名为非Cache的 <code>LLVM_TOOLCHAIN_TOOLS_SELECT</code>, 增加注释 <code># See &lt;llvm-project>/llvm/test/CMakeLists.txt</code> ，同时组件变更如下:<ul><li>移除:<ul><li>llvm-ifs</li><li>llvm-lipo</li><li>llvm-libtool-darwin</li><li>llvm-otool</li></ul></li><li>增加<ul><li>llc</li><li>lli</li><li>llvm-addr2line</li><li>llvm-as</li><li>llvm-config</li><li>llvm-cxxdump</li><li>llvm-cxxmap</li><li>llvm-install-name-tool</li><li>llvm-jitlink</li><li>llvm-jitlistener</li><li>llvm-link</li><li>llvm-mc</li><li>llvm-ml</li><li>llvm-strings</li><li>llvm-lto</li><li>llvm-lto2</li><li>scan-build</li><li>scan-view</li></ul></li><li>最后添加<blockquote><pre><code class=language-cmake>if(APPLE)
   list(
@@ -51,22 +51,22 @@ message(STATUS &amp;#34;Stage2: LINUX_NATIVE_TARGET=${LINUX_NATIVE_TARGET}&amp;#
     llvm-libtool-darwin
     llvm-otool)
 endif()
-if(CMAKE_HOST_SYSTEM_NAME MATCHES &amp;#34;Linux|Windows&amp;#34;)
+if(CMAKE_HOST_SYSTEM_NAME MATCHES "Linux|Windows")
   list(APPEND LLVM_TOOLCHAIN_TOOLS_SELECT llvm-jitlink llvm-jitlistener)
 endif()
-set(LLVM_TOOLCHAIN_TOOLS ${LLVM_TOOLCHAIN_TOOLS_SELECT} CACHE STRING &amp;#34;&amp;#34;)</code></pre></blockquote></li></ul></li></ul><p>JIT组件的开关同上。</p><ul><li><code>distribution-stage2.cmake</code> 内 <code>LLVM_DISTRIBUTION_COMPONENTS</code> 增加 <code>${LLVM_DISTRIBUTION_ADDTIONAL_COMPONENTS}</code></li></ul><pre><code class=language-cmake>set(LLVM_DISTRIBUTION_ADDTIONAL_COMPONENTS
-    # add_lldb_library(...) in &amp;lt;llvm-project&amp;gt;/lldb
+set(LLVM_TOOLCHAIN_TOOLS ${LLVM_TOOLCHAIN_TOOLS_SELECT} CACHE STRING "")</code></pre></blockquote></li></ul></li></ul><p>JIT组件的开关同上。</p><ul><li><code>distribution-stage2.cmake</code> 内 <code>LLVM_DISTRIBUTION_COMPONENTS</code> 增加 <code>${LLVM_DISTRIBUTION_ADDTIONAL_COMPONENTS}</code></li></ul><pre><code class=language-cmake>set(LLVM_DISTRIBUTION_ADDTIONAL_COMPONENTS
+    # add_lldb_library(...) in <llvm-project>/lldb
     liblldb
-    # add_lldb_tool(...) in &amp;lt;llvm-project&amp;gt;/lldb
+    # add_lldb_tool(...) in <llvm-project>/lldb
     lldb
     lldb-server
     lldb-instr
     lldb-vscode
-    # add_llvm_install_targets(xxx) in &amp;lt;llvm-project&amp;gt;/clang
+    # add_llvm_install_targets(xxx) in <llvm-project>/clang
     libclang-headers
     libclang-python-bindings
     libclang
-    # add_clang_tool(xxx) in &amp;lt;llvm-project&amp;gt;/clang
+    # add_clang_tool(xxx) in <llvm-project>/clang
     clang-change-namespace
     clang-check
     clang-extdef-mapping
@@ -77,9 +77,9 @@ set(LLVM_TOOLCHAIN_TOOLS ${LLVM_TOOLCHAIN_TOOLS_SELECT} CACHE STRING &amp;#34;&a
     pp-trace
     opt-viewer
     # unwind, cxx, cxxabi are already included in runtimes
-    # From &amp;lt;llvm-project&amp;gt;/clang/cmake/caches/Apple-stage2.cmake
+    # From <llvm-project>/clang/cmake/caches/Apple-stage2.cmake
     Remarks
-    # From &amp;lt;llvm-project&amp;gt;/clang/cmake/caches/MultiDistributionExample.cmake . These targets are development targets, and
+    # From <llvm-project>/clang/cmake/caches/MultiDistributionExample.cmake . These targets are development targets, and
     # them will only available when LLVM_INSTALL_TOOLCHAIN_ONLY=OFF
     cmake-exports
     llvm-headers

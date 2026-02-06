@@ -3,13 +3,13 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-a785641c056272c9cc8ad6edf1146498 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2009/85.html target=_blank itemprop=url>ECUST 09年 校赛个人赛第六，七场总结</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#a-grey-area>A Grey Area</a></li><li><a href=#b-expected-allowance>B Expected Allowance</a></li><li><a href=#第七场>第七场</a></li><li><a href=#b要注意一下判断的优先级>B要注意一下判断的优先级.</a></li><li><a href=#e-stock-exchange>E Stock Exchange</a></li><li><a href=#c题很烦但是我觉得可以通过列出各种特殊情况出来死套太烦了所以没写>C题很烦，但是我觉得可以通过列出各种特殊情况出来死套。太烦了所以没写</a></li><li><a href=#d题我觉得可以通过dphash来完成按最长子序列的反向dp不过我觉得等我想出来dp方案时间也到了就没写>D题我觉得可以通过DP+Hash来完成，按最长子序列的反向DP（不过我觉得等我想出来DP方案时间也到了，就没写）</a></li><li><a href=#f题我没什么思路>F题我没什么思路</a></li><li><a href=#g题我认为可以dp主要是算出三个子段的最小值且三个子段的长度和为k-1但是dp的话要写24种分支我觉得这个方法并不好所以也没写>G题我认为可以DP，主要是算出三个子段的最小值，且三个子段的长度和为k-1，但是DP的话要写24种分支，我觉得这个方法并不好，所以也没写</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>校赛个人赛第六，七场总结</p><p>这两场比赛体现了英文水平的重要性</p><p>第六场的题目超长，用词还诡异，话了很长时间才看懂</p><p>这两场题目都比较有难度，第六场我只出了2题</p><h2 id=a-grey-area>A Grey Area</h2><p>A题是很诡异的统计，是一道纯模拟就能过的题，其他的不多说了</p><p>代码：</p><pre><code class=language-cpp>#include&amp;lt;iostream&amp;gt;
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-a785641c056272c9cc8ad6edf1146498 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2009/85.html target=_blank itemprop=url>ECUST 09年 校赛个人赛第六，七场总结</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#a-grey-area>A Grey Area</a></li><li><a href=#b-expected-allowance>B Expected Allowance</a></li><li><a href=#第七场>第七场</a></li><li><a href=#b要注意一下判断的优先级>B要注意一下判断的优先级.</a></li><li><a href=#e-stock-exchange>E Stock Exchange</a></li><li><a href=#c题很烦但是我觉得可以通过列出各种特殊情况出来死套太烦了所以没写>C题很烦，但是我觉得可以通过列出各种特殊情况出来死套。太烦了所以没写</a></li><li><a href=#d题我觉得可以通过dphash来完成按最长子序列的反向dp不过我觉得等我想出来dp方案时间也到了就没写>D题我觉得可以通过DP+Hash来完成，按最长子序列的反向DP（不过我觉得等我想出来DP方案时间也到了，就没写）</a></li><li><a href=#f题我没什么思路>F题我没什么思路</a></li><li><a href=#g题我认为可以dp主要是算出三个子段的最小值且三个子段的长度和为k-1但是dp的话要写24种分支我觉得这个方法并不好所以也没写>G题我认为可以DP，主要是算出三个子段的最小值，且三个子段的长度和为k-1，但是DP的话要写24种分支，我觉得这个方法并不好，所以也没写</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>校赛个人赛第六，七场总结</p><p>这两场比赛体现了英文水平的重要性</p><p>第六场的题目超长，用词还诡异，话了很长时间才看懂</p><p>这两场题目都比较有难度，第六场我只出了2题</p><h2 id=a-grey-area>A Grey Area</h2><p>A题是很诡异的统计，是一道纯模拟就能过的题，其他的不多说了</p><p>代码：</p><pre><code class=language-cpp>#include<iostream>
 using namespace std;
 int pe[20];
 int main()
 {
     int n,w;
-    while(cin&amp;gt;&amp;gt;n&amp;gt;&amp;gt;w, n || w)
+    while(cin>>n>>w, n || w)
     {
         int value;
         int peNum = 0;
@@ -18,60 +18,60 @@ int main()
         memset(pe,0,sizeof(pe));
         while(n --)
         {
-            scanf(&amp;#34;%d&amp;#34;,&amp;amp;value);
-            while(value &amp;gt;= Max)
+            scanf("%d",&value);
+            while(value >= Max)
             {
-                peNum &#43;&#43;;
+                peNum ++;
                 Max = peNum * w;
             }
-            pe[value / w] &#43;&#43;;
-            if(pe[value / w] &amp;gt; valueMax)
+            pe[value / w] ++;
+            if(pe[value / w] > valueMax)
                 valueMax = pe[value / w];
         }
 
         double output = 0.01;
-        for(int i = 0 ; i &amp;lt; peNum ; i &#43;&#43;)
-            output &#43;= ((double)pe[i] / (double)valueMax)
+        for(int i = 0 ; i < peNum ; i ++)
+            output += ((double)pe[i] / (double)valueMax)
                 * ((double)(peNum - i - 1) / (double)(peNum - 1));
 
-        printf(&amp;#34;%lf\n&amp;#34;,output);
+        printf("%lf\n",output);
     }
     return 0;
-}</code></pre><h2 id=b-expected-allowance>B Expected Allowance</h2><p>B题和A题类似，也是纯暴力</p><p>代码：</p><pre><code class=language-cpp>#include&amp;lt;iostream&amp;gt;
-#include&amp;lt;cmath&amp;gt;
+}</code></pre><h2 id=b-expected-allowance>B Expected Allowance</h2><p>B题和A题类似，也是纯暴力</p><p>代码：</p><pre><code class=language-cpp>#include<iostream>
+#include<cmath>
 using namespace std;
 long value[10000];
 
 void cal(long now,int pos,int n,int m)
 {
-    for(int i = 1 ; i &amp;lt;= m ; i &#43;&#43;)
+    for(int i = 1 ; i <= m ; i ++)
         if(pos == n)
-            value[now &#43; i] &#43;&#43;;
+            value[now + i] ++;
         else
-            cal(now &#43; i,pos &#43; 1,n,m);
+            cal(now + i,pos + 1,n,m);
 }
 
 
 int main()
 {
     long m,n,k;
-    while(scanf(&amp;#34;%ld %ld %ld&amp;#34;,&amp;amp;n,&amp;amp;m,&amp;amp;k), n || m || k )
+    while(scanf("%ld %ld %ld",&n,&m,&k), n || m || k )
     {
         memset(value,0,sizeof(value));
         cal(0,1,n,m);
         double output = 0.0;
         double fm = pow((double)m,(double)n);
-        for(long i = n ; i &amp;lt;= n * m ; i &#43;&#43;)
-            if(i - k &amp;lt;= 0)
-                output &#43;= (double)value[i] / fm;
+        for(long i = n ; i <= n * m ; i ++)
+            if(i - k <= 0)
+                output += (double)value[i] / fm;
             else
-                output &#43;= (double)value[i] / fm * (double)(i - k);
+                output += (double)value[i] / fm * (double)(i - k);
 
-        printf(&amp;#34;%.8lf\n&amp;#34;,output);
+        printf("%.8lf\n",output);
     }
     return 0;
-}</code></pre><h2 id=第七场>第七场</h2><p>第七场很多题目都有想法，可是很多都没能写出来</p><p>同样B和E是水题，直接暴力能过，不过就是要有耐性</p><h2 id=b要注意一下判断的优先级>B要注意一下判断的优先级.</h2><p>代码如下：</p><pre><code class=language-cpp>#include&amp;lt;iostream&amp;gt;
-#include&amp;lt;cstring&amp;gt;
+}</code></pre><h2 id=第七场>第七场</h2><p>第七场很多题目都有想法，可是很多都没能写出来</p><p>同样B和E是水题，直接暴力能过，不过就是要有耐性</p><h2 id=b要注意一下判断的优先级>B要注意一下判断的优先级.</h2><p>代码如下：</p><pre><code class=language-cpp>#include<iostream>
+#include<cstring>
 using namespace std;
 double bank[10][10000];
 char cmd[20];
@@ -79,8 +79,8 @@ int isExist[10][10000];
 int main()
 {
     int n = 1;
-    //freopen(&amp;#34;b.in&amp;#34;,&amp;#34;r&amp;#34;,stdin);
-    while(scanf(&amp;#34;%d&amp;#34;,&amp;amp;n),n)
+    //freopen("b.in","r",stdin);
+    while(scanf("%d",&n),n)
     {
         memset(bank,0,sizeof(bank));
         memset(isExist,0,sizeof(isExist));
@@ -88,91 +88,91 @@ int main()
         {
             int tmpInt1,tmpInt2;
             double tmpMoney;
-            scanf(&amp;#34;%d/%d %lf&amp;#34;,&amp;amp;tmpInt1,&amp;amp;tmpInt2,&amp;amp;tmpMoney);
+            scanf("%d/%d %lf",&tmpInt1,&tmpInt2,&tmpMoney);
             isExist[tmpInt2][tmpInt1] = 1;
             bank[tmpInt2][tmpInt1] = tmpMoney;
         }
-        while(scanf(&amp;#34;%s&amp;#34;,cmd) , strcmp(cmd,&amp;#34;end&amp;#34;))
+        while(scanf("%s",cmd) , strcmp(cmd,"end"))
         {
-            if(!strcmp(cmd,&amp;#34;withdraw&amp;#34;))
+            if(!strcmp(cmd,"withdraw"))
             {
                 int tmpInt1,tmpInt2;
                 double tmpMoney;
-                scanf(&amp;#34;%d/%d %lf&amp;#34;,&amp;amp;tmpInt1,&amp;amp;tmpInt2,&amp;amp;tmpMoney);
-                printf(&amp;#34;withdraw %.2lf: &amp;#34;,tmpMoney);
+                scanf("%d/%d %lf",&tmpInt1,&tmpInt2,&tmpMoney);
+                printf("withdraw %.2lf: ",tmpMoney);
                 if(isExist[tmpInt2][tmpInt1])
                 {
-                    if(bank[tmpInt2][tmpInt1] &amp;lt; tmpMoney)
-                        printf(&amp;#34;insufficient funds\n&amp;#34;);
+                    if(bank[tmpInt2][tmpInt1] < tmpMoney)
+                        printf("insufficient funds\n");
                     else
                     {
-                        printf(&amp;#34;ok\n&amp;#34;);
+                        printf("ok\n");
                         bank[tmpInt2][tmpInt1] -= tmpMoney;
                     }
                 }
                 else
-                    printf(&amp;#34;no such account\n&amp;#34;);
+                    printf("no such account\n");
             }
-            else if(!strcmp(cmd,&amp;#34;deposit&amp;#34;))
+            else if(!strcmp(cmd,"deposit"))
             {
                 int tmpInt1,tmpInt2;
                 double tmpMoney;
-                scanf(&amp;#34;%d/%d %lf&amp;#34;,&amp;amp;tmpInt1,&amp;amp;tmpInt2,&amp;amp;tmpMoney);
-                printf(&amp;#34;deposit %.2lf: &amp;#34;,tmpMoney);
+                scanf("%d/%d %lf",&tmpInt1,&tmpInt2,&tmpMoney);
+                printf("deposit %.2lf: ",tmpMoney);
                 if(isExist[tmpInt2][tmpInt1])
                 {
-                    printf(&amp;#34;ok\n&amp;#34;);
-                    bank[tmpInt2][tmpInt1] &#43;= tmpMoney;
+                    printf("ok\n");
+                    bank[tmpInt2][tmpInt1] += tmpMoney;
                 }
                 else
-                    printf(&amp;#34;no such account\n&amp;#34;);
+                    printf("no such account\n");
             }
-            else if(!strcmp(cmd,&amp;#34;create&amp;#34;))
+            else if(!strcmp(cmd,"create"))
             {
                 int tmpInt1,tmpInt2;
-                scanf(&amp;#34;%d/%d&amp;#34;,&amp;amp;tmpInt1,&amp;amp;tmpInt2);
-                printf(&amp;#34;create: &amp;#34;);
+                scanf("%d/%d",&tmpInt1,&tmpInt2);
+                printf("create: ");
                 if(isExist[tmpInt2][tmpInt1])
-                    printf(&amp;#34;already exists\n&amp;#34;);
+                    printf("already exists\n");
                 else
                 {
-                    printf(&amp;#34;ok\n&amp;#34;);
+                    printf("ok\n");
                     isExist[tmpInt2][tmpInt1] = 1;
                     bank[tmpInt2][tmpInt1] = 0;
                 }
             }
-            else if(!strcmp(cmd,&amp;#34;transfer&amp;#34;))
+            else if(!strcmp(cmd,"transfer"))
             {
                 int tmpInt1,tmpInt2,tmpInt3,tmpInt4;
                 double tmpMoney;
-                scanf(&amp;#34;%d/%d %d/%d %lf&amp;#34;,&amp;amp;tmpInt1,&amp;amp;tmpInt2,&amp;amp;tmpInt3,&amp;amp;tmpInt4,&amp;amp;tmpMoney);
-                printf(&amp;#34;transfer %.2lf: &amp;#34;,tmpMoney);
-                if(isExist[tmpInt2][tmpInt1] &amp;amp;&amp;amp; isExist[tmpInt4][tmpInt3])
+                scanf("%d/%d %d/%d %lf",&tmpInt1,&tmpInt2,&tmpInt3,&tmpInt4,&tmpMoney);
+                printf("transfer %.2lf: ",tmpMoney);
+                if(isExist[tmpInt2][tmpInt1] && isExist[tmpInt4][tmpInt3])
                 {
-                    if(tmpInt2 == tmpInt4 &amp;amp;&amp;amp; tmpInt1 == tmpInt3)
-                        printf(&amp;#34;same account\n&amp;#34;);
-                    else if(bank[tmpInt2][tmpInt1] &amp;lt; tmpMoney)
-                        printf(&amp;#34;insufficient funds\n&amp;#34;);
+                    if(tmpInt2 == tmpInt4 && tmpInt1 == tmpInt3)
+                        printf("same account\n");
+                    else if(bank[tmpInt2][tmpInt1] < tmpMoney)
+                        printf("insufficient funds\n");
                     else
                     {
                         if(tmpInt2 == tmpInt4)
-                            printf(&amp;#34;ok\n&amp;#34;);
+                            printf("ok\n");
                         else
-                            printf(&amp;#34;interbank\n&amp;#34;);
+                            printf("interbank\n");
                         bank[tmpInt2][tmpInt1] -= tmpMoney;
-                        bank[tmpInt4][tmpInt3] &#43;= tmpMoney;
+                        bank[tmpInt4][tmpInt3] += tmpMoney;
                     }
                 }
                 else
-                    printf(&amp;#34;no such account\n&amp;#34;);
+                    printf("no such account\n");
             }
         }
-        printf(&amp;#34;end\n\n&amp;#34;);
+        printf("end\n\n");
     }
-    printf(&amp;#34;goodbye&amp;#34;);
+    printf("goodbye");
     return 0;
-}</code></pre><h2 id=e-stock-exchange>E Stock Exchange</h2><p>我这题TLE一次，原因是很郁闷的忘了把freopen函数给注释掉 -_-!!</p><p>我的代码如下:</p><pre><code class=language-cpp>#include&amp;lt;iostream&amp;gt;
-#include&amp;lt;cstring&amp;gt;
+}</code></pre><h2 id=e-stock-exchange>E Stock Exchange</h2><p>我这题TLE一次，原因是很郁闷的忘了把freopen函数给注释掉 -_-!!</p><p>我的代码如下:</p><pre><code class=language-cpp>#include<iostream>
+#include<cstring>
 using namespace std;
 char Issuer[12];
 struct Member
@@ -185,34 +185,34 @@ Member mem[1001];
 int main()
 {
     int n;
-    //freopen(&amp;#34;e.txt&amp;#34;,&amp;#34;r&amp;#34;,stdin);
-    while(scanf(&amp;#34;%d %s&amp;#34;,&amp;amp;n,Issuer), strcmp(Issuer,&amp;#34;END&amp;#34;) || n)
+    //freopen("e.txt","r",stdin);
+    while(scanf("%d %s",&n,Issuer), strcmp(Issuer,"END") || n)
     {
         int i,j;
-        for(i = 0 ; i &amp;lt; n ; i &#43;&#43;)
-            scanf(&amp;#34;%s %s %lf&amp;#34;,mem[i].name,mem[i].type,&amp;amp;mem[i].money);
+        for(i = 0 ; i < n ; i ++)
+            scanf("%s %s %lf",mem[i].name,mem[i].type,&mem[i].money);
 
-        printf(&amp;#34;%s\n&amp;#34;,Issuer);
+        printf("%s\n",Issuer);
         int num = 0;
-        for(i = 0 ; i &amp;lt; n ; i &#43;&#43;)
+        for(i = 0 ; i < n ; i ++)
         {
             num = 0;
-            printf(&amp;#34;%s:&amp;#34;,mem[i].name);
-            for(j = 0 ; j &amp;lt; n ; j &#43;&#43;)
+            printf("%s:",mem[i].name);
+            for(j = 0 ; j < n ; j ++)
             {
                 if(mem[i].type[0] == mem[j].type[0])
                     continue;
-                if(mem[i].type[0] == &amp;#39;b&amp;#39;
-                    &amp;amp;&amp;amp; mem[j].money &amp;lt;= mem[i].money)
-                    printf(&amp;#34; %s&amp;#34;,mem[j].name),num &#43;&#43;;
-                else if(mem[i].type[0] == &amp;#39;s&amp;#39;
-                    &amp;amp;&amp;amp; mem[j].money &amp;gt;= mem[i].money)
-                    printf(&amp;#34; %s&amp;#34;,mem[j].name),num &#43;&#43;;
+                if(mem[i].type[0] == 'b'
+                    && mem[j].money <= mem[i].money)
+                    printf(" %s",mem[j].name),num ++;
+                else if(mem[i].type[0] == 's'
+                    && mem[j].money >= mem[i].money)
+                    printf(" %s",mem[j].name),num ++;
             }
             if(num)
-                putchar(&amp;#39;\n&amp;#39;);
+                putchar('\n');
             else
-                printf(&amp;#34; NO-ONE\n&amp;#34;);
+                printf(" NO-ONE\n");
         }
     }
     return 0;

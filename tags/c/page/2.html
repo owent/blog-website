@@ -9,70 +9,70 @@
 现在我还是决定记录一下这些有意思的东西。</p><h2 id=201004>2010/04</h2><p>a ^= b ^= a ^=b;
 这是一个交换值得有意思的方式</p></div><div class=article-more><a href=//owent.net/2011/359.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2011-04-26T07:08:13.000+00:00 itemprop=datePublished>2011-04-26</time></div></div></article><article class="article-panel archive-article archive-type-264"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2011/264.html target=_blank itemprop=url>常用官方文档整理</a></h1></header><div class=article-summary><p><strong>网站及网页：</strong></p><p>基本知识中文学习站（中）：<a href=http://www.w3school.com.cn>http://www.w3school.com.cn</a></p><p>W3C官网（英）：<a href=http://www.w3.org/>http://www.w3.org/</a></p><p>HTML 4.01规范（英）：<a href=http://www.w3.org/TR/html4/>http://www.w3.org/TR/html4/</a></p><p>XHTML™ 1.1规范（英）：<a href=http://www.w3.org/TR/xhtml11/>http://www.w3.org/TR/xhtml11/</a></p><p>CSS官方文档（多国语言）：<a href=http://www.w3.org/Style/CSS/>http://www.w3.org/Style/CSS/</a></p></div><div class=article-more><a href=//owent.net/2011/264.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2011-02-08T14:04:26.000+00:00 itemprop=datePublished>2011-02-08</time></div></div></article><article class="article-panel archive-article archive-type-264"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2011/264.html target=_blank itemprop=url>常用官方文档整理</a></h1></header><div class=article-summary><p><strong>网站及网页：</strong></p><p>基本知识中文学习站（中）：<a href=http://www.w3school.com.cn>http://www.w3school.com.cn</a></p><p>W3C官网（英）：<a href=http://www.w3.org/>http://www.w3.org/</a></p><p>HTML 4.01规范（英）：<a href=http://www.w3.org/TR/html4/>http://www.w3.org/TR/html4/</a></p><p>XHTML™ 1.1规范（英）：<a href=http://www.w3.org/TR/xhtml11/>http://www.w3.org/TR/xhtml11/</a></p><p>CSS官方文档（多国语言）：<a href=http://www.w3.org/Style/CSS/>http://www.w3.org/Style/CSS/</a></p></div><div class=article-more><a href=//owent.net/2011/264.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2011-02-08T14:04:26.000+00:00 itemprop=datePublished>2011-02-08</time></div></div></article><article class="article-panel archive-article archive-type-26"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/26.html target=_blank itemprop=url>C#格式化输出(记录)</a></h1></header><div class=article-summary><pre><code class=language-cs>int a = 12345678;
 //格式为sring输出
-Label1.Text = string.Format(&amp;#34;asdfadsf{0}adsfasdf&amp;#34;,a);
-Label2.Text = &amp;#34;asdfadsf&amp;#34;&#43;a.ToString()&#43;&amp;#34;adsfasdf&amp;#34;;
-Label1.Text = string.Format(&amp;#34;asdfadsf{0:C}adsfasdf&amp;#34;,a);//asdfadsf￥1,234.00adsfasdf
-Label2.Text = &amp;#34;asdfadsf&amp;#34;&#43;a.ToString(&amp;#34;C&amp;#34;)&#43;&amp;#34;adsfasdf&amp;#34;;//asdfadsf￥1,234.00adsfasdf
+Label1.Text = string.Format("asdfadsf{0}adsfasdf",a);
+Label2.Text = "asdfadsf"+a.ToString()+"adsfasdf";
+Label1.Text = string.Format("asdfadsf{0:C}adsfasdf",a);//asdfadsf￥1,234.00adsfasdf
+Label2.Text = "asdfadsf"+a.ToString("C")+"adsfasdf";//asdfadsf￥1,234.00adsfasdf
 double b = 1234.12543;
 int a = 12345678;
 //格式为特殊的string样式输出
-Label1.Text = string.Format(&amp;#34;asdfadsf{0:C}adsfasdf&amp;#34;,b);//asdfadsf￥1,234.13adsfasdf
-Label2.Text = &amp;#34;asdfadsf&amp;#34;&#43;b.ToString(&amp;#34;C&amp;#34;)&#43;&amp;#34;adsfasdf&amp;#34;;//asdfadsf￥1,234.13adsfasdf
-Label1.Text = string.Format(&amp;#34;{0:C3}&amp;#34;,b);//￥1,234.125
-Label2.Text = b.ToString(&amp;#34;C3&amp;#34;);//￥1,234.125
-Label1.Text = string.Format(&amp;#34;{0:d}&amp;#34;,a);//十进制--12345678
-Label2.Text = b.ToString(&amp;#34;d&amp;#34;);//十进制--相同的类型，转换报错
-Label1.Text = string.Format(&amp;#34;{0:e}&amp;#34;,a);//指数--1.234568e&#43;007
-Label2.Text = b.ToString(&amp;#34;e&amp;#34;);//指数--1.234125e&#43;003
-Label1.Text = string.Format(&amp;#34;{0:f}&amp;#34;,a);//定点数--12345678.00
-Label2.Text = b.ToString(&amp;#34;f&amp;#34;);//定点数--1234.13
-Label1.Text = string.Format(&amp;#34;{0:n}&amp;#34;,a);//数值--12,345,678.00
-Label2.Text = b.ToString(&amp;#34;n&amp;#34;);//数值--1,234.13
-Label1.Text = string.Format(&amp;#34;{0:x}&amp;#34;,a);//十六进制--bc614e
-Label2.Text = b.ToString(&amp;#34;x&amp;#34;);//16--带有小数不能转换，出错
-Label1.Text = string.Format(&amp;#34;{0:g}&amp;#34;,a);//通用为最紧凑--12345678
-Label2.Text = b.ToString(&amp;#34;g&amp;#34;);//通用为最紧凑--1234.12543
-Label1.Text = string.Format(&amp;#34;{0:r}&amp;#34;,a);//转来转去不损失精度--整数不允许用，报错
-Label2.Text = b.ToString(&amp;#34;r&amp;#34;);//转来转去不损失精度--1234.12543
+Label1.Text = string.Format("asdfadsf{0:C}adsfasdf",b);//asdfadsf￥1,234.13adsfasdf
+Label2.Text = "asdfadsf"+b.ToString("C")+"adsfasdf";//asdfadsf￥1,234.13adsfasdf
+Label1.Text = string.Format("{0:C3}",b);//￥1,234.125
+Label2.Text = b.ToString("C3");//￥1,234.125
+Label1.Text = string.Format("{0:d}",a);//十进制--12345678
+Label2.Text = b.ToString("d");//十进制--相同的类型，转换报错
+Label1.Text = string.Format("{0:e}",a);//指数--1.234568e+007
+Label2.Text = b.ToString("e");//指数--1.234125e+003
+Label1.Text = string.Format("{0:f}",a);//定点数--12345678.00
+Label2.Text = b.ToString("f");//定点数--1234.13
+Label1.Text = string.Format("{0:n}",a);//数值--12,345,678.00
+Label2.Text = b.ToString("n");//数值--1,234.13
+Label1.Text = string.Format("{0:x}",a);//十六进制--bc614e
+Label2.Text = b.ToString("x");//16--带有小数不能转换，出错
+Label1.Text = string.Format("{0:g}",a);//通用为最紧凑--12345678
+Label2.Text = b.ToString("g");//通用为最紧凑--1234.12543
+Label1.Text = string.Format("{0:r}",a);//转来转去不损失精度--整数不允许用，报错
+Label2.Text = b.ToString("r");//转来转去不损失精度--1234.12543
 double b = 4321.12543;
 int a = 1234;
 自定义模式输出：
-//&amp;#34;0&amp;#34;描述：占位符，如果可能，填充位
-Label1.Text = string.Format(&amp;#34;{0:000000}&amp;#34;,a);// 001234
-Label2.Text = string.Format(&amp;#34;{0:000000}&amp;#34;,b);// 004321
-//&amp;#34;#&amp;#34;描述：占位符，如果可能，填充位
-Label1.Text = string.Format(&amp;#34;{0:####### }&amp;#34;,a);// 1234
-Label2.Text = string.Format(&amp;#34;{0:####### }&amp;#34;,b);// 4321
-Label1.Text = string.Format(&amp;#34;{0:#0#### }&amp;#34;,a);// 01234
-Label2.Text = string.Format(&amp;#34;{0:0#0000}&amp;#34;,b);// 004321
-//&amp;#34;.&amp;#34;描述：小数点
-Label1.Text = string.Format(&amp;#34;{0:000.000}&amp;#34;,a);//1234.000
-Label2.Text = string.Format(&amp;#34;{0:000.000}&amp;#34;,b);//4321.125
+//"0"描述：占位符，如果可能，填充位
+Label1.Text = string.Format("{0:000000}",a);// 001234
+Label2.Text = string.Format("{0:000000}",b);// 004321
+//"#"描述：占位符，如果可能，填充位
+Label1.Text = string.Format("{0:####### }",a);// 1234
+Label2.Text = string.Format("{0:####### }",b);// 4321
+Label1.Text = string.Format("{0:#0#### }",a);// 01234
+Label2.Text = string.Format("{0:0#0000}",b);// 004321
+//"."描述：小数点
+Label1.Text = string.Format("{0:000.000}",a);//1234.000
+Label2.Text = string.Format("{0:000.000}",b);//4321.125
 double b = 87654321.12543;
 int a = 12345678;
-//&amp;#34;,&amp;#34;描述：数字分组，也用于增倍器
-Label1.Text = string.Format(&amp;#34;{0:0,00}&amp;#34;,a);// 12,345,678
-Label2.Text = string.Format(&amp;#34;{0:0,00}&amp;#34;,b);// 87,654,32
-Label1.Text = string.Format(&amp;#34;{0:0,}&amp;#34;,a);// 12346
-Label2.Text = string.Format(&amp;#34;{0:0,}&amp;#34;,b);// 87654
-Label1.Text = string.Format(&amp;#34;{0:0,,}&amp;#34;,a);// 12
-Label2.Text = string.Format(&amp;#34;{0:0,,}&amp;#34;,b);// 88
-Label1.Text = string.Format(&amp;#34;{0:0,,,}&amp;#34;,a);// 0
-Label2.Text = string.Format(&amp;#34;{0:0,,,}&amp;#34;,b);// 0
-//&amp;#34;%&amp;#34;描述：格式为百分数
-Label1.Text = string.Format(&amp;#34;{ 0:0% }&amp;#34;,a);// 1234567800%
-Label2.Text = string.Format(&amp;#34;{ 0:#% }&amp;#34;,b);// 8765432113%
-Label1.Text = string.Format(&amp;#34;{ 0:0.00% }&amp;#34;,a);// 1234567800.00%
-Label2.Text = string.Format(&amp;#34;{ 0:#.00% }&amp;#34;,b);// 8765432112.54%
-//&amp;#34;abc&amp;#34;描述：显示单引号内的文本
-Label1.Text = string.Format(&amp;#34;{0:&amp;#39;文本&amp;#39;0}&amp;#34;,a);// 文本12345678
-Label2.Text = string.Format(&amp;#34;{0:文本0}&amp;#34;,b);// 文本87654321
-//&amp;#34;\&amp;#34;描述：后跟1要打印字的字符，也用于转移符\n等
-Label1.Text = string.Format(&amp;#34;\&amp;#34;你好！\&amp;#34;&amp;#34;);// &amp;#34;你好！&amp;#34;
-Label2.Text = string.Format(&amp;#34;[url=file://\\c\\books\\new\\we.asp]\\c\\books\\new\\we.asp&amp;#34;);//\c\books\new\we.asp
-//&amp;#34;@&amp;#34;描述：后跟要打印字的字符,
-Label1.Text = string.Format(@&amp;#34;&amp;#34;&amp;#34;你好！&amp;#34;&amp;#34;&amp;#34;); // &amp;#34;你好！&amp;#34;要打印&amp;#34;则需要输入两对才可以
-Label2.Text = string.Format(@&amp;#34;\c\books\new\we.asp&amp;#34;);//\c\books\new\we.asp </code></pre></div><div class=article-more><a href=//owent.net/2010/26.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-06-08T05:39:06.000+00:00 itemprop=datePublished>2010-06-08</time></div></div></article><article class="article-panel archive-article archive-type-89"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/89.html target=_blank itemprop=url>C/C++语言常用排序算法</a></h1></header><div class=article-summary><p>资料由互联网收集整理，供新手参考学习
+//","描述：数字分组，也用于增倍器
+Label1.Text = string.Format("{0:0,00}",a);// 12,345,678
+Label2.Text = string.Format("{0:0,00}",b);// 87,654,32
+Label1.Text = string.Format("{0:0,}",a);// 12346
+Label2.Text = string.Format("{0:0,}",b);// 87654
+Label1.Text = string.Format("{0:0,,}",a);// 12
+Label2.Text = string.Format("{0:0,,}",b);// 88
+Label1.Text = string.Format("{0:0,,,}",a);// 0
+Label2.Text = string.Format("{0:0,,,}",b);// 0
+//"%"描述：格式为百分数
+Label1.Text = string.Format("{ 0:0% }",a);// 1234567800%
+Label2.Text = string.Format("{ 0:#% }",b);// 8765432113%
+Label1.Text = string.Format("{ 0:0.00% }",a);// 1234567800.00%
+Label2.Text = string.Format("{ 0:#.00% }",b);// 8765432112.54%
+//"abc"描述：显示单引号内的文本
+Label1.Text = string.Format("{0:'文本'0}",a);// 文本12345678
+Label2.Text = string.Format("{0:文本0}",b);// 文本87654321
+//"\"描述：后跟1要打印字的字符，也用于转移符\n等
+Label1.Text = string.Format("\"你好！\"");// "你好！"
+Label2.Text = string.Format("[url=file://\\c\\books\\new\\we.asp]\\c\\books\\new\\we.asp");//\c\books\new\we.asp
+//"@"描述：后跟要打印字的字符,
+Label1.Text = string.Format(@"""你好！"""); // "你好！"要打印"则需要输入两对才可以
+Label2.Text = string.Format(@"\c\books\new\we.asp");//\c\books\new\we.asp </code></pre></div><div class=article-more><a href=//owent.net/2010/26.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-06-08T05:39:06.000+00:00 itemprop=datePublished>2010-06-08</time></div></div></article><article class="article-panel archive-article archive-type-89"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/89.html target=_blank itemprop=url>C/C++语言常用排序算法</a></h1></header><div class=article-summary><p>资料由互联网收集整理，供新手参考学习
 这里又生动点的演示：http://www.cnblogs.com/wangfupeng1988/archive/2011/12/26/2302216.html</p></div><div class=article-more><a href=//owent.net/2009/89.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2009-07-20T12:31:10.000+00:00 itemprop=datePublished>2009-07-20</time></div></div></article></div><hr><nav id=page-nav><ul class=pagination><li class=page-item><a class=page-link href=/tags/c.html>&#171;上一页</a></li><li class=page-item><a class=page-link href=/tags/c.html>1</a></li><li class='page-item disabled'><a class=page-link href=/tags/c/page/2.html>2</a><span class=sr-only>(current)</span></li></ul></nav></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,

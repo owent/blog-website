@@ -3,11 +3,11 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-add04356017d626439484503f8a9c977 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2010/33.html target=_blank itemprop=url>HDU HDOJ 3400 Line belt 解题报告</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>题目链接：<a href="http://acm.hdu.edu.cn/showproblem.php?pid=3400">http://acm.hdu.edu.cn/showproblem.php?pid=3400</a></p><p>这题就是一道简单的两重三分</p><p>首先设e点为从ab上离开的点，f为从cd上进入的点</p><p>显然对固定点e,f从距c的距离的长度是一个单调函数或者先减后增的函数，这里可以三分算出最优解。这里是第一个三分</p><p>然后对e点的最优解易证也存在这个性质，所以再来一个三分，就能解除最优解</p><p>代码如下：</p><pre><code class=language-cpp>#include &amp;lt;iostream&amp;gt;
-#include &amp;lt;cstdio&amp;gt;
-#include &amp;lt;cstring&amp;gt;
-#include &amp;lt;algorithm&amp;gt;
-#include &amp;lt;cmath&amp;gt;
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-add04356017d626439484503f8a9c977 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2010/33.html target=_blank itemprop=url>HDU HDOJ 3400 Line belt 解题报告</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>题目链接：<a href="http://acm.hdu.edu.cn/showproblem.php?pid=3400">http://acm.hdu.edu.cn/showproblem.php?pid=3400</a></p><p>这题就是一道简单的两重三分</p><p>首先设e点为从ab上离开的点，f为从cd上进入的点</p><p>显然对固定点e,f从距c的距离的长度是一个单调函数或者先减后增的函数，这里可以三分算出最优解。这里是第一个三分</p><p>然后对e点的最优解易证也存在这个性质，所以再来一个三分，就能解除最优解</p><p>代码如下：</p><pre><code class=language-cpp>#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cmath>
 using namespace std;
 
 const double EPS = 1e-10;
@@ -19,26 +19,26 @@ typedef struct
 
 double sulAB(point a, point b, point c, point d, double p, double q, double r);
 double sulCD(point e, point c, point d, double q, double r);
-double getSulCD(double l,const point &amp;amp;e,const point &amp;amp;c,const point &amp;amp;d,const double &amp;amp;q,const double &amp;amp;r);
-double getSulAB(double l,const point &amp;amp;a,const point &amp;amp;b, const point &amp;amp;c,const point &amp;amp;d
-    , const double &amp;amp;p,const double &amp;amp;q,const double &amp;amp;r);
+double getSulCD(double l,const point &e,const point &c,const point &d,const double &q,const double &r);
+double getSulAB(double l,const point &a,const point &b, const point &c,const point &d
+    , const double &p,const double &q,const double &r);
 double getDis(point a, point b)
 {
-    return sqrt((a.x - b.x) * (a.x - b.x) &#43; (a.y - b.y) * (a.y - b.y));
+    return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
 }
 int main()
 {
     long t,p,q,r;
     double res;
     point a,b,c,d;
-    scanf(&amp;#34;%ld&amp;#34;, &amp;amp;t);
+    scanf("%ld", &t);
     while(t --)
     {
-        scanf(&amp;#34;%lf %lf %lf %lf&amp;#34;, &amp;amp;a.x, &amp;amp;a.y, &amp;amp;b.x, &amp;amp;b.y);
-        scanf(&amp;#34;%lf %lf %lf %lf&amp;#34;, &amp;amp;c.x, &amp;amp;c.y, &amp;amp;d.x, &amp;amp;d.y);
-        scanf(&amp;#34;%ld %ld %ld&amp;#34;, &amp;amp;p, &amp;amp;q, &amp;amp;r);
+        scanf("%lf %lf %lf %lf", &a.x, &a.y, &b.x, &b.y);
+        scanf("%lf %lf %lf %lf", &c.x, &c.y, &d.x, &d.y);
+        scanf("%ld %ld %ld", &p, &q, &r);
         res = sulAB(a, b, c, d, p, q, r);
-        printf(&amp;#34;%.2lf\n&amp;#34;, res);
+        printf("%.2lf\n", res);
     }
     return 0;
 }
@@ -49,13 +49,13 @@ double sulAB(point a, point b, point c, point d, double p, double q, double r)
     double tmp1, tmp2;
     l = 0;
     rr = 1.0;
-    while(l &#43; EPS &amp;lt; rr)
+    while(l + EPS < rr)
     {
-        m = (l &#43; rr) / 2;
-        mm = (m &#43; rr) / 2;
+        m = (l + rr) / 2;
+        mm = (m + rr) / 2;
         tmp1 = getSulAB(m, a, b, c, d, p, q, r);
         tmp2 = getSulAB(mm, a, b, c, d, p, q, r);
-        if(tmp1 &amp;lt; tmp2)
+        if(tmp1 < tmp2)
             rr = mm;
         else
             l = m;
@@ -70,13 +70,13 @@ double sulCD(point e, point c, point d, double q, double r)
     double tmp1, tmp2;
     l = 0;
     rr = 1.0;
-    while(l &#43; EPS &amp;lt; rr)
+    while(l + EPS < rr)
     {
-        m = (l &#43; rr) / 2;
-        mm = (m &#43; rr) / 2;
+        m = (l + rr) / 2;
+        mm = (m + rr) / 2;
         tmp1 = getSulCD(m, e, c, d, q, r);
         tmp2 = getSulCD(mm, e, c, d, q, r);
-        if(tmp1 &amp;lt; tmp2)
+        if(tmp1 < tmp2)
             rr = mm;
         else
             l = m;
@@ -85,21 +85,21 @@ double sulCD(point e, point c, point d, double q, double r)
     return getSulCD(l, e, c, d, q, r);
 }
 
-double getSulCD(double l,const point &amp;amp;e,const point &amp;amp;c,const point &amp;amp;d,const double &amp;amp;q,const double &amp;amp;r)
+double getSulCD(double l,const point &e,const point &c,const point &d,const double &q,const double &r)
 {
     point p;
-    p.x = c.x &#43; (d.x - c.x) * l;
-    p.y = c.y &#43; (d.y - c.y) * l;
-    return getDis(e, p) / r &#43; getDis(p, d) / q;
+    p.x = c.x + (d.x - c.x) * l;
+    p.y = c.y + (d.y - c.y) * l;
+    return getDis(e, p) / r + getDis(p, d) / q;
 }
 
-double getSulAB(double l,const point &amp;amp;a,const point &amp;amp;b, const point &amp;amp;c,const point &amp;amp;d
-    , const double &amp;amp;p,const double &amp;amp;q,const double &amp;amp;r)
+double getSulAB(double l,const point &a,const point &b, const point &c,const point &d
+    , const double &p,const double &q,const double &r)
 {
     point pp;
-    pp.x = a.x &#43; (b.x - a.x) * l;
-    pp.y = a.y &#43; (b.y - a.y) * l;
-    return getDis(a, pp) / p &#43; sulCD(pp, c, d, q, r);
+    pp.x = a.x + (b.x - a.x) * l;
+    pp.y = a.y + (b.y - a.y) * l;
+    return getDis(a, pp) / p + sulCD(pp, c, d, q, r);
 }</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2010-05-03T11:17:15.000+00:00 itemprop=datePublished>2010-05-03</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/acm.html>acm</a></li><li class=article-tag-list-item><a href=//owent.net/tags/hdoj.html>hdoj</a></li><li class=article-tag-list-item><a href=//owent.net/tags/hdu.html>hdu</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2010/32.html>上一篇<strong>线性筛法求质数(素数)表 及其原理</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2010/34.html>下一篇<strong>Southeastern European 2008 Sky Code 解题报告</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,

@@ -7,32 +7,32 @@
     test: /\.js$/,
     exclude: /(node_modules|bower_components)/,
     use: {
-        loader: &amp;#39;babel-loader&amp;#39;,
+        loader: 'babel-loader',
         options: {
-            presets: [&amp;#39;env&amp;#39;]
+            presets: ['env']
         }
     }
 }</code></pre><h2 id=sasscss支持>sass、css支持</h2><p>为了可以方便地使用css，可以加入 <a href=https://sass-lang.com/>sass</a> 或者 <a href=http://lesscss.org/>less</a> 支持，我这里加入了 <a href=https://sass-lang.com/>sass</a> 支持。然后再加上原本的css模块。</p><pre><code class=language-bash>npm install css-loader sass-loader style-loader node-sass --save-dev</code></pre><p>然后 <a href=https://webpack.js.org/>webpack</a> 模具哎规则里加上:</p><pre><code class=language-js>{
     test: /\.css$/,
-    use: [&amp;#39;vue-style-loader&amp;#39;, &amp;#39;style-loader&amp;#39;, &amp;#39;css-loader&amp;#39;]
+    use: ['vue-style-loader', 'style-loader', 'css-loader']
 },
 {
     test: /\.scss$/,
     use: [
-        &amp;#34;vue-style-loader&amp;#34;, // Vue支持，后面会提到
-        &amp;#34;style-loader&amp;#34;, // creates style nodes from JS strings
-        &amp;#34;css-loader&amp;#34;, // translates CSS into CommonJS
-        &amp;#34;sass-loader&amp;#34; // compiles Sass to CSS, using Node Sass by default
+        "vue-style-loader", // Vue支持，后面会提到
+        "style-loader", // creates style nodes from JS strings
+        "css-loader", // translates CSS into CommonJS
+        "sass-loader" // compiles Sass to CSS, using Node Sass by default
     ]
 },
 {
     test: /\.sass$/,
     use: [
-        &amp;#39;vue-style-loader&amp;#39;, // Vue支持，后面会提到
-        &amp;#34;style-loader&amp;#34;,
-        &amp;#39;css-loader&amp;#39;,
+        'vue-style-loader', // Vue支持，后面会提到
+        "style-loader",
+        'css-loader',
         {
-            loader: &amp;#39;sass-loader&amp;#39;,
+            loader: 'sass-loader',
             options: {
                 indentedSyntax: true
             }
@@ -41,99 +41,99 @@
 }</code></pre><h2 id=vue模板>Vue模板</h2><p>我的GM工具中使用Vue做模板引擎，前面有提到Vue模板引擎的支持。首先也是安装基础库的支持库。</p><pre><code class=language-bash>npm install vue --save
 npm install vue-loader --save-dev</code></pre><p>不过其实我没有使用 <strong>vue-loader</strong> 来提供.vue后缀的支持。感觉这种方式局限性比较高。我用的是运行时编译的版本，而 <a href=https://vuejs.org/>vue</a> 对 <a href=https://webpack.js.org/>webpack</a> 文档里支持方式是只导入了runtime，没有导入编译库，所以这里初始化流程会麻烦一些。当然如果开 .vue 支持的话可以加规则:</p><pre><code class=language-js>{
     test: /\.vue$/,
-    loader: &amp;#39;vue-loader&amp;#39;
+    loader: 'vue-loader'
 }</code></pre><p>插件初始化里要使用完整版本的Vue:</p><pre><code class=language-js>{
   // 。。。
   plugins: [
     new webpack.ProvidePlugin({
-      Vue: [&amp;#39;vue/dist/vue.esm.js&amp;#39;, &amp;#39;default&amp;#39;]
+      Vue: ['vue/dist/vue.esm.js', 'default']
     }),
     // new VueLoaderPlugin() //开 .vue 支持的话加这一行
   ]
 }</code></pre><h2 id=html模板引擎和ejs>HTML模板引擎和ejs</h2><p><a href=https://webpack.js.org/>webpack</a> 默认是对js打包的，但是如果能在编译期对html打包才能满足我们GM工具的模块化的需求。其实有很多模板引擎增加了对 <a href=https://webpack.js.org/>webpack</a> 的支持，而我之前用过一些 <a href=http://www.embeddedjs.com/>ejs</a> ，比较轻量级，功能也足够，所以我还是用了 <a href=http://www.embeddedjs.com/>ejs</a> 作为模板系统。 另外要让 <a href=https://webpack.js.org/>webpack</a> 支持对html打包，还需要 <strong>html-webpack-plugin</strong> 插件:</p><pre><code class=language-bash>npm install html-webpack-plugin ejs-loader ejs-webpack-loader --save-dev</code></pre><p>这里要注意下 <a href=https://webpack.js.org/>webpack</a> 的版本，这里的插件对不同大版本的 <a href=https://webpack.js.org/>webpack</a> 可能不同。
 接下来仍然是注册规则:</p><pre><code class=language-js>{
     test: /\.ejs$/,
-    use: [&amp;#39;ejs-webpack-loader&amp;#39;]
+    use: ['ejs-webpack-loader']
 }</code></pre><p>然后初始化:</p><pre><code class=language-js>{
   plugins: [
     new HtmlWebpackPlugin({
-      template: &amp;#39;!!ejs-webpack-loader!./src/index.ejs&amp;#39;,
-      inject: &amp;#39;body&amp;#39;
+      template: '!!ejs-webpack-loader!./src/index.ejs',
+      inject: 'body'
     })
   ]
 }</code></pre><h2 id=额外组件-bootstrapjquerymoment>额外组件： bootstrap、jquery、moment</h2><p><a href=http://getbootstrap.com/>bootstrap</a> 、 <a href=http://jquery.com/>jquery</a> 、 <a href=http://momentjs.com/>moment</a> 是前端页面用到的，然后 <a href=http://getbootstrap.com/>bootstrap</a> 还依赖 <a href=https://popper.js.org/>popper.js</a> 。</p><p>先安装依赖:</p><pre><code class=language-bash>npm install bootstrap jquery moment popper.js --save</code></pre><p>接下来就比较特殊了，因为 <a href=https://webpack.js.org/>webpack</a> 走的是和 node.js 一样的模块隔离，像上面的这些库是需要写入全局命名空间的，所以还需要初始化的时候导入一下:</p><pre><code class=language-js>{
   plugins: [
     new webpack.ProvidePlugin({
-      moment: &amp;#34;moment&amp;#34;,
-      $: &amp;#34;jquery&amp;#34;,
-      jQuery: &amp;#34;jquery&amp;#34;
+      moment: "moment",
+      $: "jquery",
+      jQuery: "jquery"
     })
   ]
 }</code></pre><h2 id=集成vscode-monaco-editor-和-typescript-支持>集成VSCode: monaco-editor 和 typescript 支持</h2><p>我们GM工具里内嵌了VSCode的编辑器内核 <a href=https://microsoft.github.io/monaco-editor/>monaco-editor</a> ，在通用信息查看编辑和diff上还是很有用的。然后由于 <a href=https://microsoft.github.io/monaco-editor/>monaco-editor</a> 依赖 <a href=https://www.typescriptlang.org/>typescript</a> 就顺便把 <a href=https://www.typescriptlang.org/>typescript</a> 也导入进来了。</p><p>安装脚本:</p><pre><code class=language-bash>npm install monaco-editor --save
 npm install monaco-editor-webpack-plugin typescript vue-ts-loader --save-dev # 顺便安装 vue-ts-loader</code></pre><p>规则配置:</p><pre><code class=language-js>{
   test: /\.tsx?$/,
-  use: [&amp;#39;vue-ts-loader&amp;#39;]
+  use: ['vue-ts-loader']
 }</code></pre><p>插件配置:</p><pre><code class=language-js>{
   plugins: [
     new MonacoWebpackPlugin()
   ]
-}</code></pre><h2 id=最终配置和编译运行>最终配置和编译运行</h2><p>最终的配置其实还包含一些细节的目录结构、环境信息和构建选项。我们GM工具最终的 <code>webpack.config.js</code> 文件如下:</p><pre><code class=language-js>const webpack = require(&amp;#39;webpack&amp;#39;);
-const HtmlWebpackPlugin = require(&amp;#39;html-webpack-plugin&amp;#39;);
-// const VueLoaderPlugin = require(&amp;#39;vue-loader/lib/plugin&amp;#39;);
-const MonacoWebpackPlugin = require(&amp;#39;monaco-editor-webpack-plugin&amp;#39;);
+}</code></pre><h2 id=最终配置和编译运行>最终配置和编译运行</h2><p>最终的配置其实还包含一些细节的目录结构、环境信息和构建选项。我们GM工具最终的 <code>webpack.config.js</code> 文件如下:</p><pre><code class=language-js>const webpack = require('webpack');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+// const VueLoaderPlugin = require('vue-loader/lib/plugin');
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 module.exports = {
-    // mode: &amp;#39;development&amp;#39;, //&amp;#39;mode&amp;#39; option to &amp;#39;development&amp;#39; or &amp;#39;production&amp;#39;
-    entry: &amp;#39;./src/js/main.js&amp;#39;,
+    // mode: 'development', //'mode' option to 'development' or 'production'
+    entry: './src/js/main.js',
     output: {
-        path: __dirname &#43; &amp;#39;/dist/&amp;#39;,
-        filename: &amp;#39;bundle.js&amp;#39;
+        path: __dirname + '/dist/',
+        filename: 'bundle.js'
     },
     devServer: {
         inline: false,
-        contentBase: &amp;#34;./dist&amp;#34;,
+        contentBase: "./dist",
     },
-    devtool: &amp;#34;cheap-module-source-map&amp;#34;,
+    devtool: "cheap-module-source-map",
     module: {
         rules: [{
                 test: /\.ejs$/,
-                use: [&amp;#39;ejs-webpack-loader&amp;#39;]
+                use: ['ejs-webpack-loader']
             },
             {
                 test: /\.js$/,
                 exclude: /(node_modules|bower_components)/,
                 use: {
-                    loader: &amp;#39;babel-loader&amp;#39;,
+                    loader: 'babel-loader',
                     options: {
-                        presets: [&amp;#39;env&amp;#39;]
+                        presets: ['env']
                     }
                 }
             },
             {
                 test: /\.tsx?$/,
-                use: [&amp;#39;vue-ts-loader&amp;#39;]
+                use: ['vue-ts-loader']
             },
             {
                 test: /\.css$/,
-                use: [&amp;#39;vue-style-loader&amp;#39;, &amp;#39;style-loader&amp;#39;, &amp;#39;css-loader&amp;#39;]
+                use: ['vue-style-loader', 'style-loader', 'css-loader']
             },
             {
                 test: /\.scss$/,
                 use: [
-                    &amp;#34;vue-style-loader&amp;#34;,
-                    &amp;#34;style-loader&amp;#34;, // creates style nodes from JS strings
-                    &amp;#34;css-loader&amp;#34;, // translates CSS into CommonJS
-                    &amp;#34;sass-loader&amp;#34; // compiles Sass to CSS, using Node Sass by default
+                    "vue-style-loader",
+                    "style-loader", // creates style nodes from JS strings
+                    "css-loader", // translates CSS into CommonJS
+                    "sass-loader" // compiles Sass to CSS, using Node Sass by default
                 ]
             },
             {
                 test: /\.sass$/,
                 use: [
-                    &amp;#39;vue-style-loader&amp;#39;,
-                    &amp;#34;style-loader&amp;#34;,
-                    &amp;#39;css-loader&amp;#39;,
+                    'vue-style-loader',
+                    "style-loader",
+                    'css-loader',
                     {
-                        loader: &amp;#39;sass-loader&amp;#39;,
+                        loader: 'sass-loader',
                         options: {
                             indentedSyntax: true
                         }
@@ -143,54 +143,54 @@ module.exports = {
             // all files with a `.ts` or `.tsx` extension will be handled by `ts-loader`
             {
                 test: /\.vue$/,
-                loader: &amp;#39;vue-loader&amp;#39;
+                loader: 'vue-loader'
             }
         ]
     },
     plugins: [
         new webpack.ProvidePlugin({
-            moment: &amp;#34;moment&amp;#34;,
-            $: &amp;#34;jquery&amp;#34;,
-            jQuery: &amp;#34;jquery&amp;#34;,
-            Vue: [&amp;#39;vue/dist/vue.esm.js&amp;#39;, &amp;#39;default&amp;#39;]
+            moment: "moment",
+            $: "jquery",
+            jQuery: "jquery",
+            Vue: ['vue/dist/vue.esm.js', 'default']
         }),
         // new VueLoaderPlugin(),
         new HtmlWebpackPlugin({
-            template: &amp;#39;!!ejs-webpack-loader!./src/index.ejs&amp;#39;,
-            inject: &amp;#39;body&amp;#39;
+            template: '!!ejs-webpack-loader!./src/index.ejs',
+            inject: 'body'
         }),
         new MonacoWebpackPlugin()
     ]
 }</code></pre><p>typescript配置文件 <code>tsconfig.json</code> 的配置如下：</p><pre><code class=language-json>{
-    &amp;#34;compilerOptions&amp;#34;: {
-        &amp;#34;target&amp;#34;: &amp;#34;es5&amp;#34;,
-        &amp;#34;module&amp;#34;: &amp;#34;es2015&amp;#34;,
-        &amp;#34;moduleResolution&amp;#34;: &amp;#34;node&amp;#34;,
-        &amp;#34;declaration&amp;#34;: false,
-        &amp;#34;noImplicitAny&amp;#34;: true,
-        &amp;#34;removeComments&amp;#34;: true,
-        &amp;#34;preserveConstEnums&amp;#34;: true,
-        &amp;#34;emitDecoratorMetadata&amp;#34;: true,
-        &amp;#34;experimentalDecorators&amp;#34;: true,
-        &amp;#34;sourceMap&amp;#34;: true,
-        &amp;#34;typeRoots&amp;#34;: [
-            &amp;#34;node_modules/@types&amp;#34;
+    "compilerOptions": {
+        "target": "es5",
+        "module": "es2015",
+        "moduleResolution": "node",
+        "declaration": false,
+        "noImplicitAny": true,
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "sourceMap": true,
+        "typeRoots": [
+            "node_modules/@types"
         ],
-        &amp;#34;lib&amp;#34;: [
-            &amp;#34;es2017&amp;#34;,
-            &amp;#34;dom&amp;#34;
+        "lib": [
+            "es2017",
+            "dom"
         ]
     },
-    &amp;#34;include&amp;#34;: [
-        &amp;#34;src/**/*&amp;#34;
+    "include": [
+        "src/**/*"
     ],
-    &amp;#34;exclude&amp;#34;: [
-        &amp;#34;node_modules&amp;#34;
+    "exclude": [
+        "node_modules"
     ]
 }</code></pre><p>然后 <code>package.json</code> 里增加了脚本命令:</p><pre><code class=language-json>{
-  &amp;#34;scripts&amp;#34;: {
-    &amp;#34;dev&amp;#34;: &amp;#34;webpack --mode development&amp;#34;,
-    &amp;#34;build&amp;#34;: &amp;#34;webpack --mode production&amp;#34;
+  "scripts": {
+    "dev": "webpack --mode development",
+    "build": "webpack --mode production"
   }
 }</code></pre><p>最后，编译打包的时候只要运行 <code>npm run dev</code> 或 <code>npm run build</code> 就可以了。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2018-10-16T17:10:50.000+00:00 itemprop=datePublished>2018-10-16</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/webpack.html>webpack</a></li><li class=article-tag-list-item><a href=//owent.net/tags/vue.html>vue</a></li><li class=article-tag-list-item><a href=//owent.net/tags/bootstrap.html>bootstrap</a></li><li class=article-tag-list-item><a href=//owent.net/tags/ejs.html>ejs</a></li><li class=article-tag-list-item><a href=//owent.net/tags/websocket.html>websocket</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2018/1810.html>上一篇<strong>2018年的新通用伪随机数算法(xoshiro / xoroshiro)的C++(head only)实现</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2018/1809.html>下一篇<strong>Rust的第二次接触-写个小服务器程序</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;owent

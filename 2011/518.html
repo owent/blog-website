@@ -3,47 +3,47 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-5c293765e3c6bdc9099bc48792930076 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2011/518.html target=_blank itemprop=url>C++ 新特性学习（二） -- Array、Tuple和Hash库</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>这回的两个库没怎么用过，这里的记录就用VC++写了，使用G++和BOOST的时候和智能指针类似。</p><p>首先是<strong>Tuple</strong>库</p><p>要注意的是这里G++，VC++和BOOST库的函数不太一样，所以使用的时候要注意没有使用到编译器和编译器相关的函数（特别是IDE的弹窗的方法要注意）。</p><p>比如VC++和G++里的tuple对象没有get方法，而boost里有，所以获取数据智能用get(tuple&)语句。</p><p>这是个多元数组，最多有10个元素，用于方便定义复杂逻辑结构。例如std::pair就是一个2元tuple 使用tuple要求指定的类型支持默认构造方法</p><pre><code class=language-cpp>#include &amp;lt;cstdio&amp;gt;
-#include &amp;lt;string&amp;gt;
-#include &amp;lt;tuple&amp;gt;
-#include &amp;lt;iostream&amp;gt;
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-5c293765e3c6bdc9099bc48792930076 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2011/518.html target=_blank itemprop=url>C++ 新特性学习（二） -- Array、Tuple和Hash库</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>这回的两个库没怎么用过，这里的记录就用VC++写了，使用G++和BOOST的时候和智能指针类似。</p><p>首先是<strong>Tuple</strong>库</p><p>要注意的是这里G++，VC++和BOOST库的函数不太一样，所以使用的时候要注意没有使用到编译器和编译器相关的函数（特别是IDE的弹窗的方法要注意）。</p><p>比如VC++和G++里的tuple对象没有get方法，而boost里有，所以获取数据智能用get(tuple&)语句。</p><p>这是个多元数组，最多有10个元素，用于方便定义复杂逻辑结构。例如std::pair就是一个2元tuple 使用tuple要求指定的类型支持默认构造方法</p><pre><code class=language-cpp>#include <cstdio>
+#include <string>
+#include <tuple>
+#include <iostream>
 
 struct foo {
     int m;
-    friend bool operator&amp;lt; (const foo&amp;amp; l, const foo&amp;amp; r) {
-        return l.m &amp;lt; r.m;
+    friend bool operator< (const foo& l, const foo& r) {
+        return l.m < r.m;
     }
-    friend bool operator==(const foo&amp;amp; l, const foo&amp;amp; r) {
+    friend bool operator==(const foo& l, const foo& r) {
         return l.m == r.m;
     }
 };
 
 int main() {
-    std::tuple&amp;lt;int, std::string, double, foo&amp;gt; tup0,
-        tup1 = std::tuple&amp;lt;int, std::string, double, foo&amp;gt;(2, &amp;#34;2&amp;#34;, 1.0, foo());
-    tup0 = std::make_tuple(1, &amp;#34;2&amp;#34;, 3.0, foo());
+    std::tuple<int, std::string, double, foo> tup0,
+        tup1 = std::tuple<int, std::string, double, foo>(2, "2", 1.0, foo());
+    tup0 = std::make_tuple(1, "2", 3.0, foo());
 
     // 比较操作符是从左向右比较的，但是要求所有元素支持比较操作
-    std::cout&amp;lt;&amp;lt; (tup0 &amp;lt; tup1)&amp;lt;&amp;lt; std::endl;
+    std::cout<< (tup0 < tup1)<< std::endl;
     // 对其中元素的操作比较特别
-    std::get&amp;lt;3&amp;gt;(tup1).m = std::get&amp;lt;3&amp;gt;(tup0).m = 1;
-    std::get&amp;lt;0&amp;gt;(tup1) = 1;
-    std::get&amp;lt;2&amp;gt;(tup1) = 3.0;
+    std::get<3>(tup1).m = std::get<3>(tup0).m = 1;
+    std::get<0>(tup1) = 1;
+    std::get<2>(tup1) = 3.0;
     // 相等比较符也一样
-    std::cout&amp;lt;&amp;lt; (tup0 == tup1)&amp;lt;&amp;lt; std::endl;
+    std::cout<< (tup0 == tup1)<< std::endl;
 
     return 0;
-}</code></pre><p>功能是比较强大，但是为什么我觉得用处不大呢？</p><p>另一个库是<strong>Array</strong>库</p><p>这个东西就如其名，就是一个数组。普通数组不支持STL，而当std::vector效率不满足需求的时候array的力量就出来了，使用不是一般的简单。</p><pre><code class=language-cpp>std::array&amp;lt;int&amp;gt; arr = {0, 1, 2, 3, 4, 5, 6};
+}</code></pre><p>功能是比较强大，但是为什么我觉得用处不大呢？</p><p>另一个库是<strong>Array</strong>库</p><p>这个东西就如其名，就是一个数组。普通数组不支持STL，而当std::vector效率不满足需求的时候array的力量就出来了，使用不是一般的简单。</p><pre><code class=language-cpp>std::array<int> arr = {0, 1, 2, 3, 4, 5, 6};
 
-for(std::array&amp;lt;int&amp;gt;::size_type i = 0; i &amp;lt; arr.size(); i &#43;&#43;)
-    std::cout&amp;lt;&amp;lt; arr[i]&amp;lt;&amp;lt; &amp;#34; = &amp;#34; &amp;lt;&amp;lt; arr.at(i)&amp;lt;&amp;lt; std::endl;</code></pre><p>最后一个啦，<strong>hash</strong>库</p><p>主要是用来计算hash值的，采用FNV哈希算法，还可以用于管理数据结构（如tr1里的std::unordered_set）。默认支持的计算散列值的对象是整型、小数、指针和字符串，其他的结构需要自己定制HASH函数，按照boost的文档指定hash函数的方法很简单，就是重写std::size_t hash_value(T const&)方法或函数，我使用boost库正常，但是VC++下用tr1编译错误，错误在自定义hash函数上，但没看懂报错的原因，也没有详细的例子或文档。另外貌似重载==操作符也是必须的</p><pre><code class=language-cpp>#include &amp;lt;cstdio&amp;gt;
-#include &amp;lt;string&amp;gt;
-#include &amp;lt;functional&amp;gt;
-#include &amp;lt;unordered_set&amp;gt;
-#include &amp;lt;array&amp;gt;
-#include &amp;lt;iostream&amp;gt;
-#include &amp;lt;assert.h&amp;gt;
-#include &amp;lt;boost/functional/hash.hpp&amp;gt;
+for(std::array<int>::size_type i = 0; i < arr.size(); i ++)
+    std::cout<< arr[i]<< " = " << arr.at(i)<< std::endl;</code></pre><p>最后一个啦，<strong>hash</strong>库</p><p>主要是用来计算hash值的，采用FNV哈希算法，还可以用于管理数据结构（如tr1里的std::unordered_set）。默认支持的计算散列值的对象是整型、小数、指针和字符串，其他的结构需要自己定制HASH函数，按照boost的文档指定hash函数的方法很简单，就是重写std::size_t hash_value(T const&)方法或函数，我使用boost库正常，但是VC++下用tr1编译错误，错误在自定义hash函数上，但没看懂报错的原因，也没有详细的例子或文档。另外貌似重载==操作符也是必须的</p><pre><code class=language-cpp>#include <cstdio>
+#include <string>
+#include <functional>
+#include <unordered_set>
+#include <array>
+#include <iostream>
+#include <assert.h>
+#include <boost/functional/hash.hpp>
 using namespace std;
 
 struct foo {
@@ -51,25 +51,25 @@ struct foo {
     int m;
     foo(int _id): id(_id){}
     void print(void*) {
-        printf(&amp;#34;%d\n&amp;#34;, m);
+        printf("%d\n", m);
     }
-    friend bool operator == (const foo&amp;amp; l, const foo&amp;amp; r) {
+    friend bool operator == (const foo& l, const foo& r) {
         return l.id == r.id;
     }
 };
 
-std::size_t hash_value(const foo&amp;amp; f) {
-    return boost::hash&amp;lt;int&amp;gt;()(f.id);
+std::size_t hash_value(const foo& f) {
+    return boost::hash<int>()(f.id);
 }
 
 int main() {
-    std::hash&amp;lt;std::string&amp;gt; str_hash;
-    std::hash&amp;lt;int&amp;gt; int_hash;
-    std::cout&amp;lt;&amp;lt; str_hash(&amp;#34;OWenT&amp;#34;)&amp;lt;&amp;lt; std::endl;
-    std::cout&amp;lt;&amp;lt; int_hash(3)&amp;lt;&amp;lt; std::endl; // 输出不是3哦
+    std::hash<std::string> str_hash;
+    std::hash<int> int_hash;
+    std::cout<< str_hash("OWenT")<< std::endl;
+    std::cout<< int_hash(3)<< std::endl; // 输出不是3哦
 
 
-    std::unordered_set&amp;lt;foo, boost::hash&amp;lt;foo&amp;gt; &amp;gt; s;
+    std::unordered_set<foo, boost::hash<foo> > s;
     foo f(3);
     s.insert(f);
     assert(s.find(foo(3)) != s.end());

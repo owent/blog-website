@@ -52,10 +52,10 @@ memory_order_seq_cst | 全部存取都按顺序执行，在多核系统上容易
 此外，atomic还有一些标记类型和测试操作，比较类似操作系统里的原子操作</p><ul><li>std::atomic_flag : 标记类型</li><li>atomic_flag_test_and_set : 尝试设置为占用（原子操作）</li><li>atomic_flag_clear : 释放（原子操作）</li></ul><pre><code class=language-cpp>std::atomic_flag lock = ATOMIC_FLAG_INIT;
 
 void f(int n) {
-    for(int cnt = 0; cnt &amp;lt; 100; &#43;&#43;cnt) {
-        while(std::atomic_flag_test_and_set_explicit(&amp;amp;lock, std::memory_order_acquire));
-        std::cout &amp;lt;&amp;lt; &amp;#34;线程 &amp;#34; &amp;lt;&amp;lt; n &amp;lt;&amp;lt; std::endl;
-        std::atomic_flag_clear_explicit(&amp;amp;lock, std::memory_order_release);
+    for(int cnt = 0; cnt < 100; ++cnt) {
+        while(std::atomic_flag_test_and_set_explicit(&lock, std::memory_order_acquire));
+        std::cout << "线程 " << n << std::endl;
+        std::atomic_flag_clear_explicit(&lock, std::memory_order_release);
     }
 }
 
@@ -67,15 +67,15 @@ int main() {
 
     int i = a.load(std::memory_order_consume);
 
-    printf(&amp;#34;i =&amp;gt; %d\n&amp;#34;, i);
+    printf("i => %d\n", i);
 
     // 原子标记
-    std::vector&amp;lt;std::thread&amp;gt; v;
-    for (int n = 0; n &amp;lt; 10; &#43;&#43;n) {
+    std::vector<std::thread> v;
+    for (int n = 0; n < 10; ++n) {
         v.emplace_back(f, n);
     }
-    for (auto t = v.begin(); t != v.end(); &#43;&#43; t) {
-        t-&amp;gt;join();
+    for (auto t = v.begin(); t != v.end(); ++ t) {
+        t->join();
     }
 
     return 0;

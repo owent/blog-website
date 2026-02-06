@@ -10,57 +10,57 @@
  * 可令degree[i]为包括i且以i为根节点的所有子节点数量
  * dp[i]为删除i后的最大子节点数量或父亲节点数量 （这里我理解了很久）
  */
-#include&amp;lt;iostream&amp;gt;
-#include&amp;lt;cstdio&amp;gt;
-#include&amp;lt;vector&amp;gt;
+#include<iostream>
+#include<cstdio>
+#include<vector>
 using namespace std;
-vector&amp;lt;int&amp;gt;chirld[10002];
+vector<int>chirld[10002];
 int dp[10002] = {0}
     ,degree[10002] = {0}
     ,isJudged[10002] = {0};
 
-int search(int pos,int &amp;amp;n);
+int search(int pos,int &n);
 int main()
 {
     int n,i,a,b;
     bool isnone = true;
-    scanf(&amp;#34;%d&amp;#34;,&amp;amp;n);
-    for(i = 1 ; i &amp;lt; n ; i &#43;&#43;)
+    scanf("%d",&n);
+    for(i = 1 ; i < n ; i ++)
     {
-        scanf(&amp;#34;%d %d&amp;#34;,&amp;amp;a,&amp;amp;b);
+        scanf("%d %d",&a,&b);
         chirld[a].push_back(b);
         chirld[b].push_back(a);
     }
 
     search(1 , n);
 
-    for(i = 1 ; i &amp;lt;= n ; i &#43;&#43;)
-        if(dp[i] * 2 &amp;lt;= n)
-            printf(&amp;#34;%d\n&amp;#34;,i) , isnone = false;
+    for(i = 1 ; i <= n ; i ++)
+        if(dp[i] * 2 <= n)
+            printf("%d\n",i) , isnone = false;
 
     if(isnone)
-        printf(&amp;#34;NONE\n&amp;#34;);
+        printf("NONE\n");
     return 0;
 }
 
-int search(int pos,int &amp;amp;n)
+int search(int pos,int &n)
 {
     int i,j;
     degree[pos] = 1;
     isJudged[pos] = 1;
     dp[pos] = 0;
 
-    for(i = 0 ; i &amp;lt; chirld[pos].size() ; i &#43;&#43;)
+    for(i = 0 ; i < chirld[pos].size() ; i ++)
     {
         if(!isJudged[chirld[pos].at(i)])//如果已经判断过就是父亲节点了
         {
-            degree[pos] &#43;= search(chirld[pos].at(i) , n);
-            if(dp[pos] &amp;lt; degree[chirld[pos].at(i)])
+            degree[pos] += search(chirld[pos].at(i) , n);
+            if(dp[pos] < degree[chirld[pos].at(i)])
                 dp[pos] = degree[chirld[pos].at(i)];
         }
     }
 
-    if(dp[pos] &amp;lt; n - degree[pos])//判断父亲节点数量
+    if(dp[pos] < n - degree[pos])//判断父亲节点数量
         dp[pos] = n - degree[pos];
     return degree[pos];
 }</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2009-12-23T14:09:13.000+00:00 itemprop=datePublished>2009-12-23</time></span>

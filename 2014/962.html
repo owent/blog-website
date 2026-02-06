@@ -15,48 +15,48 @@
     ~foo_class();
 
     static foo_class _;
-};</code></pre><h3 id=acpp>a.cpp</h3><pre><code class=language-cpp>#include &amp;lt;cstdio&amp;gt;
-#include &amp;#34;a.h&amp;#34;
+};</code></pre><h3 id=acpp>a.cpp</h3><pre><code class=language-cpp>#include <cstdio>
+#include "a.h"
 
 foo_class foo_class::_;
 
 
 foo_class::foo_class() {
     m = 10;
-    printf(&amp;#34;foo_class::foo_class(), this-&amp;gt; 0x%llx\n&amp;#34;, this);
+    printf("foo_class::foo_class(), this-> 0x%llx\n", this);
 }
 
 foo_class::~foo_class() {
-    printf(&amp;#34;foo_class::~foo_class(), this-&amp;gt; 0x%llx\n&amp;#34;, this);
-}</code></pre><h3 id=编译选项>编译选项</h3><pre><code class=language-text>gcc -O0 -g -ggdb a.cpp -o libtest_a.a -c -fPIC</code></pre><h2 id=模块b>模块b</h2><h3 id=bcpp>b.cpp</h3><pre><code class=language-cpp>#include &amp;lt;dlfcn.h&amp;gt;
-#include &amp;lt;errno.h&amp;gt;
+    printf("foo_class::~foo_class(), this-> 0x%llx\n", this);
+}</code></pre><h3 id=编译选项>编译选项</h3><pre><code class=language-text>gcc -O0 -g -ggdb a.cpp -o libtest_a.a -c -fPIC</code></pre><h2 id=模块b>模块b</h2><h3 id=bcpp>b.cpp</h3><pre><code class=language-cpp>#include <dlfcn.h>
+#include <errno.h>
  
-#include &amp;lt;cstdio&amp;gt;
-#include &amp;lt;cstdlib&amp;gt;
+#include <cstdio>
+#include <cstdlib>
 
-#include &amp;#34;a.h&amp;#34;
+#include "a.h"
 
 
 int main() {
     void (*dll_func)() = NULL;
     char* error = NULL;
 
-    foo_class::_.m &#43;= 1000;
-    printf(&amp;#34;&amp;amp;foo_class::_ = 0x%llx, foo_class::_.m = %d\n&amp;#34;, &amp;amp;foo_class::_, foo_class::_.m);
+    foo_class::_.m += 1000;
+    printf("&foo_class::_ = 0x%llx, foo_class::_.m = %d\n", &foo_class::_, foo_class::_.m);
 
 
-    void* handle = dlopen(&amp;#34;libtest_c.so&amp;#34;, RTLD_LAZY);
+    void* handle = dlopen("libtest_c.so", RTLD_LAZY);
     if (!handle) {
-        fprintf(stderr, &amp;#34;%s\n&amp;#34;, dlerror());
+        fprintf(stderr, "%s\n", dlerror());
         return -1;
     }
 
     dlerror();
 
-    *(void **) (&amp;amp;dll_func) = dlsym(handle, &amp;#34;dll_func&amp;#34;);
+    *(void **) (&dll_func) = dlsym(handle, "dll_func");
 
     if ((error = dlerror()) != NULL)  {
-        fprintf(stderr, &amp;#34;%s\n&amp;#34;, error);
+        fprintf(stderr, "%s\n", error);
         return -2;
     }
 
@@ -65,30 +65,30 @@ int main() {
     dlclose(handle);
 
     return 0;
-}</code></pre><h3 id=编译选项-1>编译选项</h3><pre><code class=language-text>gcc -O0 -g -ggdb b.cpp -o test_b -fPIC -ldl -L$PWD -ltest_a -lstdc&#43;&#43;</code></pre><h2 id=模块c>模块c</h2><h3 id=ccpp>c.cpp</h3><pre><code class=language-cpp>#include &amp;lt;cstdio&amp;gt;
+}</code></pre><h3 id=编译选项-1>编译选项</h3><pre><code class=language-text>gcc -O0 -g -ggdb b.cpp -o test_b -fPIC -ldl -L$PWD -ltest_a -lstdc++</code></pre><h2 id=模块c>模块c</h2><h3 id=ccpp>c.cpp</h3><pre><code class=language-cpp>#include <cstdio>
 
-#include &amp;#34;a.h&amp;#34;
+#include "a.h"
 
 
-extern &amp;#34;C&amp;#34; {
+extern "C" {
 
 void dll_func() {
-    foo_class::_.m &#43;= 100;
-    printf(&amp;#34;&amp;amp;foo_class::_ = 0x%llx, foo_class::_.m = %d\n&amp;#34;, &amp;amp;foo_class::_, foo_class::_.m);
+    foo_class::_.m += 100;
+    printf("&foo_class::_ = 0x%llx, foo_class::_.m = %d\n", &foo_class::_, foo_class::_.m);
 }
 
-}</code></pre><h3 id=编译选项-2>编译选项</h3><pre><code class=language-text>gcc -O0 -g -ggdb c.cpp -o libtest_c.so -shared -fPIC -L$PWD -ltest_a -lstdc&#43;&#43;</code></pre><p>这是三个模块的代码和编译选项。我分别至于Linux和Windows内的GCC编译测试。
-在<strong>Linux</strong>中的GCC 4.4.6 运行结果如下:</p><pre><code class=language-text>foo_class::foo_class(), this-&amp;gt; 0x600f98
-&amp;amp;foo_class::_ = 0x600f98, foo_class::_.m = 1010
-foo_class::foo_class(), this-&amp;gt; 0x600f98
-&amp;amp;foo_class::_ = 0x600f98, foo_class::_.m = 110
-foo_class::~foo_class(), this-&amp;gt; 0x600f98
-foo_class::~foo_class(), this-&amp;gt; 0x600f98</code></pre><p>从结果中可以看出来，在Linux中多个动态链接库和主程序引用的同一个全局变量（地址相同），但是每一个二进制实例都会完成一次构造。这就造成了同一个实例多次构造，导致我们最初碰到的结果。</p><p>在<strong>Windows</strong>中Cygwin的GCC 4.8.2 中运行结果如下:</p><pre><code class=language-text>foo_class::foo_class(), this-&amp;gt; 0x100406010
-&amp;amp;foo_class::_ = 0x100406010, foo_class::_.m = 1010
-foo_class::foo_class(), this-&amp;gt; 0x5aa426010
-&amp;amp;foo_class::_ = 0x5aa426010, foo_class::_.m = 110
-foo_class::~foo_class(), this-&amp;gt; 0x5aa426010
-foo_class::~foo_class(), this-&amp;gt; 0x100406010</code></pre><p>但是在Windows中，虽然每个动态链接库和主程序引用的同一个全局变量也各自都执行了一次构造。但是，每一个二进制内的全局变量，实际上并不是同一个。他们并不冲突，但是他们也不在一个内存区域内，所以即便是纯C下和Linux内的行为也不一样。</p><p>这也就意味着，<strong>在Linux中，载入的动态链接库实际上可以直接使用外部框架或者其他模块的全局数据，但是在Windows下确是隔离的，不能直接访问到。</strong>
+}</code></pre><h3 id=编译选项-2>编译选项</h3><pre><code class=language-text>gcc -O0 -g -ggdb c.cpp -o libtest_c.so -shared -fPIC -L$PWD -ltest_a -lstdc++</code></pre><p>这是三个模块的代码和编译选项。我分别至于Linux和Windows内的GCC编译测试。
+在<strong>Linux</strong>中的GCC 4.4.6 运行结果如下:</p><pre><code class=language-text>foo_class::foo_class(), this-> 0x600f98
+&foo_class::_ = 0x600f98, foo_class::_.m = 1010
+foo_class::foo_class(), this-> 0x600f98
+&foo_class::_ = 0x600f98, foo_class::_.m = 110
+foo_class::~foo_class(), this-> 0x600f98
+foo_class::~foo_class(), this-> 0x600f98</code></pre><p>从结果中可以看出来，在Linux中多个动态链接库和主程序引用的同一个全局变量（地址相同），但是每一个二进制实例都会完成一次构造。这就造成了同一个实例多次构造，导致我们最初碰到的结果。</p><p>在<strong>Windows</strong>中Cygwin的GCC 4.8.2 中运行结果如下:</p><pre><code class=language-text>foo_class::foo_class(), this-> 0x100406010
+&foo_class::_ = 0x100406010, foo_class::_.m = 1010
+foo_class::foo_class(), this-> 0x5aa426010
+&foo_class::_ = 0x5aa426010, foo_class::_.m = 110
+foo_class::~foo_class(), this-> 0x5aa426010
+foo_class::~foo_class(), this-> 0x100406010</code></pre><p>但是在Windows中，虽然每个动态链接库和主程序引用的同一个全局变量也各自都执行了一次构造。但是，每一个二进制内的全局变量，实际上并不是同一个。他们并不冲突，但是他们也不在一个内存区域内，所以即便是纯C下和Linux内的行为也不一样。</p><p>这也就意味着，<strong>在Linux中，载入的动态链接库实际上可以直接使用外部框架或者其他模块的全局数据，但是在Windows下确是隔离的，不能直接访问到。</strong>
 另外, 我从另一篇文章上看到，这个行为与dlopen时flag是<strong>RTLD_GLOBAL还是RTLD_LOCAL</strong>有关。但是我这里实测没有任何变化。但是结果和编译选项**-fPIC**有关(原因去看gcc文档吧，我就不复述啦)。
 PS: 如果不是直接使用的全局变量，而是直接使用函数接口，并且返回一个static的局部变量这种方式，测试结果也是一样的；
 而且如果不是通过dlopen动态加载，而是通过编译时链接进去的话，也是构造了两次。

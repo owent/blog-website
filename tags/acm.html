@@ -6,7 +6,7 @@
 <button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-1046"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2014/1046.html target=_blank itemprop=url>[ACM] HDU 1006 解题报告</a></h1></header><div class=article-summary><p>偶尔写写ACM水题还是挺好玩的。(好吧其实是老婆求助我才看滴)</p><p>题目链接：<a href="http://acm.hdu.edu.cn/showproblem.php?pid=1006">http://acm.hdu.edu.cn/showproblem.php?pid=1006</a></p><p>一开始看到这题的时候，感觉一天24小时<em>60分钟</em>60秒。把每一秒的最小指针角度记下来再搞个排序。</p></div><div class=article-more><a href=//owent.net/2014/1046.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2014-04-28T21:10:46.000+00:00 itemprop=datePublished>2014-04-28</time></div></div></article><article class="article-panel archive-article archive-type-930"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/930.html target=_blank itemprop=url>不知道是哪一年的腾讯马拉松题目 照片评级 解题报告</a></h1></header><div class=article-summary><p>在某个神奇的下午，收到一个垃圾邮件（至少被邮件系统当成了垃圾邮件）。</p><p>结果就一不小心看到了这个充满回忆的ACM模式竞赛，还有咱腾讯的，就忍不住看了一下。</p></div><div class=article-more><a href=//owent.net/2013/930.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-10-25T15:45:05.000+00:00 itemprop=datePublished>2013-10-25</time></div></div></article><article class="article-panel archive-article archive-type-861"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/861.html target=_blank itemprop=url>POJ 2192 Zipper HDU 2059 龟兔赛跑</a></h1></header><div class=article-summary><p>今天心情好，刷了两到ACM水题，思路很简单都在注释里，所以直接贴代码:</p><pre><code class=language-cpp>/**
  * @file 龟兔赛跑.cpp
  * @brief 龟兔赛跑 AC代码 (DP)
- * DP方程式: [到第i的充电站的最短时间] = [到最后一个冲了电的充电站的最短时间] &#43; [那个充电站到第i个充电站的时间]
+ * DP方程式: [到第i的充电站的最短时间] = [到最后一个冲了电的充电站的最短时间] + [那个充电站到第i个充电站的时间]
  *
  * @link http://acm.hdu.edu.cn/showproblem.php?pid=2059
  * @version 1.0
@@ -18,57 +18,57 @@
  *
  */
 
-#include &amp;lt;cstdio&amp;gt;
-#include &amp;lt;iostream&amp;gt;
-#include &amp;lt;cstring&amp;gt;
-#include &amp;lt;algorithm&amp;gt;
-#include &amp;lt;set&amp;gt;
-#include &amp;lt;numeric&amp;gt;
+#include <cstdio>
+#include <iostream>
+#include <cstring>
+#include <algorithm>
+#include <set>
+#include <numeric>
 
 int pn[128];
-double dp[128]; /** dp[i] 表示 到第i个充电站的最小时间(0为开始位置，n&#43;1为终点) **/
+double dp[128]; /** dp[i] 表示 到第i个充电站的最小时间(0为开始位置，n+1为终点) **/
 
 double calc_charge_time(int dis, int v1, int v2, int c) {
-    if (dis &amp;lt;= c)
+    if (dis <= c)
         return 1.0 * dis / v1;
 
-    return 1.0 * c / v1 &#43; 1.0 * (dis - c) / v2;
+    return 1.0 * c / v1 + 1.0 * (dis - c) / v2;
 }
 
 int main(int argc, char* argv[]) {
     using namespace std;
 
-    double eps = std::numeric_limits&amp;lt;double&amp;gt;::epsilon();
+    double eps = std::numeric_limits<double>::epsilon();
     int l, n, c, t, vr, v1, v2;
 
-    while(cin&amp;gt;&amp;gt; l) {
-        cin &amp;gt;&amp;gt; n&amp;gt;&amp;gt; c&amp;gt;&amp;gt; t&amp;gt;&amp;gt; vr&amp;gt;&amp;gt; v1&amp;gt;&amp;gt; v2;
+    while(cin>> l) {
+        cin >> n>> c>> t>> vr>> v1>> v2;
 
         pn[0] = 0; /** 0为起点 **/
-        for (int i = 1; i &amp;lt;= n; &#43;&#43; i) {
-            cin&amp;gt;&amp;gt; pn[i];
+        for (int i = 1; i <= n; ++ i) {
+            cin>> pn[i];
         }
-        pn[n &#43; 1] = l; /** n&#43;1为终点 **/
+        pn[n + 1] = l; /** n+1为终点 **/
 
         memset(dp, 0, sizeof(dp));
-        for(int i = 0; i &amp;lt;= n &#43; 1; &#43;&#43; i) {
+        for(int i = 0; i <= n + 1; ++ i) {
             dp[i] = calc_charge_time(pn[i] - pn[0], v1, v2, c);
         }
 
-        for(int i = 1; i &amp;lt;= n &#43; 1; &#43;&#43; i) {
-            for(int j = 0; j &amp;lt; i; &#43;&#43; j) {
-                double tc = calc_charge_time(pn[i] - pn[j], v1, v2, c) &#43; t &#43; dp[j];
+        for(int i = 1; i <= n + 1; ++ i) {
+            for(int j = 0; j < i; ++ j) {
+                double tc = calc_charge_time(pn[i] - pn[j], v1, v2, c) + t + dp[j];
                 dp[i] = std::min(tc, dp[i]);
             }
             
         }
 
-        double rt = 1.0 * l / vr, tt = dp[n &#43; 1];
+        double rt = 1.0 * l / vr, tt = dp[n + 1];
 
-        if (tt &amp;lt; rt)
-            puts(&amp;#34;What a pity rabbit!&amp;#34;);
+        if (tt < rt)
+            puts("What a pity rabbit!");
         else
-            puts(&amp;#34;Good job,rabbit!&amp;#34;);
+            puts("Good job,rabbit!");
     }
 
     return 0;
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
  * @file Zipper.cpp
  * @brief Zipper AC代码 (DP)
  * @link http://poj.org/problem?id=2192
- * DP方程式: [A串消耗个数i][B串消耗个数j] = min{[A串消耗个数i - 1][B串消耗个数j]|[A串消耗个数i][B串消耗个数j &#43; 1]}
+ * DP方程式: [A串消耗个数i][B串消耗个数j] = min{[A串消耗个数i - 1][B串消耗个数j]|[A串消耗个数i][B串消耗个数j + 1]}
  * 以上分支选取条件是 A或B的新选用字符和C串新字符匹配
  *
  * @version 1.0
@@ -90,30 +90,30 @@ int main(int argc, char* argv[]) {
  *
  */
 
-#include &amp;lt;cstdio&amp;gt;
-#include &amp;lt;cstring&amp;gt;
-#include &amp;lt;algorithm&amp;gt;
-#include &amp;lt;set&amp;gt;
-#include &amp;lt;numeric&amp;gt;
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <set>
+#include <numeric>
 
 
 char strA[256], strB[256], strC[512];
-int dp[256][256]; /** dp[i][j] = k 表示A消耗了i个字符，B消耗了j个字符，拼成的C串消耗了k个字符（其实就是i&#43;j） **/
+int dp[256][256]; /** dp[i][j] = k 表示A消耗了i个字符，B消耗了j个字符，拼成的C串消耗了k个字符（其实就是i+j） **/
 
 int main(int argc, char* argv[]) {
     using namespace std;
     int s, n;
 
-    scanf(&amp;#34;%d&amp;#34;, &amp;amp;n);
-    for( s = 0; s &amp;lt; n; &#43;&#43; s) {
-        scanf(&amp;#34;%s %s %s&amp;#34;, strA, strB, strC);
+    scanf("%d", &n);
+    for( s = 0; s < n; ++ s) {
+        scanf("%s %s %s", strA, strB, strC);
         int lenA = strlen(strA);
         int lenB = strlen(strB);
         int lenC = strlen(strC);
         bool bFlag = false;
 
-        if ( lenC != lenA &#43; lenB ) {
-            printf(&amp;#34;Data set %d: no\n&amp;#34;, s &#43; 1);
+        if ( lenC != lenA + lenB ) {
+            printf("Data set %d: no\n", s + 1);
             continue;
         }
 
@@ -124,28 +124,28 @@ int main(int argc, char* argv[]) {
         if (strB[0] == strC[0])
             dp[0][1] = 1;
 
-        for (int i = 0; i &amp;lt;= lenA; &#43;&#43; i) {
-            for (int j = 0; j &amp;lt;= lenB; &#43;&#43; j) {
+        for (int i = 0; i <= lenA; ++ i) {
+            for (int j = 0; j <= lenB; ++ j) {
                 if (0 == dp[i][j])
                     continue;
 
-                int ri = i &#43; 1, rj = j &#43; 1;
+                int ri = i + 1, rj = j + 1;
 
                 if (strA[i] == strC[dp[i][j]]) {
-                    dp[ri][j] = dp[i][j] &#43; 1;
-                    if (ri &#43; j == lenC)
+                    dp[ri][j] = dp[i][j] + 1;
+                    if (ri + j == lenC)
                         bFlag = true;
                 }
 
                 if (strB[j] == strC[dp[i][j]]) {
-                    dp[i][rj] = dp[i][j] &#43; 1;
-                    if (i &#43; rj == lenC)
+                    dp[i][rj] = dp[i][j] + 1;
+                    if (i + rj == lenC)
                         bFlag = true;
                 }
             }
         }
 
-        printf(&amp;#34;Data set %d: %s\n&amp;#34;, s &#43; 1, bFlag? &amp;#34;yes&amp;#34;: &amp;#34;no&amp;#34;);
+        printf("Data set %d: %s\n", s + 1, bFlag? "yes": "no");
     }
 
     return 0;
@@ -167,8 +167,8 @@ int main(int argc, char* argv[]) {
 </code></pre></div><div class=article-more><a href=//owent.net/2010/7.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-10-14T06:40:54.000+00:00 itemprop=datePublished>2010-10-14</time></div></div></article><article class="article-panel archive-article archive-type-8"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/8.html target=_blank itemprop=url>线段树相关问题 (引用 PKU POJ题目) 整理</a></h1></header><div class=article-summary><h2 id=1rangeminimummaximum-query问题计算单调区间内出现最多少的次数>1.RangeMinimum、Maximum Query问题（计算单调区间内出现最多（少）的次数）</h2><p>对元素的起点做离散化，再把离散化后的位置作为线段树的[l, r),记录次数为t.</p><p>对输入区间a, b:</p></div><div class=article-more><a href=//owent.net/2010/8.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-10-12T16:45:11.000+00:00 itemprop=datePublished>2010-10-12</time></div></div></article><article class="article-panel archive-article archive-type-10"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/10.html target=_blank itemprop=url>POJ PKU 1474 Video Surveillance 解题报告</a></h1></header><div class=article-summary><p>题目链接：<a href="http://poj.org/problem?id=1474">http://poj.org/problem?id=1474</a></p><p>写这题的目的是看完了zzy的论文，写了半平面交，验证一下正确性，结果发现我写的问题还是很多的。</p><p>题目大意是问能不能放一个摄像机，使得摄像机能看到整个多边形内部。</p></div><div class=article-more><a href=//owent.net/2010/10.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-10-04T11:49:56.000+00:00 itemprop=datePublished>2010-10-04</time></div></div></article><article class="article-panel archive-article archive-type-11"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/11.html target=_blank itemprop=url>ACM 计算几何 个人模板</a></h1></header><div class=article-summary><pre><code class=language-cpp>/**
  * 二维ACM计算几何模板
  * 注意变量类型更改和EPS
- * #include &amp;lt;cmath&amp;gt;
- * #include &amp;lt;cstdio&amp;gt;
+ * #include <cmath>
+ * #include <cstdio>
  * By OWenT
  */
 
@@ -182,41 +182,41 @@ public:
     point(){};
     point(double x, double y):x(x),y(y){};
 
-    static int xmult(const point &amp;amp;ps, const point &amp;amp;pe, const point &amp;amp;po)
+    static int xmult(const point &ps, const point &pe, const point &po)
     {
         return (ps.x - po.x) * (pe.y - po.y) - (pe.x - po.x) * (ps.y - po.y);
     }
 
     //相对原点的差乘结果，参数：点[_Off]
     //即由原点和这两个点组成的平行四边形面积
-    double operator *(const point &amp;amp;_Off) const
+    double operator *(const point &_Off) const
     {
         return x * _Off.y - y * _Off.x;
     }
     //相对偏移
-    point operator - (const point &amp;amp;_Off) const
+    point operator - (const point &_Off) const
     {
         return point(x - _Off.x, y - _Off.y);
     }
     //点位置相同(double类型)
-    bool operator == (const point &amp;amp;_Off) const
+    bool operator == (const point &_Off) const
     {
-        return std::fabs(_Off.x - x) &amp;lt; eps &amp;amp;&amp;amp; std::fabs(_Off.y - y) &amp;lt; eps;
+        return std::fabs(_Off.x - x) < eps && std::fabs(_Off.y - y) < eps;
     }
     //点位置不同(double类型)
-    bool operator != (const point &amp;amp;_Off) const
+    bool operator != (const point &_Off) const
     {
         return ((*this) == _Off) == false;
     }
     //两点间距离的平方
-    double dis2(const point &amp;amp;_Off) const
+    double dis2(const point &_Off) const
     {
-        return (x - _Off.x) * (x - _Off.x) &#43; (y - _Off.y) * (y - _Off.y);
+        return (x - _Off.x) * (x - _Off.x) + (y - _Off.y) * (y - _Off.y);
     }
     //两点间距离
-    double dis(const point &amp;amp;_Off) const
+    double dis(const point &_Off) const
     {
-        return std::sqrt((x - _Off.x) * (x - _Off.x) &#43; (y - _Off.y) * (y - _Off.y));
+        return std::sqrt((x - _Off.x) * (x - _Off.x) + (y - _Off.y) * (y - _Off.y));
     }
 };
 
@@ -225,19 +225,19 @@ class pVector
 {
 public:
     point s, e;//两点表示，起点[s]，终点[e]
-    double a, b, c;//一般式,ax&#43;by&#43;c=0
+    double a, b, c;//一般式,ax+by+c=0
 
     pVector(){}
-    pVector(const point &amp;amp;s, const point &amp;amp;e):s(s),e(e){}
+    pVector(const point &s, const point &e):s(s),e(e){}
 
     //向量与点的叉乘,参数：点[_Off]
     //[点相对向量位置判断]
-    double operator *(const point &amp;amp;_Off) const
+    double operator *(const point &_Off) const
     {
         return (_Off.y - s.y) * (e.x - s.x) - (_Off.x - s.x) * (e.y - s.y);
     }
     //向量与向量的叉乘,参数：向量[_Off]
-    double operator *(const pVector &amp;amp;_Off) const
+    double operator *(const pVector &_Off) const
     {
         return (e.x - s.x) * (_Off.e.y - _Off.s.y) - (e.y - s.y) * (_Off.e.x - _Off.s.x);
     }
@@ -253,45 +253,45 @@ public:
     //-----------点和直线（向量）-----------
     //点在向量左边（右边的小于号改成大于号即可,在对应直线上则加上=号）
     //参数：点[_Off],向量[_Ori]
-    friend bool operator&amp;lt;(const point &amp;amp;_Off, const pVector &amp;amp;_Ori)
+    friend bool operator<(const point &_Off, const pVector &_Ori)
     {
         return (_Ori.e.y - _Ori.s.y) * (_Off.x - _Ori.s.x)
-            &amp;lt; (_Off.y - _Ori.s.y) * (_Ori.e.x - _Ori.s.x);
+            < (_Off.y - _Ori.s.y) * (_Ori.e.x - _Ori.s.x);
     }
 
     //点在直线上,参数：点[_Off]
-    bool lhas(const point &amp;amp;_Off) const
+    bool lhas(const point &_Off) const
     {
-        return std::fabs((*this) * _Off) &amp;lt; eps;
+        return std::fabs((*this) * _Off) < eps;
     }
     //点在线段上,参数：点[_Off]
-    bool shas(const point &amp;amp;_Off) const
+    bool shas(const point &_Off) const
     {
         return lhas(_Off)
-            &amp;amp;&amp;amp; _Off.x - std::min(s.x, e.x) &amp;gt; -eps &amp;amp;&amp;amp; _Off.x - std::max(s.x, e.x) &amp;lt; eps
-            &amp;amp;&amp;amp; _Off.y - std::min(s.y, e.y) &amp;gt; -eps &amp;amp;&amp;amp; _Off.y - std::max(s.y, e.y) &amp;lt; eps;
+            && _Off.x - std::min(s.x, e.x) > -eps && _Off.x - std::max(s.x, e.x) < eps
+            && _Off.y - std::min(s.y, e.y) > -eps && _Off.y - std::max(s.y, e.y) < eps;
     }
 
     //点到直线/线段的距离
     //参数： 点[_Off], 是否是线段[isSegment](默认为直线)
-    double dis(const point &amp;amp;_Off, bool isSegment = false)
+    double dis(const point &_Off, bool isSegment = false)
     {
         //化为一般式
         pton();
 
         //到直线垂足的距离
-        double td = (a * _Off.x &#43; b * _Off.y &#43; c) / sqrt(a * a &#43; b * b);
+        double td = (a * _Off.x + b * _Off.y + c) / sqrt(a * a + b * b);
 
         //如果是线段判断垂足
         if(isSegment)
         {
-            double xp = (b * b * _Off.x - a * b * _Off.y - a * c) / ( a * a &#43; b * b);
-            double yp = (-a * b * _Off.x &#43; a * a * _Off.y - b * c) / (a * a &#43; b * b);
+            double xp = (b * b * _Off.x - a * b * _Off.y - a * c) / ( a * a + b * b);
+            double yp = (-a * b * _Off.x + a * a * _Off.y - b * c) / (a * a + b * b);
             double xb = std::max(s.x, e.x);
             double yb = std::max(s.y, e.y);
-            double xs = s.x &#43; e.x - xb;
-            double ys = s.y &#43; e.y - yb;
-            if(xp &amp;gt; xb &#43; eps || xp &amp;lt; xs - eps || yp &amp;gt; yb &#43; eps || yp &amp;lt; ys - eps)
+            double xs = s.x + e.x - xb;
+            double ys = s.y + e.y - yb;
+            if(xp > xb + eps || xp < xs - eps || yp > yb + eps || yp < ys - eps)
                 td = std::min(_Off.dis(s), _Off.dis(e));
         }
 
@@ -299,27 +299,27 @@ public:
     }
 
     //关于直线对称的点
-    point mirror(const point &amp;amp;_Off) const
+    point mirror(const point &_Off) const
     {
         //注意先转为一般式
         point ret;
-        double d = a * a &#43; b * b;
+        double d = a * a + b * b;
         ret.x = (b * b * _Off.x - a * a * _Off.x - 2 * a * b * _Off.y - 2 * a * c) / d;
         ret.y = (a * a * _Off.y - b * b * _Off.y - 2 * a * b * _Off.x - 2 * b * c) / d;
         return ret;
     }
     //计算两点的中垂线
-    static pVector ppline(const point &amp;amp;_a, const point &amp;amp;_b)
+    static pVector ppline(const point &_a, const point &_b)
     {
         pVector ret;
-        ret.s.x = (_a.x &#43; _b.x) / 2;
-        ret.s.y = (_a.y &#43; _b.y) / 2;
+        ret.s.x = (_a.x + _b.x) / 2;
+        ret.s.y = (_a.y + _b.y) / 2;
         //一般式
         ret.a = _b.x - _a.x;
         ret.b = _b.y - _a.y;
-        ret.c = (_a.y - _b.y) * ret.s.y &#43; (_a.x - _b.x) * ret.s.x;
+        ret.c = (_a.y - _b.y) * ret.s.y + (_a.x - _b.x) * ret.s.x;
         //两点式
-        if(std::fabs(ret.a) &amp;gt; eps)
+        if(std::fabs(ret.a) > eps)
         {
             ret.e.y = 0.0;
             ret.e.x = - ret.c / ret.a;
@@ -344,14 +344,14 @@ public:
 
     //------------直线和直线（向量）-------------
     //直线重合,参数：直线向量[_Off]
-    bool equal(const pVector &amp;amp;_Off) const
+    bool equal(const pVector &_Off) const
     {
-        return lhas(_Off.e) &amp;amp;&amp;amp; lhas(_Off.s);
+        return lhas(_Off.e) && lhas(_Off.s);
     }
     //直线平行，参数：直线向量[_Off]
-    bool parallel(const pVector &amp;amp;_Off) const
+    bool parallel(const pVector &_Off) const
     {
-        return std::fabs((*this) * _Off) &amp;lt; eps;
+        return std::fabs((*this) * _Off) < eps;
     }
     //两直线交点，参数：目标直线[_Off]
     point crossLPt(pVector _Off)
@@ -360,34 +360,34 @@ public:
         point ret = s;
         double t = ((s.x - _Off.s.x) * (_Off.s.y - _Off.e.y) - (s.y - _Off.s.y) * (_Off.s.x - _Off.e.x))
                 / ((s.x - e.x) * (_Off.s.y - _Off.e.y) - (s.y - e.y) * (_Off.s.x - _Off.e.x));
-        ret.x &#43;= (e.x - s.x) * t;
-        ret.y &#43;= (e.y - s.y) * t;
+        ret.x += (e.x - s.x) * t;
+        ret.y += (e.y - s.y) * t;
         return ret;
     }
 
     //------------线段和直线（向量）----------
     //线段和直线交
     //参数：线段[_Off]
-    bool crossSL(const pVector &amp;amp;_Off) const
+    bool crossSL(const pVector &_Off) const
     {
         double rs = (*this) * _Off.s;
         double re = (*this) * _Off.e;
-        return rs * re &amp;lt; eps;
+        return rs * re < eps;
     }
 
     //------------线段和线段（向量）----------
     //判断线段是否相交(注意添加eps)，参数：线段[_Off]
-    bool isCrossSS(const pVector &amp;amp;_Off) const
+    bool isCrossSS(const pVector &_Off) const
     {
         //1.快速排斥试验判断以两条线段为对角线的两个矩形是否相交
         //2.跨立试验（等于0时端点重合）
         return (
-            (std::max(s.x, e.x) &amp;gt;= std::min(_Off.s.x, _Off.e.x)) &amp;amp;&amp;amp;
-            (std::max(_Off.s.x, _Off.e.x) &amp;gt;= std::min(s.x, e.x)) &amp;amp;&amp;amp;
-            (std::max(s.y, e.y) &amp;gt;= std::min(_Off.s.y, _Off.e.y)) &amp;amp;&amp;amp;
-            (std::max(_Off.s.y, _Off.e.y) &amp;gt;= std::min(s.y, e.y)) &amp;amp;&amp;amp;
-            ((pVector(_Off.s, s) * _Off) * (_Off * pVector(_Off.s, e)) &amp;gt;= 0.0) &amp;amp;&amp;amp;
-            ((pVector(s, _Off.s) * (*this)) * ((*this) * pVector(s, _Off.e)) &amp;gt;= 0.0)
+            (std::max(s.x, e.x) >= std::min(_Off.s.x, _Off.e.x)) &&
+            (std::max(_Off.s.x, _Off.e.x) >= std::min(s.x, e.x)) &&
+            (std::max(s.y, e.y) >= std::min(_Off.s.y, _Off.e.y)) &&
+            (std::max(_Off.s.y, _Off.e.y) >= std::min(s.y, e.y)) &&
+            ((pVector(_Off.s, s) * _Off) * (_Off * pVector(_Off.s, e)) >= 0.0) &&
+            ((pVector(s, _Off.s) * (*this)) * ((*this) * pVector(s, _Off.e)) >= 0.0)
             );
     }
 };
@@ -399,7 +399,7 @@ public:
     point pt[maxpn];//点（顺时针或逆时针）
     long n;//点的个数
 
-    point&amp;amp; operator[](int _p)
+    point& operator[](int _p)
     {
         return pt[_p];
     }
@@ -409,10 +409,10 @@ public:
     {
         double ans = 0.0;
         int i;
-        for(i = 0; i &amp;lt; n; i &#43;&#43;)
+        for(i = 0; i < n; i ++)
         {
-            int nt = (i &#43; 1) % n;
-            ans &#43;= pt[i].x * pt[nt].y - pt[nt].x * pt[i].y;
+            int nt = (i + 1) % n;
+            ans += pt[i].x * pt[nt].y - pt[nt].x * pt[i].y;
         }
         return std::fabs(ans / 2.0);
     }
@@ -423,49 +423,49 @@ public:
         ans.x = ans.y = 0.0;
         int i;
         double area = 0.0;
-        for(i = 0; i &amp;lt; n; i &#43;&#43;)
+        for(i = 0; i < n; i ++)
         {
-            int nt = (i &#43; 1) % n;
+            int nt = (i + 1) % n;
             double tp = pt[i].x * pt[nt].y - pt[nt].x * pt[i].y;
-            area &#43;= tp;
-            ans.x &#43;= tp * (pt[i].x &#43; pt[nt].x);
-            ans.y &#43;= tp * (pt[i].y &#43; pt[nt].y);
+            area += tp;
+            ans.x += tp * (pt[i].x + pt[nt].x);
+            ans.y += tp * (pt[i].y + pt[nt].y);
         }
         ans.x /= 3 * area;
         ans.y /= 3 * area;
         return ans;
     }
     //判断点在凸多边形内，参数：点[_Off]
-    bool chas(const point &amp;amp;_Off) const
+    bool chas(const point &_Off) const
     {
         double tp = 0, np;
         int i;
-        for(i = 0; i &amp;lt; n; i &#43;&#43;)
+        for(i = 0; i < n; i ++)
         {
-            np = pVector(pt[i], pt[(i &#43; 1) % n]) * _Off;
-            if(tp * np &amp;lt; -eps)
+            np = pVector(pt[i], pt[(i + 1) % n]) * _Off;
+            if(tp * np < -eps)
                 return false;
-            tp = (std::fabs(np) &amp;gt; eps)?np: tp;
+            tp = (std::fabs(np) > eps)?np: tp;
         }
         return true;
     }
     //判断点是否在任意多边形内[射线法]，O(n)
-    bool ahas(const point &amp;amp;_Off) const
+    bool ahas(const point &_Off) const
     {
         int ret = 0;
         double infv = 1e-10;//坐标系最大范围
         pVector l = pVector(_Off, point( -infv ,_Off.y));
-        for(int i = 0; i &amp;lt; n; i &#43;&#43;)
+        for(int i = 0; i < n; i ++)
         {
-            pVector ln = pVector(pt[i], pt[(i &#43; 1) % n]);
-            if(fabs(ln.s.y - ln.e.y) &amp;gt; eps)
+            pVector ln = pVector(pt[i], pt[(i + 1) % n]);
+            if(fabs(ln.s.y - ln.e.y) > eps)
             {
-                point tp = (ln.s.y &amp;gt; ln.e.y)? ln.s: ln.e;
-                if(fabs(tp.y - _Off.y) &amp;lt; eps &amp;amp;&amp;amp; tp.x &amp;lt; _Off.x &#43; eps)
-                    ret &#43;&#43;;
+                point tp = (ln.s.y > ln.e.y)? ln.s: ln.e;
+                if(fabs(tp.y - _Off.y) < eps && tp.x < _Off.x + eps)
+                    ret ++;
             }
             else if(ln.isCrossSS(l))
-                ret &#43;&#43;;
+                ret ++;
         }
         return (ret % 2 == 1);
     }
@@ -478,52 +478,52 @@ public:
         double tp = 0.0, np;
         bool flag = true;
         int i, pn = 0, spn = 0;
-        for(i = 0; i &amp;lt; n; i &#43;&#43;)
+        for(i = 0; i < n; i ++)
         {
             if(flag)
-                pt[pn &#43;&#43;] = pt[i];
+                pt[pn ++] = pt[i];
             else
-                ret.pt[ret.n &#43;&#43;] = pt[i];
-            np = _Off * pt[(i &#43; 1) % n];
-            if(tp * np &amp;lt; -eps)
+                ret.pt[ret.n ++] = pt[i];
+            np = _Off * pt[(i + 1) % n];
+            if(tp * np < -eps)
             {
                 flag = !flag;
-                spt[spn &#43;&#43;] = _Off.crossLPt(pVector(pt[i], pt[(i &#43; 1) % n]));
+                spt[spn ++] = _Off.crossLPt(pVector(pt[i], pt[(i + 1) % n]));
             }
-            tp = (std::fabs(np) &amp;gt; eps)?np: tp;
+            tp = (std::fabs(np) > eps)?np: tp;
         }
-        ret.pt[ret.n &#43;&#43;] = spt[0];
-        ret.pt[ret.n &#43;&#43;] = spt[1];
+        ret.pt[ret.n ++] = spt[0];
+        ret.pt[ret.n ++] = spt[1];
         n = pn;
         return ret;
     }
 
     //-------------凸包-------------
     //Graham扫描法，复杂度O(nlg(n)),结果为逆时针
-    //#include &amp;lt;algorithm&amp;gt;
-    static bool graham_cmp(const point &amp;amp;l, const point &amp;amp;r)//凸包排序函数
+    //#include <algorithm>
+    static bool graham_cmp(const point &l, const point &r)//凸包排序函数
     {
-        return l.y &amp;lt; r.y || (l.y == r.y &amp;amp;&amp;amp; l.x &amp;lt; r.x);
+        return l.y < r.y || (l.y == r.y && l.x < r.x);
     }
-    polygon&amp;amp; graham(point _p[], int _n)
+    polygon& graham(point _p[], int _n)
     {
         int i, len;
-        std::sort(_p, _p &#43; _n, polygon::graham_cmp);
+        std::sort(_p, _p + _n, polygon::graham_cmp);
         n = 1;
         pt[0] = _p[0], pt[1] = _p[1];
-        for(i = 2; i &amp;lt; _n; i &#43;&#43;)
+        for(i = 2; i < _n; i ++)
         {
-            while(n &amp;amp;&amp;amp; point::xmult(_p[i], pt[n], pt[n - 1]) &amp;gt;= 0)
+            while(n && point::xmult(_p[i], pt[n], pt[n - 1]) >= 0)
                 n --;
-            pt[&#43;&#43; n] = _p[i];
+            pt[++ n] = _p[i];
         }
         len = n;
-        pt[&#43;&#43; n] = _p[_n - 2];
-        for(i = _n - 3; i &amp;gt;= 0; i --)
+        pt[++ n] = _p[_n - 2];
+        for(i = _n - 3; i >= 0; i --)
         {
-            while(n != len &amp;amp;&amp;amp; point::xmult(_p[i], pt[n], pt[n - 1]) &amp;gt;= 0)
+            while(n != len && point::xmult(_p[i], pt[n], pt[n - 1]) >= 0)
                 n --;
-            pt[&#43;&#43; n] = _p[i];
+            pt[++ n] = _p[i];
         }
         return (*this);
     }
@@ -535,40 +535,40 @@ public:
         int i = 1;
         double ret = 0.0;
         pt[n] = pt[0];
-        for(int j = 0; j &amp;lt; n; j &#43;&#43;)
+        for(int j = 0; j < n; j ++)
         {
-            while(fabs(point::xmult(pt[j], pt[j &#43; 1], pt[i &#43; 1])) &amp;gt; fabs(point::xmult(pt[j], pt[j &#43; 1], pt[i])) &#43; eps)
-                i = (i &#43; 1) % n;
-            //pt[i]和pt[j],pt[i &#43; 1]和pt[j &#43; 1]可能是对踵点
-            ret = std::max(ret, std::max(pt[i].dis(pt[j]), pt[i &#43; 1].dis(pt[j &#43; 1])));
+            while(fabs(point::xmult(pt[j], pt[j + 1], pt[i + 1])) > fabs(point::xmult(pt[j], pt[j + 1], pt[i])) + eps)
+                i = (i + 1) % n;
+            //pt[i]和pt[j],pt[i + 1]和pt[j + 1]可能是对踵点
+            ret = std::max(ret, std::max(pt[i].dis(pt[j]), pt[i + 1].dis(pt[j + 1])));
         }
         return ret;
     }
 
     //凸包旋转卡壳(注意点必须逆时针排列)
     //返回值两凸包的最短距离
-    double rotating_calipers(polygon &amp;amp;_Off)
+    double rotating_calipers(polygon &_Off)
     {
         int i = 0;
         double ret = 1e10;//inf
         pt[n] = pt[0];
         _Off.pt[_Off.n] = _Off.pt[0];
         //注意凸包必须逆时针排列且pt[0]是左下角点的位置
-        while(_Off.pt[i &#43; 1].y &amp;gt; _Off.pt[i].y)
-            i = (i &#43; 1) % _Off.n;
-        for(int j = 0; j &amp;lt; n; j &#43;&#43;)
+        while(_Off.pt[i + 1].y > _Off.pt[i].y)
+            i = (i + 1) % _Off.n;
+        for(int j = 0; j < n; j ++)
         {
             double tp;
-            //逆时针时为 &amp;gt;,顺时针则相反
-            while((tp = point::xmult(pt[j], pt[j &#43; 1], _Off.pt[i &#43; 1]) - point::xmult( pt[j], pt[j &#43; 1], _Off.pt[i])) &amp;gt; eps)
-                i = (i &#43; 1) % _Off.n;
-            //(pt[i],pt[i&#43;1])和(_Off.pt[j],_Off.pt[j &#43; 1])可能是最近线段
-            ret = std::min(ret, pVector(pt[j], pt[j &#43; 1]).dis(_Off.pt[i], true));
-            ret = std::min(ret, pVector(_Off.pt[i], _Off.pt[i &#43; 1]).dis(pt[j &#43; 1], true));
-            if(tp &amp;gt; -eps)//如果不考虑TLE问题最好不要加这个判断
+            //逆时针时为 >,顺时针则相反
+            while((tp = point::xmult(pt[j], pt[j + 1], _Off.pt[i + 1]) - point::xmult( pt[j], pt[j + 1], _Off.pt[i])) > eps)
+                i = (i + 1) % _Off.n;
+            //(pt[i],pt[i+1])和(_Off.pt[j],_Off.pt[j + 1])可能是最近线段
+            ret = std::min(ret, pVector(pt[j], pt[j + 1]).dis(_Off.pt[i], true));
+            ret = std::min(ret, pVector(_Off.pt[i], _Off.pt[i + 1]).dis(pt[j + 1], true));
+            if(tp > -eps)//如果不考虑TLE问题最好不要加这个判断
             {
-                ret = std::min(ret, pVector(pt[j], pt[j &#43; 1]).dis(_Off.pt[i &#43; 1], true));
-                ret = std::min(ret, pVector(_Off.pt[i], _Off.pt[i &#43; 1]).dis(pt[j], true));
+                ret = std::min(ret, pVector(pt[j], pt[j + 1]).dis(_Off.pt[i + 1], true));
+                ret = std::min(ret, pVector(_Off.pt[i], _Off.pt[i + 1]).dis(pt[j], true));
             }
         }
         return ret;
@@ -576,65 +576,65 @@ public:
 
     //-----------半平面交-------------
     //复杂度:O(nlog2(n))
-    //#include &amp;lt;algorithm&amp;gt;
+    //#include <algorithm>
     //半平面计算极角函数[如果考虑效率可以用成员变量记录]
-    static double hpc_pa(const pVector &amp;amp;_Off)
+    static double hpc_pa(const pVector &_Off)
     {
         return atan2(_Off.e.y - _Off.s.y, _Off.e.x - _Off.s.x);
     }
     //半平面交排序函数[优先顺序: 1.极角 2.前面的直线在后面的左边]
-    static bool hpc_cmp(const pVector &amp;amp;l, const pVector &amp;amp;r)
+    static bool hpc_cmp(const pVector &l, const pVector &r)
     {
         double lp = hpc_pa(l), rp = hpc_pa(r);
-        if(fabs(lp - rp) &amp;gt; eps)
-            return lp &amp;lt; rp;
-        return point::xmult(l.s, r.e, r.s) &amp;lt; 0.0;
+        if(fabs(lp - rp) > eps)
+            return lp < rp;
+        return point::xmult(l.s, r.e, r.s) < 0.0;
     }
     //用于计算的双端队列
     pVector dequeue[maxpn];
     //获取半平面交的多边形（多边形的核）
     //参数：向量集合[l]，向量数量[ln];(半平面方向在向量左边）
     //函数运行后如果n[即返回多边形的点数量]为0则不存在半平面交的多边形（不存在区域或区域面积无穷大）
-    polygon&amp;amp; halfPanelCross(pVector _Off[], int ln)
+    polygon& halfPanelCross(pVector _Off[], int ln)
     {
         int i, tn;
         n = 0;
-        std::sort(_Off, _Off &#43; ln, hpc_cmp);
+        std::sort(_Off, _Off + ln, hpc_cmp);
         //平面在向量左边的筛选
-        for(i = tn = 1; i &amp;lt; ln; i &#43;&#43;)
-            if(fabs(hpc_pa(_Off[i]) - hpc_pa(_Off[i - 1])) &amp;gt; eps)
-                _Off[tn &#43;&#43;] = _Off[i];
+        for(i = tn = 1; i < ln; i ++)
+            if(fabs(hpc_pa(_Off[i]) - hpc_pa(_Off[i - 1])) > eps)
+                _Off[tn ++] = _Off[i];
         ln = tn;
         int bot = 0, top = 1;
         dequeue[0] = _Off[0];
         dequeue[1] = _Off[1];
-        for(i = 2; i &amp;lt; ln; i &#43;&#43;)
+        for(i = 2; i < ln; i ++)
         {
             if(dequeue[top].parallel(dequeue[top - 1]) ||
-                dequeue[bot].parallel(dequeue[bot &#43; 1]))
+                dequeue[bot].parallel(dequeue[bot + 1]))
                 return (*this);
-            while(bot &amp;lt; top &amp;amp;&amp;amp;
-                point::xmult(dequeue[top].crossLPt(dequeue[top - 1]), _Off[i].e, _Off[i].s) &amp;gt; eps)
+            while(bot < top &&
+                point::xmult(dequeue[top].crossLPt(dequeue[top - 1]), _Off[i].e, _Off[i].s) > eps)
                 top --;
-            while(bot &amp;lt; top &amp;amp;&amp;amp;
-                point::xmult(dequeue[bot].crossLPt(dequeue[bot &#43; 1]), _Off[i].e, _Off[i].s) &amp;gt; eps)
-                bot &#43;&#43;;
-            dequeue[&#43;&#43; top] = _Off[i];
+            while(bot < top &&
+                point::xmult(dequeue[bot].crossLPt(dequeue[bot + 1]), _Off[i].e, _Off[i].s) > eps)
+                bot ++;
+            dequeue[++ top] = _Off[i];
         }
 
-        while(bot &amp;lt; top &amp;amp;&amp;amp;
-            point::xmult(dequeue[top].crossLPt(dequeue[top - 1]), dequeue[bot].e, dequeue[bot].s) &amp;gt; eps)
+        while(bot < top &&
+            point::xmult(dequeue[top].crossLPt(dequeue[top - 1]), dequeue[bot].e, dequeue[bot].s) > eps)
             top --;
-        while(bot &amp;lt; top &amp;amp;&amp;amp;
-            point::xmult(dequeue[bot].crossLPt(dequeue[bot &#43; 1]), dequeue[top].e, dequeue[top].s) &amp;gt; eps)
-            bot &#43;&#43;;
+        while(bot < top &&
+            point::xmult(dequeue[bot].crossLPt(dequeue[bot + 1]), dequeue[top].e, dequeue[top].s) > eps)
+            bot ++;
         //计算交点(注意不同直线形成的交点可能重合)
-        if(top &amp;lt;= bot &#43; 1)
+        if(top <= bot + 1)
             return (*this);
-        for(i = bot; i &amp;lt; top; i &#43;&#43;)
-            pt[n &#43;&#43;] = dequeue[i].crossLPt(dequeue[i &#43; 1]);
-        if(bot &amp;lt; top &#43; 1)
-            pt[n &#43;&#43;] = dequeue[bot].crossLPt(dequeue[top]);
+        for(i = bot; i < top; i ++)
+            pt[n ++] = dequeue[i].crossLPt(dequeue[i + 1]);
+        if(bot < top + 1)
+            pt[n ++] = dequeue[bot].crossLPt(dequeue[top]);
         return (*this);
     }
 };
@@ -648,91 +648,91 @@ public:
     //-------圆---------
 
     //判断圆在多边形内
-    bool inside(const polygon &amp;amp;_Off) const
+    bool inside(const polygon &_Off) const
     {
         if(_Off.ahas(c) == false)
             return false;
-        for(int i = 0; i &amp;lt; _Off.n; i &#43;&#43;)
+        for(int i = 0; i < _Off.n; i ++)
         {
-            pVector l = pVector(_Off.pt[i], _Off.pt[(i &#43; 1) % _Off.n]);
-            if(l.dis(c, true) &amp;lt; r - eps)
+            pVector l = pVector(_Off.pt[i], _Off.pt[(i + 1) % _Off.n]);
+            if(l.dis(c, true) < r - eps)
                 return false;
         }
         return true;
     }
 
     //判断多边形在圆内（线段和折线类似）
-    bool has(const polygon &amp;amp;_Off) const
+    bool has(const polygon &_Off) const
     {
-        for(int i = 0; i &amp;lt; _Off.n; i &#43;&#43;)
-            if(_Off.pt[i].dis2(c) &amp;gt; r * r - eps)
+        for(int i = 0; i < _Off.n; i ++)
+            if(_Off.pt[i].dis2(c) > r * r - eps)
                 return false;
         return true;
     }
 
     //-------圆弧-------
     //圆被其他圆截得的圆弧，参数：圆[_Off]
-    circle operator-(circle &amp;amp;_Off) const
+    circle operator-(circle &_Off) const
     {
         //注意圆必须相交，圆心不能重合
         double d2 = c.dis2(_Off.c);
         double d = c.dis(_Off.c);
-        double ans = std::acos((d2 &#43; r * r - _Off.r * _Off.r) / (2 * d * r));
+        double ans = std::acos((d2 + r * r - _Off.r * _Off.r) / (2 * d * r));
         point py = _Off.c - c;
         double oans = std::atan2(py.y, py.x);
         circle res;
         res.c = c;
         res.r = r;
-        res.db = oans &#43; ans;
-        res.de = oans - ans &#43; 2 * pi;
+        res.db = oans + ans;
+        res.de = oans - ans + 2 * pi;
         return res;
     }
     //圆被其他圆截得的圆弧，参数：圆[_Off]
-    circle operator&#43;(circle &amp;amp;_Off) const
+    circle operator+(circle &_Off) const
     {
         //注意圆必须相交，圆心不能重合
         double d2 = c.dis2(_Off.c);
         double d = c.dis(_Off.c);
-        double ans = std::acos((d2 &#43; r * r - _Off.r * _Off.r) / (2 * d * r));
+        double ans = std::acos((d2 + r * r - _Off.r * _Off.r) / (2 * d * r));
         point py = _Off.c - c;
         double oans = std::atan2(py.y, py.x);
         circle res;
         res.c = c;
         res.r = r;
         res.db = oans - ans;
-        res.de = oans &#43; ans;
+        res.de = oans + ans;
         return res;
     }
 
     //过圆外一点的两条切线
     //参数：点[_Off](必须在圆外),返回：两条切线(切线的s点为_Off,e点为切点)
-    std::pair&amp;lt;pVector, pVector&amp;gt;  tangent(const point &amp;amp;_Off) const
+    std::pair<pvector, pvector>  tangent(const point &_Off) const
     {
         double d = c.dis(_Off);
         //计算角度偏移的方式
         double angp = std::acos(r / d), ango = std::atan2(_Off.y - c.y, _Off.x - c.x);
-        point pl = point(c.x &#43; r * std::cos(ango &#43; angp), c.y &#43; r * std::sin(ango &#43; angp)),
-            pr = point(c.x &#43; r * std::cos(ango - angp), c.y &#43; r * std::sin(ango - angp));
+        point pl = point(c.x + r * std::cos(ango + angp), c.y + r * std::sin(ango + angp)),
+            pr = point(c.x + r * std::cos(ango - angp), c.y + r * std::sin(ango - angp));
         return std::make_pair(pVector(_Off, pl), pVector(_Off, pr));
     }
 
     //计算直线和圆的两个交点
     //参数：直线[_Off](两点式)，返回两个交点，注意直线必须和圆有两个交点
-    std::pair&amp;lt;point, point&amp;gt; cross(pVector _Off) const
+    std::pair<point, point> cross(pVector _Off) const
     {
         _Off.pton();
         //到直线垂足的距离
-        double td = fabs(_Off.a * c.x &#43; _Off.b * c.y &#43; _Off.c) / sqrt(_Off.a * _Off.a &#43; _Off.b * _Off.b);
+        double td = fabs(_Off.a * c.x + _Off.b * c.y + _Off.c) / sqrt(_Off.a * _Off.a + _Off.b * _Off.b);
 
         //计算垂足坐标
-        double xp = (_Off.b * _Off.b * c.x - _Off.a * _Off.b * c.y - _Off.a * _Off.c) / ( _Off.a * _Off.a &#43; _Off.b * _Off.b);
-        double yp = (- _Off.a * _Off.b * c.x &#43; _Off.a * _Off.a * c.y - _Off.b * _Off.c) / (_Off.a * _Off.a &#43; _Off.b * _Off.b);
+        double xp = (_Off.b * _Off.b * c.x - _Off.a * _Off.b * c.y - _Off.a * _Off.c) / ( _Off.a * _Off.a + _Off.b * _Off.b);
+        double yp = (- _Off.a * _Off.b * c.x + _Off.a * _Off.a * c.y - _Off.b * _Off.c) / (_Off.a * _Off.a + _Off.b * _Off.b);
 
         double ango = std::atan2(yp - c.y, xp - c.x);
         double angp = std::acos(td / r);
 
-        return std::make_pair(point(c.x &#43; r * std::cos(ango &#43; angp), c.y &#43; r * std::sin(ango &#43; angp)),
-            point(c.x &#43; r * std::cos(ango - angp), c.y &#43; r * std::sin(ango - angp)));
+        return std::make_pair(point(c.x + r * std::cos(ango + angp), c.y + r * std::sin(ango + angp)),
+            point(c.x + r * std::cos(ango - angp), c.y + r * std::sin(ango - angp)));
     }
 };
 
@@ -754,14 +754,14 @@ public:
     point circumcenter()
     {
         pVector u,v;
-        u.s.x = (a.x &#43; b.x) / 2;
-        u.s.y = (a.y &#43; b.y) / 2;
-        u.e.x = u.s.x - a.y &#43; b.y;
-        u.e.y = u.s.y &#43; a.x - b.x;
-        v.s.x = (a.x &#43; c.x) / 2;
-        v.s.y = (a.y &#43; c.y) / 2;
-        v.e.x = v.s.x - a.y &#43; c.y;
-        v.e.y = v.s.y &#43; a.x - c.x;
+        u.s.x = (a.x + b.x) / 2;
+        u.s.y = (a.y + b.y) / 2;
+        u.e.x = u.s.x - a.y + b.y;
+        u.e.y = u.s.y + a.x - b.x;
+        v.s.x = (a.x + c.x) / 2;
+        v.s.y = (a.y + c.y) / 2;
+        v.e.x = v.s.x - a.y + c.y;
+        v.e.y = v.s.y + a.x - c.x;
         return u.crossLPt(v);
     }
 
@@ -774,13 +774,13 @@ public:
         u.s = a;
         m = atan2(b.y - a.y, b.x - a.x);
         n = atan2(c.y - a.y, c.x - a.x);
-        u.e.x = u.s.x &#43; cos((m &#43; n) / 2);
-        u.e.y = u.s.y &#43; sin((m &#43; n) / 2);
+        u.e.x = u.s.x + cos((m + n) / 2);
+        u.e.y = u.s.y + sin((m + n) / 2);
         v.s = b;
         m = atan2(a.y - b.y, a.x - b.x);
         n = atan2(c.y - b.y, c.x - b.x);
-        v.e.x = v.s.x &#43; cos((m &#43; n) / 2);
-        v.e.y = v.s.y &#43; sin((m &#43; n) / 2);
+        v.e.x = v.s.x + cos((m + n) / 2);
+        v.e.y = v.s.y + sin((m + n) / 2);
         return u.crossLPt(v);
     }
 
@@ -790,11 +790,11 @@ public:
     {
         pVector u,v;
         u.s = c;
-        u.e.x = u.s.x - a.y &#43; b.y;
-        u.e.y = u.s.y &#43; a.x - b.x;
+        u.e.x = u.s.x - a.y + b.y;
+        u.e.y = u.s.y + a.x - b.x;
         v.s = b;
-        v.e.x = v.s.x - a.y &#43; c.y;
-        v.e.y = v.s.y &#43; a.x - c.x;
+        v.e.x = v.s.x - a.y + c.y;
+        v.e.y = v.s.y + a.x - c.x;
         return u.crossLPt(v);
     }
 
@@ -805,11 +805,11 @@ public:
     point barycenter()
     {
         pVector u,v;
-        u.s.x = (a.x &#43; b.x) / 2;
-        u.s.y = (a.y &#43; b.y) / 2;
+        u.s.x = (a.x + b.x) / 2;
+        u.s.y = (a.y + b.y) / 2;
         u.e = c;
-        v.s.x = (a.x &#43; c.x) / 2;
-        v.s.y = (a.y &#43; c.y) / 2;
+        v.s.x = (a.x + c.x) / 2;
+        v.s.y = (a.y + c.y) / 2;
         v.e = b;
         return u.crossLPt(v);
     }
@@ -819,21 +819,21 @@ public:
     point fermentpoint()
     {
         point u, v;
-        double step = fabs(a.x) &#43; fabs(a.y) &#43; fabs(b.x) &#43; fabs(b.y) &#43; fabs(c.x) &#43; fabs(c.y);
+        double step = fabs(a.x) + fabs(a.y) + fabs(b.x) + fabs(b.y) + fabs(c.x) + fabs(c.y);
         int i, j, k;
-        u.x = (a.x &#43; b.x &#43; c.x) / 3;
-        u.y = (a.y &#43; b.y &#43; c.y) / 3;
-        while (step &amp;gt; eps)
+        u.x = (a.x + b.x + c.x) / 3;
+        u.y = (a.y + b.y + c.y) / 3;
+        while (step > eps)
         {
-            for (k = 0; k &amp;lt; 10; step /= 2, k &#43;&#43;)
+            for (k = 0; k < 10; step /= 2, k ++)
             {
-                for (i = -1; i &amp;lt;= 1; i &#43;&#43;)
+                for (i = -1; i <= 1; i ++)
                 {
-                    for (j =- 1; j &amp;lt;= 1; j &#43;&#43;)
+                    for (j =- 1; j <= 1; j ++)
                     {
-                        v.x = u.x &#43; step * i;
-                        v.y = u.y &#43; step * j;
-                        if (u.dis(a) &#43; u.dis(b) &#43; u.dis(c) &amp;gt; v.dis(a) &#43; v.dis(b) &#43; v.dis(c))
+                        v.x = u.x + step * i;
+                        v.y = u.y + step * j;
+                        if (u.dis(a) + u.dis(b) + u.dis(c) > v.dis(a) + v.dis(b) + v.dis(c))
                             u = v;
                     }
                 }
@@ -846,33 +846,33 @@ n边形能分解成三角形的分法数为 h(n – 2)
 n个节点能组成的二叉树个数为 h(n)
 一个栈(无穷大)的进栈序列为1，2，3，…，n，出栈序列种数为 h(n)</p></div><div class=article-more><a href=//owent.net/2010/15.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-09-08T16:47:57.000+00:00 itemprop=datePublished>2010-09-08</time></div></div></article><article class="article-panel archive-article archive-type-17"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/17.html target=_blank itemprop=url>简易四则运算(ACM个人模板)</a></h1></header><div class=article-summary><pre><code class=language-cpp>/**
  * 简易四则运算（栈实现）
- * #include &amp;lt;stack&amp;gt;
- * #include &amp;lt;cstring&amp;gt;
+ * #include <stack>
+ * #include <cstring>
  */
-std::stack&amp;lt;char&amp;gt; opr;
-std::stack&amp;lt;double&amp;gt; num;
+std::stack<char> opr;
+std::stack<double> num;
 char oprPRI[256];
 //初始化调用
 void initCalc()
 {
     //优先级设置
-    char oprMap[7][2] = { {&amp;#39;&#43;&amp;#39;, 1}, {&amp;#39;-&amp;#39;, 1}, {&amp;#39;*&amp;#39;, 2}, {&amp;#39;/&amp;#39;, 2}, {&amp;#39;^&amp;#39;, 3}, {&amp;#39;(&amp;#39;, 100}, {&amp;#39;)&amp;#39;, 0} };
-    for(int i = 0; i &amp;lt; 7; i &#43;&#43;)
+    char oprMap[7][2] = { {'+', 1}, {'-', 1}, {'*', 2}, {'/', 2}, {'^', 3}, {'(', 100}, {')', 0} };
+    for(int i = 0; i < 7; i ++)
         oprPRI[oprMap[i][0]] = oprMap[i][1];
 }
 bool checkNum(char c)
 {
-    return c == &amp;#39;.&amp;#39; || (c &amp;gt;= &amp;#39;0&amp;#39; &amp;amp;&amp;amp; c &amp;lt;= &amp;#39;9&amp;#39;);
+    return c == '.' || (c >= '0' && c <= '9');
 }
 double calcOpr(double l, double r, char opr)
 {
     switch(opr)
     {
-        case &amp;#39;&#43;&amp;#39;: return l &#43; r;
-        case &amp;#39;-&amp;#39;: return l - r;
-        case &amp;#39;*&amp;#39;: return l * r;
-        case &amp;#39;/&amp;#39;: return l / r;
-        case &amp;#39;^&amp;#39;: return ::pow(l, r);
+        case '+': return l + r;
+        case '-': return l - r;
+        case '*': return l * r;
+        case '/': return l / r;
+        case '^': return ::pow(l, r);
     }
     return 0.0;
 }
@@ -894,37 +894,37 @@ double calc(const char str[])
         num.pop();
     int i = 0, len = strlen(str);
     num.push(0.0);
-    opr.push(&amp;#39;(&amp;#39;);
-    while(i &amp;lt; len)
+    opr.push('(');
+    while(i < len)
     {
         if(::checkNum(str[i]))
         {
             double l;
-            ::sscanf(str &#43; i, &amp;#34;%lf&amp;#34;, &amp;amp;l);
+            ::sscanf(str + i, "%lf", &l);
             while(::checkNum(str[i]))
-            i &#43;&#43;;
+            i ++;
             num.push(l);
         }
         else
         {
-            char c = str[i &#43;&#43;];
-            if(c == &amp;#39;)&amp;#39;)
+            char c = str[i ++];
+            if(c == ')')
             {
-                while(opr.top() != &amp;#39;(&amp;#39;)
+                while(opr.top() != '(')
                     calcStack();
                 opr.pop();
             }
-            else if(oprPRI[c] &amp;gt; oprPRI[opr.top()])
+            else if(oprPRI[c] > oprPRI[opr.top()])
                 opr.push(c);
             else
             {
-                while(opr.top() != &amp;#39;(&amp;#39; &amp;amp;&amp;amp; oprPRI[c] &amp;lt;= oprPRI[opr.top()])
+                while(opr.top() != '(' && oprPRI[c] <= oprPRI[opr.top()])
                     calcStack();
                 opr.push(c);
             }
         }
     }
-    while(opr.size() &amp;gt; 1)
+    while(opr.size() > 1)
         calcStack();
     return num.top();
 }</code></pre></div><div class=article-more><a href=//owent.net/2010/17.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-08-10T18:40:31.000+00:00 itemprop=datePublished>2010-08-10</time></div></div></article><article class="article-panel archive-article archive-type-18"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/18.html target=_blank itemprop=url>数论模板（个人模板）</a></h1></header><div class=article-summary><h2 id=基础函数>基础函数:</h2><pre><code class=language-cpp>// 最大公约数,欧几里得定理
@@ -933,8 +933,8 @@ int gcd(int a, int b)
     return b?gcd(b, a % b): a;
 }
 // 拓展欧几里得定理
-// 求解ax &#43; by = gcd(a,b)
-int ext_gcd(int a, int b, int &amp;amp;x, int &amp;amp;y)
+// 求解ax + by = gcd(a,b)
+int ext_gcd(int a, int b, int &x, int &y)
 {
     int tmp, ret;
     if(!b)
@@ -950,7 +950,7 @@ int ext_gcd(int a, int b, int &amp;amp;x, int &amp;amp;y)
     return ret;
 }
 //交换数值
-void swap(int &amp;amp;a, int &amp;amp;b)
+void swap(int &a, int &b)
 {
     a ^= b ^= a ^= b;
 }
@@ -965,10 +965,10 @@ int PowerMod(int a, int b, int c)
     int tp = 1;
     while (b)
     {
-        if (b &amp;amp; 1)
+        if (b & 1)
             tp = (tp * a) % c;
         a = (a * a) % c;
-        b &amp;gt;&amp;gt;= 1;
+        b >>= 1;
     }
     return tp;
 }</code></pre><h2 id=1欧拉函数>1.欧拉函数</h2><p>Ψ（n） = 小于n且与n互质的数的个数</p></div><div class=article-more><a href=//owent.net/2010/18.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-08-09T15:54:02.000+00:00 itemprop=datePublished>2010-08-09</time></div></div></article><article class="article-panel archive-article archive-type-19"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/19.html target=_blank itemprop=url>POJ PKU 2826 An Easy Problem?! 解题报告</a></h1></header><div class=article-summary><p>题目链接：

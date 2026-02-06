@@ -12,11 +12,11 @@ long prime[MAXP] = {0},num_prime = 0;
 int isNotPrime[MAXP] = {1, 1};
 void GetPrime_Init()//初始化调用
 {
-    for(long i = 2 ; i &amp;lt;  MAXP ; i &#43;&#43;)
+    for(long i = 2 ; i <  MAXP ; i ++)
     {
         if(! isNotPrime[i])
-            prime[num_prime &#43;&#43;]=i;
-        for(long j = 0 ; j &amp;lt; num_prime &amp;amp;&amp;amp; i * prime[j] &amp;lt;  MAXP ; j &#43;&#43;)
+            prime[num_prime ++]=i;
+        for(long j = 0 ; j < num_prime && i * prime[j] <  MAXP ; j ++)
         {
             isNotPrime[i * prime[j]] = 1;
             if( !(i % prime[j]))

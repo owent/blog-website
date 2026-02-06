@@ -3,8 +3,8 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/tags/trick/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-879"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/879.html target=_blank itemprop=url>一个C++关于成员变量偏移地址的小Trick</a></h1></header><div class=article-summary><p>今天看到一个小例子，发现了一个小trick。见代码：</p><pre><code class=language-cpp>#include &amp;lt;cstdio&amp;gt;
-#include &amp;lt;cstdlib&amp;gt;
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-879"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/879.html target=_blank itemprop=url>一个C++关于成员变量偏移地址的小Trick</a></h1></header><div class=article-summary><p>今天看到一个小例子，发现了一个小trick。见代码：</p><pre><code class=language-cpp>#include <cstdio>
+#include <cstdlib>
 
 class base_1
 {
@@ -26,11 +26,11 @@ public:
 
 int main(int argc, char* argv[]) {
 
-    printf(&amp;#34;&amp;amp;base_1::a = %p\n&amp;#34;, &amp;amp;base_1::a);
-    printf(&amp;#34;&amp;amp;base_2::b = %p\n&amp;#34;, &amp;amp;base_2::b);
-    printf(&amp;#34;&amp;amp;base_3::a = %p\n&amp;#34;, &amp;amp;base_3::a);
-    printf(&amp;#34;&amp;amp;base_3::b = %p\n&amp;#34;, &amp;amp;base_3::b);
-    printf(&amp;#34;&amp;amp;base_3::c = %p\n&amp;#34;, &amp;amp;base_3::c);
+    printf("&base_1::a = %p\n", &base_1::a);
+    printf("&base_2::b = %p\n", &base_2::b);
+    printf("&base_3::a = %p\n", &base_3::a);
+    printf("&base_3::b = %p\n", &base_3::b);
+    printf("&base_3::c = %p\n", &base_3::c);
 
 
     base_3 t;
@@ -41,16 +41,16 @@ int main(int argc, char* argv[]) {
     typedef int (base_3::*tip);
     tip pm = NULL;
 
-    printf(&amp;#34;base_3::a = %d\n&amp;#34;, t.base_3::a);
-    printf(&amp;#34;base_3::b = %d\n&amp;#34;, t.base_3::b);
-    printf(&amp;#34;base_3::c = %d\n&amp;#34;, t.base_3::c);
+    printf("base_3::a = %d\n", t.base_3::a);
+    printf("base_3::b = %d\n", t.base_3::b);
+    printf("base_3::c = %d\n", t.base_3::c);
 
-    pm = &amp;amp;base_3::a;
-    printf(&amp;#34;base_3::a(%p) = %d(ptr)\n&amp;#34;, pm, t.*pm);
-    pm = &amp;amp;base_3::b;
-    printf(&amp;#34;base_3::b(%p) = %d(ptr)\n&amp;#34;, pm, t.*pm);
-    pm = &amp;amp;base_3::c;
-    printf(&amp;#34;base_3::c(%p) = %d(ptr)\n&amp;#34;, pm, t.*pm);
+    pm = &base_3::a;
+    printf("base_3::a(%p) = %d(ptr)\n", pm, t.*pm);
+    pm = &base_3::b;
+    printf("base_3::b(%p) = %d(ptr)\n", pm, t.*pm);
+    pm = &base_3::c;
+    printf("base_3::c(%p) = %d(ptr)\n", pm, t.*pm);
 
     return 0;
 }</code></pre><p>猜猜看这个代码输出什么？

@@ -6,7 +6,7 @@
 <button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-707eebfb3f4915b612f276f9b0983c40 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2010/54.html target=_blank itemprop=url>Hash模板 个人模板</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><pre><code class=language-cpp>/**
  * Hash模板
  * Based: 0
- * template&amp;lt;unsigned long _SZ,class _T, unsigned long *pFun(_T _Off)&amp;gt;
+ * template<unsigned long _sz,class _t, unsigned long *pfun(_t _off)>
  * class _My_Hash_ToInt
  * 传入数据大小_SZ,传入类型_T,Hash函数
  * 传入类型_T必须重载 = 和 == 符号
@@ -23,11 +23,11 @@ unsigned int SDBMHash(char *str)
 
     while (*str)
     {
-        // equivalent to: hash = 65599*hash &#43; (*str&#43;&#43;);
-        hash = (*str&#43;&#43;) &#43; (hash &amp;lt;&amp;lt; 6) &#43; (hash &amp;lt;&amp;lt; 16) - hash;
+        // equivalent to: hash = 65599*hash + (*str++);
+        hash = (*str++) + (hash << 6) + (hash << 16) - hash;
     }
 
-    return (hash &amp;amp; 0x7FFFFFFF);
+    return (hash & 0x7FFFFFFF);
 }
 
 // RS Hash Function
@@ -39,11 +39,11 @@ unsigned int RSHash(char *str)
 
     while (*str)
     {
-        hash = hash * a &#43; (*str&#43;&#43;);
+        hash = hash * a + (*str++);
         a *= b;
     }
 
-    return (hash &amp;amp; 0x7FFFFFFF);
+    return (hash & 0x7FFFFFFF);
 }
 
 // JS Hash Function
@@ -53,10 +53,10 @@ unsigned int JSHash(char *str)
 
     while (*str)
     {
-        hash ^= ((hash &amp;lt;&amp;lt; 5) &#43; (*str&#43;&#43;) &#43; (hash &amp;gt;&amp;gt; 2));
+        hash ^= ((hash << 5) + (*str++) + (hash >> 2));
     }
 
-    return (hash &amp;amp; 0x7FFFFFFF);
+    return (hash & 0x7FFFFFFF);
 }
 
 // P. J. Weinberger Hash Function
@@ -65,20 +65,20 @@ unsigned int PJWHash(char *str)
     unsigned int BitsInUnignedInt = (unsigned int)(sizeof(unsigned int) * 8);
     unsigned int ThreeQuarters    = (unsigned int)((BitsInUnignedInt  * 3) / 4);
     unsigned int OneEighth        = (unsigned int)(BitsInUnignedInt / 8);
-    unsigned int HighBits         = (unsigned int)(0xFFFFFFFF) &amp;lt;&amp;lt; (BitsInUnignedInt - OneEighth);
+    unsigned int HighBits         = (unsigned int)(0xFFFFFFFF) << (BitsInUnignedInt - OneEighth);
     unsigned int hash             = hashsize;
     unsigned int test             = 0;
 
     while (*str)
     {
-        hash = (hash &amp;lt;&amp;lt; OneEighth) &#43; (*str&#43;&#43;);
-        if ((test = hash &amp;amp; HighBits) != 0)
+        hash = (hash << OneEighth) + (*str++);
+        if ((test = hash & HighBits) != 0)
         {
-            hash = ((hash ^ (test &amp;gt;&amp;gt; ThreeQuarters)) &amp;amp; (~HighBits));
+            hash = ((hash ^ (test >> ThreeQuarters)) & (~HighBits));
         }
     }
 
-    return (hash &amp;amp; 0x7FFFFFFF);
+    return (hash & 0x7FFFFFFF);
 }
 
 // ELF Hash Function
@@ -89,15 +89,15 @@ unsigned int ELFHash(char *str)
 
     while (*str)
     {
-        hash = (hash &amp;lt;&amp;lt; 4) &#43; (*str&#43;&#43;);
-        if ((x = hash &amp;amp; 0xF0000000L) != 0)
+        hash = (hash << 4) + (*str++);
+        if ((x = hash & 0xF0000000L) != 0)
         {
-            hash ^= (x &amp;gt;&amp;gt; 24);
-            hash &amp;amp;= ~x;
+            hash ^= (x >> 24);
+            hash &= ~x;
         }
     }
 
-    return (hash &amp;amp; 0x7FFFFFFF);
+    return (hash & 0x7FFFFFFF);
 }
 
 // BKDR Hash Function
@@ -108,10 +108,10 @@ unsigned int BKDRHash(char *str)
 
     while (*str)
     {
-        hash = hash * seed &#43; (*str&#43;&#43;);
+        hash = hash * seed + (*str++);
     }
 
-    return (hash &amp;amp; 0x7FFFFFFF);
+    return (hash & 0x7FFFFFFF);
 }
 
 // DJB Hash Function
@@ -121,10 +121,10 @@ unsigned int DJBHash(char *str)
 
     while (*str)
     {
-        hash &#43;= (hash &amp;lt;&amp;lt; 5) &#43; (*str&#43;&#43;);
+        hash += (hash << 5) + (*str++);
     }
 
-    return (hash &amp;amp; 0x7FFFFFFF);
+    return (hash & 0x7FFFFFFF);
 }
 
 // AP Hash Function
@@ -133,23 +133,23 @@ unsigned int APHash(char *str)
     unsigned int hash = hashsize;
     int i;
 
-    for (i=0; *str; i&#43;&#43;)
+    for (i=0; *str; i++)
     {
-        if ((i &amp;amp; 1) == 0)
+        if ((i & 1) == 0)
         {
-            hash ^= ((hash &amp;lt;&amp;lt; 7) ^ (*str&#43;&#43;) ^ (hash &amp;gt;&amp;gt; 3));
+            hash ^= ((hash << 7) ^ (*str++) ^ (hash >> 3));
         }
         else
         {
-            hash ^= (~((hash &amp;lt;&amp;lt; 11) ^ (*str&#43;&#43;) ^ (hash &amp;gt;&amp;gt; 5)));
+            hash ^= (~((hash << 11) ^ (*str++) ^ (hash >> 5)));
         }
     }
 
-    return (hash &amp;amp; 0x7FFFFFFF);
+    return (hash & 0x7FFFFFFF);
 }
 
 // 程序模板
-template&amp;lt;typename _T&amp;gt;
+template<typename _t>
 class _My_Hash_ToInt_Data
 {
 public:
@@ -162,7 +162,7 @@ public:
     long times;
     long next;
 };
-template&amp;lt;long _SZ,class _T, unsigned long pFun(_T&amp;amp; _Off)&amp;gt;
+template<long _sz,class _t, unsigned long pfun(_t& _off)>
 class _My_Hash_ToInt
 {
 public:
@@ -175,7 +175,7 @@ public:
     long find(_T _Off)
     {
         long pos = hash[pFun(_Off)];
-        while(pos &amp;gt;= 0)
+        while(pos >= 0)
         {
             if(data[pos].data == _Off)
                 return pos;
@@ -188,11 +188,11 @@ public:
     {
         long oldPos = pFun(_Off);
         long pos = hash[oldPos];
-        while(pos &amp;gt;= 0)
+        while(pos >= 0)
         {
             if(data[pos].data == _Off)
             {
-                data[pos].times &#43;&#43;;
+                data[pos].times ++;
                 return pos;
             }
             else
@@ -202,7 +202,7 @@ public:
         data[length].times = 1;
         data[length].next = hash[oldPos];
         hash[oldPos] = length ;
-        return length &#43;&#43;;
+        return length ++;
     }
     void clear()
     {
@@ -212,7 +212,7 @@ public:
     }
     //Member
     long length;
-    _My_Hash_ToInt_Data&amp;lt;_T&amp;gt; data[_SZ];
+    _My_Hash_ToInt_Data<_T> data[_SZ];
     long hash[hashsize];
 };
 
@@ -221,22 +221,22 @@ class node
 {
 public:
     char str[60];
-    bool operator == (node &amp;amp;strin)
+    bool operator == (node &strin)
     {
         return !strcmp(str, strin.str);
     }
-    node&amp;amp; operator = (node &amp;amp;strin)
+    node& operator = (node &strin)
     {
         strcpy(str, strin.str);
         return (*this);
     }
 };
 //扩展Hash函数（注意修改）
-unsigned long ELFHashEx(node &amp;amp;strIn)
+unsigned long ELFHashEx(node &strIn)
 {
     return ELFHash(strIn.str);
 }
-_My_Hash_ToInt&amp;lt;10005, node, ELFHashEx&amp;gt;hash;//Hash类例子</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2010-03-15T12:58:47.000+00:00 itemprop=datePublished>2010-03-15</time></span>
+_My_Hash_ToInt<10005, node, ELFHashEx>hash;//Hash类例子</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2010-03-15T12:58:47.000+00:00 itemprop=datePublished>2010-03-15</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/acm.html>acm</a></li><li class=article-tag-list-item><a href=//owent.net/tags/template.html>template</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2010/53.html>上一篇<strong>ZOJ 3309 Search New Posts 解题报告</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2010/55.html>下一篇<strong>HDU 3336 Count the string 解题报告</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,

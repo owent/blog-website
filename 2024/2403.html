@@ -9,31 +9,31 @@
   // ...
 
   // Now wait for the worker thread to signal back from the Export method
-  std::unique_lock&amp;lt;std::mutex&amp;gt; lk_cv(synchronization_data_-&amp;gt;force_flush_cv_m);
+  std::unique_lock<std::mutex> lk_cv(synchronization_data_->force_flush_cv_m);
 
-  synchronization_data_-&amp;gt;is_force_flush_pending.store(true, std::memory_order_release);
+  synchronization_data_->is_force_flush_pending.store(true, std::memory_order_release);
   auto break_condition = [this]() {
-    if (synchronization_data_-&amp;gt;is_shutdown.load() == true)
+    if (synchronization_data_->is_shutdown.load() == true)
     {
       return true;
     }
 
     // Wake up the worker thread once.
-    if (synchronization_data_-&amp;gt;is_force_flush_pending.load(std::memory_order_acquire))
+    if (synchronization_data_->is_force_flush_pending.load(std::memory_order_acquire))
     {
-      synchronization_data_-&amp;gt;is_force_wakeup_background_worker.store(true,
+      synchronization_data_->is_force_wakeup_background_worker.store(true,
                                                                      std::memory_order_release);
-      synchronization_data_-&amp;gt;cv.notify_one();
+      synchronization_data_->cv.notify_one();
     }
 
-    return synchronization_data_-&amp;gt;is_force_flush_notified.load(std::memory_order_acquire);
+    return synchronization_data_->is_force_flush_notified.load(std::memory_order_acquire);
   };
 
   // Fix timeout to meet requirement of wait_for
   timeout = opentelemetry::common::DurationUtil::AdjustWaitForTimeout(
       timeout, std::chrono::microseconds::zero());
   bool result;
-  if (timeout &amp;lt;= std::chrono::microseconds::zero())
+  if (timeout <= std::chrono::microseconds::zero())
   {
     bool wait_result = false;
     while (!wait_result)
@@ -41,14 +41,14 @@
       // When is_force_flush_notified.store(true) and force_flush_cv.notify_all() is called
       // between is_force_flush_pending.load() and force_flush_cv.wait(). We must not wait
       // for ever
-      wait_result = synchronization_data_-&amp;gt;force_flush_cv.wait_for(lk_cv, schedule_delay_millis_,
+      wait_result = synchronization_data_->force_flush_cv.wait_for(lk_cv, schedule_delay_millis_,
                                                                    break_condition);
     }
     result = true;
   }
   else
   {
-    result = synchronization_data_-&amp;gt;force_flush_cv.wait_for(lk_cv, timeout, break_condition);
+    result = synchronization_data_->force_flush_cv.wait_for(lk_cv, timeout, break_condition);
   }
 
   // ...
@@ -60,19 +60,19 @@
   while (true)
   {
     // Wait for `timeout` milliseconds
-    std::unique_lock&amp;lt;std::mutex&amp;gt; lk(synchronization_data_-&amp;gt;cv_m);
-    synchronization_data_-&amp;gt;cv.wait_for(lk, timeout, [this] {
-      if (synchronization_data_-&amp;gt;is_force_wakeup_background_worker.load(std::memory_order_acquire))
+    std::unique_lock<std::mutex> lk(synchronization_data_->cv_m);
+    synchronization_data_->cv.wait_for(lk, timeout, [this] {
+      if (synchronization_data_->is_force_wakeup_background_worker.load(std::memory_order_acquire))
       {
         return true;
       }
 
       return !buffer_.empty();
     });
-    synchronization_data_-&amp;gt;is_force_wakeup_background_worker.store(false,
+    synchronization_data_->is_force_wakeup_background_worker.store(false,
                                                                    std::memory_order_release);
 
-    if (synchronization_data_-&amp;gt;is_shutdown.load() == true)
+    if (synchronization_data_->is_shutdown.load() == true)
     {
       DrainQueue();
       return;
@@ -81,7 +81,7 @@
     auto start = std::chrono::steady_clock::now();
     Export();
     auto end      = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast&amp;lt;std::chrono::milliseconds&amp;gt;(end - start);
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
     // Subtract the duration of this export call from the next `timeout`.
     timeout = schedule_delay_millis_ - duration;
@@ -93,14 +93,14 @@ void BatchSpanProcessor::Export()
   do
   {
     // 省略无关代码 ...
-    exporter_-&amp;gt;Export(nostd::span&amp;lt;std::unique_ptr&amp;lt;Recordable&amp;gt;&amp;gt;(spans_arr.data(), spans_arr.size()));
+    exporter_->Export(nostd::span<std::unique_ptr<recordable>>(spans_arr.data(), spans_arr.size()));
     NotifyCompletion(notify_force_flush, synchronization_data_);
   } while (true);
 }
 
 void BatchSpanProcessor::NotifyCompletion(
     bool notify_force_flush,
-    const std::shared_ptr&amp;lt;SynchronizationData&amp;gt; &amp;amp;synchronization_data)
+    const std::shared_ptr<synchronizationdata> &synchronization_data)
 {
   if (!synchronization_data)
   {
@@ -109,8 +109,8 @@ void BatchSpanProcessor::NotifyCompletion(
 
   if (notify_force_flush)
   {
-    synchronization_data-&amp;gt;is_force_flush_notified.store(true, std::memory_order_release);
-    synchronization_data-&amp;gt;force_flush_cv.notify_one();
+    synchronization_data->is_force_flush_notified.store(true, std::memory_order_release);
+    synchronization_data->force_flush_cv.notify_one();
   }
 }</code></pre><p>简单描述一下就是在退出阶段，首先要设置shutdown flag，然后唤醒后台线程导出数据。之后用一个 <code>std::condition_variable</code> 来等待后台线程通知导出完成。然后自己再退出，时序大概如下:</p><pre class=mermaid>
 sequenceDiagram
@@ -129,23 +129,23 @@ sequenceDiagram
     end
     Caller->>Caller: 退出
     Background->>Background: 后台线程退出
-</pre><h2 id=问题分析>问题分析</h2><p>上面的流程和代码乍一看似乎没有什么问题，但是在实际项目中偶尔会出现在 <code>BatchSpanProcessor::ForceFlush</code> 里的 <code>synchronization_data_->force_flush_cv.wait_for</code> 陷入了长耗时的等待。有的版本甚至会陷入无尽得等待。</p><p>因为在退出流程里，上层要保证最后的数据执行过刷出。并且后台线程不再引用资源之后才能销毁内存对象，所以会<code>ForceFlush</code> 一次，且 <code>schedule_delay_millis_</code> 一般情况下考虑网络抖动会设置得比较长。某些流程里也有可能会在reload的时候切换到另一个新线程上调用 <code>ForceFlush(max())</code> 的，这时候如果发生退出也会发生某些Provider一直退不掉的问题。</p><p>在后台任务刷出数据完成后，设置完 <code>is_force_flush_notified</code> 并且 <code>force_flush_cv.notify_one()</code> 后下一此循环会发现 <code>is_shutdown</code> 已经是 <code>true</code> 了，就会退出后台线程，之后就不再有 <code>force_flush_cv.notify_one()</code> 了。</p><p>那么在调用 <code>ForceFlush()</code> 的线程里 <code>force_flush_cv.wait_for(lk_cv, schedule_delay_millis_, break_condition);</code> 的 <code>break_condition</code> 包含 <code>is_force_flush_notified.load(std::memory_order_acquire);</code> 为什么返回 <code>false</code> 且后面还没收到 <code>force_flush_cv.notify_one()</code> 的通知呢？</p><p>我们先来看一看 <code>std::condition_variable::wait_for</code> 的实现。（几个主流STL库实现大同小异，这里贴Linux下GCC的实现作为案例）</p><pre><code class=language-cpp>template&amp;lt;typename _Rep, typename _Period, typename _Predicate&amp;gt;
+</pre><h2 id=问题分析>问题分析</h2><p>上面的流程和代码乍一看似乎没有什么问题，但是在实际项目中偶尔会出现在 <code>BatchSpanProcessor::ForceFlush</code> 里的 <code>synchronization_data_->force_flush_cv.wait_for</code> 陷入了长耗时的等待。有的版本甚至会陷入无尽得等待。</p><p>因为在退出流程里，上层要保证最后的数据执行过刷出。并且后台线程不再引用资源之后才能销毁内存对象，所以会<code>ForceFlush</code> 一次，且 <code>schedule_delay_millis_</code> 一般情况下考虑网络抖动会设置得比较长。某些流程里也有可能会在reload的时候切换到另一个新线程上调用 <code>ForceFlush(max())</code> 的，这时候如果发生退出也会发生某些Provider一直退不掉的问题。</p><p>在后台任务刷出数据完成后，设置完 <code>is_force_flush_notified</code> 并且 <code>force_flush_cv.notify_one()</code> 后下一此循环会发现 <code>is_shutdown</code> 已经是 <code>true</code> 了，就会退出后台线程，之后就不再有 <code>force_flush_cv.notify_one()</code> 了。</p><p>那么在调用 <code>ForceFlush()</code> 的线程里 <code>force_flush_cv.wait_for(lk_cv, schedule_delay_millis_, break_condition);</code> 的 <code>break_condition</code> 包含 <code>is_force_flush_notified.load(std::memory_order_acquire);</code> 为什么返回 <code>false</code> 且后面还没收到 <code>force_flush_cv.notify_one()</code> 的通知呢？</p><p>我们先来看一看 <code>std::condition_variable::wait_for</code> 的实现。（几个主流STL库实现大同小异，这里贴Linux下GCC的实现作为案例）</p><pre><code class=language-cpp>template<typename _rep, typename _period, typename _predicate>
   bool
-  wait_for(unique_lock&amp;lt;mutex&amp;gt;&amp;amp; __lock,
-      const chrono::duration&amp;lt;_Rep, _Period&amp;gt;&amp;amp; __rtime,
+  wait_for(unique_lock<mutex>& __lock,
+      const chrono::duration<_Rep, _Period>& __rtime,
       _Predicate __p)
   {
 using __dur = typename steady_clock::duration;
 return wait_until(__lock,
-    steady_clock::now() &#43;
-    chrono::__detail::ceil&amp;lt;__dur&amp;gt;(__rtime),
+    steady_clock::now() +
+    chrono::__detail::ceil<__dur>(__rtime),
     std::move(__p));
   }
 
-template&amp;lt;typename _Clock, typename _Duration, typename _Predicate&amp;gt;
+template<typename _clock, typename _duration, typename _predicate>
   bool
-  wait_until(unique_lock&amp;lt;mutex&amp;gt;&amp;amp; __lock,
-  const chrono::time_point&amp;lt;_Clock, _Duration&amp;gt;&amp;amp; __atime,
+  wait_until(unique_lock<mutex>& __lock,
+  const chrono::time_point<_Clock, _Duration>& __atime,
   _Predicate __p)
   {
 while (!__p())
@@ -156,10 +156,10 @@ return true;
 
   // 其他的 wait_until 嵌套都是设计模式相关，不在展示，最后是调用下面的代码,pthread的接口
   void
-  wait_until(mutex&amp;amp; __m, clockid_t __clock, timespec&amp;amp; __abs_time)
+  wait_until(mutex& __m, clockid_t __clock, timespec& __abs_time)
   {
-    pthread_cond_clockwait(&amp;amp;_M_cond, __m.native_handle(), __clock,
-          &amp;amp;__abs_time);
+    pthread_cond_clockwait(&_M_cond, __m.native_handle(), __clock,
+          &__abs_time);
   }</code></pre><p>可以看到，这里关键点在这个代码:</p><pre><code class=language-cpp>while (!__p())
 if (wait_until(__lock, __atime) == cv_status::timeout)
   return __p();

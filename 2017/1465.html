@@ -6,80 +6,80 @@
 <button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-187b1c8d03bbfb92d3c354208cc6f2d3 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2017/1465.html target=_blank itemprop=url>libcopp(v2) vs goroutine性能测试</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#goroutine压力测试>goroutine压力测试</a></li><li><a href=#libcopp的同环境报告和对比>libcopp的同环境报告和对比</a></li><li><a href=#结论>结论</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>本来是没想写这个对比。无奈之前和<a href=https://github.com/yuanzhubi/call_in_stack>call_in_stack</a>的作者聊了一阵，发现了一些<a href=https://github.com/owent/libcopp>libcopp</a>的改进空间。然后顺便看了新的boost.context的cc部分的代码，有所启发。想给<a href=https://github.com/owent/libcopp>libcopp</a>做一些优化，主要集中在减少分配次数从而减少内存碎片；在支持的编译器里有些地方用右值引用来减少不必要的拷贝；减少原子操作和减少L1cache miss几个方面。</p><p>之后改造了茫茫多流程和接口后出了v2版本，虽然没完全优化完，但是组织结构已经定型了，可以用来做压力测试。为了以后方便顺便还把cppcheck和clang-analyzer的静态分析工具写进了dev脚本。然后万万没想到的是，在大量协程的情况下，benchmark的结果性能居然比原来还下降了大约1/3。</p><p>我结合valgrind和perf的报告分析了一下原因，原来的读L1 cache miss大约在68%左右，而v2里的读L1 cache miss到了98%。究其原因，原来的协程、协程任务对象和协程任务的actor是由malloc分配的，而现在在v2里全部优化后放进了分配的执行栈里。这样减少了三次malloc操作。但是这也导致不同协程、任务和actor之间的距离隔得非常远，必超出L1 cache的量（一般是64字节）。那么就必然容易L1 cache miss了。而原来在benchmark里由于是连续分配的，所以他们互相都在比较近的位置，当然原来的性能高了。</p><p>这种情况，因该说是原来的benchmark更加不能作为实际使用过程中的性能参考依据。之前也说过，因为在实际应用场景中几乎必然cache miss，因为逻辑会更复杂得多，内存访问也更切换得频繁和多。</p><p>这让我突然想到了<a href=https://golang.org>go</a>语言的goroutine。不知道这玩意有没有考虑切换时的Cache miss开销，不知道针对这个做优化。因为它是语言级别实现的go程，那么如果要针对缓存做优化则比较容易实现一些。不过它的动态栈总归会有一定的开销。</p><h2 id=goroutine压力测试>goroutine压力测试</h2><p>这里还是用了和<a href=https://github.com/owent/libcopp>libcopp</a>里差不多的测试方法。benchmark的代码如下:</p><pre><code class=language-go>package main
 
 import (
-	&amp;#34;fmt&amp;#34;
-	&amp;#34;os&amp;#34;
-	&amp;#34;strconv&amp;#34;
-	&amp;#34;time&amp;#34;
+	"fmt"
+	"os"
+	"strconv"
+	"time"
 )
 
 func runCallback(in, out chan int64) {
-	for n, ok := &amp;lt;-in; ok; n, ok = &amp;lt;-in {
-		out &amp;lt;- n
+	for n, ok := <-in; ok; n, ok = <-in {
+		out <- n
 	}
 }
 
 func runTest(round int, coroutineNum, switchTimes int64) {
-	fmt.Printf(&amp;#34;##### Round: %v\n&amp;#34;, round)
+	fmt.Printf("##### Round: %v\n", round)
 	start := time.Now()
 	channelsIn, channelsOut := make([]chan int64, coroutineNum), make([]chan int64, coroutineNum)
-	for i := int64(0); i &amp;lt; coroutineNum; i&#43;&#43; {
+	for i := int64(0); i < coroutineNum; i++ {
 		channelsIn[i] = make(chan int64, 1)
 		channelsOut[i] = make(chan int64, 1)
 	}
 	end := time.Now()
-	fmt.Printf(&amp;#34;Create %v goroutines and channels cost %vns, avg %vns\n&amp;#34;, coroutineNum, end.Sub(start).Nanoseconds(), end.Sub(start).Nanoseconds()/coroutineNum)
+	fmt.Printf("Create %v goroutines and channels cost %vns, avg %vns\n", coroutineNum, end.Sub(start).Nanoseconds(), end.Sub(start).Nanoseconds()/coroutineNum)
 
 	start = time.Now()
-	for i := int64(0); i &amp;lt; coroutineNum; i&#43;&#43; {
+	for i := int64(0); i < coroutineNum; i++ {
 		go runCallback(channelsIn[i], channelsOut[i])
 	}
 	end = time.Now()
-	fmt.Printf(&amp;#34;Start %v goroutines and channels cost %vns, avg %vns\n&amp;#34;, coroutineNum, end.Sub(start).Nanoseconds(), end.Sub(start).Nanoseconds()/coroutineNum)
+	fmt.Printf("Start %v goroutines and channels cost %vns, avg %vns\n", coroutineNum, end.Sub(start).Nanoseconds(), end.Sub(start).Nanoseconds()/coroutineNum)
 
 	var sum int64 = 0
 	start = time.Now()
-	for i := int64(0); i &amp;lt; switchTimes; i&#43;&#43; {
-		for j := int64(0); j &amp;lt; coroutineNum; j&#43;&#43; {
-			channelsIn[j] &amp;lt;- 1
-			sum &#43;= &amp;lt;-channelsOut[j]
+	for i := int64(0); i < switchTimes; i++ {
+		for j := int64(0); j < coroutineNum; j++ {
+			channelsIn[j] <- 1
+			sum += <-channelsOut[j]
 		}
 	}
 	end = time.Now()
-	fmt.Printf(&amp;#34;Switch %v goroutines for %v times cost %vns, avg %vns\n&amp;#34;, coroutineNum, sum, end.Sub(start).Nanoseconds(), end.Sub(start).Nanoseconds()/sum)
+	fmt.Printf("Switch %v goroutines for %v times cost %vns, avg %vns\n", coroutineNum, sum, end.Sub(start).Nanoseconds(), end.Sub(start).Nanoseconds()/sum)
 
 	start = time.Now()
-	for i := int64(0); i &amp;lt; coroutineNum; i&#43;&#43; {
+	for i := int64(0); i < coroutineNum; i++ {
 		close(channelsIn[i])
 		close(channelsOut[i])
 	}
 	end = time.Now()
-	fmt.Printf(&amp;#34;Close %v goroutines cost %vns, avg %vns\n&amp;#34;, coroutineNum, end.Sub(start).Nanoseconds(), end.Sub(start).Nanoseconds()/coroutineNum)
+	fmt.Printf("Close %v goroutines cost %vns, avg %vns\n", coroutineNum, end.Sub(start).Nanoseconds(), end.Sub(start).Nanoseconds()/coroutineNum)
 }
 
 func main() {
 	var coroutineNum, switchTimes int64 = 30000, 1000
 
-	fmt.Printf(&amp;#34;### Run: &amp;#34;)
+	fmt.Printf("### Run: ")
 	for _, v := range os.Args {
-		fmt.Printf(&amp;#34; \&amp;#34;%s\&amp;#34;&amp;#34;, v)
+		fmt.Printf(" \"%s\"", v)
 	}
-	fmt.Printf(&amp;#34;\n&amp;#34;)
+	fmt.Printf("\n")
 
-	if (len(os.Args)) &amp;gt; 1 {
+	if (len(os.Args)) > 1 {
 		v, _ := strconv.Atoi(os.Args[1])
 		coroutineNum = int64(v)
 	}
 
-	if (len(os.Args)) &amp;gt; 2 {
+	if (len(os.Args)) > 2 {
 		v, _ := strconv.Atoi(os.Args[2])
 		switchTimes = int64(v)
 	}
 
-	for i := 1; i &amp;lt;= 5; i&#43;&#43; {
+	for i := 1; i <= 5; i++ {
 		runTest(i, coroutineNum, switchTimes)
 	}
-}</code></pre><p>同时发布在了： <a href=https://gist.github.com/owent/2286768f2586521600c9fd1700cbf845>https://gist.github.com/owent/2286768f2586521600c9fd1700cbf845</a></p><p>测试结果如下：</p><pre><code class=language-text>PS D:\projs\test\go&amp;gt; .\test_goroutine.exe
-### Run:  &amp;#34;D:\projs\test\go\test_goroutine.exe&amp;#34;
+}</code></pre><p>同时发布在了： <a href=https://gist.github.com/owent/2286768f2586521600c9fd1700cbf845>https://gist.github.com/owent/2286768f2586521600c9fd1700cbf845</a></p><p>测试结果如下：</p><pre><code class=language-text>PS D:\projs\test\go> .\test_goroutine.exe
+### Run:  "D:\projs\test\go\test_goroutine.exe"
 ##### Round: 1
 Create 30000 goroutines and channels cost 6515200ns, avg 217ns
 Start 30000 goroutines and channels cost 79505000ns, avg 2650ns

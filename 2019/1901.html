@@ -35,64 +35,64 @@ graph TB;
     执行内容-->打包结果;
     打包结果-->构造回包;
   </pre></div><p>在第一阶段实现完成之后，企业微信又增加了分享机器人的功能。这样一个机器人的URL就可能对应多个群，我们原来有个脚本为了发送图片回去，是收到消息后启动一个后台脚本，执行完调用发消息的接口去发送结果的，而这么一来以后，原来的发布消息的接口变成了群发。 后来我看了下它也增加了个一个 <code>ChatId</code> 字段和 <code>GetChatInfoUrl</code> 字段。前面一个用于区分来源的群，收到消息以后。发消息接口附带这个参数就能实现仅回复来源的群，而后一个接口是用于拉取来源群的信息的。</p><p>另外我们内网的地址和外部的机器人地址不一样，所以为了方便我也是提取出了机器人的KEY，以便后台任务执行完后通知的时候直接用转换后的地址。还有些零零碎碎的字段都在最开始贴的项目地址里了。</p><h2 id=跨平台构建cross和自动release>跨平台构建cross和自动release</h2><p>之前也提到rust的嵌入式小组提供了交叉编译的工具链 <a href=https://crates.io/crates/cross>cross</a> 。这其实是一套基于docker的工具链集合，帮我们把一些通用的依赖库和工具链准备好了，这样我们就不用每个环境自己去配交叉编译环境。 我就依赖这个部署了 appveyor和travis-ci的自动部署服务。</p><p>在使用过程中我发现这套工具还不是非常稳定，特别是MIPS架构下有些很基础的库构建不出来，当然这也算是这些库的构建脚本或者代码有点问题。所以最终我只提供了我测试能够打包出来的几个版本，至少目前Linux的ARM、ARM64、x86、x86_64和和Windows的x86、x86_64没什么太大问题，部分架构下的musl工具链也编不出来。最终自动发布的结果都放在 <a href=https://github.com/owent/wxwork_robotd/releases>https://github.com/owent/wxwork_robotd/releases</a> 了，以后发现有新的可用适配环境的话再加吧。</p><p>大家有兴趣也可以下载自己需要的架构的预编译好的机器人发布包自己Happy自己玩。配置大概这个样子：</p><pre><code class=language-javascript>{
-    &amp;#34;listen&amp;#34;: [&amp;#34;0.0.0.0:12019&amp;#34;, &amp;#34;:::12019&amp;#34;], // 监听列表，这里配置了ipv4和ipv6地址
-    &amp;#34;taskTimeout&amp;#34;: 4000,                     // 超时时间4000ms，企业微信要求在5秒内回应，这里容忍1秒钟的网络延迟
-    &amp;#34;workers&amp;#34;: 8,                            // 工作线程数
-    &amp;#34;backlog&amp;#34;: 256,                          // 建立连接的排队长度
-    &amp;#34;cmds&amp;#34;: {                                // 这里所有的command所有的project共享
-        &amp;#34;default&amp;#34;: {                         // 如果找不到命令，会尝试找名称为default的命令执行，这时候
-            &amp;#34;type&amp;#34;: &amp;#34;echo&amp;#34;,                  // 直接输出类型的命令
-            &amp;#34;echo&amp;#34;: &amp;#34;我还不认识这个指令呐!({{WXWORK_ROBOT_CMD}})&amp;#34;, // 输出内容
-            &amp;#34;hidden&amp;#34;: true                   // 是否隐藏，所有的命令都有这个选项，用户help命令隐藏这条指令的帮助信息
+    "listen": ["0.0.0.0:12019", ":::12019"], // 监听列表，这里配置了ipv4和ipv6地址
+    "taskTimeout": 4000,                     // 超时时间4000ms，企业微信要求在5秒内回应，这里容忍1秒钟的网络延迟
+    "workers": 8,                            // 工作线程数
+    "backlog": 256,                          // 建立连接的排队长度
+    "cmds": {                                // 这里所有的command所有的project共享
+        "default": {                         // 如果找不到命令，会尝试找名称为default的命令执行，这时候
+            "type": "echo",                  // 直接输出类型的命令
+            "echo": "我还不认识这个指令呐!({{WXWORK_ROBOT_CMD}})", // 输出内容
+            "hidden": true                   // 是否隐藏，所有的命令都有这个选项，用户help命令隐藏这条指令的帮助信息
         },
-        &amp;#34;(help)|(帮助)|(指令列表)&amp;#34;: {
-            &amp;#34;type&amp;#34;: &amp;#34;help&amp;#34;,                    // 帮助类型的命令
-            &amp;#34;description&amp;#34;: &amp;#34;help|帮助|指令列表&amp;#34;, // 描述，所有的命令都有这个选项，用于help类型命令的输出，如果没有这一项，则会直接输出命令的key（匹配式）
-            &amp;#34;prefix&amp;#34;: &amp;#34;### 可用指令列表\r\n&amp;#34;       // 帮助信息前缀
-            &amp;#34;suffix&amp;#34;: &amp;#34;&amp;#34;                       // 帮助信息后缀
+        "(help)|(帮助)|(指令列表)": {
+            "type": "help",                    // 帮助类型的命令
+            "description": "help|帮助|指令列表", // 描述，所有的命令都有这个选项，用于help类型命令的输出，如果没有这一项，则会直接输出命令的key（匹配式）
+            "prefix": "### 可用指令列表\r\n"       // 帮助信息前缀
+            "suffix": ""                       // 帮助信息后缀
         },
-        &amp;#34;说\\s*(?P&amp;lt;MSG&amp;gt;[^\\r\\n]&#43;)&amp;#34;: {
-            &amp;#34;type&amp;#34;: &amp;#34;echo&amp;#34;,
-            &amp;#34;echo&amp;#34;: &amp;#34;{{WXWORK_ROBOT_CMD_MSG}}&amp;#34;, // 可以使用匹配式里的变量
-            &amp;#34;description&amp;#34;: &amp;#34;说**消息内容**&amp;#34;
+        "说\\s*(?P<msg>[^\\r\\n]+)": {
+            "type": "echo",
+            "echo": "{{WXWORK_ROBOT_CMD_MSG}}", // 可以使用匹配式里的变量
+            "description": "说**消息内容**"
         },
-        &amp;#34;执行命令\\s*(?P&amp;lt;EXEC&amp;gt;[^\\s]&#43;)\\s*(?P&amp;lt;PARAM&amp;gt;[^\\s]*)&amp;#34;: {
-            &amp;#34;type&amp;#34;: &amp;#34;spawn&amp;#34;,                    // 启动子进程执行命令，注意，任务超时并不会被kill掉
-            &amp;#34;exec&amp;#34;: &amp;#34;{{WXWORK_ROBOT_CMD_EXEC}}&amp;#34;,
-            &amp;#34;args&amp;#34;: [&amp;#34;{{WXWORK_ROBOT_CMD_PARAM}}&amp;#34;],
-            &amp;#34;cwd&amp;#34;: &amp;#34;&amp;#34;,
-            &amp;#34;env&amp;#34;: {                            // 命令级环境变量，所有的命令都有这个选项，这些环境变量仅此命令有效
-                &amp;#34;TEST_ENV&amp;#34;: &amp;#34;all env key will be WXWORK_ROBOT_CMD_{NAME IN ENV} or WXWORK_ROBOT_PROJECT_{NAME}&amp;#34;
+        "执行命令\\s*(?P<exec>[^\\s]+)\\s*(?P<param>[^\\s]*)": {
+            "type": "spawn",                    // 启动子进程执行命令，注意，任务超时并不会被kill掉
+            "exec": "{{WXWORK_ROBOT_CMD_EXEC}}",
+            "args": ["{{WXWORK_ROBOT_CMD_PARAM}}"],
+            "cwd": "",
+            "env": {                            // 命令级环境变量，所有的命令都有这个选项，这些环境变量仅此命令有效
+                "TEST_ENV": "all env key will be WXWORK_ROBOT_CMD_{NAME IN ENV} or WXWORK_ROBOT_PROJECT_{NAME}"
             },
-            &amp;#34;description&amp;#34;: &amp;#34;执行命令**可执行文件路径** ***参数***&amp;#34;,
-            &amp;#34;output_type&amp;#34;: &amp;#34;输出类型&amp;#34;            // markdown/text
+            "description": "执行命令**可执行文件路径** ***参数***",
+            "output_type": "输出类型"            // markdown/text
         }
     },
-    &amp;#34;projects&amp;#34;: [{                                                          // 项目列表，可以每个项目对应一个机器人，也可以多个机器人共享一个项目
-        &amp;#34;name&amp;#34;: &amp;#34;test_proj&amp;#34;,                                                // 名称，影响机器人回调路径，比如说这里的配置就是: http://外网IP:/12019/test_proj/
-        &amp;#34;token&amp;#34;: &amp;#34;hJqcu3uJ9Tn2gXPmxx2w9kkCkCE2EPYo&amp;#34;,                        // 对应机器人里配置的Token
-        &amp;#34;encodingAESKey&amp;#34;: &amp;#34;6qkdMrq68nTKduznJYO1A37W2oEgpkMUvkttRToqhUt&amp;#34;,    // 对应机器人里配置的EncodingAESKey
-        &amp;#34;env&amp;#34;: {                                                            // 项目级环境变量，这些环境变量仅此项目有效
-            &amp;#34;testURL&amp;#34;: &amp;#34;robots.txt&amp;#34;
+    "projects": [{                                                          // 项目列表，可以每个项目对应一个机器人，也可以多个机器人共享一个项目
+        "name": "test_proj",                                                // 名称，影响机器人回调路径，比如说这里的配置就是: http://外网IP:/12019/test_proj/
+        "token": "hJqcu3uJ9Tn2gXPmxx2w9kkCkCE2EPYo",                        // 对应机器人里配置的Token
+        "encodingAESKey": "6qkdMrq68nTKduznJYO1A37W2oEgpkMUvkttRToqhUt",    // 对应机器人里配置的EncodingAESKey
+        "env": {                                                            // 项目级环境变量，这些环境变量仅此项目有效
+            "testURL": "robots.txt"
         },
-        &amp;#34;cmds&amp;#34;: {                                                           // 项目级命令，这些命令仅此项目有效
-            &amp;#34;http请求&amp;#34;: {
-                &amp;#34;type&amp;#34;: &amp;#34;http&amp;#34;,                                             // http请求类命令
-                &amp;#34;method&amp;#34;: &amp;#34;get&amp;#34;,                                            // http方法，可选值为 get/post/put/delete/head，如果不填则会自动从设置，如果post里有数据则会自动设为post，否则自动设为get
-                &amp;#34;url&amp;#34;: &amp;#34;https://owent.net/{{WXWORK_ROBOT_PROJECT_TEST_URL}}&amp;#34;, // http请求地址
-                &amp;#34;post&amp;#34;: &amp;#34;&amp;#34;,                                                   // body里的数据
-                &amp;#34;content_type&amp;#34;: &amp;#34;&amp;#34;,                                           // content-type，可不填
-                &amp;#34;headers&amp;#34;: {                                                  // 请求的额外header
-                    &amp;#34;X-TEST&amp;#34;: &amp;#34;value&amp;#34;
+        "cmds": {                                                           // 项目级命令，这些命令仅此项目有效
+            "http请求": {
+                "type": "http",                                             // http请求类命令
+                "method": "get",                                            // http方法，可选值为 get/post/put/delete/head，如果不填则会自动从设置，如果post里有数据则会自动设为post，否则自动设为get
+                "url": "https://owent.net/{{WXWORK_ROBOT_PROJECT_TEST_URL}}", // http请求地址
+                "post": "",                                                   // body里的数据
+                "content_type": "",                                           // content-type，可不填
+                "headers": {                                                  // 请求的额外header
+                    "X-TEST": "value"
                 },
-                &amp;#34;echo&amp;#34;: &amp;#34;已发起HTTP请求，回包内容\r\n{{WXWORK_ROBOT_HTTP_RESPONSE}}&amp;#34; // 机器人回应内容
+                "echo": "已发起HTTP请求，回包内容\r\n{{WXWORK_ROBOT_HTTP_RESPONSE}}" // 机器人回应内容
             },
-            &amp;#34;访问\\s*(?P&amp;lt;URL&amp;gt;[^\\r\\n]&#43;)&amp;#34;: {
-                &amp;#34;type&amp;#34;: &amp;#34;http&amp;#34;,
-                &amp;#34;url&amp;#34;: &amp;#34;{{WXWORK_ROBOT_CMD_URL}}&amp;#34;,
-                &amp;#34;post&amp;#34;: &amp;#34;&amp;#34;,
-                &amp;#34;echo&amp;#34;: &amp;#34;HTTP请求: {{WXWORK_ROBOT_CMD_URL}}\r\n{{WXWORK_ROBOT_HTTP_RESPONSE}}&amp;#34;,
-                &amp;#34;description&amp;#34;: &amp;#34;访问**URL地址**&amp;#34;
+            "访问\\s*(?P<url>[^\\r\\n]+)": {
+                "type": "http",
+                "url": "{{WXWORK_ROBOT_CMD_URL}}",
+                "post": "",
+                "echo": "HTTP请求: {{WXWORK_ROBOT_CMD_URL}}\r\n{{WXWORK_ROBOT_HTTP_RESPONSE}}",
+                "description": "访问**URL地址**"
             }
         }
     }]

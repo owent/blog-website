@@ -8,12 +8,12 @@
         auto buf = get_log_buffer_addr();                           \
         auto size = get_log_buffer_size();                          \
         auto fmt_res = fmt::format_to_n(buf, size, __VA_ARGS__);    \
-        if (fmt_res.size &amp;gt;= size) {                                 \
+        if (fmt_res.size >= size) {                                 \
             buf[size - 1] = 0;                                      \
         } else {                                                    \
             buf[fmt_res.size] = 0;                                  \
         }                                                           \
-        std::cout &amp;lt;&amp;lt; buf &amp;lt;&amp;lt; &amp;#39;\n&amp;#39;;                                   \
+        std::cout << buf << '\n';                                   \
     } while(false)
 
 void func1() {
@@ -22,32 +22,32 @@ void func1() {
 
 void func2() {
   //...
-  LOGFMT(&amp;#34;test {}, data {}&amp;#34;, a, b);
+  LOGFMT("test {}, data {}", a, b);
 
   func1();
 }</code></pre><p>在 <code>LOGFMT(...)</code> 宏的实现里，使用 <code>fmt::format_to_n</code> 比 <code>snprintf</code> 对 <code>func1</code> 到 <code>func2</code> 的函数栈顶增量大幅增加。</p><p>理论上， <code>LOGFMT()</code> 的代码都处于子作用域里，无论是临时变量还是子作用域里的变量，出了作用域之后应该可以释放并被复用。
 但是现在各个编译器（包括GCC、Clang和MSVC）似乎是为了方便调试信息定位和区分变量，都没有复用这部分栈空间。</p><p>而在我们项目工程里，有些地方使用了64K栈的协程。我改造的地方属于日志相关的模块，被大量多层级使用。
-这两个因素叠加以后，恰好成为了压死骆驼的最后一根稻草。</p><h3 id=问题测试代码>问题测试代码</h3><p>这里贴一下独立的复现和测试代码:</p><pre><code class=language-cpp>// -std=c&#43;&#43;17 -O0 -g -ggdb -fno-omit-frame-pointer
+这两个因素叠加以后，恰好成为了压死骆驼的最后一根稻草。</p><h3 id=问题测试代码>问题测试代码</h3><p>这里贴一下独立的复现和测试代码:</p><pre><code class=language-cpp>// -std=c++17 -O0 -g -ggdb -fno-omit-frame-pointer
 // /O0 /Zc:__cplusplus
-#include &amp;lt;fmt/format.h&amp;gt;
+#include <fmt/format.h>
 
 #ifdef _MSC_VER
-#  include &amp;lt;intrin.h&amp;gt;
+#  include <intrin.h>
 #endif
 
-#include &amp;lt;iostream&amp;gt;
-#include &amp;lt;cstddef&amp;gt;
-#include &amp;lt;string&amp;gt;
+#include <iostream>
+#include <cstddef>
+#include <string>
 
 #ifndef TEST_NOINLINE_NOCLONE
 #  if defined(__clang__)
-#    if __cplusplus &amp;gt;= 201103L
+#    if __cplusplus >= 201103L
 #      define TEST_NOINLINE_NOCLONE [[gnu::noinline]]
 #    else
 #      define TEST_NOINLINE_NOCLONE __attribute__((noinline))
 #    endif
-#  elif defined(__GNUC__) &amp;amp;&amp;amp; __GNUC__ &amp;gt; 3
-#    if __cplusplus &amp;gt;= 201103L &amp;amp;&amp;amp; (__GNUC__ * 100 &#43; __GNUC_MINOR__) &amp;gt;= 408
+#  elif defined(__GNUC__) && __GNUC__ > 3
+#    if __cplusplus >= 201103L && (__GNUC__ * 100 + __GNUC_MINOR__) >= 408
 #      define TEST_NOINLINE_NOCLONE [[gnu::noinline, gnu::noclone]]
 #    else
 #      define TEST_NOINLINE_NOCLONE __attribute__((noinline, noclone))
@@ -62,7 +62,7 @@ void func2() {
 // 模拟日志代码
 namespace {
 constexpr size_t get_log_buffer_size() {
-    return 1 &amp;lt;&amp;lt; 20; // 1 MiB
+    return 1 << 20; // 1 MiB
 }
 char* get_log_buffer_addr() {
     static char log_buffer[get_log_buffer_size()];
@@ -75,12 +75,12 @@ char* get_log_buffer_addr() {
         auto buf = get_log_buffer_addr();                           \
         auto size = get_log_buffer_size();                          \
         auto fmt_res = fmt::format_to_n(buf, size, __VA_ARGS__);    \
-        if (fmt_res.size &amp;gt;= size) {                                 \
+        if (fmt_res.size >= size) {                                 \
             buf[size - 1] = 0;                                      \
         } else {                                                    \
             buf[fmt_res.size] = 0;                                  \
         }                                                           \
-        std::cout &amp;lt;&amp;lt; buf &amp;lt;&amp;lt; &amp;#39;\n&amp;#39;;                                   \
+        std::cout << buf << '\n';                                   \
     } while(false)
 
 #ifdef _MSC_VER
@@ -91,38 +91,38 @@ char* get_log_buffer_addr() {
 
 TEST_NOINLINE_NOCLONE void func_leaf(uintptr_t top, uintptr_t previous) {
     uintptr_t current = TEST_TOP_FRAME_ADDR;
-    std::cout&amp;lt;&amp;lt; &amp;#34;======\n&amp;#34;&amp;lt;&amp;lt; &amp;#34;(LEAF) from func_no_var_no_fmt&amp;#34;
-        &amp;lt;&amp;lt; &amp;#34;, previous offset: &amp;#34;&amp;lt;&amp;lt; (previous - current)
-        &amp;lt;&amp;lt; &amp;#34;, top offset: &amp;#34;&amp;lt;&amp;lt; (top - current)
-        &amp;lt;&amp;lt; &amp;#39;\n&amp;#39;;
+    std::cout<< "======\n"<< "(LEAF) from func_no_var_no_fmt"
+        << ", previous offset: "<< (previous - current)
+        << ", top offset: "<< (top - current)
+        << '\n';
 }
 
 TEST_NOINLINE_NOCLONE void func_no_var_no_fmt(uintptr_t top, uintptr_t previous) {
     uintptr_t current = TEST_TOP_FRAME_ADDR;
-    std::cout&amp;lt;&amp;lt; &amp;#34;======\n&amp;#34;&amp;lt;&amp;lt; &amp;#34;from func_no_var_fmt_once&amp;#34;
-        &amp;lt;&amp;lt; &amp;#34;, previous offset: &amp;#34;&amp;lt;&amp;lt; (previous - current)
-        &amp;lt;&amp;lt; &amp;#34;, top offset: &amp;#34;&amp;lt;&amp;lt; (top - current)
-        &amp;lt;&amp;lt; &amp;#39;\n&amp;#39;;
+    std::cout<< "======\n"<< "from func_no_var_fmt_once"
+        << ", previous offset: "<< (previous - current)
+        << ", top offset: "<< (top - current)
+        << '\n';
 
     func_leaf(top, current);
 }
 
 TEST_NOINLINE_NOCLONE void func_no_var_fmt_once(uintptr_t top, uintptr_t previous) {
     uintptr_t current = TEST_TOP_FRAME_ADDR;
-    LOGFMT(&amp;#34;======\n{}&amp;#34;, &amp;#34;func_no_var_fmt_once&amp;#34;);
-    std::cout&amp;lt;&amp;lt; &amp;#34;from func_no_var_fmt_twice&amp;#34;
-        &amp;lt;&amp;lt; &amp;#34;, previous offset: &amp;#34;&amp;lt;&amp;lt; (previous - current)
-        &amp;lt;&amp;lt; &amp;#34;, top offset: &amp;#34;&amp;lt;&amp;lt; (top - current)
-        &amp;lt;&amp;lt; &amp;#39;\n&amp;#39;;
+    LOGFMT("======\n{}", "func_no_var_fmt_once");
+    std::cout<< "from func_no_var_fmt_twice"
+        << ", previous offset: "<< (previous - current)
+        << ", top offset: "<< (top - current)
+        << '\n';
 
     func_no_var_no_fmt(top, current);
 }
 
 TEST_NOINLINE_NOCLONE void func_no_var_fmt_twice(uintptr_t top, uintptr_t previous) {
     uintptr_t current = TEST_TOP_FRAME_ADDR;
-    LOGFMT(&amp;#34;======\n{}&amp;#34;, &amp;#34;func_no_var_fmt_twice&amp;#34;);
-    LOGFMT(&amp;#34;{}: previous offset: {}, top offset: {}&amp;#34;,
-            &amp;#34;from func_int_var_fmt_once&amp;#34;, (previous - current), (top - current));
+    LOGFMT("======\n{}", "func_no_var_fmt_twice");
+    LOGFMT("{}: previous offset: {}, top offset: {}",
+            "from func_int_var_fmt_once", (previous - current), (top - current));
 
     func_no_var_fmt_once(top, current);
 }
@@ -134,14 +134,14 @@ TEST_NOINLINE_NOCLONE void func_int_var_fmt_once(uintptr_t top, uintptr_t previo
     
     {
         char buf[1024];
-        LOGFMT(&amp;#34;======\n{}: sizeof(parameter1): {}, sizeof(stack var): {}&amp;#34;,
-                &amp;#34;func_int_var_fmt_once&amp;#34;, sizeof(p1), sizeof(p2));
+        LOGFMT("======\n{}: sizeof(parameter1): {}, sizeof(stack var): {}",
+                "func_int_var_fmt_once", sizeof(p1), sizeof(p2));
     }
-    std::cout&amp;lt;&amp;lt; &amp;#34;from func_int_var_fmt_twice&amp;#34;
-        &amp;lt;&amp;lt; &amp;#34;, p2 addr: &amp;#34; &amp;lt;&amp;lt; (uintptr_t)&amp;amp;p2
-        &amp;lt;&amp;lt; &amp;#34;, previous offset: &amp;#34;&amp;lt;&amp;lt; (previous - current)
-        &amp;lt;&amp;lt; &amp;#34;, top offset: &amp;#34;&amp;lt;&amp;lt; (top - current)
-        &amp;lt;&amp;lt; &amp;#39;\n&amp;#39;;
+    std::cout<< "from func_int_var_fmt_twice"
+        << ", p2 addr: " << (uintptr_t)&p2
+        << ", previous offset: "<< (previous - current)
+        << ", top offset: "<< (top - current)
+        << '\n';
 
     func_no_var_fmt_twice(top, current);
 }
@@ -150,52 +150,52 @@ TEST_NOINLINE_NOCLONE void func_int_var_fmt_twice(uintptr_t top, uintptr_t previ
     uintptr_t current = TEST_TOP_FRAME_ADDR;
     volatile int p2 = 0;
     
-    LOGFMT(&amp;#34;======\n{}: sizeof(parameter1): {}, sizeof(stack var): {}&amp;#34;,
-            &amp;#34;func_int_var_fmt_twice&amp;#34;, sizeof(p1), sizeof(p2));
-    LOGFMT(&amp;#34;{}: p2 addr: {}, previous offset: {}, top offset: {}&amp;#34;,
-            &amp;#34;from func_string_var_fmt_once&amp;#34;, (uintptr_t)&amp;amp;p2, (previous - current), (top - current));
+    LOGFMT("======\n{}: sizeof(parameter1): {}, sizeof(stack var): {}",
+            "func_int_var_fmt_twice", sizeof(p1), sizeof(p2));
+    LOGFMT("{}: p2 addr: {}, previous offset: {}, top offset: {}",
+            "from func_string_var_fmt_once", (uintptr_t)&p2, (previous - current), (top - current));
 
     func_int_var_fmt_once(top, current, p1);
 }
 
 TEST_NOINLINE_NOCLONE void func_string_var_fmt_once(uintptr_t top, uintptr_t previous, std::string p1) {
     uintptr_t current = TEST_TOP_FRAME_ADDR;
-    volatile std::string p2 = &amp;#34;from &amp;#34; &#43; std::string(__FUNCTION__);
+    volatile std::string p2 = "from " + std::string(__FUNCTION__);
     
-    LOGFMT(&amp;#34;======\n{}: sizeof(parameter1): {}, sizeof(stack var): {}&amp;#34;,
-            &amp;#34;func_string_var_fmt_once&amp;#34;, sizeof(p1), sizeof(p2));
-    std::cout&amp;lt;&amp;lt; p1
-        &amp;lt;&amp;lt; &amp;#34;, p2 addr: &amp;#34; &amp;lt;&amp;lt; (uintptr_t)&amp;amp;p2
-        &amp;lt;&amp;lt; &amp;#34;, previous offset: &amp;#34;&amp;lt;&amp;lt; (previous - current)
-        &amp;lt;&amp;lt; &amp;#34;, top offset: &amp;#34;&amp;lt;&amp;lt; (top - current)
-        &amp;lt;&amp;lt; &amp;#39;\n&amp;#39;;
+    LOGFMT("======\n{}: sizeof(parameter1): {}, sizeof(stack var): {}",
+            "func_string_var_fmt_once", sizeof(p1), sizeof(p2));
+    std::cout<< p1
+        << ", p2 addr: " << (uintptr_t)&p2
+        << ", previous offset: "<< (previous - current)
+        << ", top offset: "<< (top - current)
+        << '\n';
 
     func_int_var_fmt_twice(top, current, 0);
 }
 
 TEST_NOINLINE_NOCLONE void func_string_var_fmt_twice(uintptr_t top, uintptr_t previous, std::string p1) {
     uintptr_t current = TEST_TOP_FRAME_ADDR;
-    volatile std::string p2 = &amp;#34;from &amp;#34; &#43; std::string(__FUNCTION__);
+    volatile std::string p2 = "from " + std::string(__FUNCTION__);
     
-    LOGFMT(&amp;#34;======\n{}: sizeof(parameter1): {}, sizeof(stack var): {}&amp;#34;,
-            &amp;#34;func_string_var_fmt_twice&amp;#34;, sizeof(p1), sizeof(p2));
-    LOGFMT(&amp;#34;{}: p2 addr: {}: , previous offset: {}, top offset: {}&amp;#34;,
-            p1, (uintptr_t)&amp;amp;p2, (previous - current), (top - current));
+    LOGFMT("======\n{}: sizeof(parameter1): {}, sizeof(stack var): {}",
+            "func_string_var_fmt_twice", sizeof(p1), sizeof(p2));
+    LOGFMT("{}: p2 addr: {}: , previous offset: {}, top offset: {}",
+            p1, (uintptr_t)&p2, (previous - current), (top - current));
 
-    func_string_var_fmt_once(top, current, &amp;#34;from func_string_var_fmt_twice&amp;#34;);
+    func_string_var_fmt_once(top, current, "from func_string_var_fmt_twice");
 }
 
 TEST_NOINLINE_NOCLONE void func_empty(uintptr_t top, uintptr_t previous) {
     uintptr_t current = TEST_TOP_FRAME_ADDR;
     volatile int p2 = 0;
     
-    std::cout&amp;lt;&amp;lt; &amp;#34;func_empty&amp;#34;
-        &amp;lt;&amp;lt; &amp;#34;, p2 addr: &amp;#34; &amp;lt;&amp;lt; (uintptr_t)&amp;amp;p2
-        &amp;lt;&amp;lt; &amp;#34;, previous offset: &amp;#34;&amp;lt;&amp;lt; (previous - current)
-        &amp;lt;&amp;lt; &amp;#34;, top offset: &amp;#34;&amp;lt;&amp;lt; (top - current)
-        &amp;lt;&amp;lt; &amp;#39;\n&amp;#39;;
+    std::cout<< "func_empty"
+        << ", p2 addr: " << (uintptr_t)&p2
+        << ", previous offset: "<< (previous - current)
+        << ", top offset: "<< (top - current)
+        << '\n';
 
-    func_string_var_fmt_twice(top, current, &amp;#34;from func_empty&amp;#34;);
+    func_string_var_fmt_twice(top, current, "from func_empty");
 }
 
 
@@ -227,16 +227,16 @@ from func_no_var_fmt_twice, previous offset: 240, top offset: 1856
 from func_no_var_fmt_once, previous offset: 128, top offset: 1984
 ======
 (LEAF) from func_no_var_no_fmt, previous offset: 48, top offset: 2032</code></pre><p>可以看到，每次调用fmt接口增量都挺大。在 <code>-O2</code> 下可能是涉及内存对齐（我没有再仔细查看汇编），offset会更大。</p><h2 id=解决方案>解决方案</h2><p>这个问题我试了一些方案，都无法零开销地解决这个问题。最后采用的方法是利用匿名的Lambda对象做一次中转。相当于把内存增量控制在Lambda表达式的对象本身的开销上。(直接加函数中转可能会被内联，从而导致栈仍然无法被复用)</p><p>按上面的代码例子就是 <code>LOGFMT(...)</code> 改成如下形式, 其他代码不变:</p><pre><code class=language-cpp>#define LOGFMT(...)                                                 \
-    ([&amp;amp;]() {                                                        \
+    ([&]() {                                                        \
         auto buf = get_log_buffer_addr();                           \
         auto size = get_log_buffer_size();                          \
         auto fmt_res = fmt::format_to_n(buf, size, __VA_ARGS__);    \
-        if (fmt_res.size &amp;gt;= size) {                                 \
+        if (fmt_res.size >= size) {                                 \
             buf[size - 1] = 0;                                      \
         } else {                                                    \
             buf[fmt_res.size] = 0;                                  \
         }                                                           \
-        std::cout &amp;lt;&amp;lt; buf &amp;lt;&amp;lt; &amp;#39;\n&amp;#39;;                                   \
+        std::cout << buf << '\n';                                   \
     })()</code></pre><p>对比结果如下:</p><pre><code class=language-bash>func_empty, p2 addr: 140736400274708, previous offset: 32, top offset: 32
 ======
 func_string_var_fmt_twice: sizeof(parameter1): 32, sizeof(stack var): 32

@@ -6,15 +6,15 @@
 <button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-da144e0d93c202ee51d5e3c817e34c08 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2010/10.html target=_blank itemprop=url>POJ PKU 1474 Video Surveillance 解题报告</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>题目链接：<a href="http://poj.org/problem?id=1474">http://poj.org/problem?id=1474</a></p><p>写这题的目的是看完了zzy的论文，写了半平面交，验证一下正确性，结果发现我写的问题还是很多的。</p><p>题目大意是问能不能放一个摄像机，使得摄像机能看到整个多边形内部。</p><p>这题和1279和3130差不多，过了这题再去对付那两题就简单多了。</p><p>代码如下：</p><pre><code class=language-cpp>/**
  * 二维ACM计算几何模板
  * 注意变量类型更改和EPS
- * #include &amp;lt;cmath&amp;gt;
- * #include &amp;lt;cstdio&amp;gt;
+ * #include <cmath>
+ * #include <cstdio>
  * By OWenT
  */
 
 
-#include &amp;lt;cmath&amp;gt;
-#include &amp;lt;cstdio&amp;gt;
-#include &amp;lt;algorithm&amp;gt;
+#include <cmath>
+#include <cstdio>
+#include <algorithm>
 
 const double eps = 1e-8;
 const double pi = std::acos(-1.0);
@@ -26,7 +26,7 @@ public:
     point(){};
     point(double x, double y):x(x),y(y){};
 
-    static int xmult(const point &amp;amp;ps, const point &amp;amp;pe, const point &amp;amp;po)
+    static int xmult(const point &ps, const point &pe, const point &po)
     {
         return (ps.x - po.x) * (pe.y - po.y) - (pe.x - po.x) * (ps.y - po.y);
     }
@@ -39,18 +39,18 @@ public:
     point s, e;//两点表示，起点[s]，终点[e]
 
     pVector(){}
-    pVector(const point &amp;amp;s, const point &amp;amp;e):s(s),e(e){}
+    pVector(const point &s, const point &e):s(s),e(e){}
 
     //向量与向量的叉乘,参数：向量[_Off]
-    double operator *(const pVector &amp;amp;_Off) const
+    double operator *(const pVector &_Off) const
     {
         return (e.x - s.x) * (_Off.e.y - _Off.s.y) - (e.y - s.y) * (_Off.e.x - _Off.s.x);
     }
 
     //直线平行，参数：直线向量[_Off]
-    bool parallel(const pVector &amp;amp;_Off) const
+    bool parallel(const pVector &_Off) const
     {
-        return std::fabs((*this) * _Off) &amp;lt; eps;
+        return std::fabs((*this) * _Off) < eps;
     }
 
     //两直线交点，参数：目标直线[_Off]
@@ -60,8 +60,8 @@ public:
         point ret = s;
         double t = ((s.x - _Off.s.x) * (_Off.s.y - _Off.e.y) - (s.y - _Off.s.y) * (_Off.s.x - _Off.e.x))
                 / ((s.x - e.x) * (_Off.s.y - _Off.e.y) - (s.y - e.y) * (_Off.s.x - _Off.e.x));
-        ret.x &#43;= (e.x - s.x) * t;
-        ret.y &#43;= (e.y - s.y) * t;
+        ret.x += (e.x - s.x) * t;
+        ret.y += (e.y - s.y) * t;
         return ret;
     }
 };
@@ -75,65 +75,65 @@ public:
 
     //-----------半平面交-------------
     //复杂度:O(nlog2(n))
-    //#include &amp;lt;algorithm&amp;gt;
+    //#include <algorithm>
     //半平面计算极角函数[如果考虑效率可以用成员变量记录]
-    static double hpc_pa(const pVector &amp;amp;_Off)
+    static double hpc_pa(const pVector &_Off)
     {
         return atan2(_Off.e.y - _Off.s.y, _Off.e.x - _Off.s.x);
     }
     //半平面交排序函数[优先顺序: 1.极角 2.前面的直线在后面的左边]
-    static bool hpc_cmp(const pVector &amp;amp;l, const pVector &amp;amp;r)
+    static bool hpc_cmp(const pVector &l, const pVector &r)
     {
         double lp = hpc_pa(l), rp = hpc_pa(r);
-        if(fabs(lp - rp) &amp;gt; eps)
-            return lp &amp;lt; rp;
-        return point::xmult(l.s, r.e, r.s) &amp;lt; 0.0;
+        if(fabs(lp - rp) > eps)
+            return lp < rp;
+        return point::xmult(l.s, r.e, r.s) < 0.0;
     }
     //用于计算的双端队列
     pVector dequeue[maxpn];
     //获取半平面交的多边形
     //参数：向量集合[l]，向量数量[ln];(半平面方向在向量左边）
-    polygon&amp;amp; halfPanelCross(pVector _Off[], int ln)
+    polygon& halfPanelCross(pVector _Off[], int ln)
     {
         int i, tn;
         n = 0;
-        std::sort(_Off, _Off &#43; ln, hpc_cmp);
+        std::sort(_Off, _Off + ln, hpc_cmp);
         //平面在向量左边的筛选
-        for(i = tn = 1; i &amp;lt; ln; i &#43;&#43;)
+        for(i = tn = 1; i < ln; i ++)
 
-            if(fabs(hpc_pa(_Off[i]) - hpc_pa(_Off[i - 1])) &amp;gt; eps)
-                _Off[tn &#43;&#43;] = _Off[i];
+            if(fabs(hpc_pa(_Off[i]) - hpc_pa(_Off[i - 1])) > eps)
+                _Off[tn ++] = _Off[i];
         ln = tn;
         int bot = 0, top = 1;
         dequeue[0] = _Off[0];
         dequeue[1] = _Off[1];
-        for(i = 2; i &amp;lt; ln; i &#43;&#43;)
+        for(i = 2; i < ln; i ++)
         {
             if(dequeue[top].parallel(dequeue[top - 1]) ||
-                dequeue[bot].parallel(dequeue[bot &#43; 1]))
+                dequeue[bot].parallel(dequeue[bot + 1]))
                 return (*this);
-            while(bot &amp;lt; top &amp;amp;&amp;amp;
-                point::xmult(dequeue[top].crossLPt(dequeue[top - 1]), _Off[i].e, _Off[i].s) &amp;gt; eps)
+            while(bot < top &&
+                point::xmult(dequeue[top].crossLPt(dequeue[top - 1]), _Off[i].e, _Off[i].s) > eps)
                 top --;
-            while(bot &amp;lt; top &amp;amp;&amp;amp;
-                point::xmult(dequeue[bot].crossLPt(dequeue[bot &#43; 1]), _Off[i].e, _Off[i].s) &amp;gt; eps)
-                bot &#43;&#43;;
-            dequeue[&#43;&#43; top] = _Off[i];
+            while(bot < top &&
+                point::xmult(dequeue[bot].crossLPt(dequeue[bot + 1]), _Off[i].e, _Off[i].s) > eps)
+                bot ++;
+            dequeue[++ top] = _Off[i];
         }
 
-        while(bot &amp;lt; top &amp;amp;&amp;amp;
-            point::xmult(dequeue[top].crossLPt(dequeue[top - 1]), dequeue[bot].e, dequeue[bot].s) &amp;gt; eps)
+        while(bot < top &&
+            point::xmult(dequeue[top].crossLPt(dequeue[top - 1]), dequeue[bot].e, dequeue[bot].s) > eps)
             top --;
-        while(bot &amp;lt; top &amp;amp;&amp;amp;
-            point::xmult(dequeue[bot].crossLPt(dequeue[bot &#43; 1]), dequeue[top].e, dequeue[top].s) &amp;gt; eps)
-            bot &#43;&#43;;
+        while(bot < top &&
+            point::xmult(dequeue[bot].crossLPt(dequeue[bot + 1]), dequeue[top].e, dequeue[top].s) > eps)
+            bot ++;
         //计算交点(注意不同直线形成的交点可能重合)
-        if(top &amp;lt;= bot &#43; 1)
+        if(top <= bot + 1)
             return (*this);
-        for(i = bot; i &amp;lt; top; i &#43;&#43;)
-            pt[n &#43;&#43;] = dequeue[i].crossLPt(dequeue[i &#43; 1]);
-        if(bot &amp;lt; top &#43; 1)
-            pt[n &#43;&#43;] = dequeue[bot].crossLPt(dequeue[top]);
+        for(i = bot; i < top; i ++)
+            pt[n ++] = dequeue[i].crossLPt(dequeue[i + 1]);
+        if(bot < top + 1)
+            pt[n ++] = dequeue[bot].crossLPt(dequeue[top]);
         return (*this);
     }
 };
@@ -146,23 +146,23 @@ int main()
 {
     int n, i;
     int t = 1;
-    //freopen(&amp;#34;d:\\in.txt&amp;#34;, &amp;#34;r&amp;#34;, stdin);
-    //freopen(&amp;#34;d:\\myout.txt&amp;#34;, &amp;#34;w&amp;#34;, stdout);
-    while(::scanf(&amp;#34;%d&amp;#34;, &amp;amp;n), n)
+    //freopen("d:\\in.txt", "r", stdin);
+    //freopen("d:\\myout.txt", "w", stdout);
+    while(::scanf("%d", &n), n)
     {
-        for(i = 0; i &amp;lt; n; i &#43;&#43;)
-            ::scanf(&amp;#34;%lf %lf&amp;#34;, &amp;amp;pt[i].x, &amp;amp;pt[i].y);
-        for(i = 0; i &amp;lt; n; i &#43;&#43;)
-            line[i] = pVector(pt[(i &#43; 1) % n], pt[i]);
+        for(i = 0; i < n; i ++)
+            ::scanf("%lf %lf", &pt[i].x, &pt[i].y);
+        for(i = 0; i < n; i ++)
+            line[i] = pVector(pt[(i + 1) % n], pt[i]);
 
-        if(t &amp;gt; 1)
-            puts(&amp;#34;&amp;#34;);
-        ::printf(&amp;#34;Floor #%d\n&amp;#34;, t &#43;&#43;);
+        if(t > 1)
+            puts("");
+        ::printf("Floor #%d\n", t ++);
         ans.halfPanelCross(line, n);
-        if(ans.n &amp;gt; 0)
-            ::printf(&amp;#34;Surveillance is possible.\n&amp;#34;);
+        if(ans.n > 0)
+            ::printf("Surveillance is possible.\n");
         else
-            ::printf(&amp;#34;Surveillance is impossible.\n&amp;#34;);
+            ::printf("Surveillance is impossible.\n");
     }
     return 0;
 }</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2010-10-04T11:49:56.000+00:00 itemprop=datePublished>2010-10-04</time></span>

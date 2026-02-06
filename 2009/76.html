@@ -9,129 +9,129 @@ typedef long MULDATATYPE;
 #define MAXMAT 100
 #define inf 1000000000
 
-#define fabs(x) ((x)&amp;gt;0?(x):-(x))
-#define zero(x) (fabs(x)&amp;lt;1e-10)
+#define fabs(x) ((x)>0?(x):-(x))
+#define zero(x) (fabs(x)<1e-10)
 
 struct mat
 {
     long n,m;
     MULDATATYPE data[MAXMAT][MAXMAT];
-    void operator =(const mat&amp;amp; a);
-    mat operator &#43;(const mat&amp;amp; a);
-    mat operator -(const mat&amp;amp; a);
+    void operator =(const mat& a);
+    mat operator +(const mat& a);
+    mat operator -(const mat& a);
     //0-1邻接矩阵
-    mat operator &amp;amp;(const mat&amp;amp; a);
-    mat operator |(const mat&amp;amp; a);
+    mat operator &(const mat& a);
+    mat operator |(const mat& a);
 };
 
 //c=a*b
 //注意引用
-int Mat_MulMode(mat&amp;amp; c,const mat&amp;amp; a,const mat&amp;amp; b,MULDATATYPE mod)
+int Mat_MulMode(mat& c,const mat& a,const mat& b,MULDATATYPE mod)
 {
     long i,j,k;
     if (a.m != b.n)
         return 0;
     c.n = a.n , c.m = b.m;
-    for (i = 0 ; i &amp;lt; c.n ; i &#43;&#43;)
-        for (j = 0 ; j &amp;lt; c.m ; j &#43;&#43;)
-            for (c.data[i][j] = k = 0 ; k  &amp;lt; a.m ; k &#43;&#43;)
-                c.data[i][j] = (c.data[i][j] &#43; a.data[i][k] * b.data[k][j]) % mod;
+    for (i = 0 ; i < c.n ; i ++)
+        for (j = 0 ; j < c.m ; j ++)
+            for (c.data[i][j] = k = 0 ; k  < a.m ; k ++)
+                c.data[i][j] = (c.data[i][j] + a.data[i][k] * b.data[k][j]) % mod;
     return 1;
 }
-//c=a^b(其中必须满足b&amp;gt;0)
-int Mat_PowMode(mat&amp;amp; c,mat a,long b,MULDATATYPE mod)
+//c=a^b(其中必须满足b>0)
+int Mat_PowMode(mat& c,mat a,long b,MULDATATYPE mod)
 {
     c = a;
     b --;
     while(b)
     {
         mat tmp;
-        if(b &amp;amp; 1)
+        if(b & 1)
         {
             tmp = c;
             Mat_MulMode(c,tmp,a,mod);
         }
         tmp = a;
         Mat_MulMode(a,tmp,tmp,mod);
-        b = b&amp;gt;&amp;gt;1;
+        b = b>>1;
     }
     return 1;
 }
-//c=a&#43;b
-int Mat_AddMode(mat&amp;amp; c,const mat&amp;amp; a,const mat&amp;amp; b,MULDATATYPE mod)
+//c=a+b
+int Mat_AddMode(mat& c,const mat& a,const mat& b,MULDATATYPE mod)
 {
     long i,j;
     if (a.n != b.n || a.m != b.m)
         return 0;
     c.n = a.n , c.m = b.m;
-    for (i = 0 ; i &amp;lt; c.n ; i &#43;&#43;)
-        for (j = 0 ; j &amp;lt; c.m ; j &#43;&#43;)
-            c.data[i][j] = (a.data[i][j] &#43; b.data[i][j]) % mod;
+    for (i = 0 ; i < c.n ; i ++)
+        for (j = 0 ; j < c.m ; j ++)
+            c.data[i][j] = (a.data[i][j] + b.data[i][j]) % mod;
     return 1;
 }
 //c=a-b
-int Mat_SubMode(mat&amp;amp; c,const mat&amp;amp; a,const mat&amp;amp; b,MULDATATYPE mod)
+int Mat_SubMode(mat& c,const mat& a,const mat& b,MULDATATYPE mod)
 {
     long i,j;
     if (a.n != b.n || a.m != b.m)
         return 0;
     c.n = a.n , c.m = b.m;
-    for (i = 0 ; i &amp;lt; c.n ; i &#43;&#43;)
-        for (j = 0 ; j &amp;lt; c.m ; j &#43;&#43;)
+    for (i = 0 ; i < c.n ; i ++)
+        for (j = 0 ; j < c.m ; j ++)
             c.data[i][j] = (a.data[i][j] - b.data[i][j]) % mod;
     return 1;
 }
 
 
-void mat::operator =(const mat&amp;amp; a)
+void mat::operator =(const mat& a)
 {
     n = a.n;
     m = a.m;
-    for(int i = 0 ; i &amp;lt; n ; i &#43;&#43;)
-        for(int j = 0 ; j &amp;lt; m ; j &#43;&#43;)
+    for(int i = 0 ; i < n ; i ++)
+        for(int j = 0 ; j < m ; j ++)
             data[i][j] = a.data[i][j];
 }
-mat mat::operator &#43;(const mat &amp;amp;a)
+mat mat::operator +(const mat &a)
 {
     long i,j;
     mat tmpMat;
     tmpMat.m = m;
     tmpMat.n = n;
-    for(i = 0 ; i &amp;lt; n ; i &#43;&#43;)
-        for(j = 0 ; j &amp;lt; m ; j &#43;&#43;)
-            tmpMat.data[i][j] = data[i][j] &#43; a.data[i][j];
+    for(i = 0 ; i < n ; i ++)
+        for(j = 0 ; j < m ; j ++)
+            tmpMat.data[i][j] = data[i][j] + a.data[i][j];
     return tmpMat;
 }
-mat mat::operator -(const mat &amp;amp;a)
+mat mat::operator -(const mat &a)
 {
     long i,j;
     mat tmpMat;
     tmpMat.m = m;
     tmpMat.n = n;
-    for(i = 0 ; i &amp;lt; n ; i &#43;&#43;)
-        for(j = 0 ; j &amp;lt; m ; j &#43;&#43;)
+    for(i = 0 ; i < n ; i ++)
+        for(j = 0 ; j < m ; j ++)
             tmpMat.data[i][j] = data[i][j] - a.data[i][j];
     return tmpMat;
 }
-mat mat::operator &amp;amp;(const mat &amp;amp;a)
+mat mat::operator &(const mat &a)
 {
     long i,j;
     mat tmpMat;
     tmpMat.m = m;
     tmpMat.n = n;
-    for(i = 0 ; i &amp;lt; n ; i &#43;&#43;)
-        for(j = 0 ; j &amp;lt; m ; j &#43;&#43;)
-            tmpMat.data[i][j] = data[i][j] &amp;amp; a.data[i][j];
+    for(i = 0 ; i < n ; i ++)
+        for(j = 0 ; j < m ; j ++)
+            tmpMat.data[i][j] = data[i][j] & a.data[i][j];
     return tmpMat;
 }
-mat mat::operator |(const mat &amp;amp;a)
+mat mat::operator |(const mat &a)
 {
     long i,j;
     mat tmpMat;
     tmpMat.m = m;
     tmpMat.n = n;
-    for(i = 0 ; i &amp;lt; n ; i &#43;&#43;)
-        for(j = 0 ; j &amp;lt; m ; j &#43;&#43;)
+    for(i = 0 ; i < n ; i ++)
+        for(j = 0 ; j < m ; j ++)
             tmpMat.data[i][j] = data[i][j] | a.data[i][j];
     return tmpMat;
 }</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2009-09-15T16:39:11.000+00:00 itemprop=datePublished>2009-09-15</time></span>

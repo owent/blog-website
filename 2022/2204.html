@@ -35,66 +35,66 @@ stateDiagram-v2
 对于不要求故障时高可用的系统(故障转移期间允许正在进行的事务失败)，可以设置 <strong>保存完离线数据后才执行</strong> 并设置 <code>W=1,R=1,N=1</code> 。
 这时候数据一致性仍然能够得到保证，但是事务恢复和一致性保证依赖保存离线数据的一致性(通常时保存到KV数据库)。</p></blockquote><p>对于一些涉及等待回包操作但标识为 <strong>(同步)</strong> 的接口，需要外部的机制来发起任务管理并最终调用 <code>receive_xxx_response(...)</code> 接口 。</p><blockquote><p>比如在 <a href=https://github.com/atframework/atsf4g-co/tree/sample_solution>atsf4g-co</a> 中可以使用 <code>rpc::async_invoke(...)</code> 来发起协程任务来处理IO。</p></blockquote><h2 id=协调者coordinator>协调者(coordinator)</h2><p>协调者主要目的是提供一个事务协调方，保证整个事务是否执行成功都是咦这个协调者内的状态为基准。其中管理逻辑是弱状态的，即使用CAS来保存数据，如果失败直接重新从数据库读取然后Retry。对于单个事务而言，流程图大致如下：</p><p><img src=2204-02.png alt=2204-02.png loading=lazy></p><p>那么，我们需要实现以下协议:</p><pre><code class=language-protobuf>service DtcoordsvrService {
   option (atframework.service_options) = {
-    module_name: &amp;#34;transaction&amp;#34;
+    module_name: "transaction"
   };
 
   rpc query(SSDistributeTransactionQueryReq) returns (SSDistributeTransactionQueryRsp) {
     option (atframework.rpc_options) = {
-      api_name: &amp;#34;拉取事务数据&amp;#34;
+      api_name: "拉取事务数据"
       allow_no_wait: true
-      warning_log_response_code: &amp;#34;PROJECT_NAMESPACE_ID::err::EN_SYS_NOTFOUND&amp;#34;
+      warning_log_response_code: "PROJECT_NAMESPACE_ID::err::EN_SYS_NOTFOUND"
     };
   };
 
   rpc create(SSDistributeTransactionCreateReq) returns (SSDistributeTransactionCreateRsp) {
     option (atframework.rpc_options) = {
-      api_name: &amp;#34;创建分布式事务&amp;#34;
+      api_name: "创建分布式事务"
       allow_no_wait: true
     };
   };
 
   rpc commit(SSDistributeTransactionCommitReq) returns (SSDistributeTransactionCommitRsp) {
     option (atframework.rpc_options) = {
-      api_name: &amp;#34;分布式事务-提交&amp;#34;
+      api_name: "分布式事务-提交"
       allow_no_wait: true
-      warning_log_response_code: &amp;#34;PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION&amp;#34;
+      warning_log_response_code: "PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION"
     };
   };
 
   rpc reject(SSDistributeTransactionRejectReq) returns (SSDistributeTransactionRejectRsp) {
     option (atframework.rpc_options) = {
-      api_name: &amp;#34;分布式事务-拒绝&amp;#34;
+      api_name: "分布式事务-拒绝"
       allow_no_wait: true
-      warning_log_response_code: &amp;#34;PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION&amp;#34;
+      warning_log_response_code: "PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION"
     };
   };
 
   rpc commit_participator(SSDistributeTransactionCommitParticipatorReq)
       returns (SSDistributeTransactionCommitParticipatorRsp) {
     option (atframework.rpc_options) = {
-      api_name: &amp;#34;分布式事务-单个参与者提交&amp;#34;
+      api_name: "分布式事务-单个参与者提交"
       allow_no_wait: true
-      warning_log_response_code: &amp;#34;PROJECT_NAMESPACE_ID::err::EN_SYS_NOTFOUND&amp;#34;
-      warning_log_response_code: &amp;#34;PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION&amp;#34;
+      warning_log_response_code: "PROJECT_NAMESPACE_ID::err::EN_SYS_NOTFOUND"
+      warning_log_response_code: "PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION"
     };
   };
 
   rpc reject_participator(SSDistributeTransactionRejectParticipatorReq)
       returns (SSDistributeTransactionRejectParticipatorRsp) {
     option (atframework.rpc_options) = {
-      api_name: &amp;#34;分布式事务-单个参与者拒绝&amp;#34;
+      api_name: "分布式事务-单个参与者拒绝"
       allow_no_wait: true
-      warning_log_response_code: &amp;#34;PROJECT_NAMESPACE_ID::err::EN_SYS_NOTFOUND&amp;#34;
-      warning_log_response_code: &amp;#34;PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION&amp;#34;
+      warning_log_response_code: "PROJECT_NAMESPACE_ID::err::EN_SYS_NOTFOUND"
+      warning_log_response_code: "PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION"
     };
   };
 
   rpc remove(SSDistributeTransactionRemoveReq) returns (SSDistributeTransactionRemoveRsp) {
     option (atframework.rpc_options) = {
-      api_name: &amp;#34;强制删除分布式事务&amp;#34;
+      api_name: "强制删除分布式事务"
       allow_no_wait: true
-      warning_log_response_code: &amp;#34;PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION&amp;#34;
-      info_log_response_code: &amp;#34;PROJECT_NAMESPACE_ID::err::EN_DB_RECORD_NOT_FOUND&amp;#34;
+      warning_log_response_code: "PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION"
+      info_log_response_code: "PROJECT_NAMESPACE_ID::err::EN_DB_RECORD_NOT_FOUND"
     };
   };
 }</code></pre><p>对于管理器而言，还需要实现以下功能:</p><ul><li>管理正在进行的事务: LRU Cache</li><li>管理已经结束但是尚未淘汰的事务: LRU Cache</li><li>调度层流程要求<ul><li>定期 <code>tick()</code><ul><li>对超时且超出容忍值的日志做清理操作（否决）</li><li>GC掉可以淘汰的事务</li></ul></li></ul></li></ul><p>以上功能都已经提供实现了，所以使用者使用的时候只需要部署服务就好了。不需要做额外操作。</p><h2 id=参与者participator>参与者(participator)</h2><p><strong>参与者(participator)</strong> 是事务Log的业务逻辑真正的执行的地方。其数据分为两部分，第一部分是和协调者类似的事务管理层。第二部分是和具体执行的功能相关的逻辑模块，这部分可以使用 <a href=https://owent.net/2022/2203.html><strong>WAL</strong> 模块</a>。
@@ -131,7 +131,7 @@ message SSParticipatorTransactionRejectRsp {}
 service ParticipatorService {
   rpc transaction_prepare(SSParticipatorTransactionPrepareReq) returns (SSParticipatorTransactionPrepareRsp) {
     option (atframework.rpc_options) = {
-      api_name: &amp;#34;事务准备阶段(Try)&amp;#34;
+      api_name: "事务准备阶段(Try)"
       router_rpc: true
       user_rpc: true
       allow_no_wait: true
@@ -140,7 +140,7 @@ service ParticipatorService {
 
   rpc transaction_commit(SSParticipatorTransactionCommitReq) returns (SSParticipatorTransactionCommitRsp) {
     option (atframework.rpc_options) = {
-      api_name: &amp;#34;事务提交(Commit)&amp;#34;
+      api_name: "事务提交(Commit)"
       router_rpc: true
       user_rpc: true
       allow_no_wait: true
@@ -149,7 +149,7 @@ service ParticipatorService {
 
   rpc transaction_reject(SSParticipatorTransactionRejectReq) returns (SSParticipatorTransactionRejectRsp) {
     option (atframework.rpc_options) = {
-      api_name: &amp;#34;事务拒绝(Commit)&amp;#34;
+      api_name: "事务拒绝(Commit)"
       router_rpc: true
       user_rpc: true
       allow_no_wait: true

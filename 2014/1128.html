@@ -9,12 +9,12 @@ static int LuaProfile_hook_run_fn(lua_State *L) {
     auto profile = LuaProfile::Instance();
     // 获取Lua调用信息
     lua_Debug ar;
-    lua_getstack(L, 0, &amp;amp;ar);
-    lua_getinfo(L, &amp;#34;Sn&amp;#34;, &amp;amp;ar);
+    lua_getstack(L, 0, &ar);
+    lua_getinfo(L, "Sn", &ar);
 
     LuaProfileStackData::stack_ptr_t root_ptr = LuaProfileStackData::make(std::make_pair(__FUNCTION__, __LINE__));
-    root_ptr-&amp;gt;name = ar.name;
-    size_t top = profile-&amp;gt;push_fn(root_ptr);
+    root_ptr->name = ar.name;
+    size_t top = profile->push_fn(root_ptr);
 
     // native 级cpu时钟统计 
     auto start_tm = LuaProfileStackData::clock_t::now();
@@ -23,14 +23,14 @@ static int LuaProfile_hook_run_fn(lua_State *L) {
     int param_num = lua_gettop(L);
     lua_pushvalue(L, lua_upvalueindex(1));
 
-    for (int i = 1; i &amp;lt;= param_num; &#43;&#43;i) {
+    for (int i = 1; i <= param_num; ++i) {
         lua_pushvalue(L, i);
     }
     lua_call(L, param_num, LUA_MULTRET);
 
     auto duration = LuaProfileStackData::clock_t::now() - start_tm;
     // 关闭统计
-    profile-&amp;gt;pop_fn(top);
+    profile->pop_fn(top);
 
     // 统计函数
     {
@@ -42,14 +42,14 @@ static int LuaProfile_hook_run_fn(lua_State *L) {
             lua_call(L, 1, 0);
         }
 
-        &#43;&#43; root_ptr-&amp;gt;call_count;
-        root_ptr-&amp;gt;call_full_duration &#43;= duration;
+        ++ root_ptr->call_count;
+        root_ptr->call_full_duration += duration;
     }
 
     // 优先读取第一子节点的信息
-    if (!root_ptr-&amp;gt;children.empty()) {
-        root_ptr-&amp;gt;source = root_ptr-&amp;gt;children.begin()-&amp;gt;second-&amp;gt;source;
-        root_ptr-&amp;gt;line_number = root_ptr-&amp;gt;children.begin()-&amp;gt;second-&amp;gt;line_number;
+    if (!root_ptr->children.empty()) {
+        root_ptr->source = root_ptr->children.begin()->second->source;
+        root_ptr->line_number = root_ptr->children.begin()->second->line_number;
     }
 
     // TODO hook 的函数级监控
@@ -62,9 +62,9 @@ profile.enable() -- 恢复性能分析
 profile.disable() -- 暂停性能分析
 profile.enableNativeProfile() -- 启动本地调用统计
 profile.disableNativeProfile() -- 关闭本地调用统计
-profile.dump_to(&amp;lt;文件路径&amp;gt;) -- 转储分析结果到文件（csv格式）
+profile.dump_to(<文件路径>) -- 转储分析结果到文件（csv格式）
 profile.dump() -- 返回分析结果（csv格式）
-profile.hook(&amp;lt;lua函数&amp;gt;) -- 函数级性能分析钩子</code></pre><h2 id=输出>输出</h2><p>上面的总调用统计我这里直接输出csv文件或csv格式的文本了。有需要可以改成其他输出格式。
+profile.hook(<lua函数>) -- 函数级性能分析钩子</code></pre><h2 id=输出>输出</h2><p>上面的总调用统计我这里直接输出csv文件或csv格式的文本了。有需要可以改成其他输出格式。
 <img src=lua-profile-1.png alt=示例-1 loading=lazy></p><p>精确的函数调用关系统计直接输出的lua table，可以通过lua转成其他格式。比如下图是我转成json之后的结果：
 <img src=lua-profile-2.png alt=示例-2 loading=lazy></p><p>所有代码托管在：
 <a href=https://github.com/owent-utils/lua/tree/master/src_native/Script/Lua/LuaModule/LuaProfile.cpp>https://github.com/owent-utils/lua/tree/master/src_native/Script/Lua/LuaModule/LuaProfile.cpp</a>

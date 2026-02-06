@@ -8,33 +8,33 @@
 * URL: http://acm.pku.edu.cn/JudgeOnline/problem?id=2728
 * Author: OWenT
 * Blog: http://www.owent.net
-* 0-1分数规划 &#43; Prim最小生成树 &#43; 迭代法
+* 0-1分数规划 + Prim最小生成树 + 迭代法
 */
 
-#include &amp;lt;iostream&amp;gt;
-#include &amp;lt;cstring&amp;gt;
-#include &amp;lt;cstdio&amp;gt;
-#include &amp;lt;cmath&amp;gt;
+#include <iostream>
+#include <cstring>
+#include <cstdio>
+#include <cmath>
 using namespace std;
 
 #define MAXN 1005
 double minEle[MAXN], dis[MAXN][MAXN];
 long x[MAXN], y[MAXN], z[MAXN], alt[MAXN][MAXN], minFrom[MAXN];
 
-double primEX(double mat[MAXN][MAXN],const long &amp;amp;n, double rv);//拓展Prim,对于这题的专用修改版Prim算法
+double primEX(double mat[MAXN][MAXN],const long &n, double rv);//拓展Prim,对于这题的专用修改版Prim算法
 
 int main()
 {
     long i, j, n;
     double res, resC;
-    while(scanf(&amp;#34;%ld&amp;#34;, &amp;amp;n), n)
+    while(scanf("%ld", &n), n)
     {
-        for(i = 0; i &amp;lt; n; i &#43;&#43;)
+        for(i = 0; i < n; i ++)
         {
-            scanf(&amp;#34;%ld %ld %ld&amp;#34;, &amp;amp;x[i], &amp;amp;y[i], &amp;amp;z[i]);
-            for(j = 0; j &amp;lt; i; j &#43;&#43;)
+            scanf("%ld %ld %ld", &x[i], &y[i], &z[i]);
+            for(j = 0; j < i; j ++)
             {
-                double tmp = (x[i] - x[j]) * (x[i] - x[j]) &#43; (y[i] - y[j]) * (y[i] - y[j]);
+                double tmp = (x[i] - x[j]) * (x[i] - x[j]) + (y[i] - y[j]) * (y[i] - y[j]);
                 alt[i][j] = alt[j][i] = abs(z[i] - z[j]);
                 dis[i][j] = dis[j][i] = sqrt(tmp);
             }
@@ -46,32 +46,32 @@ int main()
         {
             resC = res;
             res = primEX(dis, n, res);
-        }while(fabs(res - resC) &amp;gt; 1e-5);
+        }while(fabs(res - resC) > 1e-5);
 
-        printf(&amp;#34;%.3lf\n&amp;#34;, res);
+        printf("%.3lf\n", res);
     }
     return 0;
 }
 
-double primEX(double mat[MAXN][MAXN],const long &amp;amp;n, double rv)
+double primEX(double mat[MAXN][MAXN],const long &n, double rv)
 {
     double hs = 0, rs = 0;
     long i, j, pos;
     memset(minFrom, 0, sizeof(minFrom));
-    for(i = 1; i &amp;lt; n; i &#43;&#43;)
+    for(i = 1; i < n; i ++)
         minEle[i] = 1.0 * alt[0][i] - rv * mat[0][i];
     minFrom[0] = -1;
-    for(i = 1; i &amp;lt; n; i &#43;&#43;)
+    for(i = 1; i < n; i ++)
     {
         pos = 0;
-        for(j = 1; j &amp;lt; n; j &#43;&#43;)
-            if(minFrom[j] &amp;gt;= 0 &amp;amp;&amp;amp; ( pos == 0 || minEle[j] &amp;lt; minEle[pos]))
+        for(j = 1; j < n; j ++)
+            if(minFrom[j] >= 0 && ( pos == 0 || minEle[j] < minEle[pos]))
                 pos = j;
-        rs &#43;= mat[minFrom[pos]][pos];
-        hs &#43;= alt[minFrom[pos]][pos];
+        rs += mat[minFrom[pos]][pos];
+        hs += alt[minFrom[pos]][pos];
         minFrom[pos] = -1;
-        for(j = 1; j &amp;lt; n; j &#43;&#43;)
-            if(minFrom[j] &amp;gt;= 0 &amp;amp;&amp;amp; minEle[j] &amp;gt; 1.0 * alt[pos][j] - rv * mat[pos][j])
+        for(j = 1; j < n; j ++)
+            if(minFrom[j] >= 0 && minEle[j] > 1.0 * alt[pos][j] - rv * mat[pos][j])
                 minEle[j] = 1.0 * alt[pos][j] - rv * mat[pos][j], minFrom[j] = pos;
     }
 

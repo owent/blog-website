@@ -3,24 +3,24 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/tags/g++/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-902"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/902.html target=_blank itemprop=url>VC和GCC成员函数指针实现的研究(三)</a></h1></header><div class=article-summary><p>接上一篇 <a href=https://www.owent.net/2013/896.html>VC和GCC内成员函数指针实现的研究(二)</a></p><h2 id=虚继承>虚继承</h2><p>终于到最后的虚继承了。</p><p>测试代码如下:</p><pre><code class=language-cpp>#include &amp;lt;ctime&amp;gt;
-#include &amp;lt;vector&amp;gt;
-#include &amp;lt;algorithm&amp;gt;
-#include &amp;lt;cstdio&amp;gt;
-#include &amp;lt;stdint.h&amp;gt;
-#include &amp;lt;cstddef&amp;gt;
-#include &amp;lt;string&amp;gt;
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-902"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/902.html target=_blank itemprop=url>VC和GCC成员函数指针实现的研究(三)</a></h1></header><div class=article-summary><p>接上一篇 <a href=https://www.owent.net/2013/896.html>VC和GCC内成员函数指针实现的研究(二)</a></p><h2 id=虚继承>虚继承</h2><p>终于到最后的虚继承了。</p><p>测试代码如下:</p><pre><code class=language-cpp>#include <ctime>
+#include <vector>
+#include <algorithm>
+#include <cstdio>
+#include <stdint.h>
+#include <cstddef>
+#include <string>
 
 class foo_a
 {
 public:
     virtual ~foo_a(){}
     virtual void info() {
-        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
 
     void print(){
-        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
 };
 
@@ -31,7 +31,7 @@ public:
     foo_l(): l(1){}
 
     virtual void info() {
-        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
 };
 
@@ -46,24 +46,24 @@ class foo_c: virtual public foo_l, public foo_r
 {
 public:
     virtual void info() {
-        printf(&amp;#34;%d,%d. %s:%d\n&amp;#34;, l, r, __FUNCTION__, __LINE__);
+        printf("%d,%d. %s:%d\n", l, r, __FUNCTION__, __LINE__);
     }
 };
 
 
 int main(int argc, char* argv[]) {
-    void (foo_a::*vptr1)() = &amp;amp;foo_a::info;
-    void (foo_l::*vptr2)() = &amp;amp;foo_l::info;
-    void (foo_a::*ptr)() = &amp;amp;foo_a::print;
+    void (foo_a::*vptr1)() = &foo_a::info;
+    void (foo_l::*vptr2)() = &foo_l::info;
+    void (foo_a::*ptr)() = &foo_a::print;
 
     foo_c c;
     foo_r r;
     foo_a a;
 
-    printf(&amp;#34;pword size = %d\n&amp;#34;, (int)(sizeof(size_t)));
-    printf(&amp;#34;address of &amp;amp;foo_a::info = 0x%llxH\n&amp;#34;, &amp;amp;foo_a::info);
-    printf(&amp;#34;pointer to &amp;amp;foo_a::info = 0x%llxH\n&amp;#34;, vptr1);
-    printf(&amp;#34;sizeof vptr = %d\n&amp;#34;, (int)(sizeof(vptr1)));
+    printf("pword size = %d\n", (int)(sizeof(size_t)));
+    printf("address of &foo_a::info = 0x%llxH\n", &foo_a::info);
+    printf("pointer to &foo_a::info = 0x%llxH\n", vptr1);
+    printf("sizeof vptr = %d\n", (int)(sizeof(vptr1)));
 
     (a.*vptr1)();
     (r.*vptr1)();
@@ -74,20 +74,20 @@ int main(int argc, char* argv[]) {
     (c.*ptr)();
 
     return 0;
-}</code></pre><h2 id=vc虚继承成员函数指针实现>VC虚继承成员函数指针实现</h2><p>因为是兼容虚继承和非虚继承的，所以赋值的部分的汇编是一样的。这里就不贴了。关键在于执行期它是怎么找到虚基类的。请往下看：</p></div><div class=article-more><a href=//owent.net/2013/902.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-11T14:57:15.000+00:00 itemprop=datePublished>2013-09-11</time></div></div></article><article class="article-panel archive-article archive-type-896"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/896.html target=_blank itemprop=url>VC和GCC成员函数指针实现的研究(二)</a></h1></header><div class=article-summary><p>接上一篇 <a href=https://www.owent.net/2013/890.html>VC和GCC内成员函数指针实现的研究(一)</a></p><p>接下来是多重继承，用到的测试代码如下所示:</p><pre><code class=language-cpp>#include &amp;lt;ctime&amp;gt;
-#include &amp;lt;vector&amp;gt;
-#include &amp;lt;algorithm&amp;gt;
-#include &amp;lt;cstdio&amp;gt;
-#include &amp;lt;stdint.h&amp;gt;
-#include &amp;lt;cstddef&amp;gt;
-#include &amp;lt;string&amp;gt;
+}</code></pre><h2 id=vc虚继承成员函数指针实现>VC虚继承成员函数指针实现</h2><p>因为是兼容虚继承和非虚继承的，所以赋值的部分的汇编是一样的。这里就不贴了。关键在于执行期它是怎么找到虚基类的。请往下看：</p></div><div class=article-more><a href=//owent.net/2013/902.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-11T14:57:15.000+00:00 itemprop=datePublished>2013-09-11</time></div></div></article><article class="article-panel archive-article archive-type-896"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/896.html target=_blank itemprop=url>VC和GCC成员函数指针实现的研究(二)</a></h1></header><div class=article-summary><p>接上一篇 <a href=https://www.owent.net/2013/890.html>VC和GCC内成员函数指针实现的研究(一)</a></p><p>接下来是多重继承，用到的测试代码如下所示:</p><pre><code class=language-cpp>#include <ctime>
+#include <vector>
+#include <algorithm>
+#include <cstdio>
+#include <stdint.h>
+#include <cstddef>
+#include <string>
 
 class foo_a
 {
 public:
     virtual ~foo_a(){}
     virtual void info() {
-        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
 };
 
@@ -97,17 +97,17 @@ public:
     virtual ~foo_b(){}
 
     // 这个函数用于试foo_b的结构与foo_a不同
-    // 以防止VC对foo_a和foo_b的`vcall&amp;#39;{8}&amp;#39;的代码合并
+    // 以防止VC对foo_a和foo_b的`vcall'{8}'的代码合并
     virtual void inspect() { 
-        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
     } 
 
     virtual void info() {
-        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
 
     void print() {
-        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
 };
 
@@ -116,27 +116,27 @@ class foo_c: public foo_a, public foo_b
 {
 public:
     virtual void info() {
-        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
     }
 };
 
 
 int main(int argc, char* argv[]) {
-    void (foo_a::*vptr1)() = &amp;amp;foo_a::info;
-    void (foo_b::*vptr2)() = &amp;amp;foo_b::info;
-    void (foo_b::*ptr)() = &amp;amp;foo_b::print;
+    void (foo_a::*vptr1)() = &foo_a::info;
+    void (foo_b::*vptr2)() = &foo_b::info;
+    void (foo_b::*ptr)() = &foo_b::print;
 
     foo_c c;
     foo_b b;
     foo_a a;
 
     
-    printf(&amp;#34;word size = %d\n&amp;#34;, (int)(sizeof(size_t)));
-    printf(&amp;#34;address of &amp;amp;foo_a::info = 0x%llxH\n&amp;#34;, &amp;amp;foo_a::info);
-    printf(&amp;#34;pointer to &amp;amp;foo_a::info = 0x%llxH\n&amp;#34;, vptr1);
-    printf(&amp;#34;address of &amp;amp;foo_b::info = 0x%llxH\n&amp;#34;, &amp;amp;foo_b::info);
-    printf(&amp;#34;pointer to &amp;amp;foo_b::info = 0x%llxH\n&amp;#34;, vptr2);
-    printf(&amp;#34;sizeof vptr = %d\n&amp;#34;, (int)(sizeof(vptr1)));
+    printf("word size = %d\n", (int)(sizeof(size_t)));
+    printf("address of &foo_a::info = 0x%llxH\n", &foo_a::info);
+    printf("pointer to &foo_a::info = 0x%llxH\n", vptr1);
+    printf("address of &foo_b::info = 0x%llxH\n", &foo_b::info);
+    printf("pointer to &foo_b::info = 0x%llxH\n", vptr2);
+    printf("sizeof vptr = %d\n", (int)(sizeof(vptr1)));
 
     (a.*vptr1)();
     (b.*vptr2)();

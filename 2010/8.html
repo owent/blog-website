@@ -21,11 +21,11 @@ struct SegTree
         data[f].l = l;
         data[f].r = r;
         data[f].v = 0;
-        if(r &amp;gt; l &#43; 1)
+        if(r > l + 1)
         {
-            int m = (l &#43; r) / 2;
-            init(l, m, 2 * f &#43; 1);
-            init(m, r, 2 * f &#43; 2);
+            int m = (l + r) / 2;
+            init(l, m, 2 * f + 1);
+            init(m, r, 2 * f + 2);
         }
     }
 
@@ -33,32 +33,32 @@ struct SegTree
     void insert(int l, int r, int f = 0)
     {
         //根据需要修改
-        data[f].v &#43;&#43;;
-        if(data[f].l == l &amp;amp;&amp;amp; data[f].r == r)
+        data[f].v ++;
+        if(data[f].l == l && data[f].r == r)
             return;
         //--------------
-        int m = (data[f].l &#43; data[f].r) / 2;
-        if(l &amp;gt;= m)//区间在右子节点上
-            insert(l, r, 2 * f &#43; 2);
-        else if(r &amp;lt;= m)//区间在作左子节点上
-            insert(l, r, 2 * f &#43; 1);
+        int m = (data[f].l + data[f].r) / 2;
+        if(l >= m)//区间在右子节点上
+            insert(l, r, 2 * f + 2);
+        else if(r <= m)//区间在作左子节点上
+            insert(l, r, 2 * f + 1);
         else
-            insert(l, m, 2 * f &#43; 1), insert(m, r, 2 * f &#43; 2);
+            insert(l, m, 2 * f + 1), insert(m, r, 2 * f + 2);
     }
 
     //参数：查找区间[l,r),区间父结点[f]
     //返回：区间值
     int find(int l, int r, int f = 0)
     {
-        if(data[f].l == l &amp;amp;&amp;amp; data[f].r == r)
+        if(data[f].l == l && data[f].r == r)
             return data[f].v;
-        int m = (data[f].l &#43; data[f].r) / 2;
-        if(l &amp;gt;= m)//区间在右子节点上
-            return find(l, r, 2 * f &#43; 2);
-        else if(r &amp;lt;= m)//区间在作左子节点上
-            return find(l, r, 2 * f &#43; 1);
+        int m = (data[f].l + data[f].r) / 2;
+        if(l >= m)//区间在右子节点上
+            return find(l, r, 2 * f + 2);
+        else if(r <= m)//区间在作左子节点上
+            return find(l, r, 2 * f + 1);
         else // 根据需要修改
-            return find(l, m, 2 * f &#43; 1) &#43; find(m, r, 2 * f &#43; 2);
+            return find(l, m, 2 * f + 1) + find(m, r, 2 * f + 2);
     }
 
     //排队问题的查找位置函数
@@ -67,25 +67,25 @@ struct SegTree
     int query(int rp, int f = 0)
     {
         if(data[f].v == 0)
-            return data[f].l &#43; rp;
-        int lc = 2 * f &#43; 1;
+            return data[f].l + rp;
+        int lc = 2 * f + 1;
         int ll = data[lc].r - data[lc].l - data[lc].v;//计算左子节点剩余位置数量
         //注意rp是偏移量[0,rp],ll是个数[1,ll]
-        if(rp &amp;lt; ll)//目标在左子节点中
+        if(rp < ll)//目标在左子节点中
             return query(rp , lc);
         else//目标在右子节点中
-            return query(rp - ll, lc &#43; 1);
+            return query(rp - ll, lc + 1);
     }
-};</code></pre><h2 id=矩形交map离散化>矩形交[MAP离散化]：</h2><pre><code class=language-cpp>#include &amp;lt;iostream&amp;gt;
-#include &amp;lt;cstdio&amp;gt;
-#include &amp;lt;algorithm&amp;gt;
-#include &amp;lt;map&amp;gt;
+};</code></pre><h2 id=矩形交map离散化>矩形交[MAP离散化]：</h2><pre><code class=language-cpp>#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <map>
 
 //注释代码为计算周长时使用
 struct SegTree;
 //用于离散化y轴坐标
-std::map&amp;lt;double, int&amp;gt; hash;//离散化映射
-std::map&amp;lt;double, int&amp;gt;::iterator itr;
+std::map<double, int> hash;//离散化映射
+std::map<double, int>::iterator itr;
 double mapOf[2 * 10500];//离散化位置对应的值
 
 struct _SegTree
@@ -97,8 +97,8 @@ struct _SegTree
     _SegTree(){}
     _SegTree(int l, int r)
     {
-        this-&amp;gt;l = l;
-        this-&amp;gt;r = r;
+        this->l = l;
+        this->r = r;
         //lc = rc = false;
         c /*= cn*/ = 0;
         cl = 0.0;
@@ -113,29 +113,29 @@ struct SegTree
     void init(int l, int r, int f = 0)
     {
         data[f] = _SegTree(l, r);
-        if(r - l &amp;gt; 1)
+        if(r - l > 1)
         {
-            int m = (l &#43; r) / 2;
-            init(l, m, 2 * f &#43; 1);
-            init(m, r, 2 * f &#43; 2);
+            int m = (l + r) / 2;
+            init(l, m, 2 * f + 1);
+            init(m, r, 2 * f + 2);
         }
     }
 
     //插入区间[l,f)
     void insert(int l, int r, int f = 0)
     {
-        if(data[f].l == l &amp;amp;&amp;amp; data[f].r == r)
-            data[f].c &#43;&#43;;
+        if(data[f].l == l && data[f].r == r)
+            data[f].c ++;
         else
         {
-            int m = (data[f].l &#43; data[f].r) / 2;
-            int lc = 2 * f &#43; 1;
-            if(l &amp;gt;= m)//区间在右子节点
-                insert(l, r, lc &#43; 1);
-            else if(r &amp;lt;= m)//区间在左子节点
+            int m = (data[f].l + data[f].r) / 2;
+            int lc = 2 * f + 1;
+            if(l >= m)//区间在右子节点
+                insert(l, r, lc + 1);
+            else if(r <= m)//区间在左子节点
                 insert(l, r, lc);
             else
-                insert(l, m, lc), insert(m, r, lc &#43; 1);
+                insert(l, m, lc), insert(m, r, lc + 1);
         }
 
         update(f);
@@ -144,18 +144,18 @@ struct SegTree
     //删除区间
     void del(int l, int r, int f = 0)
     {
-        if(data[f].l == l &amp;amp;&amp;amp; data[f].r == r)
+        if(data[f].l == l && data[f].r == r)
             data[f].c --;
         else
         {
-            int m = (data[f].l &#43; data[f].r) / 2;
-            int lc = 2 * f &#43; 1;
-            if(l &amp;gt;= m)//区间在右子节点
-                del(l, r, lc &#43; 1);
-            else if(r &amp;lt;= m)//区间在左子节点
+            int m = (data[f].l + data[f].r) / 2;
+            int lc = 2 * f + 1;
+            if(l >= m)//区间在右子节点
+                del(l, r, lc + 1);
+            else if(r <= m)//区间在左子节点
                 del(l, r, lc);
             else
-                del(l, m, lc), del(m, r, lc &#43; 1);
+                del(l, m, lc), del(m, r, lc + 1);
         }
 
         update(f);
@@ -164,27 +164,27 @@ struct SegTree
     //更新记录状态集
     void update(int f = 0)
     {
-        if(data[f].c &amp;gt; 0)//全覆盖判断
+        if(data[f].c > 0)//全覆盖判断
         {
             //data[f].lc = data[f].rc = true;
             data[f].cl = mapOf[data[f].r] - mapOf[data[f].l];//离散化的还原
             //data[f].cn = 1;
             return;
         }
-        else if(data[f].r - data[f].l &amp;lt;= 1)//单位节点
+        else if(data[f].r - data[f].l <= 1)//单位节点
         {
             //data[f].lc = data[f].rc = false;
             data[f].cl = 0.0;
             //data[f].cn = 0;
             return;
         }
-        int lc = 2 * f &#43; 1;
-        data[f].cl = data[lc].cl &#43; data[lc &#43; 1].cl;
-        //data[f].cn = data[lc].cn &#43; data[lc &#43; 1].cn;
-        //if(data[lc].rc == true &amp;amp;&amp;amp; data[lc &#43; 1].lc == true)
+        int lc = 2 * f + 1;
+        data[f].cl = data[lc].cl + data[lc + 1].cl;
+        //data[f].cn = data[lc].cn + data[lc + 1].cn;
+        //if(data[lc].rc == true && data[lc + 1].lc == true)
             //data[f].cn --;
         //data[f].lc = data[lc].lc;
-        //data[f].rc = data[lc &#43; 1].rc;
+        //data[f].rc = data[lc + 1].rc;
     }
 };
 
@@ -202,34 +202,34 @@ node ls[2 * SegTree::maxn];//输入矩阵
 bool cmp(node l, node r)
 {
     if(l.x != r.x)
-        return l.x &amp;lt; r.x;
+        return l.x < r.x;
     if(l.isAdd != r.isAdd)
         return l.isAdd;
-    return l.dy &amp;lt; r.dy;
+    return l.dy < r.dy;
 }
 int main()
 {
     int n, hl;
-    while(::scanf(&amp;#34;%d&amp;#34;, &amp;amp;n), n)
+    while(::scanf("%d", &n), n)
     {
         double ans = 0;
         double lux, luy, rlx, rly;
         root.init(0, SegTree::maxn);
         hash.clear();
-        for(int i = 0; i &amp;lt; n; i &#43;&#43;)
+        for(int i = 0; i < n; i ++)
         {
             //读入左上角和右下角
-            ::scanf(&amp;#34;%lf %lf %lf %lf&amp;#34;, &amp;amp;lux, &amp;amp;luy, &amp;amp;rlx, &amp;amp;rly);
+            ::scanf("%lf %lf %lf %lf", &lux, &luy, &rlx, &rly);
             ls[2 * i] = node(lux, rly, luy, true);
-            ls[2 * i &#43; 1] = node(rlx, rly, luy, false);
+            ls[2 * i + 1] = node(rlx, rly, luy, false);
             hash[rly] = hash[luy] = 0;
         }
-        for(hl = 0, itr = hash.begin(); itr != hash.end(); itr &#43;&#43;, hl &#43;&#43; )
-            itr-&amp;gt;second = hl, mapOf[hl] = itr-&amp;gt;first;
+        for(hl = 0, itr = hash.begin(); itr != hash.end(); itr ++, hl ++ )
+            itr->second = hl, mapOf[hl] = itr->first;
 
-        std::sort(ls, ls &#43; 2 * n, cmp);//排序后从左到右扫描
+        std::sort(ls, ls + 2 * n, cmp);//排序后从左到右扫描
         double preX = ls[0].x;
-        for(int i = 0; i &amp;lt; 2 * n; i &#43;&#43;)
+        for(int i = 0; i < 2 * n; i ++)
         {
             double ocl = root.data[0].cl;
             //int ocn = root.data[0].cn;
@@ -238,21 +238,21 @@ int main()
             else
                 root.del(hash[ls[i].dy], hash[ls[i].uy]);
             //求周长
-            //ans &#43;= (ls[i].x - preX) * 2 * ocn;
-            //ans &#43;= abs(ocl - root.data[0].cl);
+            //ans += (ls[i].x - preX) * 2 * ocn;
+            //ans += abs(ocl - root.data[0].cl);
             //求面积
-            ans &#43;= ocl * (ls[i].x - preX);
-            if(ls[i].x &amp;gt; preX)
+            ans += ocl * (ls[i].x - preX);
+            if(ls[i].x > preX)
                 preX = ls[i].x;
         }
 
-        ::printf(&amp;#34;%.2lf\n&amp;#34;, ans);
+        ::printf("%.2lf\n", ans);
     }
     return 0;
-}</code></pre><h2 id=涂色覆盖问题sort数值离散化>涂色覆盖问题[[Sort数值离散化]：</h2><pre><code class=language-cpp>#include &amp;lt;iostream&amp;gt;
-#include &amp;lt;algorithm&amp;gt;
-#include &amp;lt;cstdio&amp;gt;
-#include &amp;lt;cstring&amp;gt;
+}</code></pre><h2 id=涂色覆盖问题sort数值离散化>涂色覆盖问题[[Sort数值离散化]：</h2><pre><code class=language-cpp>#include <iostream>
+#include <algorithm>
+#include <cstdio>
+#include <cstring>
 
 int map[20010];// 用于离散化
 int seg[10005][2];
@@ -274,11 +274,11 @@ struct SegTree
         data[f].l = map[l];
         data[f].r = map[r];
         data[f].v = 0;
-        if(r &amp;gt; l &#43; 1)
+        if(r > l + 1)
         {
-            int m = (l &#43; r) / 2;
-            init(l, m, 2 * f &#43; 1);
-            init(m, r, 2 * f &#43; 2);
+            int m = (l + r) / 2;
+            init(l, m, 2 * f + 1);
+            init(m, r, 2 * f + 2);
             data[f].leaf = false;
         }
         else
@@ -289,31 +289,31 @@ struct SegTree
     void insert(int l, int r, int v, int f = 0)
     {
         //根据需要修改
-        if(data[f].l == l &amp;amp;&amp;amp; data[f].r == r)
+        if(data[f].l == l && data[f].r == r)
         {
             data[f].v = v;
             return;
         }
         //--------------
-        int m = data[2 * f &#43; 2].l;
-        if(data[f].v &amp;gt; 0)
+        int m = data[2 * f + 2].l;
+        if(data[f].v > 0)
         {
-            data[2 * f &#43; 1].v = data[2 * f &#43; 2].v = data[f].v;
+            data[2 * f + 1].v = data[2 * f + 2].v = data[f].v;
             data[f].v = 0;
         }
-        if(l &amp;gt;= m)//区间在右子节点上
-            insert(l, r, v, 2 * f &#43; 2);
-        else if(r &amp;lt;= m)//区间在作左子节点上
-            insert(l, r, v, 2 * f &#43; 1);
+        if(l >= m)//区间在右子节点上
+            insert(l, r, v, 2 * f + 2);
+        else if(r <= m)//区间在作左子节点上
+            insert(l, r, v, 2 * f + 1);
         else
-            insert(l, m, v, 2 * f &#43; 1), insert(m, r, v, 2 * f &#43; 2);
+            insert(l, m, v, 2 * f + 1), insert(m, r, v, 2 * f + 2);
     }
 
     //参数：查找区间父结点[f]
     //返回：段数
     int find(int f = 0)
     {
-        if(data[f].v &amp;gt; 0)
+        if(data[f].v > 0)
         {
             if(!check[data[f].v])
             {
@@ -323,7 +323,7 @@ struct SegTree
             return 0;
         }
         if(data[f].leaf == false)
-            return find(2 * f &#43; 1) &#43; find(2 * f &#43; 2);
+            return find(2 * f + 1) + find(2 * f + 2);
         return 0;
     }
 };
@@ -333,30 +333,30 @@ SegTree root;
 int main()
 {
     int t;
-    scanf(&amp;#34;%d&amp;#34;, &amp;amp;t);
+    scanf("%d", &t);
     while(t --)
     {
         int n, rn;
-        scanf(&amp;#34;%d&amp;#34;, &amp;amp;n);
-        for(int i = 0; i &amp;lt; n; i &#43;&#43;)
+        scanf("%d", &n);
+        for(int i = 0; i < n; i ++)
         {
-            scanf(&amp;#34;%d %d&amp;#34;, &amp;amp;seg[i][0], &amp;amp;seg[i][1]);
+            scanf("%d %d", &seg[i][0], &seg[i][1]);
             map[2 * i] = seg[i][0];
-            map[2 * i &#43; 1] = seg[i][1] &#43; 1;//注意右边界为开区间
+            map[2 * i + 1] = seg[i][1] + 1;//注意右边界为开区间
         }
         memset(check, false, sizeof(check));
-        std::sort(map, map &#43; 2 * n);
+        std::sort(map, map + 2 * n);
         rn = 1;
-        for(int i = 1; i &amp;lt; 2 * n; i &#43;&#43;)//去除重复点
+        for(int i = 1; i < 2 * n; i ++)//去除重复点
             if(map[i] != map[i - 1])
-                map[rn &#43;&#43;] = map[i];
+                map[rn ++] = map[i];
 
         root.init(0, rn - 1);
         check[0] = true;
-        for(int i = 0; i &amp;lt; n; i &#43;&#43;)
-            root.insert(seg[i][0], seg[i][1] &#43; 1, i &#43; 1);
+        for(int i = 0; i < n; i ++)
+            root.insert(seg[i][0], seg[i][1] + 1, i + 1);
 
-        printf(&amp;#34;%d\n&amp;#34;, root.find());
+        printf("%d\n", root.find());
     }
     return 0;
 }</code></pre><h2 id=二维线段树这段不是自己写的copy来的>二维线段树（这段不是自己写的Copy来的）：</h2><pre><code class=language-cpp>//下面我就简单介绍一下我理解中的二维线段树。顾名思义，二维线段树需要有两个维度，所以实现它的最基本思想就是树中套树。假设有一个矩形横坐标范围1—n，纵坐标范围1—m。我们可以以横坐标为一个维度，建立一棵线段树，假设为tree1，在这棵树的每个节点中以纵坐标建立一棵线段树，设为tree2，假设我们在tree1所处在的节点的的横坐标范围为l,r，那么该节点表示的矩形范围为横坐标为l—r，纵坐标范围为1—m。若我们正处在该节点中tree2的某个节点，该节点的纵坐标范围为d—u，那么tree2中的这个节点所代表的矩形范围，横坐标l—r，纵坐标d—u。所以千万不要糊涂应该怎么树中套树，仔细想想其实思想就是这么简单，我们要知道二维线段树并不是一棵树，我们不能把其统一成某种能表示平面的节点，而是根据各个节点的含义组合出能表示平面的节点。
@@ -412,38 +412,38 @@ void OneDemonTree::init(int l, int r, int step)
     data[step].mv = 0;
     if(l == r)
         return;
-    int mid = (l &#43; r) &amp;gt;&amp;gt; 1;
+    int mid = (l + r) >> 1;
     init(l, mid, 2 * step);
-    init(mid &#43; 1, r, 2 * step &#43; 1);
+    init(mid + 1, r, 2 * step + 1);
 }
 void OneDemonTree::insert(int l, int r, int var, int step)
 {
-    if(data[step].mv &amp;lt; var)
+    if(data[step].mv < var)
         data[step].mv = var;
     if(data[step].l == data[step].r)
         return;
-    int mid = (data[step].l &#43; data[step].r) &amp;gt;&amp;gt; 1;
-    if(l &amp;lt;= mid)
+    int mid = (data[step].l + data[step].r) >> 1;
+    if(l <= mid)
         insert(l, r, var, 2 * step);
-    if(r &amp;gt; mid)
-        insert(l, r, var, 2 * step &#43; 1);
-    int v = data[2 * step].mv &amp;gt; data[2 * step &#43; 1].mv ? data[2 * step].mv : data[2 * step &#43; 1].mv;
-    if(data[step].mv &amp;lt; v)
+    if(r > mid)
+        insert(l, r, var, 2 * step + 1);
+    int v = data[2 * step].mv > data[2 * step + 1].mv ? data[2 * step].mv : data[2 * step + 1].mv;
+    if(data[step].mv < v)
         data[step].mv = v;
 }
 
 int OneDemonTree::query(int l, int r, int step)
 {
-    if(l &amp;lt;= data[step].l &amp;amp;&amp;amp; r &amp;gt;= data[step].r)
+    if(l <= data[step].l && r >= data[step].r)
         return data[step].mv;
-    int mid = (data[step].l &#43; data[step].r) &amp;gt;&amp;gt; 1;
+    int mid = (data[step].l + data[step].r) >> 1;
     int mv = 0;
-    if(l &amp;lt;= mid)
+    if(l <= mid)
         mv = query(l, r, 2 * step);
-    if(r &amp;gt; mid)
+    if(r > mid)
     {
-        int rs = query(l, r, 2 * step &#43; 1);
-        if(rs &amp;gt; mv)
+        int rs = query(l, r, 2 * step + 1);
+        if(rs > mv)
             mv = rs;
     }
     return mv;
@@ -457,9 +457,9 @@ void TwoDemonTree::init(int xl, int xr, int yd, int yu, int step)
     data[step].tree.init(yd, yu, 1);
     if(xl == xr)
         return;
-    int mid = (xl &#43; xr) &amp;gt;&amp;gt; 1;
+    int mid = (xl + xr) >> 1;
     init(xl, mid, yd, yu, 2 * step);
-    init(mid &#43; 1, xr, yd, yu, 2 * step &#43; 1);
+    init(mid + 1, xr, yd, yu, 2 * step + 1);
 }
 
 void TwoDemonTree::insert(int xl, int xr, int yd, int yu, int var, int step)
@@ -467,25 +467,25 @@ void TwoDemonTree::insert(int xl, int xr, int yd, int yu, int var, int step)
     data[step].tree.insert(yd, yu, var, 1);
     if(data[step].l == data[step].r)
         return;
-    int mid = (data[step].l &#43; data[step].r) &amp;gt;&amp;gt; 1;
-    if(xl &amp;lt;= mid)
+    int mid = (data[step].l + data[step].r) >> 1;
+    if(xl <= mid)
         insert(xl, xr, yd, yu, var, 2 * step);
-    if(xr &amp;gt; mid)
-        insert(xl, xr, yd, yu, var, 2 * step &#43; 1);
+    if(xr > mid)
+        insert(xl, xr, yd, yu, var, 2 * step + 1);
 }
 
 int TwoDemonTree::query(int xl, int xr, int yd, int yu, int step)
 {
-   if(xl &amp;lt;= data[step].l &amp;amp;&amp;amp; xr &amp;gt;= data[step].r)
+   if(xl <= data[step].l && xr >= data[step].r)
         return data[step].tree.query(yd, yu, 1);
-   int mid = (data[step].l &#43; data[step].r) &amp;gt;&amp;gt; 1;
+   int mid = (data[step].l + data[step].r) >> 1;
    int rs = 0;
-   if(xl &amp;lt;= mid)
+   if(xl <= mid)
         rs = query(xl, xr, yd, yu, 2 * step);
-   if(xr &amp;gt; mid)
+   if(xr > mid)
    {
-        int tmp = query(xl, xr, yd, yu, 2 * step &#43; 1);
-        if(tmp &amp;gt; rs)
+        int tmp = query(xl, xr, yd, yu, 2 * step + 1);
+        if(tmp > rs)
             rs = tmp;
    }
    return rs;

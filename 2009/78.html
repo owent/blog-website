@@ -3,7 +3,7 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-35a2ad4dc2fb6b5d6030914dea297a81 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2009/78.html target=_blank itemprop=url>ECUST 09年 校赛个人赛第八场（最后一场）总结</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#然后是i题>然后是I题</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>懒惰了，暂时休息一下</p><p>这次我只AC了一题（在结束的那一刻，另一题在题目来源地网站上AC了，我们的OJ上仍然WA，我们OJ的Special Judge真是—_—!）</p><p>H题是用木棒拼数字，给出木棒数量，要求算出拼出的最大和最小数字</p><p>最大数字部分很明显7要用3根棒，1用2根棒，所以如果是奇数就是7+K个1，k=（n-1）/2 -1偶数直接n/2个1</p><p>最小数字部分比较麻烦，因为分几种情况，我是DP解决的，也可以找规律，DP的话要注意0和6都是用6根棒，而0不能作为第一个数字</p><p>代码如下：</p><pre><code class=language-cpp>#include&amp;lt;iostream&amp;gt;
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-35a2ad4dc2fb6b5d6030914dea297a81 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2009/78.html target=_blank itemprop=url>ECUST 09年 校赛个人赛第八场（最后一场）总结</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#然后是i题>然后是I题</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>懒惰了，暂时休息一下</p><p>这次我只AC了一题（在结束的那一刻，另一题在题目来源地网站上AC了，我们的OJ上仍然WA，我们OJ的Special Judge真是—_—!）</p><p>H题是用木棒拼数字，给出木棒数量，要求算出拼出的最大和最小数字</p><p>最大数字部分很明显7要用3根棒，1用2根棒，所以如果是奇数就是7+K个1，k=（n-1）/2 -1偶数直接n/2个1</p><p>最小数字部分比较麻烦，因为分几种情况，我是DP解决的，也可以找规律，DP的话要注意0和6都是用6根棒，而0不能作为第一个数字</p><p>代码如下：</p><pre><code class=language-cpp>#include<iostream>
 using namespace std;
 class cal
 {
@@ -17,12 +17,12 @@ public:
 cal Num[101];
 int main()
 {
-    freopen(&amp;#34;h.in&amp;#34;,&amp;#34;r&amp;#34;,stdin);
-    freopen(&amp;#34;h.out&amp;#34;,&amp;#34;w&amp;#34;,stdout);
+    freopen("h.in","r",stdin);
+    freopen("h.out","w",stdout);
     int i,j;
 
-    for(i = 0 ; i &amp;lt; 101 ; i &#43;&#43;)
-        for(j = 0 ; j &amp;lt; 10 ; j &#43;&#43;)
+    for(i = 0 ; i < 101 ; i ++)
+        for(j = 0 ; j < 10 ; j ++)
             Num[i].num[j] = 0;
 
     Num[2].num[1] = 1;Num[2].length = 1;
@@ -33,10 +33,10 @@ int main()
     Num[7].num[8] = 1;Num[7].length = 1;
 
 
-    for(i = 8 ; i &amp;lt; 101 ; i &#43;&#43;)
+    for(i = 8 ; i < 101 ; i ++)
     {
         Num[i].Equal(Num[2].AandB(Num[i - 2]));
-        for(j = 3 ; j &amp;lt; 8 &amp;amp;&amp;amp; i - j &amp;gt;= 2 ; j &#43;&#43;)
+        for(j = 3 ; j < 8 && i - j >= 2 ; j ++)
         {
             if(Num[j].AandB(Num[i - j]).sThan(Num[i]))
                 Num[i].Equal(Num[j].AandB(Num[i - j]));
@@ -45,34 +45,34 @@ int main()
 
 
     int t;
-    scanf(&amp;#34;%d&amp;#34;,&amp;amp;t);
+    scanf("%d",&t);
     while(t --)
     {
         int n;
-        scanf(&amp;#34;%d&amp;#34;,&amp;amp;n);
+        scanf("%d",&n);
         if(n == 6)
-            printf(&amp;#34;6 111\n&amp;#34;);
+            printf("6 111\n");
         else
         {
-            for(i = 1 ; i &amp;lt; 10 ; i &#43;&#43;)
+            for(i = 1 ; i < 10 ; i ++)
                 if(Num[n].num[i])
                     break;
             int b1 = i;
-            printf(&amp;#34;%d&amp;#34;,b1);
-            for(i = 0 ; i &amp;lt; 10 ; i &#43;&#43;)
-                for(j = 0 ; (j &amp;lt; Num[n].num[i] &amp;amp;&amp;amp; i != b1)
-                    || (j &amp;lt; Num[n].num[i] - 1 &amp;amp;&amp;amp; i == b1); j &#43;&#43;)
-                    printf(&amp;#34;%d&amp;#34;,i);
-            putchar(&amp;#39; &amp;#39;);
+            printf("%d",b1);
+            for(i = 0 ; i < 10 ; i ++)
+                for(j = 0 ; (j < Num[n].num[i] && i != b1)
+                    || (j < Num[n].num[i] - 1 && i == b1); j ++)
+                    printf("%d",i);
+            putchar(' ');
 
             if(n % 2)
-                printf(&amp;#34;7&amp;#34;);
+                printf("7");
             else
-                printf(&amp;#34;1&amp;#34;);
+                printf("1");
             n = n / 2 - 1;
             while(n --)
-                putchar(&amp;#39;1&amp;#39;);
-            putchar(&amp;#39;\n&amp;#39;);
+                putchar('1');
+            putchar('\n');
         }
 
     }
@@ -82,51 +82,51 @@ int main()
 cal cal::AandB(cal a)
 {
     cal tmpCal;
-    tmpCal.length = length &#43; a.length;
-    for(int i = 0 ; i &amp;lt; 10 ; i &#43;&#43;)
-        tmpCal.num[i] = num[i] &#43; a.num[i];
+    tmpCal.length = length + a.length;
+    for(int i = 0 ; i < 10 ; i ++)
+        tmpCal.num[i] = num[i] + a.num[i];
 
-    tmpCal.num[0] &#43;= tmpCal.num[6];
+    tmpCal.num[0] += tmpCal.num[6];
     tmpCal.num[6] = 0;
 
     int j;
-    for( j = 1 ; j &amp;lt; 10 ; j &#43;&#43;)
+    for( j = 1 ; j < 10 ; j ++)
         if(tmpCal.num[j])
             break;
     int b1 = j;
 
-    if(tmpCal.num[0] &amp;amp;&amp;amp; b1 &amp;gt; 6)
-        tmpCal.num[0] --,tmpCal.num[6] &#43;&#43;;
+    if(tmpCal.num[0] && b1 > 6)
+        tmpCal.num[0] --,tmpCal.num[6] ++;
 
     return tmpCal;
 };
 
 bool cal::sThan(cal a)
 {
-    if(length &amp;lt; a.length)
+    if(length < a.length)
         return true;
-    else if(a.length &amp;gt; length)
+    else if(a.length > length)
         return false;
     else
     {
         int i;
-        for(i = 1 ; i &amp;lt; 10 ; i &#43;&#43;)
+        for(i = 1 ; i < 10 ; i ++)
             if(num[i])
                 break;
         int b1 = i;
-        for(i = 1 ; i &amp;lt; 10 ; i &#43;&#43;)
+        for(i = 1 ; i < 10 ; i ++)
             if(a.num[i])
                 break;
         int b2 = i;
 
-        if(b1 &amp;lt; b2)
+        if(b1 < b2)
             return true;
-        else if(b1 &amp;gt; b2)
+        else if(b1 > b2)
             return false;
         else
-            for(i = 0 ; i &amp;lt; 10 ; i &#43;&#43;)
+            for(i = 0 ; i < 10 ; i ++)
                 if(a.num[i] != num[i])
-                    return num[i] &amp;gt; a.num[i];
+                    return num[i] > a.num[i];
     }
 
     return false;
@@ -134,26 +134,26 @@ bool cal::sThan(cal a)
 
 void cal::Equal(cal a)
 {
-    for(int i = 0 ; i &amp;lt; 10 ; i &#43;&#43;)
+    for(int i = 0 ; i < 10 ; i ++)
         num[i] = a.num[i];
 
     length = a.length;
 
 
-    num[0] &#43;= num[6];
+    num[0] += num[6];
     num[6] = 0;
 
     int j;
-    for( j = 1 ; j &amp;lt; 10 ; j &#43;&#43;)
+    for( j = 1 ; j < 10 ; j ++)
         if(num[j])
             break;
     int b1 = j;
 
-    if(num[0] &amp;amp;&amp;amp; b1 &amp;gt; 6)
-        num[0] --,num[6] &#43;&#43;;
+    if(num[0] && b1 > 6)
+        num[0] --,num[6] ++;
 
-}</code></pre><h2 id=然后是i题>然后是I题</h2><p>其实I题很水，就是前两天写的点到线段距离的改版，只不过这是线段到线段间的最短距离</p><p>题目按顺时针或逆时针输入，数据量只有100，所以任然暴搜解决</p><p>代码如下：</p><pre><code class=language-cpp>#include&amp;lt;stdio.h&amp;gt;
-#include&amp;lt;math.h&amp;gt;
+}</code></pre><h2 id=然后是i题>然后是I题</h2><p>其实I题很水，就是前两天写的点到线段距离的改版，只不过这是线段到线段间的最短距离</p><p>题目按顺时针或逆时针输入，数据量只有100，所以任然暴搜解决</p><p>代码如下：</p><pre><code class=language-cpp>#include<stdio.h>
+#include<math.h>
 double GetLineDistance(double x1,double y1,double x2,double y2,double x3,double y3,double x4,double y4);
 double disBetweenPointAndLine(double x0,double y0,double x1,double y1,double x2,double y2);
 
@@ -161,29 +161,29 @@ double X1[100],Y1[100],X2[100],Y2[100];
 int main()
 {
     int t;
-    scanf(&amp;#34;%d&amp;#34;,&amp;amp;t);
+    scanf("%d",&t);
     while(t --)
     {
         int n,m,i,j;
         double out = 100000000;
-        scanf(&amp;#34;%d&amp;#34;,&amp;amp;n);
-        for(i = 0 ; i &amp;lt; n ; i &#43;&#43;)
-            scanf(&amp;#34;%lf %lf&amp;#34;,&amp;amp;X1[i],&amp;amp;Y1[i]);
+        scanf("%d",&n);
+        for(i = 0 ; i < n ; i ++)
+            scanf("%lf %lf",&X1[i],&Y1[i]);
 
-        scanf(&amp;#34;%d&amp;#34;,&amp;amp;m);
-        for(i = 0 ; i &amp;lt; m ; i &#43;&#43;)
-            scanf(&amp;#34;%lf %lf&amp;#34;,&amp;amp;X2[i],&amp;amp;Y2[i]);
+        scanf("%d",&m);
+        for(i = 0 ; i < m ; i ++)
+            scanf("%lf %lf",&X2[i],&Y2[i]);
 
-        for(i = 0 ; i &amp;lt; n ; i &#43;&#43;)
-            for(j = 0 ; j &amp;lt; m ; j &#43;&#43;)
+        for(i = 0 ; i < n ; i ++)
+            for(j = 0 ; j < m ; j ++)
             {
-                double tmpDou = GetLineDistance(X1[i],Y1[i],X1[(i &#43; 1) % n],Y1[(i &#43; 1) % n]
-                    ,X2[j],Y2[j],X2[(j &#43; 1) % m],Y2[(j &#43; 1) % m]);
-                if(out &amp;gt; tmpDou)
+                double tmpDou = GetLineDistance(X1[i],Y1[i],X1[(i + 1) % n],Y1[(i + 1) % n]
+                    ,X2[j],Y2[j],X2[(j + 1) % m],Y2[(j + 1) % m]);
+                if(out > tmpDou)
                     out = tmpDou;
             };
 
-        printf(&amp;#34;%.8lg\n&amp;#34;,out / 2);
+        printf("%.8lg\n",out / 2);
     }
     return 0;
 }
@@ -196,11 +196,11 @@ int main()
 double GetLineDistance(double x1,double y1,double x2,double y2,double x3,double y3,double x4,double y4)
 {
     double tmpDouble = disBetweenPointAndLine(x1,y1,x3,y3,x4,y4);
-    if(tmpDouble &amp;gt; disBetweenPointAndLine(x2,y2,x3,y3,x4,y4))
+    if(tmpDouble > disBetweenPointAndLine(x2,y2,x3,y3,x4,y4))
         tmpDouble = disBetweenPointAndLine(x2,y2,x3,y3,x4,y4);
-    if(tmpDouble &amp;gt; disBetweenPointAndLine(x3,y3,x1,y1,x2,y2))
+    if(tmpDouble > disBetweenPointAndLine(x3,y3,x1,y1,x2,y2))
         tmpDouble = disBetweenPointAndLine(x3,y3,x1,y1,x2,y2);
-    if(tmpDouble &amp;gt; disBetweenPointAndLine(x4,y4,x1,y1,x2,y2))
+    if(tmpDouble > disBetweenPointAndLine(x4,y4,x1,y1,x2,y2))
         tmpDouble = disBetweenPointAndLine(x4,y4,x1,y1,x2,y2);
 
     return tmpDouble;
@@ -208,25 +208,25 @@ double GetLineDistance(double x1,double y1,double x2,double y2,double x3,double 
 
 double disBetweenPointAndLine(double x0,double y0,double x1,double y1,double x2,double y2)
 {
-    //化为ax&#43;by&#43;c=0的形式
+    //化为ax+by+c=0的形式
     double a = y1-y2;
     double b = x2-x1;
     double c = x1*y2-x2*y1;
-    double d = (a*x0&#43;b*y0&#43;c)/sqrt(a*a&#43;b*b);
+    double d = (a*x0+b*y0+c)/sqrt(a*a+b*b);
     /*
     如果是线段判断垂足
     */
-    double xp = (b*b*x0-a*b*y0-a*c)/(a*a&#43;b*b);
-    double yp = (-a*b*x0&#43;a*a*y0-b*c)/(a*a&#43;b*b);
-    double xb = (x1&amp;gt;x2)?x1:x2;
-    double yb = (y1&amp;gt;y2)?y1:y2;
-    double xs = x1&#43;x2-xb;
-    double ys = y1&#43;y2-yb;
-    if(xp &amp;gt; xb || xp &amp;lt; xs || yp &amp;gt; yb || yp &amp;lt; ys)
+    double xp = (b*b*x0-a*b*y0-a*c)/(a*a+b*b);
+    double yp = (-a*b*x0+a*a*y0-b*c)/(a*a+b*b);
+    double xb = (x1>x2)?x1:x2;
+    double yb = (y1>y2)?y1:y2;
+    double xs = x1+x2-xb;
+    double ys = y1+y2-yb;
+    if(xp > xb || xp < xs || yp > yb || yp < ys)
     {
-        d = sqrt((x0 - x1) * (x0 - x1) &#43; (y0 - y1) * (y0 - y1));
-        if(d &amp;gt; sqrt((x0 - x2) * (x0 - x2) &#43; (y0 - y2) * (y0 - y2)))
-            d = sqrt((x0 - x2) * (x0 - x2) &#43; (y0 - y2) * (y0 - y2));
+        d = sqrt((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
+        if(d > sqrt((x0 - x2) * (x0 - x2) + (y0 - y2) * (y0 - y2)))
+            d = sqrt((x0 - x2) * (x0 - x2) + (y0 - y2) * (y0 - y2));
     }
 
     return fabs(d);

@@ -14,8 +14,8 @@ public:
     }
 };</code></pre><p>那么在 <strong>Module</strong> 里怎么处理这种需求呢？其实我之前一直只是知道有这么个东西，并没有深入研究过。前段时间看到公司论坛里有同学问，就现学了并且试了一下，以下是一些记录。</p><h2 id=问题>问题</h2><p>举个例子，比如有两个文件:</p><pre><code class=language-cpp>// file: base.ixx
 module;
-#include &amp;lt;iostream&amp;gt;
-#include &amp;lt;typeinfo&amp;gt;
+#include <iostream>
+#include <typeinfo>
 export module base;
 
 class derived;
@@ -23,19 +23,19 @@ export class base {
 public:
 	virtual ~base() = default;
 	virtual void visit(derived*) {
-		std::cout &amp;lt;&amp;lt; &amp;#34;base::visit -&amp;gt; &amp;#34;&amp;lt;&amp;lt; typeid(*this).name() &amp;lt;&amp;lt; std::endl;
+		std::cout << "base::visit -> "<< typeid(*this).name() << std::endl;
 	}
 };</code></pre><pre><code class=language-cpp>// file: derived.ixx
 module;
-#include &amp;lt;iostream&amp;gt;
-#include &amp;lt;typeinfo&amp;gt;
+#include <iostream>
+#include <typeinfo>
 export module derived;
 export import base;
 
 export class derived : public base {
 public:
 	virtual void visit(derived*) override {
-		std::cout &amp;lt;&amp;lt; &amp;#34;derived::visit -&amp;gt; &amp;#34;&amp;lt;&amp;lt; typeid(*this).name() &amp;lt;&amp;lt; std::endl;
+		std::cout << "derived::visit -> "<< typeid(*this).name() << std::endl;
 	}
 };</code></pre><p>程序的本意是 <code>derived</code> 继承 <code>base</code> 类。但是 <code>derived::visit(derived*)</code> 在多态上override了 <code>base::visit(derived*)</code> 。但是实际上这里在 <code>base.ixx</code> 里的 <code>class derived</code> 和 <code>derived.ixx</code> 里的 <code>class derived</code> 不是同一个类。因为他们是处于不同模块内的，作用域和可见性也都不同。</p><h2 id=module-partitions>Module partitions</h2><p>按目前 Modules 文档的说法，是 <strong>禁止跨模块交叉引用</strong> 的。
 为了实现模块可以跨多个文件和让接口与实现隔离，可以使用 <strong>Module partitions</strong> 功能。</p><blockquote><p>最新 <strong>Module partitions</strong> 的规范见 <a href=http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1103r3.pdf>http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1103r3.pdf</a> 的 <strong>2.2 Module partitions</strong> 章节。
@@ -45,8 +45,8 @@ module;
 export module foo:types;
 export class derived;</code></pre><pre><code class=language-cpp>// file: foo-base.ixx
 module;
-#include &amp;lt;iostream&amp;gt;
-#include &amp;lt;typeinfo&amp;gt;
+#include <iostream>
+#include <typeinfo>
 
 export module foo:base;
 import :types;
@@ -55,12 +55,12 @@ export class base {
 public:
     virtual ~base() = default;
     virtual void visit(derived*) {
-        std::cout &amp;lt;&amp;lt; &amp;#34;base::visit -&amp;gt; &amp;#34;&amp;lt;&amp;lt; typeid(*this).name() &amp;lt;&amp;lt; std::endl;
+        std::cout << "base::visit -> "<< typeid(*this).name() << std::endl;
     }
 };</code></pre><pre><code class=language-cpp>// file: foo-derived.ixx
 module;
-#include &amp;lt;iostream&amp;gt;
-#include &amp;lt;typeinfo&amp;gt;
+#include <iostream>
+#include <typeinfo>
 
 export module foo:derived;
 import :types;
@@ -69,7 +69,7 @@ import :base;
 export class derived : public base {
 public:
     virtual void visit(derived*) {
-        std::cout &amp;lt;&amp;lt; &amp;#34;derived::visit -&amp;gt; &amp;#34;&amp;lt;&amp;lt; typeid(*this).name() &amp;lt;&amp;lt; std::endl;
+        std::cout << "derived::visit -> "<< typeid(*this).name() << std::endl;
     }
 };</code></pre><pre><code class=language-cpp>// file: foo.ixx
 module;
@@ -83,29 +83,29 @@ import foo;
 
 int main() {
     derived d;
-    derived* pd = &amp;amp;d;
+    derived* pd = &d;
     base* pb = pd;
-    pb-&amp;gt;visit(nullptr);
-    pd-&amp;gt;visit(nullptr);
+    pb->visit(nullptr);
+    pd->visit(nullptr);
 
     return 0;
-}</code></pre><p>执行输出结果如下:</p><pre><code class=language-bash>derived::visit -&amp;gt; class derived
-derived::visit -&amp;gt; class derived</code></pre><h2 id=编译命令>编译命令</h2><h3 id=msvc>MSVC</h3><pre><code class=language-pwsh>cl /std:c&#43;&#43;latest /c /experimental:module foo-types.ixx /nologo /EHsc /MDd
-cl /std:c&#43;&#43;latest /c /experimental:module foo-base.ixx /nologo /EHsc /MDd
-cl /std:c&#43;&#43;latest /c /experimental:module foo-derived.ixx /nologo /EHsc /MDd
-cl /std:c&#43;&#43;latest /c /experimental:module foo.ixx /nologo /EHsc /MDd
-cl /std:c&#43;&#43;latest /c /experimental:module main.cpp /nologo /EHsc /MDd
+}</code></pre><p>执行输出结果如下:</p><pre><code class=language-bash>derived::visit -> class derived
+derived::visit -> class derived</code></pre><h2 id=编译命令>编译命令</h2><h3 id=msvc>MSVC</h3><pre><code class=language-pwsh>cl /std:c++latest /c /experimental:module foo-types.ixx /nologo /EHsc /MDd
+cl /std:c++latest /c /experimental:module foo-base.ixx /nologo /EHsc /MDd
+cl /std:c++latest /c /experimental:module foo-derived.ixx /nologo /EHsc /MDd
+cl /std:c++latest /c /experimental:module foo.ixx /nologo /EHsc /MDd
+cl /std:c++latest /c /experimental:module main.cpp /nologo /EHsc /MDd
 cl /nologo /EHsc /MDd main.obj foo.obj foo-derived.obj foo-base.obj foo-types.obj</code></pre><h3 id=clang>Clang</h3><p>Clang 目前还不支持 <strong>Module partitions</strong> 功能。（我这里的版本是 Clang 11.0.0）
-猜测以后支持了的话，命令应该是下面这样:</p><pre><code class=language-bash>clang&#43;&#43; -std=c&#43;&#43;20 -stdlib=libc&#43;&#43; -fmodules --precompile -fprebuilt-module-path=. -x c&#43;&#43;-module foo-types.ixx -o foo-types.pcm
-clang&#43;&#43; -std=c&#43;&#43;20 -stdlib=libc&#43;&#43; -fmodules --precompile -fprebuilt-module-path=. -x c&#43;&#43;-module foo-base.ixx -o foo-base.pcm
-clang&#43;&#43; -std=c&#43;&#43;20 -stdlib=libc&#43;&#43; -fmodules --precompile -fprebuilt-module-path=. -x c&#43;&#43;-module foo-derived.ixx -o foo-derived.pcm
-clang&#43;&#43; -std=c&#43;&#43;20 -stdlib=libc&#43;&#43; -fmodules --precompile -fprebuilt-module-path=. -x c&#43;&#43;-module foo.ixx -o foo.pcm
-clang&#43;&#43; -std=c&#43;&#43;20 -stdlib=libc&#43;&#43; -fmodules -fprebuilt-module-path=. main.cpp</code></pre><p>也可能需要用 <code>module-map-file</code> 来辅助文件查找。</p><h3 id=gcc>GCC</h3><p>GCC 11以上才初步支持 <strong>Module</strong> 。我本地下了个snapshot的GCC（ <code>gcc version 11.0.1 20210321 (experimental) (GCC)</code> ）。
-但是GCC有BUG编不出来。可以有兴趣可以跟进一下 <a href="https://gcc.gnu.org/bugzilla/show_bug.cgi?id=99769">https://gcc.gnu.org/bugzilla/show_bug.cgi?id=99769</a> ，等解决了大致上就是下面这样的命令:</p><pre><code class=language-bash>g&#43;&#43; -fmodules-ts -std=c&#43;&#43;20 -x c&#43;&#43; -c foo-types.ixx -o foo-types.o
-g&#43;&#43; -fmodules-ts -std=c&#43;&#43;20 -x c&#43;&#43; -c foo-base.ixx -o foo-base.o
-g&#43;&#43; -fmodules-ts -std=c&#43;&#43;20 -x c&#43;&#43; -c foo-derived.ixx -o foo-derived.o
-g&#43;&#43; -fmodules-ts -std=c&#43;&#43;20 -x c&#43;&#43; -c foo.ixx -o foo.o
-g&#43;&#43; -fmodules-ts -std=c&#43;&#43;20 -c main.cpp foo.o foo-derived.o foo-base.o foo-types.o</code></pre><h2 id=参考文献>参考文献</h2><ul><li><a href=https://www.modernescpp.com/index.php/c-20-module-interface-unit-and-module-implementation-unit>https://www.modernescpp.com/index.php/c-20-module-interface-unit-and-module-implementation-unit</a></li><li><a href=https://zhuanlan.zhihu.com/p/350136757>https://zhuanlan.zhihu.com/p/350136757</a></li><li><a href=http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1103r3.pdf>http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1103r3.pdf</a></li><li><a href=http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0775r0.pdf>http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0775r0.pdf</a></li><li><a href=https://en.cppreference.com/w/cpp/language/modules>https://en.cppreference.com/w/cpp/language/modules</a></li><li><a href=https://clang.llvm.org/docs/Modules.html>https://clang.llvm.org/docs/Modules.html</a></li><li><a href=https://gcc.gnu.org/wiki/cxx-modules#Compiled_Module_Interface_Files>https://gcc.gnu.org/wiki/cxx-modules#Compiled_Module_Interface_Files</a></li><li><a href=https://devblogs.microsoft.com/cppblog/standard-c20-modules-support-with-msvc-in-visual-studio-2019-version-16-8/>https://devblogs.microsoft.com/cppblog/standard-c20-modules-support-with-msvc-in-visual-studio-2019-version-16-8/</a></li></ul><h2 id=最后>最后</h2><p>第一次上手 C++ Module ，可能文中有不正确的地方。欢迎指正交流。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2021-03-25T22:38:52.000+00:00 itemprop=datePublished>2021-03-25</time></span>
+猜测以后支持了的话，命令应该是下面这样:</p><pre><code class=language-bash>clang++ -std=c++20 -stdlib=libc++ -fmodules --precompile -fprebuilt-module-path=. -x c++-module foo-types.ixx -o foo-types.pcm
+clang++ -std=c++20 -stdlib=libc++ -fmodules --precompile -fprebuilt-module-path=. -x c++-module foo-base.ixx -o foo-base.pcm
+clang++ -std=c++20 -stdlib=libc++ -fmodules --precompile -fprebuilt-module-path=. -x c++-module foo-derived.ixx -o foo-derived.pcm
+clang++ -std=c++20 -stdlib=libc++ -fmodules --precompile -fprebuilt-module-path=. -x c++-module foo.ixx -o foo.pcm
+clang++ -std=c++20 -stdlib=libc++ -fmodules -fprebuilt-module-path=. main.cpp</code></pre><p>也可能需要用 <code>module-map-file</code> 来辅助文件查找。</p><h3 id=gcc>GCC</h3><p>GCC 11以上才初步支持 <strong>Module</strong> 。我本地下了个snapshot的GCC（ <code>gcc version 11.0.1 20210321 (experimental) (GCC)</code> ）。
+但是GCC有BUG编不出来。可以有兴趣可以跟进一下 <a href="https://gcc.gnu.org/bugzilla/show_bug.cgi?id=99769">https://gcc.gnu.org/bugzilla/show_bug.cgi?id=99769</a> ，等解决了大致上就是下面这样的命令:</p><pre><code class=language-bash>g++ -fmodules-ts -std=c++20 -x c++ -c foo-types.ixx -o foo-types.o
+g++ -fmodules-ts -std=c++20 -x c++ -c foo-base.ixx -o foo-base.o
+g++ -fmodules-ts -std=c++20 -x c++ -c foo-derived.ixx -o foo-derived.o
+g++ -fmodules-ts -std=c++20 -x c++ -c foo.ixx -o foo.o
+g++ -fmodules-ts -std=c++20 -c main.cpp foo.o foo-derived.o foo-base.o foo-types.o</code></pre><h2 id=参考文献>参考文献</h2><ul><li><a href=https://www.modernescpp.com/index.php/c-20-module-interface-unit-and-module-implementation-unit>https://www.modernescpp.com/index.php/c-20-module-interface-unit-and-module-implementation-unit</a></li><li><a href=https://zhuanlan.zhihu.com/p/350136757>https://zhuanlan.zhihu.com/p/350136757</a></li><li><a href=http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1103r3.pdf>http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1103r3.pdf</a></li><li><a href=http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0775r0.pdf>http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0775r0.pdf</a></li><li><a href=https://en.cppreference.com/w/cpp/language/modules>https://en.cppreference.com/w/cpp/language/modules</a></li><li><a href=https://clang.llvm.org/docs/Modules.html>https://clang.llvm.org/docs/Modules.html</a></li><li><a href=https://gcc.gnu.org/wiki/cxx-modules#Compiled_Module_Interface_Files>https://gcc.gnu.org/wiki/cxx-modules#Compiled_Module_Interface_Files</a></li><li><a href=https://devblogs.microsoft.com/cppblog/standard-c20-modules-support-with-msvc-in-visual-studio-2019-version-16-8/>https://devblogs.microsoft.com/cppblog/standard-c20-modules-support-with-msvc-in-visual-studio-2019-version-16-8/</a></li></ul><h2 id=最后>最后</h2><p>第一次上手 C++ Module ，可能文中有不正确的地方。欢迎指正交流。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2021-03-25T22:38:52.000+00:00 itemprop=datePublished>2021-03-25</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/c++.html>c++</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cpp.html>cpp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cxx.html>cxx</a></li><li class=article-tag-list-item><a href=//owent.net/tags/c++20.html>c++20</a></li><li class=article-tag-list-item><a href=//owent.net/tags/module.html>module</a></li><li class=article-tag-list-item><a href=//owent.net/tags/module-partitions.html>Module partitions</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2021/2104.html>上一篇<strong>折腾一下nftables下的双拨</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2021/2102.html>下一篇<strong>[Rust] 实现一个线程安全且迭代器可以保存的链表</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;owent
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,

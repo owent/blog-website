@@ -5,12 +5,12 @@
 <input class=form-control type=text placeholder=搜索 name=q>
 <button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-723e8c14a8c7ce7dcaf0374572a6f40f class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2022/2209.html target=_blank itemprop=url>关于opentelemetry-cpp社区对于C++ Head Only组件单例和符号可见性的讨论小记</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#前言>前言</a></li><li><a href=#背景>背景</a></li><li><a href=#几个编译环境的example>几个编译环境的example</a><ul><li><a href=#case-1-windowsgccvisibilitystatic-local变量>Case 1: Windows+GCC+visibility+static local变量</a></li><li><a href=#case-2-windowsgccvisibility全局变量>Case 2: Windows+GCC+visibility+全局变量</a></li><li><a href=#case-3-windowsmsvc__declspecselectany>Case 3: Windows+MSVC+<code>__declspec(selectany)</code></a></li><li><a href=#case-4-windowsgcc__attribute__selectany>Case 4: Windows+GCC+<code>__attribute__((selectany))</code></a></li></ul></li><li><a href=#elf的特例global变量和static-local变量的差异>ELF的特例（global变量和static local变量的差异）</a></li><li><a href=#最后>最后</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><h2 id=前言>前言</h2><p>前段时间有人在 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 提出了api组件在动态库中单例无法工作的 issue ，( <a href=https://github.com/open-telemetry/opentelemetry-cpp/issues/1520>https://github.com/open-telemetry/opentelemetry-cpp/issues/1520</a> ) 。</p><blockquote><p><a href=https://opentelemetry.io/>opentelemetry</a> 是可观测性领域的开源项目，目标是统一链路跟踪、数据指标和日志的服务、上报、协议和接口规范，目前属于 <a href=https://cncf.io/>CNCF基金会</a> 孵化项目。而 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 则是 <a href=https://opentelemetry.io/>opentelemetry</a> 中对标准规范SDK的C++实现。</p></blockquote><p>其本质原因是 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 规范要求api组件必须是header-only的（ <a href=https://github.com/open-telemetry/opentelemetry-cpp/blob/main/docs/requirements.md#requirements>https://github.com/open-telemetry/opentelemetry-cpp/blob/main/docs/requirements.md#requirements</a> ）。</p><p><a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 一直以来仅仅提供了跨平台的静态库支持，对动态库并没有找到一个特别理想的方式。这里记录一下当时整个讨论的要点记录。</p><h2 id=背景>背景</h2><p>三大主流平台（macOS,Linux和Windows ）中用的ABI规范都不太一样。其中macOS的Mach-O和Linux下的ELF差别不是很大，但是它们Windows下PE ABI的差异很大。
 对动态库而言，实际上所有写在 header 里的接口和全局变量都有一份自己的实例。而关键性的差异主要是 ELF和Mach-O 对于 <code>-fvisibility=default</code> 的变量都是去GOT查找，而如果GOT找不到会走到第一次调用的模块的初始化流程，然后初始化完以后会把这个地址写入GOT，GOT是所有模块共享的，函数符号表也是共享的。</p><p>另外，虽然 <code>-fvisibility=default</code> 是可见性设置的默认值，但是有些下游库为了版本兼容性和符号隔离，会在编译选项中加入 <code>-fvisibility=hidden</code> 来使得符号是默认隐藏的。这种情况又不太一样，各个模块会直接使用本地的函数，不再从GOT中查找。导致各个模块最终使用的同名变量和函数地址不一样。</p><p>而在PE中，dll调用函数,除非标记为 <code>__declspec(dllimport)</code>，总是从本模块的符号表总查找。而标记为 <code>__declspec(dllimport)</code> 的函数不会生成本地实例，所以会要求必须要有某个模块申明了 <code>__declspec(dllexport)</code> 来导出实际的实例。每个dll和exe都有自己独立符号表和堆管理。</p><p>介于以上原因，大多数 C/C++ 库的解决方式是在声明接口时加一个宏 <code>XXX_API</code> ，然后不同的场景通过宏来切换到不同的编译分支，比如：</p><pre><code class=language-cpp>// ================ import/export: for compilers ================
-#if defined(__GNUC__) &amp;amp;&amp;amp; !defined(__ibmxl__)
-//  GNU C&#43;&#43;/Clang
+#if defined(__GNUC__) && !defined(__ibmxl__)
+//  GNU C++/Clang
 //
 // Dynamic shared object (DSO) and dynamic-link library (DLL) support
 //
-#  if __GNUC__ &amp;gt;= 4
+#  if __GNUC__ >= 4
 #    if defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__)
 // All Win32 development environments, including 64-bit Windows and MinGW, define
 // _WIN32 or one of its variant spellings. Note that Cygwin is a POSIX environment,
@@ -23,10 +23,10 @@
 #      endif
 #    else
 #      ifndef OPENTELEMETRY_SYMBOL_EXPORT
-#        define OPENTELEMETRY_SYMBOL_EXPORT __attribute__((visibility(&amp;#34;default&amp;#34;)))
+#        define OPENTELEMETRY_SYMBOL_EXPORT __attribute__((visibility("default")))
 #      endif
 #      ifndef OPENTELEMETRY_SYMBOL_IMPORT
-#        define OPENTELEMETRY_SYMBOL_IMPORT __attribute__((visibility(&amp;#34;default&amp;#34;)))
+#        define OPENTELEMETRY_SYMBOL_IMPORT __attribute__((visibility("default")))
 #      endif
 #    endif
 #  else
@@ -39,7 +39,7 @@
 #    endif
 #  endif
 #elif defined(_MSC_VER)
-//  Microsoft Visual C&#43;&#43;
+//  Microsoft Visual C++
 //
 //  Must remain the last #elif since some other vendors (Metrowerks, for
 //  example) also #define _MSC_VER
@@ -49,9 +49,9 @@
 
 // ================ import/export: for platform ================
 //  Default defines for OPENTELEMETRY_SYMBOL_EXPORT and OPENTELEMETRY_SYMBOL_IMPORT
-//  If a compiler doesn&amp;#39;t support __declspec(dllexport)/__declspec(dllimport),
+//  If a compiler doesn't support __declspec(dllexport)/__declspec(dllimport),
 //  its file must define OPENTELEMETRY_SYMBOL_EXPORT and OPENTELEMETRY_SYMBOL_IMPORT
-#if !defined(OPENTELEMETRY_SYMBOL_EXPORT) &amp;amp;&amp;amp; (defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__))
+#if !defined(OPENTELEMETRY_SYMBOL_EXPORT) && (defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__))
 
 #  ifndef OPENTELEMETRY_SYMBOL_EXPORT
 #    define OPENTELEMETRY_SYMBOL_EXPORT __declspec(dllexport)
@@ -77,14 +77,14 @@
 #define OPENTELEMETRY_API_API_DLL
 
 // And then declare these.
-#if defined(OPENTELEMETRY_API_API_NATIVE) &amp;amp;&amp;amp; OPENTELEMETRY_API_API_NATIVE
-#  if defined(OPENTELEMETRY_API_API_DLL) &amp;amp;&amp;amp; OPENTELEMETRY_API_API_DLL
+#if defined(OPENTELEMETRY_API_API_NATIVE) && OPENTELEMETRY_API_API_NATIVE
+#  if defined(OPENTELEMETRY_API_API_DLL) && OPENTELEMETRY_API_API_DLL
 #    define OPENTELEMETRY_API_API OPENTELEMETRY_SYMBOL_EXPORT
 #  else
 #    define OPENTELEMETRY_API_API
 #  endif
 #else
-#  if defined(OPENTELEMETRY_API_API_DLL) &amp;amp;&amp;amp; OPENTELEMETRY_API_API_DLL
+#  if defined(OPENTELEMETRY_API_API_DLL) && OPENTELEMETRY_API_API_DLL
 #    define OPENTELEMETRY_API_API OPENTELEMETRY_SYMBOL_IMPORT
 #  else
 #    define OPENTELEMETRY_API_API
@@ -94,25 +94,25 @@
 在Windows下，有且只能有一个模块的代码实现把 <code>OPENTELEMETRY_SYMBOL_EXPORT</code> 声明为 <code>__declspec(dllexport)</code> ，其他模块声明为 <code>__declspec(import)</code> 。
 只有一个模块有实现，其他的模块都是导入这个模块的实现，否则链接时会报重定义。所以这个申明必须位于 cpp 文件中，不能位于头文件中。这就和前面提到的 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 规范要求 <a href=https://github.com/open-telemetry/opentelemetry-cpp/blob/main/docs/requirements.md#requirements>api组件必须是header-only的</a> 相冲突。而但凡写在头文件里。就会导致不同的模块对 <strong>单例</strong> 对象的引用，使用不同的变量地址，从而失去了 <strong>单例</strong> 的意义。</p><h2 id=几个编译环境的example>几个编译环境的example</h2><p>在issue讨论中，首先对于Linux/macOS，可以显式把涉及单例的接口设置为 <code>__attribute__((visibility("default")， weak))</code> ，这样不受全局选项的影响。而对于Windows，有人提到了在MSVC中可以用 <a href=https://learn.microsoft.com/en-us/cpp/cpp/selectany><code>__declspec(selectany)</code></a> 代替 <code>__attribute__((visibility("default"), weak))</code> 。看 <a href=https://learn.microsoft.com/en-us/cpp/cpp/selectany><code>__declspec( selectany )</code></a> 的文档，似乎确实是一个解决方案。同时在Windows下的 GCC/Clang 中，也有对应的选项 <a href=https://gcc.gnu.org/onlinedocs/gcc/Microsoft-Windows-Variable-Attributes.html><code>__attribute__((selectany))</code></a> （注意 <code>selectany</code> 只能用于变量，不能用于函数）。所以我写了几个Windows下的example用于测试可行性。</p><h3 id=case-1-windowsgccvisibilitystatic-local变量>Case 1: Windows+GCC+visibility+static local变量</h3><p>文件: <strong>test_dll.h</strong></p><pre><code class=language-cpp>#pragma once
 
-#include &amp;lt;iostream&amp;gt;
+#include <iostream>
 
 struct foo {
-  __attribute__((visibility(&amp;#34;default&amp;#34;))) static void print_addr() {
-    __attribute__((visibility(&amp;#34;default&amp;#34;))) static foo inst;
+  __attribute__((visibility("default"))) static void print_addr() {
+    __attribute__((visibility("default"))) static foo inst;
     inst.print();
-    std::cout&amp;lt;&amp;lt; &amp;#34;print_addr address: &amp;#34;&amp;lt;&amp;lt; foo::print_addr&amp;lt;&amp;lt; std::endl;
+    std::cout<< "print_addr address: "<< foo::print_addr<< std::endl;
   }
 
   void print() {
-    std::cout&amp;lt;&amp;lt; &amp;#34;Instance address: &amp;#34;&amp;lt;&amp;lt; this&amp;lt;&amp;lt; std::endl;
+    std::cout<< "Instance address: "<< this<< std::endl;
   }
-};</code></pre><p>文件: <strong>test_dll.cpp</strong></p><pre><code class=language-cpp>#include &amp;#34;test_dll.h&amp;#34;
+};</code></pre><p>文件: <strong>test_dll.cpp</strong></p><pre><code class=language-cpp>#include "test_dll.h"
 
-#include &amp;lt;iostream&amp;gt;
+#include <iostream>
 
 __attribute__((dllexport)) void call_print() {
   foo::print_addr();
-}</code></pre><p>文件: <strong>test_main.cpp</strong></p><pre><code class=language-cpp>#include &amp;#34;test_dll.h&amp;#34;
+}</code></pre><p>文件: <strong>test_main.cpp</strong></p><pre><code class=language-cpp>#include "test_dll.h"
 
 __attribute__ ((dllimport)) void call_print();
 
@@ -120,18 +120,18 @@ int main() {
   foo::print_addr();
   call_print();
   return 0;
-}</code></pre><p>编译指令和执行结果:</p><pre><code class=language-bash>$ g&#43;&#43; test_dll.cpp -shared -o test_dll.dll
+}</code></pre><p>编译指令和执行结果:</p><pre><code class=language-bash>$ g++ test_dll.cpp -shared -o test_dll.dll
 In file included from test_dll.cpp:1:
-test_dll.h: In static member function &amp;#39;static void foo::print_addr()&amp;#39;:
-test_dll.h:7:56: warning: &amp;#39;visibility&amp;#39; attribute ignored [-Wattributes]
-    7 |     __attribute__((visibility(&amp;#34;default&amp;#34;))) static foo inst;
+test_dll.h: In static member function 'static void foo::print_addr()':
+test_dll.h:7:56: warning: 'visibility' attribute ignored [-Wattributes]
+    7 |     __attribute__((visibility("default"))) static foo inst;
       |                                                       ^~~~
 
-$ g&#43;&#43; test_main.cpp -o test_dll.exe -L. -ltest_dll
+$ g++ test_main.cpp -o test_dll.exe -L. -ltest_dll
 In file included from test_main.cpp:1:
-test_dll.h: In static member function &amp;#39;static void foo::print_addr()&amp;#39;:
-test_dll.h:7:56: warning: &amp;#39;visibility&amp;#39; attribute ignored [-Wattributes]
-    7 |     __attribute__((visibility(&amp;#34;default&amp;#34;))) static foo inst;
+test_dll.h: In static member function 'static void foo::print_addr()':
+test_dll.h:7:56: warning: 'visibility' attribute ignored [-Wattributes]
+    7 |     __attribute__((visibility("default"))) static foo inst;
       |                                                       ^~~~
 
 
@@ -144,54 +144,54 @@ print_addr address: 1
 $ cat /etc/os-release
 NAME=MSYS2
 ID=msys2
-PRETTY_NAME=&amp;#34;MSYS2&amp;#34;
-ID_LIKE=&amp;#34;cygwin arch&amp;#34;
-HOME_URL=&amp;#34;https://www.msys2.org&amp;#34;
-BUG_REPORT_URL=&amp;#34;https://github.com/msys2/MSYS2-packages/issues&amp;#34;
+PRETTY_NAME="MSYS2"
+ID_LIKE="cygwin arch"
+HOME_URL="https://www.msys2.org"
+BUG_REPORT_URL="https://github.com/msys2/MSYS2-packages/issues"
 
 $ gcc -v
 Using built-in specs.
 COLLECT_GCC=C:\msys64\mingw64\bin\gcc.exe
 COLLECT_LTO_WRAPPER=C:/msys64/mingw64/bin/../lib/gcc/x86_64-w64-mingw32/12.1.0/lto-wrapper.exe
 Target: x86_64-w64-mingw32
-Configured with: ../gcc-12.1.0/configure --prefix=/mingw64 --with-local-prefix=/mingw64/local --build=x86_64-w64-mingw32 --host=x86_64-w64-mingw32 --target=x86_64-w64-mingw32 --with-native-system-header-dir=/mingw64/include --libexecdir=/mingw64/lib --enable-bootstrap --enable-checking=release --with-arch=x86-64 --with-tune=generic --enable-languages=c,lto,c&#43;&#43;,fortran,ada,objc,obj-c&#43;&#43;,jit --enable-shared --enable-static --enable-libatomic --enable-threads=posix --enable-graphite --enable-fully-dynamic-string --enable-libstdcxx-filesystem-ts --enable-libstdcxx-time --disable-libstdcxx-pch --enable-lto --enable-libgomp --disable-multilib --disable-rpath --disable-win32-registry --disable-nls --disable-werror --disable-symvers --with-libiconv --with-system-zlib --with-gmp=/mingw64 --with-mpfr=/mingw64 --with-mpc=/mingw64 --with-isl=/mingw64 --with-pkgversion=&amp;#39;Rev2, Built by MSYS2 project&amp;#39; --with-bugurl=https://github.com/msys2/MINGW-packages/issues --with-gnu-as --with-gnu-ld --disable-libstdcxx-debug --with-boot-ldflags=-static-libstdc&#43;&#43; --with-stage1-ldflags=-static-libstdc&#43;&#43;
+Configured with: ../gcc-12.1.0/configure --prefix=/mingw64 --with-local-prefix=/mingw64/local --build=x86_64-w64-mingw32 --host=x86_64-w64-mingw32 --target=x86_64-w64-mingw32 --with-native-system-header-dir=/mingw64/include --libexecdir=/mingw64/lib --enable-bootstrap --enable-checking=release --with-arch=x86-64 --with-tune=generic --enable-languages=c,lto,c++,fortran,ada,objc,obj-c++,jit --enable-shared --enable-static --enable-libatomic --enable-threads=posix --enable-graphite --enable-fully-dynamic-string --enable-libstdcxx-filesystem-ts --enable-libstdcxx-time --disable-libstdcxx-pch --enable-lto --enable-libgomp --disable-multilib --disable-rpath --disable-win32-registry --disable-nls --disable-werror --disable-symvers --with-libiconv --with-system-zlib --with-gmp=/mingw64 --with-mpfr=/mingw64 --with-mpc=/mingw64 --with-isl=/mingw64 --with-pkgversion='Rev2, Built by MSYS2 project' --with-bugurl=https://github.com/msys2/MINGW-packages/issues --with-gnu-as --with-gnu-ld --disable-libstdcxx-debug --with-boot-ldflags=-static-libstdc++ --with-stage1-ldflags=-static-libstdc++
 Thread model: posix
 Supported LTO compression algorithms: zlib zstd
 gcc version 12.1.0 (Rev2, Built by MSYS2 project)</code></pre><p>显然，两个模块内地址不一致。</p><h3 id=case-2-windowsgccvisibility全局变量>Case 2: Windows+GCC+visibility+全局变量</h3><p>文件: <strong>test_dll.h</strong></p><pre><code class=language-cpp>#pragma once
 
-#include &amp;lt;iostream&amp;gt;
+#include <iostream>
 
 struct foo {
-  __attribute__((visibility(&amp;#34;default&amp;#34;))) static void print_addr() {
+  __attribute__((visibility("default"))) static void print_addr() {
     inst.print();
-    std::cout&amp;lt;&amp;lt; &amp;#34;print_addr address: &amp;#34;&amp;lt;&amp;lt; foo::print_addr&amp;lt;&amp;lt; std::endl;
+    std::cout<< "print_addr address: "<< foo::print_addr<< std::endl;
   }
 
   void print() {
-    std::cout&amp;lt;&amp;lt; &amp;#34;Instance address: &amp;#34;&amp;lt;&amp;lt; this&amp;lt;&amp;lt; std::endl;
+    std::cout<< "Instance address: "<< this<< std::endl;
   }
 
-  __attribute__((weak, visibility(&amp;#34;default&amp;#34;))) static foo inst;
+  __attribute__((weak, visibility("default"))) static foo inst;
 };
 
 
-__attribute__((weak, visibility(&amp;#34;default&amp;#34;))) foo foo::inst;</code></pre><p>其他文件同 <strong>Case 1</strong> 。</p><p>编译指令和执行结果:</p><pre><code class=language-bash>$ ./test_dll.exe
+__attribute__((weak, visibility("default"))) foo foo::inst;</code></pre><p>其他文件同 <strong>Case 1</strong> 。</p><p>编译指令和执行结果:</p><pre><code class=language-bash>$ ./test_dll.exe
 Instance address: 0x7ff7750f7040
 print_addr address: 1
 Instance address: 0x7ff87b247020
-print_addr address: 1</code></pre><p>显然，两个模块内地址也不一致。</p><h3 id=case-3-windowsmsvc__declspecselectany>Case 3: Windows+MSVC+<code>__declspec(selectany)</code></h3><p>文件: <strong>test_dll.h</strong></p><pre><code class=language-cpp>#include &amp;#34;test_dll.h&amp;#34;
+print_addr address: 1</code></pre><p>显然，两个模块内地址也不一致。</p><h3 id=case-3-windowsmsvc__declspecselectany>Case 3: Windows+MSVC+<code>__declspec(selectany)</code></h3><p>文件: <strong>test_dll.h</strong></p><pre><code class=language-cpp>#include "test_dll.h"
 
-#include &amp;lt;iostream&amp;gt;
-
-__declspec(dllexport) void call_print() {
-  foo::print_addr();
-}</code></pre><p>文件: <strong>test_dll.cpp</strong></p><pre><code class=language-cpp>#include &amp;#34;test_dll.h&amp;#34;
-
-#include &amp;lt;iostream&amp;gt;
+#include <iostream>
 
 __declspec(dllexport) void call_print() {
   foo::print_addr();
-}</code></pre><p>文件: <strong>test_main.cpp</strong></p><pre><code class=language-cpp>#include &amp;#34;test_dll.h&amp;#34;
+}</code></pre><p>文件: <strong>test_dll.cpp</strong></p><pre><code class=language-cpp>#include "test_dll.h"
+
+#include <iostream>
+
+__declspec(dllexport) void call_print() {
+  foo::print_addr();
+}</code></pre><p>文件: <strong>test_main.cpp</strong></p><pre><code class=language-cpp>#include "test_dll.h"
 
 __declspec(dllimport) void call_print();
 
@@ -202,35 +202,35 @@ int main() {
 }</code></pre><p>编译指令和执行结果(直接链接 .dll):</p><pre><code class=language-pwsh>cl /nologo /O2 /MD /Zi /Z7 /LD test_dll.cpp
 cl /nologo /O2 /MD /Zi /Z7 test_main.cpp /link test_dll
 
-d:\workspace\test\vcconsole\testdll&amp;gt;test_main.exe
+d:\workspace\test\vcconsole\testdll>test_main.exe
 Instance address: 00007FF6551F9150
 print_addr address: 00007FF6551F1140
 Instance address: 00007FF6551F9150
 print_addr address: 00007FF6551F1140</code></pre><p><strong>这种方法和我们预计的结果一致，单例的地址唯一了。但是对于所有的dll，MSVC还是生成一个用于 .lib 文件也是用于链接的，像cmake这类构建工具，只会链接这个.lib文件，而不是直接链接 .dll 。</strong></p><p>我们再来试一下链接.dll对应的.lib:</p><pre><code class=language-pwsh>cl /nologo /O2 /MD /Zi /Z7 /LD test_dll.cpp
 cl /nologo /O2 /MD /Zi /Z7 test_main.cpp /link test_dll.lib
 
-d:\workspace\test\vcconsole\testdll&amp;gt;test_main.exe
+d:\workspace\test\vcconsole\testdll>test_main.exe
 Instance address: 00E08130
 print_addr address: 00E0114A
 Instance address: 796A8120
 print_addr address: 796A1122</code></pre><p><strong>这种方式地址又不一样了。</strong></p><h3 id=case-4-windowsgcc__attribute__selectany>Case 4: Windows+GCC+<code>__attribute__((selectany))</code></h3><p>文件: <strong>test_dll.h</strong></p><pre><code class=language-cpp>#pragma once
 
-#include &amp;lt;iostream&amp;gt;
+#include <iostream>
 
 struct foo {
-  __attribute__((visibility(&amp;#34;default&amp;#34;))) static void print_addr() {
+  __attribute__((visibility("default"))) static void print_addr() {
     inst.print();
-    std::cout&amp;lt;&amp;lt; &amp;#34;print_addr address: &amp;#34;&amp;lt;&amp;lt; foo::print_addr&amp;lt;&amp;lt; std::endl;
+    std::cout<< "print_addr address: "<< foo::print_addr<< std::endl;
   }
 
   void print() {
-    std::cout&amp;lt;&amp;lt; &amp;#34;Instance address: &amp;#34;&amp;lt;&amp;lt; this&amp;lt;&amp;lt; std::endl;
+    std::cout<< "Instance address: "<< this<< std::endl;
   }
 
-  __attribute__((visibility(&amp;#34;default&amp;#34;), weak)) static foo inst;
+  __attribute__((visibility("default"), weak)) static foo inst;
 };
 
-__attribute__((visibility(&amp;#34;default&amp;#34;), weak, selectany)) foo foo::inst;</code></pre><p>其他文件同 <strong>Case 1</strong> 。</p><p>编译指令和执行结果:</p><pre><code class=language-bash>$ ./test_dll.exe
+__attribute__((visibility("default"), weak, selectany)) foo foo::inst;</code></pre><p>其他文件同 <strong>Case 1</strong> 。</p><p>编译指令和执行结果:</p><pre><code class=language-bash>$ ./test_dll.exe
 Instance address: 0x7ff735ac30b0
 print_addr address: 1
 Instance address: 0x7ff8d19c3070

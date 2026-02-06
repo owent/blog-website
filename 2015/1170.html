@@ -6,16 +6,16 @@
 <button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-8dac3ac757513a0271fa172fc9ca3968 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2015/1170.html target=_blank itemprop=url>Vim常用命令</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#常用配置>常用配置</a></li><li><a href=#基本命令>基本命令</a><ul><li><a href=#编辑和查看>编辑和查看</a></li><li><a href=#查找和替换>查找和替换</a></li><li><a href=#分屏和tab>分屏和tab</a></li><li><a href=#缓冲区和文件系统>缓冲区和文件系统</a></li><li><a href=#关键字导航>关键字导航</a></li></ul></li><li><a href=#常用指令>常用指令</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>之前有搜集过一些常用的命令脚本，其中有vim的部分。但是vim内置的很多功能那些个命令显然是不够的，而且那些记录的很多也不常用，于是想到专门开一个页面记录vim常用的命令集。</p><h2 id=常用配置>常用配置</h2><p>见 <a href=https://github.com/owent-utils/vim>https://github.com/owent-utils/vim</a></p><h2 id=基本命令>基本命令</h2><h3 id=编辑和查看>编辑和查看</h3><pre><code class=language-vim>/                      # 向下搜索
 ?                      # 向上搜索 
 v                      # 进入可视化模式
-Ctrl&#43;v                 # 列编辑模式
-    Shift&#43;i            # 多列插入
+Ctrl+v                 # 列编辑模式
+    Shift+i            # 多列插入
 d[d/w]                 # 剪切[行/单词]
 y[y/w]                 # 复制[行/单词]
 =[=]                   # 自动缩进[行]
 p                      # （查看模式）粘贴
 u                      # Undo
-Ctrl&#43;r                 # （查看模式）Redo
-Ctrl&#43;r Ctrl&#43;&amp;#34;          # （命令行模式/编辑模式）粘贴
-:e                     # 更新缓冲区   </code></pre><h3 id=查找和替换>查找和替换</h3><pre><code class=language-vim># 和正则表达式不同的的一个地方在于，用于全字匹配的\b在vim里是 \&amp;lt;\&amp;gt;
+Ctrl+r                 # （查看模式）Redo
+Ctrl+r Ctrl+"          # （命令行模式/编辑模式）粘贴
+:e                     # 更新缓冲区   </code></pre><h3 id=查找和替换>查找和替换</h3><pre><code class=language-vim># 和正则表达式不同的的一个地方在于，用于全字匹配的\b在vim里是 \<\>
 :s/src/dst/     # 文本替换(当前行第一个src替换为dst)
 :s/src/dst/g    # 文本替换(当前行所有src替换为dst)
 :%s/src/dst/g   # 文本替换(所有行第一个src替换为dst)
@@ -29,18 +29,18 @@ g(t/T)         # (下/上)一个tab
 
 :He[!]          # 上[下]分屏浏览 
 :Ve[!]          # 左[右]分屏浏览
-Ctrl&#43;w Ctrl&#43;w   # 分屏切换
+Ctrl+w Ctrl+w   # 分屏切换
 :set scb[!]     # 开启[关闭]分屏同步移动
 :(s/v)plit      # (水平/垂直)分屏打开</code></pre><h3 id=缓冲区和文件系统>缓冲区和文件系统</h3><pre><code class=language-vim>:e . # 打开目录
 :E   # 目录导航
 :ls  # 列举缓冲区
-N Ctrl&#43;^ # 切换缓冲区</code></pre><h3 id=关键字导航>关键字导航</h3><pre><code class=language-vim>Ctrl&#43;N               # 向下查找关键字关键字[插入模式下]， Ctrl&#43;P 向上查找关键字[插入模式下]
-Ctrl &#43; X 和 Ctrl &#43; D # 宏定义补齐
-Ctrl &#43; X 和 Ctrl &#43; ] # 是 Tag 补齐
-Ctrl &#43; X 和 Ctrl &#43; F # 是文件名补齐
-Ctrl &#43; X 和 Ctrl &#43; I # 也是关键词补齐，但是关键后会有个文件名，告诉你这个关键词在哪个文件中
-Ctrl &#43; X 和 Ctrl &#43;V  # 是表达式补齐
-Ctrl &#43; X 和 Ctrl &#43;L  # 对整行补齐。</code></pre><h2 id=常用指令>常用指令</h2><pre><code class=language-vim>:%!python -m json.tool  # jsom 格式化
+N Ctrl+^ # 切换缓冲区</code></pre><h3 id=关键字导航>关键字导航</h3><pre><code class=language-vim>Ctrl+N               # 向下查找关键字关键字[插入模式下]， Ctrl+P 向上查找关键字[插入模式下]
+Ctrl + X 和 Ctrl + D # 宏定义补齐
+Ctrl + X 和 Ctrl + ] # 是 Tag 补齐
+Ctrl + X 和 Ctrl + F # 是文件名补齐
+Ctrl + X 和 Ctrl + I # 也是关键词补齐，但是关键后会有个文件名，告诉你这个关键词在哪个文件中
+Ctrl + X 和 Ctrl +V  # 是表达式补齐
+Ctrl + X 和 Ctrl +L  # 对整行补齐。</code></pre><h2 id=常用指令>常用指令</h2><pre><code class=language-vim>:%!python -m json.tool  # jsom 格式化
 :%!xxd[ -r]             # 转入[转出]为16进制查看
 gg=G                    # 全文自动缩进
 :set encoding=utf8      # 设置显示编码

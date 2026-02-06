@@ -7,25 +7,25 @@
 
 double disBetweenPointAndLine(double x0,double y0,double x1,double y1,double x2,double y2)
 {
-    //化为ax&#43;by&#43;c=0的形式
+    //化为ax+by+c=0的形式
     double a = y1-y2;
     double b = x2-x1;
     double c = x1*y2-x2*y1;
-    double d = (a*x0&#43;b*y0&#43;c)/sqrt(a*a&#43;b*b);
+    double d = (a*x0+b*y0+c)/sqrt(a*a+b*b);
     /*
     如果是线段判断垂足
 
-    double xp = (b*b*x0-a*b*y0-a*c)/(a*a&#43;b*b);
-    double yp = (-a*b*x0&#43;a*a*y0-b*c)/(a*a&#43;b*b);
-    double xb = (x1&amp;gt;x2)?x1:x2;
-    double yb = (y1&amp;gt;y2)?y1:y2;
-    double xs = x1&#43;x2-xb;
-    double ys = y1&#43;y2-yb;
-    if(xp &amp;gt; xb || xp &amp;lt; xs || yp &amp;gt; yb || yp &amp;lt; ys)
+    double xp = (b*b*x0-a*b*y0-a*c)/(a*a+b*b);
+    double yp = (-a*b*x0+a*a*y0-b*c)/(a*a+b*b);
+    double xb = (x1>x2)?x1:x2;
+    double yb = (y1>y2)?y1:y2;
+    double xs = x1+x2-xb;
+    double ys = y1+y2-yb;
+    if(xp > xb || xp < xs || yp > yb || yp < ys)
     {
-        d = sqrt((x0 - x1) * (x0 - x1) &#43; (y0 - y1) * (y0 - y1));
-        if(d &amp;gt; sqrt((x0 - x2) * (x0 - x2) &#43; (y0 - y2) * (y0 - y2)))
-            d = sqrt((x0 - x2) * (x0 - x2) &#43; (y0 - y2) * (y0 - y2));
+        d = sqrt((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
+        if(d > sqrt((x0 - x2) * (x0 - x2) + (y0 - y2) * (y0 - y2)))
+            d = sqrt((x0 - x2) * (x0 - x2) + (y0 - y2) * (y0 - y2));
     }
     */
     return fabs(d);
@@ -35,11 +35,11 @@ double disBetweenPointAndLine(double x0,double y0,double x1,double y1,double x2,
 double GetLineDistance(double x1,double y1,double x2,double y2,double x3,double y3,double x4,double y4)
 {
     double tmpDouble = disBetweenPointAndLine(x1,y1,x3,y3,x4,y4);
-    if(tmpDouble &amp;gt; disBetweenPointAndLine(x2,y2,x3,y3,x4,y4))
+    if(tmpDouble > disBetweenPointAndLine(x2,y2,x3,y3,x4,y4))
         tmpDouble = disBetweenPointAndLine(x2,y2,x3,y3,x4,y4)；
-    if(tmpDouble &amp;gt; disBetweenPointAndLine(x3,y3,x1,y1,x2,y2))
+    if(tmpDouble > disBetweenPointAndLine(x3,y3,x1,y1,x2,y2))
         tmpDouble = disBetweenPointAndLine(x3,y3,x1,y1,x2,y2)；
-    if(tmpDouble &amp;gt; disBetweenPointAndLine(x4,y4,x1,y1,x2,y2))
+    if(tmpDouble > disBetweenPointAndLine(x4,y4,x1,y1,x2,y2))
         tmpDouble = disBetweenPointAndLine(x4,y4,x1,y1,x2,y2)；
 
     return tmpDouble;
@@ -47,25 +47,25 @@ double GetLineDistance(double x1,double y1,double x2,double y2,double x3,double 
 
 double disBetweenPointAndLine(double x0,double y0,double x1,double y1,double x2,double y2)
 {
-    //化为ax&#43;by&#43;c=0的形式
+    //化为ax+by+c=0的形式
     double a = y1-y2;
     double b = x2-x1;
     double c = x1*y2-x2*y1;
-    double d = (a*x0&#43;b*y0&#43;c)/sqrt(a*a&#43;b*b);
+    double d = (a*x0+b*y0+c)/sqrt(a*a+b*b);
     /*
     如果是线段判断垂足
     */
-    double xp = (b*b*x0-a*b*y0-a*c)/(a*a&#43;b*b);
-    double yp = (-a*b*x0&#43;a*a*y0-b*c)/(a*a&#43;b*b);
-    double xb = (x1&amp;gt;x2)?x1:x2;
-    double yb = (y1&amp;gt;y2)?y1:y2;
-    double xs = x1&#43;x2-xb;
-    double ys = y1&#43;y2-yb;
-    if(xp &amp;gt; xb || xp &amp;lt; xs || yp &amp;gt; yb || yp &amp;lt; ys)
+    double xp = (b*b*x0-a*b*y0-a*c)/(a*a+b*b);
+    double yp = (-a*b*x0+a*a*y0-b*c)/(a*a+b*b);
+    double xb = (x1>x2)?x1:x2;
+    double yb = (y1>y2)?y1:y2;
+    double xs = x1+x2-xb;
+    double ys = y1+y2-yb;
+    if(xp > xb || xp < xs || yp > yb || yp < ys)
     {
-        d = sqrt((x0 - x1) * (x0 - x1) &#43; (y0 - y1) * (y0 - y1));
-        if(d &amp;gt; sqrt((x0 - x2) * (x0 - x2) &#43; (y0 - y2) * (y0 - y2)))
-            d = sqrt((x0 - x2) * (x0 - x2) &#43; (y0 - y2) * (y0 - y2));
+        d = sqrt((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
+        if(d > sqrt((x0 - x2) * (x0 - x2) + (y0 - y2) * (y0 - y2)))
+            d = sqrt((x0 - x2) * (x0 - x2) + (y0 - y2) * (y0 - y2));
     }
 
     return fabs(d);

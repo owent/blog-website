@@ -18,19 +18,19 @@ PrimeType GetPrimeLength(const long n)
     long tmpPos = 0,left = n - 1;
     PrimeType sumLen = 0;
 
-    for(long i = 1 ; i &amp;lt; n ; i &#43;&#43;)
+    for(long i = 1 ; i < n ; i ++)
         PrimeRecord[i] = dis[0][i];
     while(left --)
     {
         tmpLen = MAXNUM;
-        for(long i = 1 ; i &amp;lt; n ; i &#43;&#43;)
-            if(!isLined[i] &amp;amp;&amp;amp; PrimeRecord[i] &amp;lt; tmpLen)
+        for(long i = 1 ; i < n ; i ++)
+            if(!isLined[i] && PrimeRecord[i] < tmpLen)
                 tmpPos = i,tmpLen = PrimeRecord[i];
 
-        sumLen &#43;= tmpLen;
-        isLined[tmpPos] &#43;&#43;;
-        for(long i = 1 ; i &amp;lt; n ; i &#43;&#43;)
-            if(dis[tmpPos][i] &amp;lt; PrimeRecord[i])
+        sumLen += tmpLen;
+        isLined[tmpPos] ++;
+        for(long i = 1 ; i < n ; i ++)
+            if(dis[tmpPos][i] < PrimeRecord[i])
                 PrimeRecord[i] = dis[tmpPos][i];
     }
 

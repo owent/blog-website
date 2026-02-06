@@ -10,14 +10,7 @@
 第二就是层数为奇数时对于最里面一层的特殊情况我忘记判断是否与标准矩阵相同.这点是Ultramanhu找出来的,很重要的BUG
 公式如下:
 n</em>n的矩阵,从外向里第k层,第l个的坐标用x,y表示则</p><p>$$ l = l \mod 4 \times (n - 1 - 2k ) $$</p><pre><code class=language-text>x=k,y=k//设初值,就是l为0时的值
-if(l&amp;lt;n-2k)
-  x&#43;=l
-else if(l&amp;lt;2n-4k-1)
-  x&#43;=n-2k-1,y&#43;=l-n&#43;2k&#43;1
-else if(l&amp;lt;3n-6k-2)
-  y&#43;=n-2k-1,x&#43;=3n-6k-l-3
-else
-  y &#43;= 4n-8k – 4 – l</code></pre><p>具体代码如下:</p><pre><code class=language-cpp>#include&amp;lt;iostream&amp;gt;
+if(l<n-2k) x+=l else if(l<2n-4k-1) x+="n-2k-1,y+=l-n+2k+1" else if(l<3n-6k-2) y+="n-2k-1,x+=3n-6k-l-3" else y +=4n-8k – 4 – l</code></pre><p>具体代码如下:</p><pre><code class=language-cpp>#include<iostream>
 using namespace std;
 
 #define MAXN 2000
@@ -36,21 +29,21 @@ long matMol[MAXN][MAXN];
 int main()
 {
     int n,t = 0;
-    while(scanf(&amp;#34;%d&amp;#34;,&amp;amp;n), n)
+    while(scanf("%d",&n), n)
     {
-        for(int i = 0 ; i &amp;lt; n ; i &#43;&#43;)
-            for(int j = 0 ; j &amp;lt; n ; j &#43;&#43;)
-                scanf(&amp;#34;%ld&amp;#34;,&amp;amp;mat[i][j]) , matMol[i][j] = i * n &#43; j &#43; 1;
+        for(int i = 0 ; i < n ; i ++)
+            for(int j = 0 ; j < n ; j ++)
+                scanf("%ld",&mat[i][j]) , matMol[i][j] = i * n + j + 1;
 
         int k;
-        for( k = 0 ; k &amp;lt;= (n - 1) / 2 ; k &#43;&#43;)
+        for( k = 0 ; k <= (n - 1) / 2 ; k ++)
             if(!check(n,k))
                 break;
 
-        if(k &amp;lt;= (n - 1) / 2)
-            printf(&amp;#34;%d. NO\n&amp;#34;, &#43;&#43; t);
+        if(k <= (n - 1) / 2)
+            printf("%d. NO\n", ++ t);
         else
-            printf(&amp;#34;%d. YES\n&amp;#34;, &#43;&#43; t);
+            printf("%d. YES\n", ++ t);
     }
     return 0;
 }
@@ -66,14 +59,14 @@ Position GetPosition(long n,long k,long l)
     else
         return tmpPos;
 
-    if(l &amp;lt; n - 2 * k)
-        tmpPos.x &#43;= l;
-    else if(l &amp;lt; 2 * n - 4 * k - 1)
-        tmpPos.x &#43;= n - 2 * k - 1 , tmpPos.y &#43;= l - (n - 2 * k) &#43; 1;
-    else if(l &amp;lt; 3 * n - 6 * k - 2)
-        tmpPos.y &#43;= n - 2 * k - 1,tmpPos.x &#43;= 3 * n - 6 * k - l - 3;
+    if(l < n - 2 * k)
+        tmpPos.x += l;
+    else if(l < 2 * n - 4 * k - 1)
+        tmpPos.x += n - 2 * k - 1 , tmpPos.y += l - (n - 2 * k) + 1;
+    else if(l < 3 * n - 6 * k - 2)
+        tmpPos.y += n - 2 * k - 1,tmpPos.x += 3 * n - 6 * k - l - 3;
     else
-        tmpPos.y &#43;= 4 * n - 8 * k - 4 - l;
+        tmpPos.y += 4 * n - 8 * k - 4 - l;
 
     return tmpPos;
 }
@@ -85,23 +78,23 @@ bool check(int n,int k)
 
     Position tmpSource = GetPosition(n,k,0);
 
-    for(pos2 = 0 ; pos2 &amp;lt; numSum ; pos2 &#43;&#43;)
+    for(pos2 = 0 ; pos2 < numSum ; pos2 ++)
     {
         Position tmpPos = GetPosition(n,k,pos2);
         if(mat[tmpPos.y][tmpPos.x] == matMol[tmpSource.y][tmpSource.x])
             break;
     }
-    if(pos2 &amp;gt;= 4 * numSum)
+    if(pos2 >= 4 * numSum)
         if(numSum)
             return false;
         else
             return mat[tmpSource.y][tmpSource.x] == matMol[tmpSource.y][tmpSource.x];
 
-    for(i = 1 ; i &amp;lt; 4 * numSum ; i &#43;&#43;)
+    for(i = 1 ; i < 4 * numSum ; i ++)
     {
         tmpSource = GetPosition(n,k,i);
 
-        Position tmpPos = GetPosition(n,k,pos2 &#43; i);
+        Position tmpPos = GetPosition(n,k,pos2 + i);
         if(mat[tmpPos.y][tmpPos.x] != matMol[tmpSource.y][tmpSource.x])
             return false;
     }
@@ -112,8 +105,8 @@ bool check(int n,int k)
 这题大意是算出[l,u]区间内的素数个数及能表示为a<sup>2</sup>+b<sup>2</sup>的素数个数
 这题只要简单的DP记录一下个数就行,主要是筛质数,这个很简单就不多说了
 代码如下:</p><pre><code class=language-cpp>//Problem E
-#include&amp;lt;iostream&amp;gt;
-#include&amp;lt;cstring&amp;gt;
+#include<iostream>
+#include<cstring>
 using namespace std;
 
 const long MAXP = 1000003;
@@ -127,10 +120,10 @@ long numPrimeNoMat[MAXP] = {0};
 
 int main()
 {
-    for(long i = 2 ; i &amp;lt;  MAXP ; i &#43;&#43;){
+    for(long i = 2 ; i <  MAXP ; i ++){
         if(! isNotPrime[i])
-            prime[num_prime &#43;&#43;]=i;
-        for(long j = 0 ; j &amp;lt; num_prime &amp;amp;&amp;amp; i * prime[j] &amp;lt;  MAXP ; j &#43;&#43;)
+            prime[num_prime ++]=i;
+        for(long j = 0 ; j < num_prime && i * prime[j] <  MAXP ; j ++)
         {
             isNotPrime[i * prime[j]] = 1;
             if( !(i % prime[j]))
@@ -138,30 +131,30 @@ int main()
         }
     }
 
-    for(long i = 0 ; i &amp;lt; 1000 ; i &#43;&#43;)
-        for(long j = 0 ; j &amp;lt; 1000 &amp;amp;&amp;amp; i * i &#43; j * j &amp;lt;= MAXP; j &#43;&#43;)
-            isTrue[i * i &#43; j * j] = 1;
+    for(long i = 0 ; i < 1000 ; i ++)
+        for(long j = 0 ; j < 1000 && i * i + j * j <= MAXP; j ++)
+            isTrue[i * i + j * j] = 1;
 
-    for(long i = 2 ; i &amp;lt; MAXP ; i &#43;&#43;)
+    for(long i = 2 ; i < MAXP ; i ++)
     {
-        numPrimeNoMat[i] = numPrimeNoMat[i - 1] &#43; (!isNotPrime[i]);
-        numPrimeLess[i] = numPrimeLess[i - 1] &#43; (!isNotPrime[i] &amp;amp;&amp;amp; isTrue[i]);
+        numPrimeNoMat[i] = numPrimeNoMat[i - 1] + (!isNotPrime[i]);
+        numPrimeLess[i] = numPrimeLess[i - 1] + (!isNotPrime[i] && isTrue[i]);
     }
 
     long l,u;
-    while(scanf(&amp;#34;%ld %ld&amp;#34;,&amp;amp;l,&amp;amp;u),l != -1 || u != -1)
+    while(scanf("%ld %ld",&l,&u),l != -1 || u != -1)
     {
-        long b = l&amp;gt;0?l:0;
-        long e = u&amp;gt;0?u:0;
-        printf(&amp;#34;%ld %ld %ld %ld\n&amp;#34;,l,u,numPrimeNoMat[e] - numPrimeNoMat[b] &#43; !isNotPrime[b]
-        ,numPrimeLess[e] - numPrimeLess[b] &#43; (!isNotPrime[b] &amp;amp;&amp;amp; isTrue[b]));
+        long b = l>0?l:0;
+        long e = u>0?u:0;
+        printf("%ld %ld %ld %ld\n",l,u,numPrimeNoMat[e] - numPrimeNoMat[b] + !isNotPrime[b]
+        ,numPrimeLess[e] - numPrimeLess[b] + (!isNotPrime[b] && isTrue[b]));
     }
     return 0;
 }</code></pre><p>F题是<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3511">POJ的3512 Incidental Points.</a>
 题意是让你输入一些点的平面坐标,有一条线段能穿过最大数量的点,求最大点的数量
 因为这类型的题以前写过而且留了代码就直接改完贴了
-代码:</p><pre><code class=language-cpp>#include&amp;lt;iostream&amp;gt;
-#include&amp;lt;cmath&amp;gt;
+代码:</p><pre><code class=language-cpp>#include<iostream>
+#include<cmath>
 using namespace std;
 char str[1000];
 #define EPS 1e-10
@@ -175,7 +168,7 @@ struct node
 };
 int cmp(const void * a, const void * b)
 {
-    return((*(double*)a-*(double*)b&amp;gt;0)?1:-1);
+    return((*(double*)a-*(double*)b>0)?1:-1);
 }
 
 node numK[1005 * 1005 / 2];
@@ -186,45 +179,45 @@ int main()
     int end = 0;
     while(gets(str))
     {
-        if((str[0] == &amp;#39;-&amp;#39; &amp;amp;&amp;amp; str[1] == &amp;#39;-&amp;#39;) &amp;amp;&amp;amp; end)
+        if((str[0] == '-' && str[1] == '-') && end)
             break;
-        else if(str[0] == &amp;#39;-&amp;#39; &amp;amp;&amp;amp; str[1] == &amp;#39;-&amp;#39;)
+        else if(str[0] == '-' && str[1] == '-')
         {
             end = 1;
 
-            for(int i = 0 ; i &amp;lt;  n ; i &#43;&#43;)
+            for(int i = 0 ; i <  n ; i ++)
             {
                 int pos = 0;
-                for(int j = i &#43; 1 ; j &amp;lt; n ; j &#43;&#43;)
-                    if(fabs(pt[i].x - pt[j].x) &amp;gt; EPS)
-                        numK[pos &#43;&#43;].k = (pt[j].y - pt[i].y) / (pt[j].x - pt[i].x);
+                for(int j = i + 1 ; j < n ; j ++)
+                    if(fabs(pt[i].x - pt[j].x) > EPS)
+                        numK[pos ++].k = (pt[j].y - pt[i].y) / (pt[j].x - pt[i].x);
                     else
-                        numK[pos &#43;&#43;].k = 2000000;
+                        numK[pos ++].k = 2000000;
 
                 qsort(numK,pos,sizeof(numK[0]),cmp);
                 int tmpNum = 2;
-                for(int j = 1 ; j &amp;lt; pos ; j &#43;&#43;)
+                for(int j = 1 ; j < pos ; j ++)
                 {
                     if(numK[j].k == numK[j - 1].k)
-                        tmpNum &#43;&#43;;
+                        tmpNum ++;
                     else
                     {
-                        if(tmpNum &amp;gt; maxNum)
+                        if(tmpNum > maxNum)
                             maxNum = tmpNum;
                         tmpNum = 2;
                     }
                 }
-                if(tmpNum &amp;gt; maxNum)
+                if(tmpNum > maxNum)
                     maxNum = tmpNum;
             }
 
 
-            printf(&amp;#34;%d. %d\n&amp;#34;,&#43;&#43; t,maxNum);
+            printf("%d. %d\n",++ t,maxNum);
             maxNum = 1;
             n = 0;
         }
         else
-            sscanf(str,&amp;#34;%lf %lf&amp;#34;,&amp;amp;pt[n].x,&amp;amp;pt[n].y) , n &#43;&#43;,end = 0;
+            sscanf(str,"%lf %lf",&pt[n].x,&pt[n].y) , n ++,end = 0;
     }
     return 0;
 }</code></pre><p>G题是一道需要Hash的题,Hash我不熟,而且到时间结束我都没能研究出来STL库的map类.没能出

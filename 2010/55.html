@@ -4,49 +4,49 @@
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
 <button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-d89e1f49575f661a701186be968e5905 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2010/55.html target=_blank itemprop=url>HDU 3336 Count the string 解题报告</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>题目：
-<a href="http://acm.hdu.edu.cn/showproblem.php?pid=3336">http://acm.hdu.edu.cn/showproblem.php?pid=3336</a></p><p>水题一道，主要是测试数据很水</p><p>不解释，贴代码：</p><pre><code class=language-cpp>#include &amp;lt;iostream&amp;gt;
-#include &amp;lt;cstdio&amp;gt;
-#include &amp;lt;vector&amp;gt;
-#include &amp;lt;cstring&amp;gt;
+<a href="http://acm.hdu.edu.cn/showproblem.php?pid=3336">http://acm.hdu.edu.cn/showproblem.php?pid=3336</a></p><p>水题一道，主要是测试数据很水</p><p>不解释，贴代码：</p><pre><code class=language-cpp>#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <cstring>
 using namespace std;
 
 char str[200005];
-vector&amp;lt;long&amp;gt;glo_Pos;
+vector<long>glo_Pos;
 int main()
 {
     int t;
     long output,i,n,j;
-    scanf(&amp;#34;%d&amp;#34;,&amp;amp;t);
+    scanf("%d",&t);
     while(t --)
     {
         output = 0;
         glo_Pos.clear();
-        scanf(&amp;#34;%ld %s&amp;#34;, &amp;amp;n, str);
+        scanf("%ld %s", &n, str);
 
-        for(i = 0; i &amp;lt; n; i &#43;&#43;)
+        for(i = 0; i < n; i ++)
         {
             if(str[i] == str[0])
             {
                 glo_Pos.push_back(i);
-                output &#43;&#43;;
+                output ++;
             }
         }
         output = output % 10007;
-        for(i = 1; i &amp;lt; n; i &#43;&#43;)
+        for(i = 1; i < n; i ++)
         {
-            for(j = 0; j &amp;lt; glo_Pos.size();j &#43;&#43;)
+            for(j = 0; j < glo_Pos.size();j ++)
             {
-                if(str[i] == str[glo_Pos[j] &#43; i])
-                    output = (output &#43; 1) % 10007;
+                if(str[i] == str[glo_Pos[j] + i])
+                    output = (output + 1) % 10007;
                 else
                 {
-                    glo_Pos.erase(glo_Pos.begin() &#43; j);
+                    glo_Pos.erase(glo_Pos.begin() + j);
                     j --;
                 }
             }
         }
 
-        printf(&amp;#34;%ld\n&amp;#34;, output);
+        printf("%ld\n", output);
     }
     return 0;
 }</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2010-03-15T11:12:56.000+00:00 itemprop=datePublished>2010-03-15</time></span>

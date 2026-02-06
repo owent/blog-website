@@ -5,8 +5,8 @@
 <input class=form-control type=text placeholder=搜索 name=q>
 <button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-95ad9bc9848de3994dce5a3e6068d7de class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2009/90.html target=_blank itemprop=url>POJ 3267 The Cow Lexicon 解题报告</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p><a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3267">POJ 3267 The Cow Lexicon</a></p><p>这题是一道DP问题,我的想法如下:</p><p>1.可以令
 deleteNum[pos]为输入字符串在pos处需要删除的最少字符数量;</p><p>2.如果输入字符串长度为len,则初始化deleteNum[len] = 0;(字符串由0开始计数)</p><p>3.对deleteNum[pos]初始化后,可以对每个单词计算;</p><p>4.如果单词长度为lenWord且从当前位置(pos处)开始能够和单词匹配则:</p><p>deleteNum[pos]=min{deleteNum[pos],deleteNum[pos + 1] +1,deleteNum[pos + lenWord] + N}</p><p>其中第一个为原始值,第二个为未匹配时的值,第三个为匹配单词后的删除字符数,N为从pos匹配这个单词需要删除的字符数</p><p>5.如果不能匹配单词
-deleteNum[pos]=min{deleteNum[pos],deleteNum[pos + 1] +1}解释如上;</p><p>6.deleteNum[0]则是要输出的数量</p><p>这是小弟个人意见,还望指正批评</p><p>代码如下:</p><pre><code class=language-cpp>#include&amp;lt;iostream&amp;gt;
-#include&amp;lt;cstring&amp;gt;
+deleteNum[pos]=min{deleteNum[pos],deleteNum[pos + 1] +1}解释如上;</p><p>6.deleteNum[0]则是要输出的数量</p><p>这是小弟个人意见,还望指正批评</p><p>代码如下:</p><pre><code class=language-cpp>#include<iostream>
+#include<cstring>
 using namespace std;
 char words[601][30];
 char str[301];
@@ -15,38 +15,32 @@ int minOfThree(int a,int b,int c);
 int main()
 {
     int w,l;
-    cin&amp;gt;&amp;gt;w&amp;gt;&amp;gt;l;
-    cin&amp;gt;&amp;gt;str;
-    for(int i = 0 ; i &amp;lt; w ; i &#43;&#43;)
-        scanf(&amp;#34;%s&amp;#34;,words[i]);
+    cin>>w>>l;
+    cin>>str;
+    for(int i = 0 ; i < w ; i ++)
+        scanf("%s",words[i]);
     int len = strlen(str);
     deleteNum[len] = 0;
-    for(int i = len - 1 ; i &amp;gt;= 0 ; i --)
+    for(int i = len - 1 ; i >= 0 ; i --)
     {
         deleteNum[i] = 301;
-        for(int j = 0 ; j &amp;lt; w ; j &#43;&#43;)
+        for(int j = 0 ; j < w ; j ++)
         {
             int isMatch = 0;
             int posWord = 0,posStr = i;
-            while(words[j][posWord] &amp;amp;&amp;amp; posStr &amp;lt; len)
+            while(words[j][posWord] && posStr < len)
             {
                 if(words[j][posWord] == str[posStr])
-                    posWord &#43;&#43;;
-                posStr &#43;&#43;;
+                    posWord ++;
+                posStr ++;
             }
             if(!words[j][posWord])
-                deleteNum[i] = minOfThree(deleteNum[i],deleteNum[i &#43; 1] &#43; 1,deleteNum[posStr] &#43; posStr - i - posWord);
+                deleteNum[i] = minOfThree(deleteNum[i],deleteNum[i + 1] + 1,deleteNum[posStr] + posStr - i - posWord);
             else
-                deleteNum[i] = (deleteNum[i] &amp;lt; deleteNum[i &#43; 1] &#43; 1)?deleteNum[i]:deleteNum[i &#43; 1] &#43; 1;
+                deleteNum[i] = (deleteNum[i] < deleteNum[i + 1] + 1)?deleteNum[i]:deleteNum[i + 1] + 1;
         }
     }
-    cout&amp;lt;&amp;lt;deleteNum[0];
-    return 0;
-}
-int minOfThree(int a,int b,int c)
-{
-    return (a &amp;lt; b &amp;amp;&amp;amp; a &amp;lt; c)?a:(b &amp;lt; c)?b:c;
-}</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2009-07-15T15:51:39.000+00:00 itemprop=datePublished>2009-07-15</time></span>
+    cout<<deletenum[0]; return 0; } int minofthree(int a,int b,int c) { return (a < b && a < c)?a:(b < c)?b:c; }</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2009-07-15T15:51:39.000+00:00 itemprop=datePublished>2009-07-15</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/acm.html>acm</a></li><li class=article-tag-list-item><a href=//owent.net/tags/pku.html>pku</a></li><li class=article-tag-list-item><a href=//owent.net/tags/poj.html>poj</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2009/89.html>上一篇<strong>C/C++语言常用排序算法</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2009/91.html>下一篇<strong>并查集 模板</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,

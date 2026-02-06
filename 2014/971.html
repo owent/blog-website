@@ -12,81 +12,81 @@ type_traits没啥好说的。主要是一些静态检测。主要还是要看动
 <a href=http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf>http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf</a>
 虽然贴出来了。估计是没人看得。所以就直接说重点。</p><h2 id=动态模板>动态模板</h2><p>还有一个更众所周知的。C里面的动态参数可以用…来表示。
 比如: <strong><em>int printf(const char</em>, …);</strong>*
-动态参数可以用va_list，在运行时获取。</p><p>但是在C++编程里。提倡使用模板来简化处理相同类型的功能和把一些功能<strong>由运行期转到编译期</strong>（这也是C++比C效率高的原因）。但是使用模板有时候会碰到需要<strong>支持多个参数</strong>的情况。比如bind函数，tuple等。</p><h2 id=遇到的问题>遇到的问题</h2><p>如果有兴趣的话可以看看VC11和目前的boost的bind或者tuple的实现。支持1到10个参数，还要对仿函数、成员函数、普通函数进行特化。再加上一些type_traits的支撑功能，你会看到很多很多类似的结构体和函数。唯一的区别只是参数个数不一样而已。这造成的结果就是很多很多的重复代码。维护起来工作量非常大而且易出错。</p><p>动态模板参数就是为了解决这个问题。并且有一点很重要的是，因为模板是编译期判定的，所以<strong>动态模板参数也必须在编译期可以判定出来</strong>。</p><p>动态模板参数</p><p>最简单的比如这个形式:</p><pre><code class=language-cpp>template&amp;lt;typename... T&amp;gt;
+动态参数可以用va_list，在运行时获取。</p><p>但是在C++编程里。提倡使用模板来简化处理相同类型的功能和把一些功能<strong>由运行期转到编译期</strong>（这也是C++比C效率高的原因）。但是使用模板有时候会碰到需要<strong>支持多个参数</strong>的情况。比如bind函数，tuple等。</p><h2 id=遇到的问题>遇到的问题</h2><p>如果有兴趣的话可以看看VC11和目前的boost的bind或者tuple的实现。支持1到10个参数，还要对仿函数、成员函数、普通函数进行特化。再加上一些type_traits的支撑功能，你会看到很多很多类似的结构体和函数。唯一的区别只是参数个数不一样而已。这造成的结果就是很多很多的重复代码。维护起来工作量非常大而且易出错。</p><p>动态模板参数就是为了解决这个问题。并且有一点很重要的是，因为模板是编译期判定的，所以<strong>动态模板参数也必须在编译期可以判定出来</strong>。</p><p>动态模板参数</p><p>最简单的比如这个形式:</p><pre><code class=language-cpp>template<typename... t>
 void print(T... t){
-    printf(&amp;#34;%d,%d,%d\n&amp;#34;, t...);
+    printf("%d,%d,%d\n", t...);
 }</code></pre><p>这个函数接受多个参数并传入到printf函数中。
-当然这个输出要求t…至少是三个int类型。并不完美。我们可以把它写得更<strong>优雅</strong>一些。</p><pre><code class=language-cpp>template&amp;lt;typename... T&amp;gt;
-void print_real(const T&amp;amp;... t)
+当然这个输出要求t…至少是三个int类型。并不完美。我们可以把它写得更<strong>优雅</strong>一些。</p><pre><code class=language-cpp>template<typename... t>
+void print_real(const T&... t)
 {
     print_unpack(t...);
 }
 
-template&amp;lt;&amp;gt;
+template<>
 void print_real()
 {
-    puts(&amp;#34;end&amp;#34;);
+    puts("end");
 }
 
-template&amp;lt;typename TM, typename... T&amp;gt;
-void print_unpack(const TM&amp;amp; tm, const T&amp;amp;... t)
+template<typename tm, typename... t>
+void print_unpack(const TM& tm, const T&... t)
 {
-    std::cout &amp;lt;&amp;lt; tm &amp;lt;&amp;lt; std::endl;
-    print_real&amp;lt;T...&amp;gt;(t...);
+    std::cout << tm << std::endl;
+    print_real<t...>(t...);
 }
 // print_real(3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 9);</code></pre><p>这样，print_real函数就可以打印出任意个各种类型的数据。</p><h2 id=语法支持>语法支持</h2><p>实际上，动态模板参数不仅仅是这个用法。按照标准文档说明。它至少能用于</p><ul><li>表达式<ul><li>解引用表达式</li><li>批量自增和自减</li><li>sizeof表达式</li><li>sizeof…表达式（这个表达式返回的是动态模板的参数个数）</li><li>new和delete操作符</li></ul></li><li>type declare（类型声明，比如上文例子中的 const T&…）</li><li>类继承</li><li>特殊成员函数（如构造函数）</li><li>临时模板</li><li>模板嵌套</li><li>typeid</li></ul><p>其实支持的还比较有限。但是基于它已经可以实现出比较复杂的功能。
-接下来我们来尝试用动态模板参数简单地实现boost和c++11里的tuple（多元组）。</p><h2 id=实现简单多元组tuple>实现简单多元组(tuple)</h2><p>tuple是stl中pair的补充。目标是支持<strong>任意</strong>个参数数据的组合。我们可以用动态模板参数避免枚举参数个数的问题。</p><pre><code class=language-cpp>template&amp;lt;typename... T&amp;gt;
+接下来我们来尝试用动态模板参数简单地实现boost和c++11里的tuple（多元组）。</p><h2 id=实现简单多元组tuple>实现简单多元组(tuple)</h2><p>tuple是stl中pair的补充。目标是支持<strong>任意</strong>个参数数据的组合。我们可以用动态模板参数避免枚举参数个数的问题。</p><pre><code class=language-cpp>template<typename... t>
 struct TUPLE;
 
-template&amp;lt;&amp;gt;
-struct TUPLE&amp;lt;&amp;gt; {
+template<>
+struct TUPLE<> {
 };
 
-template&amp;lt;typename TM, typename... TL&amp;gt;
-struct TUPLE&amp;lt;TM, TL...&amp;gt;: TUPLE&amp;lt;TL...&amp;gt;  {
+template<typename tm, typename... tl>
+struct TUPLE<tm, tl...>: TUPLE<tl...>  {
     TM v;
 };
 
-template&amp;lt;std::size_t INDEX, typename T, typename... TL&amp;gt;
-struct GET_TYPE :  GET_TYPE&amp;lt;INDEX - 1, TL...&amp;gt; {
+template<std::size_t index, typename t, typename... tl>
+struct GET_TYPE :  GET_TYPE<index - 1, tl...> {
 };
 
-template&amp;lt;typename T, typename... TL&amp;gt;
-struct GET_TYPE&amp;lt;0, T, TL...&amp;gt; {
-    typedef TUPLE&amp;lt;T, TL...&amp;gt; tuple_type;
+template<typename t, typename... tl>
+struct GET_TYPE<0, T, TL...> {
+    typedef TUPLE<t, tl...> tuple_type;
     typedef T value_type;
 };
 
-template&amp;lt;std::size_t INDEX, typename... TL&amp;gt;
-typename GET_TYPE&amp;lt;INDEX, TL...&amp;gt;::value_type&amp;amp; 
-    GET(TUPLE&amp;lt;TL...&amp;gt;&amp;amp; t) {
-    typedef GET_TYPE&amp;lt;INDEX, TL...&amp;gt; conv_type;
+template<std::size_t index, typename... tl>
+typename GET_TYPE<index, tl...>::value_type& 
+    GET(TUPLE<tl...>& t) {
+    typedef GET_TYPE<index, tl...> conv_type;
     typedef typename conv_type::tuple_type tuple_type;
     typedef typename conv_type::value_type value_type;
 
-    return ((tuple_type*) &amp;amp; t)-&amp;gt;v;
+    return ((tuple_type*) & t)->v;
 }</code></pre><p>这样，一个简化版的tuple就完成了。
 这上面使用特化来分离和提取参数，通过继承来生成多个对象数据。
 这套接口可以通过GET&lt;0>([TUPLE]), GET([TUPLE]), GET([TUPLE])等等可以拿到对应位置的数据。
 实际上，支持C++11动态模板参数的<strong>STL里的tuple也是这种实现方法</strong>，只不过额外还会有一些功能性函数和解决权限问题的函数而已。</p><p>如果研究一下stl里关于bind函数的实现，你会发现还有一个有意思的地方。</p><h2 id=动态模版参数与stdbind>动态模版参数与std::bind</h2><p>解释这个有意思的动态模板应用之前还要先了解下bind的实现原理（可以参见<a href=//owent.net/2013/938.html>《std和boost的function与bind实现剖析》</a>，已经知道的话就直接跳过吧）。
-到了这里，各位知道bind函数有两个list，一个是绑定时构造，另一个是执行时构造。我们看一下绑定时参数列表的构造和保存。</p><pre><code class=language-cpp>template&amp;lt;typename _Functor, typename... _Bound_args&amp;gt;
-class _Bind&amp;lt;_Functor(_Bound_args...)&amp;gt;
-: public _Weak_result_type&amp;lt;_Functor&amp;gt;
+到了这里，各位知道bind函数有两个list，一个是绑定时构造，另一个是执行时构造。我们看一下绑定时参数列表的构造和保存。</p><pre><code class=language-cpp>template<typename _functor, typename... _bound_args>
+class _Bind<_Functor(_Bound_args...)>
+: public _Weak_result_type<_Functor>
 {
     typedef _Bind __self_type;
-    typedef typename _Build_index_tuple&amp;lt;sizeof...(_Bound_args)&amp;gt;::__type
+    typedef typename _Build_index_tuple<sizeof...(_bound_args)>::__type
     _Bound_indexes;
 
     _Functor _M_f;
-    tuple&amp;lt;_Bound_args...&amp;gt; _M_bound_args;
+    tuple<_Bound_args...> _M_bound_args;
 
     // Call unqualified
-    template&amp;lt;typename _Result, typename... _Args, std::size_t... _Indexes&amp;gt;
+    template<typename _result, typename... _args, std::size_t... _indexes>
     _Result
-    __call(tuple&amp;lt;_Args...&amp;gt;&amp;amp;&amp;amp; __args, _Index_tuple&amp;lt;_Indexes...&amp;gt;)
+    __call(tuple<_Args...>&& __args, _Index_tuple<_Indexes...>)
     {
-      return _M_f(_Mu&amp;lt;_Bound_args&amp;gt;()
-              (get&amp;lt;_Indexes&amp;gt;(_M_bound_args), __args)...);
+      return _M_f(_Mu<_Bound_args>()
+              (get<_Indexes>(_M_bound_args), __args)...);
     }
 
 //...
@@ -94,54 +94,54 @@ class _Bind&amp;lt;_Functor(_Bound_args...)&amp;gt;
 正如这里面所看到的。bind的数据保存也用了tuple。但是这里有一个问题，<strong>执行时要把绑定时的list按顺序解引用</strong>。这怎么实现呢？
 可以看到上面代码里的__call函数，有没有注意到第二个参数是一个**_Indexes&mldr;<strong>，而且上面有一个</strong><em>typedef typename _Build_index_tuple&lt;sizeof…(_Bound_args)>::__type _Bound_indexes;</em><strong>？没错秘诀就在这里。由于代码篇幅过长，这里不再贴出代码。
 它是怎么使</strong>_Indexes…**的值是从0到tuple的最大值的呢？我们bind函数传入参数的时候并没有传入数字一类的东西。这里该type_traits出场了。
-我们把这其中的核心的部分提取一下。请看下面的代码：</p><pre><code class=language-cpp>#include &amp;lt;cstdio&amp;gt;
-#include &amp;lt;iostream&amp;gt;
-#include &amp;lt;typeinfo&amp;gt;
-#include &amp;lt;memory&amp;gt;
-#include &amp;lt;functional&amp;gt;
+我们把这其中的核心的部分提取一下。请看下面的代码：</p><pre><code class=language-cpp>#include <cstdio>
+#include <iostream>
+#include <typeinfo>
+#include <memory>
+#include <functional>
 
-template&amp;lt;int... _Index&amp;gt;
+template<int... _index>
 struct IndexArgsVarList{};
 
-template&amp;lt;std::size_t N, int... _Index&amp;gt;
+template<std::size_t n, int... _index>
 struct BuildArgsIndex:
-    BuildArgsIndex&amp;lt;N - 1, _Index..., sizeof...(_Index)&amp;gt;
+    BuildArgsIndex<n - 1, _index..., sizeof...(_index)>
 {
 };
 
-template&amp;lt;int... _Index&amp;gt;
-struct BuildArgsIndex&amp;lt;0, _Index...&amp;gt;
+template<int... _index>
+struct BuildArgsIndex<0, _Index...>
 {
-    typedef IndexArgsVarList&amp;lt;_Index...&amp;gt; type;
+    typedef IndexArgsVarList<_Index...> type;
 };
 
-template&amp;lt;int... _Index&amp;gt;
+template<int... _index>
 void print_real()
 {
-    print_unpack&amp;lt;_Index...&amp;gt;();
+    print_unpack<_Index...>();
 }
 
-template&amp;lt;&amp;gt;
+template<>
 void print_real()
 {
-    puts(&amp;#34;end&amp;#34;);
+    puts("end");
 }
 
-template&amp;lt;int _My, int... _Index&amp;gt;
+template<int _my, int... _index>
 void print_unpack()
 {
-    printf(&amp;#34;%d\n&amp;#34;, _My);
-    print_real&amp;lt;_Index...&amp;gt;();
+    printf("%d\n", _My);
+    print_real<_Index...>();
 }
 
-template&amp;lt;int... _Index&amp;gt;
-void print(IndexArgsVarList&amp;lt;_Index...&amp;gt;)
+template<int... _index>
+void print(IndexArgsVarList<_Index...>)
 {
-    print_real&amp;lt;_Index...&amp;gt;();
+    print_real<_Index...>();
 }
 
 int main() {
-    print(BuildArgsIndex&amp;lt;10&amp;gt;::type());
+    print(BuildArgsIndex<10>::type());
     return 0;
 }</code></pre><p>这个会输出什么？
 答案很简单就是 0到9然后一个end。

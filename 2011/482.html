@@ -18,7 +18,7 @@ Ctrl + d : 某些程序的中断命令
 lsof: 查看被打开的文件（该指令可用于查找标记删除但未被真正删除的文件[会被标记为 deleted ], 详见 <a href=http://www.ibm.com/developerworks/cn/aix/library/au-lsof.html>http://www.ibm.com/developerworks/cn/aix/library/au-lsof.html</a> ）</p><h3 id=常用环境变量>常用环境变量</h3><p>echo PATH (可执行文件目录)
 LD_LIBRARY_PATH (C/C++库文件目录)
 /etc/ld.so.conf (C/C++ 库文件目录表)</p><h2 id=bash字符串操作>Bash字符串操作</h2><ol><li><code>#</code>, 删除左边第一个匹配串，保留右边字符串</li><li><code>##</code>, 删除左边最后一个匹配串，保留右边字符串</li><li><code>%</code>, 删除右边第一个匹配串，保留左边字符串
-4. <code>%</code>, 删除右边最后一个匹配串，保留左边字符串</li><li><code>:0:N</code>, 保留左边第一个字符起的N个字符</li><li><code>:X</code> 保留左边第X个字符起的N个字符</li><li><code>:0-X:N</code>, 保留右边第X个字符起的N个字符</li><li><code>:0-X</code>, 保留左边第一个字符起的N个字符</li><li><code>/a/b</code> 用b替换第一个出现的a</li><li><code>//a/b</code> 用b替换所有出现的a</li><li><code>/#a/b</code> 用b替换前缀a</li><li><code>/%a/b</code> 用b替换后缀a</li></ol><pre><code class=language-bash>var=&amp;#34;http://www.owent.net&amp;#34;
+4. <code>%</code>, 删除右边最后一个匹配串，保留左边字符串</li><li><code>:0:N</code>, 保留左边第一个字符起的N个字符</li><li><code>:X</code> 保留左边第X个字符起的N个字符</li><li><code>:0-X:N</code>, 保留右边第X个字符起的N个字符</li><li><code>:0-X</code>, 保留左边第一个字符起的N个字符</li><li><code>/a/b</code> 用b替换第一个出现的a</li><li><code>//a/b</code> 用b替换所有出现的a</li><li><code>/#a/b</code> 用b替换前缀a</li><li><code>/%a/b</code> 用b替换后缀a</li></ol><pre><code class=language-bash>var="http://www.owent.net"
 echo ${var#*/}		      # 删除var左边第一个*/后的内容 		(/www.owent/net)
 echo ${var##*/}		      # 删除var左边最后一个*/后的内容 	(www.woent.net)
 echo ${var%/*}		      # 删除var右边第一个/*后的内容 		(http:/)
@@ -30,16 +30,16 @@ echo ${var:0-5}		      # 截取var最后5个字符 			(t.net)
 echo ${var/www/api}	    # 把第一个www替换为api 			(http://api.owent.net)
 echo ${var//e/f}		    # 把所有www替换为api 			(http://www.owfnt.nft)
 echo ${var/#http/https}	# 把http前缀替换为https 		(https://www.owent.net)
-echo ${var/%net/com}	  # 把net后缀替换为com 			(http://www.owent.com)</code></pre><h2 id=系统信息ip等>系统信息(IP等)</h2><pre><code class=language-bash>MAC地址： /sbin/ifconfig eth1 2&amp;gt; /dev/null | grep &amp;#39;HWaddr&amp;#39; | awk &amp;#39;{print $5}&amp;#39;
-IP地址：/sbin/ifconfig eth1 2&amp;gt; /dev/null | grep &amp;#39;inet addr&amp;#39; | awk &amp;#39;{print $2}&amp;#39; | cut -d: -f2
-子网掩码：/sbin/ifconfig eth1 2&amp;gt; /dev/null | grep &amp;#39;Mask&amp;#39; | cut -d: -f4
-/tmp/resolv.conf.auto 2&amp;gt; /dev/null | grep &amp;#39;nameserver&amp;#39; | awk &amp;#39;{print $2}&amp;#39;#
-系统运行时间：/bin/cat /proc/uptime 2&amp;gt; /dev/null | awk -F. &amp;#39;{run_days=$1 / 86400;run_hour=($1 % 86400)/3600;run_minute=($1 % 3600)/60;run_second=$1 % 60;printf(&amp;#34;%d天%d时%d分%d秒&amp;#34;,run_days,run_hour,run_minute,run_second)}&amp;#39;
-共发出数据包：/sbin/ifconfig eth0 2&amp;gt; /dev/null | grep &amp;#39;TX packets&amp;#39; | awk &amp;#39;{print $2}&amp;#39;|cut -d: -f2
-共接受数据包：/sbin/ifconfig eth0 2&amp;gt; /dev/null | grep &amp;#39;RX packets&amp;#39; | awk &amp;#39;{print $2}&amp;#39;|cut -d: -f2
+echo ${var/%net/com}	  # 把net后缀替换为com 			(http://www.owent.com)</code></pre><h2 id=系统信息ip等>系统信息(IP等)</h2><pre><code class=language-bash>MAC地址： /sbin/ifconfig eth1 2> /dev/null | grep 'HWaddr' | awk '{print $5}'
+IP地址：/sbin/ifconfig eth1 2> /dev/null | grep 'inet addr' | awk '{print $2}' | cut -d: -f2
+子网掩码：/sbin/ifconfig eth1 2> /dev/null | grep 'Mask' | cut -d: -f4
+/tmp/resolv.conf.auto 2> /dev/null | grep 'nameserver' | awk '{print $2}'#
+系统运行时间：/bin/cat /proc/uptime 2> /dev/null | awk -F. '{run_days=$1 / 86400;run_hour=($1 % 86400)/3600;run_minute=($1 % 3600)/60;run_second=$1 % 60;printf("%d天%d时%d分%d秒",run_days,run_hour,run_minute,run_second)}'
+共发出数据包：/sbin/ifconfig eth0 2> /dev/null | grep 'TX packets' | awk '{print $2}'|cut -d: -f2
+共接受数据包：/sbin/ifconfig eth0 2> /dev/null | grep 'RX packets' | awk '{print $2}'|cut -d: -f2
 
 使Linux脚本或者命令输出的结果不换行（在网页中应用较多）
-echo -e &amp;#34;`ifconfig eth0 2&amp;gt; /dev/null | grep &amp;#39;inet addr&amp;#39; | awk &amp;#39;{print $2}&amp;#39; | cut -d: -f2`\c&amp;#34;
+echo -e "`ifconfig eth0 2> /dev/null | grep 'inet addr' | awk '{print $2}' | cut -d: -f2`\c"
 
 用硬件检测程序kuduz探测新硬件：service kudzu start ( or restart)
 dmesg (查看所有启动时检测到的硬件信息)
@@ -84,7 +84,7 @@ c 删除并转到编辑模式  C 删到行尾并转为编辑模式
 x 向后删除 X 向前删除
 n 下一个搜索项 N 上一个搜索项
 u 取消修改 U 取消当前行的修改</code></pre><h3 id=文本替换>文本替换</h3><pre><code class=language-vim>:[搜索规则][分隔符][原匹配式][分隔符][替换目标][分隔符][替换规则]
-分隔符可以是/,&#43;和#
+分隔符可以是/,+和#
 搜索规则
 
 :n,$s/从第n行到结尾，类似正则表达式
@@ -100,7 +100,7 @@ u 取消修改 U 取消当前行的修改</code></pre><h3 id=文本替换>文本
 :%s/src/dst/g 文本替换(所有行第一个src替换为dst)
 :%s/src/dst/g 文本替换(所有行所有src替换为dst)</code></pre><h3 id=分屏>分屏</h3><pre><code class=language-vim>:He 上分屏浏览 :He! 下分屏浏览
 :Ve 左分屏浏览 :Ve! 右分屏浏览
-Ctrl&#43;w 分屏切换
+Ctrl+w 分屏切换
 :set scb 分屏同步移动 :set scb! 解除分屏同步移动
 :E 目录导航
 :split/vsplit 分屏/垂直分屏打开
@@ -110,19 +110,19 @@ ctrl-w_  最大化当前窗口
 ctrl-w= 所有窗口设为相同大小
 :hide 隐藏当前窗口
 :­nly 关闭当前窗口外的所有窗口
-:b N 打开窗口N</code></pre><h3 id=关键字导航>关键字导航</h3><pre><code class=language-vim>Ctrl&#43;N 向下查找关键字关键字[插入模式下]， Ctrl&#43;P 向上查找关键字[插入模式下]
-Ctrl &#43; X 和 Ctrl &#43; D 宏定义补齐
-Ctrl &#43; X 和 Ctrl &#43; ] 是 Tag 补齐
-Ctrl &#43; X 和 Ctrl &#43; F 是文件名补齐
-Ctrl &#43; X 和 Ctrl &#43; I 也是关键词补齐，但是关键后会有个文件名，告诉你这个关键词在哪个文件中
-Ctrl &#43; X 和 Ctrl &#43;V 是表达式补齐
-Ctrl &#43; X 和 Ctrl &#43;L 对整行补齐。</code></pre><h3 id=字符相关>字符相关</h3><pre><code class=language-vim> 【guu 】 – 把一行的文字变成全小写。或是【Vu】
+:b N 打开窗口N</code></pre><h3 id=关键字导航>关键字导航</h3><pre><code class=language-vim>Ctrl+N 向下查找关键字关键字[插入模式下]， Ctrl+P 向上查找关键字[插入模式下]
+Ctrl + X 和 Ctrl + D 宏定义补齐
+Ctrl + X 和 Ctrl + ] 是 Tag 补齐
+Ctrl + X 和 Ctrl + F 是文件名补齐
+Ctrl + X 和 Ctrl + I 也是关键词补齐，但是关键后会有个文件名，告诉你这个关键词在哪个文件中
+Ctrl + X 和 Ctrl +V 是表达式补齐
+Ctrl + X 和 Ctrl +L 对整行补齐。</code></pre><h3 id=字符相关>字符相关</h3><pre><code class=language-vim> 【guu 】 – 把一行的文字变成全小写。或是【Vu】
  【gUU】 – 把一行的文件变成全大写。或是【VU】
  按【v】键进入选择模式，然后移动光标选择你要的文本，按【u】转小写，按【U】转大写
  【ga】 –  查看光标处字符的 ascii 码
  【g8】 – 查看光标处字符的 utf-8 编码
  【gf】  - 打开光标处所指的文件 （这个命令在打到#include 头文件时挺好用的，当然，仅限于有路径的）
- 【*】或【#】在当前文件中搜索当前光标的单词</code></pre><h3 id=缩进相关>缩进相关</h3><pre><code class=language-vim>【&amp;gt;&amp;gt; 】向右给它进当前行 【&amp;lt;&amp;lt; 】向左缩进当前行
+ 【*】或【#】在当前文件中搜索当前光标的单词</code></pre><h3 id=缩进相关>缩进相关</h3><pre><code class=language-vim>【>> 】向右给它进当前行 【<< 】向左缩进当前行
 【=】  - 缩进当前行 （和上面不一样的是，它会对齐缩进）
 【=%】 – 把光标位置移到语句块的括号上，然后按=%，缩进整个语句块（%是括号匹配）
 【G=gg】 或是 【gg=G】  - 缩进整个文件（G是到文件结尾，gg 是到文件开头）
@@ -131,8 +131,8 @@ Ctrl &#43; X 和 Ctrl &#43;L 对整行补齐。</code></pre><h3 id=字符相关>
 :set tabstop=4 制表符长度为4
 :set shiftwidth=4 缩进符为长度为4的空格
 ctrl-t, ctrl-d 插入模式的缩进和取消缩进
-【&amp;gt;&amp;gt;】 缩进
-【&amp;lt;&amp;lt;】取消缩进</code></pre><h3 id=文件系统>文件系统</h3><pre><code class=language-vim>:e . 打开文件目录
+【>>】 缩进
+【<<】取消缩进</code></pre><h3 id=文件系统>文件系统</h3><pre><code class=language-vim>:e . 打开文件目录
 :Sex 分割窗口并开启文件目录
 :ls List buffers
 :cd ..
@@ -146,12 +146,12 @@ gf 打开光标指向的文件
 
 ```powershell
 Set-ExecutionPolicy Unrestricted
-Set-ExecutionPolicy RemoteSigned</code></pre><h2 id=编译器命令>编译器命令</h2><pre><code class=language-bash>gcc -dM -E - &amp;lt; /dev/null # GCC查看 预定义宏
-cpp -dM  &amp;lt; /dev/null # GCC查看 预定义宏
+Set-ExecutionPolicy RemoteSigned</code></pre><h2 id=编译器命令>编译器命令</h2><pre><code class=language-bash>gcc -dM -E - < /dev/null # GCC查看 预定义宏
+cpp -dM  < /dev/null # GCC查看 预定义宏
 cc -v fred.c # HP-UX ansi C compiler 查看 预定义宏
-cc -## fred.c  # SCO OpenServer C compiler 和 Sun Studio C/C&#43;&#43; compiler 查看 预定义宏
-cc -qshowmacros -E fred.c # IBM AIX XL C/C&#43;&#43; compiler 查看 预定义宏
-clang -dM -E - &amp;lt; /dev/null # Clang 查看 预定义宏
+cc -## fred.c  # SCO OpenServer C compiler 和 Sun Studio C/C++ compiler 查看 预定义宏
+cc -qshowmacros -E fred.c # IBM AIX XL C/C++ compiler 查看 预定义宏
+clang -dM -E - < /dev/null # Clang 查看 预定义宏
 # VC 查看 预定义宏，查文档吧 http://msdn.microsoft.com/en-us/library/b0084kay(v=vs.110).aspx</code></pre><h2 id=linux查看系统信息命令>Linux查看系统信息命令</h2><p>工具查询地址: <a href=http://bhami.com/rosetta.html>http://bhami.com/rosetta.html</a></p><h2 id=最后记录一下我常用的软件包>最后记录一下我常用的软件包</h2><h3 id=posix环境>Posix环境</h3><p>tar zip unzip gzip lzip zlib binutils gcc gdb cmake subversion git make colorgcc colordiff diffutils automake texinfo curl wget ncurses libncurses bison rsync uuid-devel valgrind telnet cppcheck openssl-devel</p><h3 id=开发工具库>开发工具&库</h3><p>openssl-devel readline-devel ncurses-devel libunwind-devel python php-cli java-1.8.0-openjdk</p><h3 id=linux专用>Linux专用</h3><p>yum-remove-with-leaves yum-download bleachbit yum-plugin-fastestmirror dstat sar ipcalc iotop htop atop iptraf rtorrent aria2 p7zip</p><h3 id=linux---llvm---clang-套件>Linux - LLVM - Clang 套件</h3><p>llvm clang dragonegg lldb</p><h3 id=linux桌面>Linux桌面</h3><p>cinnamon gnome-tweak-tool numix-gtk-theme
 imsettings-cinnamon  ： 用于切换系统输入法</p><h3 id=小工具>小工具</h3><p>figlet</p><h4 id=编辑工具>编辑工具</h4><p>pandoc ctex/miktex</p><h4 id=图像处理>图像处理</h4><p>gimg darktable GraphicsMagick</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/collection.html>Collection</a></li></ol></span><span class=article-meta-right><time datetime=2011-08-19T11:16:55.000+00:00 itemprop=datePublished>2011-08-19</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/bash.html>bash</a></li><li class=article-tag-list-item><a href=//owent.net/tags/clang.html>clang</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cpp.html>cpp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cygwin.html>cygwin</a></li><li class=article-tag-list-item><a href=//owent.net/tags/gcc.html>gcc</a></li><li class=article-tag-list-item><a href=//owent.net/tags/linux.html>linux</a></li><li class=article-tag-list-item><a href=//owent.net/tags/mingw.html>mingw</a></li><li class=article-tag-list-item><a href=//owent.net/tags/powershell.html>powershell</a></li><li class=article-tag-list-item><a href=//owent.net/tags/sh.html>sh</a></li><li class=article-tag-list-item><a href=//owent.net/tags/shell.html>shell</a></li><li class=article-tag-list-item><a href=//owent.net/tags/vim.html>vim</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E5%91%BD%E4%BB%A4.html>命令</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E5%B7%A5%E5%85%B7.html>工具</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E8%AE%B0%E5%BD%95.html>记录</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2011/508.html>上一篇<strong>C++ 新特性学习（一） -- 概述+智能指针（smart_ptr）</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2011/447.html>下一篇<strong>非常帅气的Linq to sql</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT

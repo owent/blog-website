@@ -19,7 +19,7 @@ typedef void*   fcontext_t;
  * @param preserve_fpu 是否复制FPU（浮点数寄存器）数据
  * @return 如果调回时的透传参数
  */
-extern &amp;#34;C&amp;#34; BOOST_CONTEXT_DECL
+extern "C" BOOST_CONTEXT_DECL
 intptr_t BOOST_CONTEXT_CALLDECL jump_fcontext( fcontext_t * ofc, fcontext_t nfc,
                                                intptr_t vp, bool preserve_fpu = false);
 
@@ -30,7 +30,7 @@ intptr_t BOOST_CONTEXT_CALLDECL jump_fcontext( fcontext_t * ofc, fcontext_t nfc,
  * @param fn 入口函数
  * @return 返回初始化完成后的执行环境上下文
  */
-extern &amp;#34;C&amp;#34; BOOST_CONTEXT_DECL
+extern "C" BOOST_CONTEXT_DECL
 fcontext_t BOOST_CONTEXT_CALLDECL make_fcontext( void * sp, std::size_t size, void (* fn)( intptr_t) );
 
 }}</code></pre><p>然后是现在的API</p><pre><code class=language-cpp>namespace boost {
@@ -49,7 +49,7 @@ typedef void*   fcontext_t;
  * @param preserve_fpu 是否复制FPU（浮点数寄存器）数据
  * @return 如果调回时的透传参数
  */
-extern &amp;#34;C&amp;#34; BOOST_CONTEXT_DECL
+extern "C" BOOST_CONTEXT_DECL
 intptr_t BOOST_CONTEXT_CALLDECL jump_fcontext( fcontext_t * ofc, fcontext_t nfc,
                                                intptr_t vp, bool preserve_fpu = false);
 
@@ -60,7 +60,7 @@ intptr_t BOOST_CONTEXT_CALLDECL jump_fcontext( fcontext_t * ofc, fcontext_t nfc,
  * @param fn 入口函数
  * @return 返回初始化完成后的执行环境上下文
  */
-extern &amp;#34;C&amp;#34; BOOST_CONTEXT_DECL
+extern "C" BOOST_CONTEXT_DECL
 fcontext_t BOOST_CONTEXT_CALLDECL make_fcontext( void * sp, std::size_t size, void (* fn)( intptr_t) );
 
 }}
@@ -88,7 +88,7 @@ struct transfer_t {
  * @param vp 跳转到的目标上下文的附加参数，会设置为transfer_t里的data成员
  * @return 跳转来源
  */
-extern &amp;#34;C&amp;#34; BOOST_CONTEXT_DECL
+extern "C" BOOST_CONTEXT_DECL
 transfer_t BOOST_CONTEXT_CALLDECL jump_fcontext( fcontext_t const to, void * vp);
 
 /**
@@ -98,7 +98,7 @@ transfer_t BOOST_CONTEXT_CALLDECL jump_fcontext( fcontext_t const to, void * vp)
  * @param fn 入口函数
  * @return 返回初始化完成后的执行环境上下文
  */
-extern &amp;#34;C&amp;#34; BOOST_CONTEXT_DECL
+extern "C" BOOST_CONTEXT_DECL
 fcontext_t BOOST_CONTEXT_CALLDECL make_fcontext( void * sp, std::size_t size, void (* fn)( transfer_t) );
 
 /**
@@ -109,7 +109,7 @@ fcontext_t BOOST_CONTEXT_CALLDECL make_fcontext( void * sp, std::size_t size, vo
  * @return 跳转来源
  */
 // based on an idea of Giovanni Derreta
-extern &amp;#34;C&amp;#34; BOOST_CONTEXT_DECL
+extern "C" BOOST_CONTEXT_DECL
 transfer_t BOOST_CONTEXT_CALLDECL ontop_fcontext( fcontext_t const to, void * vp, transfer_t (* fn)( transfer_t) );
 
 }}}</code></pre><h3 id=流程变化>流程变化</h3><p>诸如命名空间从boost转移到boost::detail这种废话我就不说了，这也是说作者不再希望用户直接使用这些接口了。然而这挡不住我非要直接用，哈哈。</p><p>重要的是首先API参数和返回值变化，对于这些接口变更，boost里并没有文档，也没有什么地方有说明，所以目前我只能通过它的单元测试和sample来评估功能。</p><p>首先重要的是多一个<strong>transfer_t</strong>，这个里面的有两个对象，第一个<em>fctx</em>是来源的执行上下文，第二个<em>data</em>是各种接口传入的自定义的指针(上面接口里的<em>vp</em>)。
@@ -147,126 +147,126 @@ current_rec = this; // 更新当前执行环境上下文
 // 这一段是对GCC动态栈的支持
 #if defined(BOOST_USE_SEGMENTED_STACKS)
 // adjust segmented stack properties
-__splitstack_getcontext( from-&amp;gt;sctx.segments_ctx);
+__splitstack_getcontext( from->sctx.segments_ctx);
 __splitstack_setcontext( sctx.segments_ctx);
 #endif
 data_t d = { from, vp }; // vp 是外部传入的private data
 // context switch from parent context to `this`-context
-transfer_t t = jump_fcontext( fctx, &amp;amp; d);
-data_t * dp = reinterpret_cast&amp;lt; data_t * &amp;gt;( t.data);
-dp-&amp;gt;from-&amp;gt;fctx = t.fctx; // 保存来源上下文
+transfer_t t = jump_fcontext( fctx, & d);
+data_t * dp = reinterpret_cast< data_t * >( t.data);
+dp->from->fctx = t.fctx; // 保存来源上下文
 
 // ========== 通过jump_fcontext第一次跳入 ==========
 // tampoline function
 // entered if the execution context
 // is resumed for the first time
-template&amp;lt; typename AR &amp;gt;
+template< typename AR >
 static void entry_func( detail::transfer_t t) noexcept {
-    detail::data_t * dp = reinterpret_cast&amp;lt; detail::data_t * &amp;gt;( t.data);
-    AR * ar = static_cast&amp;lt; AR * &amp;gt;( dp-&amp;gt;data);
+    detail::data_t * dp = reinterpret_cast< detail::data_t * >( t.data);
+    AR * ar = static_cast< AR * >( dp->data);
     BOOST_ASSERT( nullptr != ar);
-    dp-&amp;gt;from-&amp;gt;fctx = t.fctx; // 保存来源上下文
+    dp->from->fctx = t.fctx; // 保存来源上下文
     // start execution of toplevel context-function
-    ar-&amp;gt;run();
+    ar->run();
 }
 
 // ========== 调用ontop_fcontext ==========
-std::tuple&amp;lt; void *, Fn &amp;gt; p = std::forward_as_tuple( data, fn);
-data_t d = { from, &amp;amp; p };
+std::tuple< void *, Fn > p = std::forward_as_tuple( data, fn);
+data_t d = { from, & p };
 // context switch from parent context to `this`-context
 // execute Fn( Tpl) on top of `this`
-transfer_t t = ontop_fcontext( fctx, &amp;amp; d, context_ontop&amp;lt; Fn &amp;gt;);
-data_t * dp = reinterpret_cast&amp;lt; data_t * &amp;gt;( t.data);
-dp-&amp;gt;from-&amp;gt;fctx = t.fctx; // 保存来源上下文
+transfer_t t = ontop_fcontext( fctx, & d, context_ontop< Fn >);
+data_t * dp = reinterpret_cast< data_t * >( t.data);
+dp->from->fctx = t.fctx; // 保存来源上下文
 
 // ========== 通过ontop_fcontext跳入 ==========
-template&amp;lt; typename Fn &amp;gt;
+template< typename Fn >
 transfer_t context_ontop( transfer_t t) {
-    data_t * dp = reinterpret_cast&amp;lt; data_t * &amp;gt;( t.data);
-    dp-&amp;gt;from-&amp;gt;fctx = t.fctx; // 保存来源上下文
-    auto tpl = reinterpret_cast&amp;lt; std::tuple&amp;lt; void *, Fn &amp;gt; * &amp;gt;( dp-&amp;gt;data);
+    data_t * dp = reinterpret_cast< data_t * >( t.data);
+    dp->from->fctx = t.fctx; // 保存来源上下文
+    auto tpl = reinterpret_cast< std::tuple< void *, Fn > * >( dp->data);
     BOOST_ASSERT( nullptr != tpl);
-    auto data = std::get&amp;lt; 0 &amp;gt;( * tpl);
-    typename std::decay&amp;lt; Fn &amp;gt;::type fn = std::forward&amp;lt; Fn &amp;gt;( std::get&amp;lt; 1 &amp;gt;( * tpl) );
-    dp-&amp;gt;data = apply( fn, std::tie( data) );
+    auto data = std::get< 0 >( * tpl);
+    typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 1 >( * tpl) );
+    dp->data = apply( fn, std::tie( data) );
     return { t.fctx, dp };
 }</code></pre><p>看上面的代码，基本上向前兼容的方法就是新搞一个data_t数据记录来源的<a href=http://www.boost.org/doc/libs/1_61_0/libs/context/doc/html/context/ecv1.html><em>execution_context</em></a>的信息，透传过去后再把老的上下文保存进度。
 并且这么做之后，由于要有方式获取正在进行的上下文是哪一个，它有个记录当前执行上下文的TLS变量就变成了关键的东西。而这个TLS变量的问题后面会再提到。</p><h3 id=execution_context_v2>execution_context_v2</h3><p>新的boost.context提供了一个新版本的<a href=http://www.boost.org/doc/libs/1_61_0/libs/context/doc/html/context/ecv2.html><em>execution_context</em></a>对象，它其实是针对新的设计模型的一个执行上下文的抽象，并且粒度比以前的更小。所以你可以看到在性能比较的页面里v2版本的性能远高于v1。
 实际上性能高的原因是<a href=http://www.boost.org/doc/libs/1_61_0/libs/context/doc/html/context/ecv1.html>execution_context_v1</a>提供了有限的<a href=https://github.com/owent/libcopp>libcopp</a>中coroutine提供的一部分功能，而<a href=http://www.boost.org/doc/libs/1_61_0/libs/context/doc/html/context/ecv2.html><em>execution_context_v2</em></a>则是把这些功能拆分地力度更小，作为其他模块的组件的时候更灵活。
 如果要使用<a href=http://www.boost.org/doc/libs/1_61_0/libs/context/doc/html/context/ecv2.html><em>execution_context_v2</em></a>的话，一些<a href=http://www.boost.org/doc/libs/1_61_0/libs/context/doc/html/context/ecv1.html>execution_context_v1</a>处理的问题还是必须上层框架再处理，所以单纯地比较切换速度意义不大。</p><p>另外新的<a href=http://www.boost.org/doc/libs/1_61_0/libs/context/doc/html/context/ecv2.html><em>execution_context_v2</em></a>更大规模地使用了C++11的特性，比如noexpect，右值，转移语义等等，用于提升性能。核心代码如下：</p><pre><code class=language-cpp>
 /** 参数包装 **/
-typedef std::tuple&amp;lt; Args ... &amp;gt;     args_tpl_t;
+typedef std::tuple< Args ... >     args_tpl_t;
 /** 返回值包装 **/
-typedef std::tuple&amp;lt; execution_context, typename std::decay&amp;lt; Args &amp;gt;::type ... &amp;gt;               ret_tpl_t;
+typedef std::tuple< execution_context, typename std::decay< Args >::type ... >               ret_tpl_t;
 
 /** 用于记录栈地址，入口函数和参数的对象 **/
-typedef record&amp;lt; Ctx, StackAlloc, Fn, Params ... &amp;gt;  record_t;
+typedef record< Ctx, StackAlloc, Fn, Params ... >  record_t;
 
 // ========== 调用jump_fcontext - context_create函数内 ==========
 // create fast-context
-const fcontext_t fctx = make_fcontext( sp, size, &amp;amp; context_entry&amp;lt; record_t &amp;gt;);
+const fcontext_t fctx = make_fcontext( sp, size, & context_entry< record_t >);
 BOOST_ASSERT( nullptr != fctx);
 // placment new for control structure on context-stack
 auto rec = ::new ( sp) record_t{
-        sctx, salloc, std::forward&amp;lt; Fn &amp;gt;( fn), std::forward&amp;lt; Params &amp;gt;( params) ... };
+        sctx, salloc, std::forward< Fn >( fn), std::forward< Params >( params) ... };
 // transfer control structure to context-stack
 return jump_fcontext( fctx, rec).fctx;
 
 // ========== 调用jump_fcontext - ret_tpl_t operator()( Args ... args)函数内 ==========
 ret_tpl_t operator()( Args ... args) {
     BOOST_ASSERT( nullptr != fctx_);
-    args_tpl_t data( std::forward&amp;lt; Args &amp;gt;( args) ... );
-    detail::transfer_t t = detail::jump_fcontext( detail::exchange( fctx_, nullptr), &amp;amp; data);
+    args_tpl_t data( std::forward< Args >( args) ... );
+    detail::transfer_t t = detail::jump_fcontext( detail::exchange( fctx_, nullptr), & data);
     if ( nullptr != t.data) {
-        data = std::move( * static_cast&amp;lt; args_tpl_t * &amp;gt;( t.data) );
+        data = std::move( * static_cast< args_tpl_t * >( t.data) );
     }
     return std::tuple_cat( std::forward_as_tuple( execution_context( t.fctx) ), std::move( data) );
 }
 
 // ========== 通过jump_fcontext第一次跳入 ==========
-template&amp;lt; typename Rec &amp;gt;
+template< typename Rec >
 void context_entry( transfer_t t_) noexcept {
     // transfer control structure to the context-stack
-    Rec * rec = static_cast&amp;lt; Rec * &amp;gt;( t_.data);
+    Rec * rec = static_cast< Rec * >( t_.data);
     BOOST_ASSERT( nullptr != rec);
     transfer_t t = { nullptr, nullptr };
     try {
         // jump back to `context_create()`
         t = jump_fcontext( t_.fctx, nullptr);
         // start executing
-        t = rec-&amp;gt;run( t);
-    } catch ( forced_unwind const&amp;amp; e) {
+        t = rec->run( t);
+    } catch ( forced_unwind const& e) {
         t = { e.fctx, nullptr };
     }
     BOOST_ASSERT( nullptr != t.fctx);
     // destroy context-stack of `this`context on next context
-    ontop_fcontext( t.fctx, rec, context_exit&amp;lt; Rec &amp;gt;);
-    BOOST_ASSERT_MSG( false, &amp;#34;context already terminated&amp;#34;);
+    ontop_fcontext( t.fctx, rec, context_exit< Rec >);
+    BOOST_ASSERT_MSG( false, "context already terminated");
 }
 
 // ========== 调用ontop_fcontext ==========
-template&amp;lt; typename Fn &amp;gt;
-ret_tpl_t operator()( exec_ontop_arg_t, Fn &amp;amp;&amp;amp; fn, Args ... args) {
+template< typename Fn >
+ret_tpl_t operator()( exec_ontop_arg_t, Fn && fn, Args ... args) {
     BOOST_ASSERT( nullptr != fctx_);
-    args_tpl_t data{ std::forward&amp;lt; Args &amp;gt;( args) ... };
-    auto p = std::make_tuple( fn, std::move( data) );       // 透传类型是 std::tuple&amp;lt;Fn, args_tpl_t&amp;gt;
+    args_tpl_t data{ std::forward< Args >( args) ... };
+    auto p = std::make_tuple( fn, std::move( data) );       // 透传类型是 std::tuple<fn, args_tpl_t>
     detail::transfer_t t = detail::ontop_fcontext(
             detail::exchange( fctx_, nullptr),              // 跳入fctx_并把fctx_置空
-            &amp;amp; p,
-            detail::context_ontop&amp;lt; execution_context, Fn, Args ... &amp;gt;);
+            & p,
+            detail::context_ontop< execution_context, Fn, Args ... >);
     if ( nullptr != t.data) {
-        data = std::move( * static_cast&amp;lt; args_tpl_t * &amp;gt;( t.data) );
+        data = std::move( * static_cast< args_tpl_t * >( t.data) );
     }
     return std::tuple_cat( std::forward_as_tuple( execution_context( t.fctx) ), std::move( data) );
 }
 
 // ========== 通过ontop_fcontext跳入 ==========
-template&amp;lt; typename Ctx, typename Fn, typename ... Args &amp;gt;
+template< typename Ctx, typename Fn, typename ... Args >
 transfer_t context_ontop( transfer_t t) {
-    auto tpl = static_cast&amp;lt; std::tuple&amp;lt; Fn, std::tuple&amp;lt; Args ... &amp;gt; &amp;gt; * &amp;gt;( t.data);
+    auto tpl = static_cast< std::tuple< Fn, std::tuple< Args ... > > * >( t.data);
     BOOST_ASSERT( nullptr != tpl);
-    typename std::decay&amp;lt; Fn &amp;gt;::type fn = std::forward&amp;lt; Fn &amp;gt;( std::get&amp;lt; 0 &amp;gt;( * tpl) );
-    auto args = std::move( std::get&amp;lt; 1 &amp;gt;( * tpl) );
+    typename std::decay< Fn >::type fn = std::forward< Fn >( std::get< 0 >( * tpl) );
+    auto args = std::move( std::get< 1 >( * tpl) );
     Ctx ctx{ t.fctx };
     // execute function
     auto result = apply(                                // apply的作用是展开并调用fn函数： fn(ctx, unpack(args))
@@ -274,11 +274,11 @@ transfer_t context_ontop( transfer_t t) {
             std::tuple_cat(
                 std::forward_as_tuple( std::move( ctx) ),
                 std::move( args) ) );
-    ctx = std::move( std::get&amp;lt; 0 &amp;gt;( result) );
+    ctx = std::move( std::get< 0 >( result) );
     // apply returned data
     detail::tail( args) = std::move( result);
-    std::get&amp;lt; 1 &amp;gt;( * tpl) = std::move( args);
-    return { exchange( ctx.fctx_, nullptr), &amp;amp; std::get&amp;lt; 1 &amp;gt;( * tpl) };
+    std::get< 1 >( * tpl) = std::move( args);
+    return { exchange( ctx.fctx_, nullptr), & std::get< 1 >( * tpl) };
 }</code></pre><h2 id=存在的问题>存在的问题</h2><p>我是不建议使用<a href=http://www.boost.org/doc/libs/1_61_0/libs/context/doc/html/index.html>boost.context</a>的execution_context的。因为首先<a href=https://github.com/owent/libcopp>libcopp</a>本身处理了它完成的功能，虽然它用模板写得，但是本身有一些兼容性问题。</p><p>比如TLS的问题，因为默认的Android和IOS标准库不支持TLS，而它里面大量使用<em>thread_local</em>关键字。首先不说非C++11的模式下没有这个关键字，即便有，在Android和IOS的默认标准库下也会link error。
 对于execution_context用TLS解决的问题，在<a href=https://github.com/owent/libcopp>libcopp</a>里也同时存在，并且我也没想到什么好办法去解决（用pthread_create_key并不是特别理想），所以我现在的做法是，至少Android和IOS下单线程可用，多线程不支持<strong>copp::this_XXX</strong>功能。</p><h2 id=其他不是很重要的变化>其他不是很重要的变化</h2><p>这次的版本更新，<a href=http://www.boost.org/doc/libs/1_61_0/libs/context/doc/html/index.html>boost.context</a>也有一些非关键性的变更。之所以说非关键是因为这些东西可有可没有，即便没有的话自己实现也不困难。列举如下:</p><ol><li>pooled_fixedsize_stack，现在<a href=http://www.boost.org/doc/libs/1_61_0/libs/context/doc/html/index.html>boost.context</a>自己提供了一个用于分配栈空间的内存池。内部使用了侵入式智能指针，反正<a href=https://github.com/owent/libcopp>libcopp</a>本身能够很容易实现这个，并且benchmark里本身就有使用预定内存池的例子，所以我认为这是非关键的功能。</li><li>很多函数重新整理了一下，增加了noexpect/nothrow等。</li></ol><h2 id=libcopp的修订>libcopp的修订</h2><p>这次的merge，使用新的设计模型是必然的，但与此同时，我也会做一些细节的优化和调整。主要是下面几大块：</p><ol><li><em><strong>优化</strong></em> 原来使用spin lock来处理多线程保护，还是抽象出跨平台且比较简单的原子操作类吧。好多时候想用但是因为麻烦直接用了c++11的atomic，但是这货gcc 4.4里没有。</li><li><em><strong>更新</strong></em> 接入新API，类似<a href=http://www.boost.org/doc/libs/1_61_0/libs/context/doc/html/context/ecv1.html>execution_context_v1</a>的方式定义一个新的<strong>POD</strong>类型作为透传数据(必须是POD因为不会执行析构函数的)，跳转后处理保存来源的执行位置</li><li><em><strong>更新</strong></em> 接入新API的话，跳转来源只能靠<em>this_coroutine</em>提供了。原先是对多线程且不支持TLS的环境不能使用<em>this_coroutine</em>，现在基础功能依赖它的话就必须保证其正确。那么计划是VC的话还是必须使用高版本（反正有社区版免费），GCC/Clang之流使用pthread处理TLS吧。</li><li><em><strong>优化</strong></em> <em>coroutine</em>增加private data，然后<em>this_task</em>可以用<em>this_coroutine</em>关联，不需要两个TLS变量了，这是之前设计的一处小失误。这样<em>task</em>的多线程重入也可以用<em>coroutine</em>的。</li><li><em><strong>更新</strong></em> caller应该要变为每次入口函数后初始化和不是来自yield的jump_to后更新。基本上caller只需要记录fcontext（支持GCC动态栈的情况下还需要多复制一个动态执行栈的数据），作用也只有执行完成后跳回。如果不是调用yield导致返回的，则是外部主动调用resume，所以结束时也需要返回到主动调用的地方。</li><li><em><strong>更新</strong></em> start内的jump_to只能通过this_XXX来获取来源协程，yield内的jump_to的来源就是this。每次jump_to返回后都要更新来源协程的callee</li><li><em><strong>更新</strong></em> this_XXX功能应该是入口函数处设置和jump_to执行返回后刷新（不能由外层记录old，因为可能发生变化）。起新的协程和yield都会走jump_to，同样start内得设为jump_to前的this_XXX，而yield的直接设为this</li><li><em><strong>优化</strong></em> 接入cmake的WriteCompilerDetectionHeader并和<a href=https://github.com/atframework/atframe_utils>atframe_utils</a>保持一致，尽量加noexpect</li><li><em><strong>优化</strong></em> 整理一下CI配置，同步<a href=https://github.com/atframework/libatbus>libatbus</a>的CI配置</li></ol><p>预计重构完成后性能不会有太大的改变，甚至因为更多地使用原子操作，可能导致性能还会变低一些。不过毕竟实际运用中并不需要经常做协程切换操作，而且逻辑的复杂度源超协程切换，所以关系不大。
 但是重构完后使用者更不容易出现错误，并且可以支持<strong>协程A跳转到协程B再跳转到协程A</strong>这种循环跳转，还是值得的。具体由多大变化，还是等重构完后看测试结果吧。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/work.html>Work</a></li></ol></span><span class=article-meta-right><time datetime=2016-06-14T17:40:29.000+00:00 itemprop=datePublished>2016-06-14</time></span>

@@ -10,10 +10,10 @@
 4
 1 2 3 6</code></pre><h2 id=sample-output>Sample Output</h2><pre><code class=language-bash>1
 12
-4</code></pre><p>首先由于行列式交换行和列后值不变，我们可以把输入的X进行排序，然后列出的矩阵行列式值等于原行列式</p><p>然后，由于题目告诉我们输入的元素是封闭的（即如果a在S中，a的所有因子都在S中）</p><p>我们对行列式进行三角阵的化简可以得出对于对角线上的元素 $$ xi=gcd(xi，xi) $$ 化简结果dp[i]有</p><p>$$dp[i] = x[i] - sum{x[i] $$的因子对应的dp值(即: gcd(xj,xi) == xj)? dp[j]: 0; }$$</p><p>这里我们可以看出它和欧拉函数很像,现在证明它就是欧拉函数</p><p>欧拉函数表示的是小于等于本身且最大公约数=1的数字的个数.</p><p>显然对于x,诺y&lt;=x且gcd(x,y) > 1</p><p>y可以化简为$$y = xp * yp$$,其中xp 为小于y的最大的x的因子,且yp是x的某个因子的最大公约数为1的数字中最大的数字.</p><p>对于每个因子的每个yp必然存在一个xp使y的值不同</p><p>也就是说每个y都对应了一个因子的一个yp</p><p>所以x的欧拉函数等于x -（y的个数）就等于x - 每个因子的欧拉函数</p><p>所以我们要求的dp[i]就是xi的欧拉函数</p><p>所以原体就被我们转换成了欧拉函数值的积,接下来就很好处理了</p><p>代码如下:</p><pre><code class=language-cpp>#include &amp;lt;iostream&amp;gt;
-#include &amp;lt;string&amp;gt;
-#include &amp;lt;cstdio&amp;gt;
-#include &amp;lt;algorithm&amp;gt;
+4</code></pre><p>首先由于行列式交换行和列后值不变，我们可以把输入的X进行排序，然后列出的矩阵行列式值等于原行列式</p><p>然后，由于题目告诉我们输入的元素是封闭的（即如果a在S中，a的所有因子都在S中）</p><p>我们对行列式进行三角阵的化简可以得出对于对角线上的元素 $$ xi=gcd(xi，xi) $$ 化简结果dp[i]有</p><p>$$dp[i] = x[i] - sum{x[i] $$的因子对应的dp值(即: gcd(xj,xi) == xj)? dp[j]: 0; }$$</p><p>这里我们可以看出它和欧拉函数很像,现在证明它就是欧拉函数</p><p>欧拉函数表示的是小于等于本身且最大公约数=1的数字的个数.</p><p>显然对于x,诺y&lt;=x且gcd(x,y) > 1</p><p>y可以化简为$$y = xp * yp$$,其中xp 为小于y的最大的x的因子,且yp是x的某个因子的最大公约数为1的数字中最大的数字.</p><p>对于每个因子的每个yp必然存在一个xp使y的值不同</p><p>也就是说每个y都对应了一个因子的一个yp</p><p>所以x的欧拉函数等于x -（y的个数）就等于x - 每个因子的欧拉函数</p><p>所以我们要求的dp[i]就是xi的欧拉函数</p><p>所以原体就被我们转换成了欧拉函数值的积,接下来就很好处理了</p><p>代码如下:</p><pre><code class=language-cpp>#include <iostream>
+#include <string>
+#include <cstdio>
+#include <algorithm>
 using namespace std;
 
 const long mod = 1000000007;
@@ -22,7 +22,7 @@ long x[1005];
 long eular(long n)
 {
     long res = 1, i;
-    for(i = 2; i * i &amp;lt;= n; i &#43;&#43;)
+    for(i = 2; i * i <= n; i ++)
     {
         if(n % i == 0)
         {
@@ -32,7 +32,7 @@ long eular(long n)
                 n /= i, res *= i;
         }
     }
-    if(n &amp;gt; 1)
+    if(n > 1)
         res *= n - 1;
     return res;
 }
@@ -41,15 +41,15 @@ int main()
 {
     int n, i;
     long res;
-    while(scanf(&amp;#34;%d&amp;#34;, &amp;amp;n) != EOF)
+    while(scanf("%d", &n) != EOF)
     {
         res = 1;
-        for(i = 0; i &amp;lt; n; i &#43;&#43;)
-            scanf(&amp;#34;%ld&amp;#34;, &amp;amp;x[i]);
-        sort(x, x &#43; n);
-        for(i = 0; i &amp;lt; n; i &#43;&#43;)
+        for(i = 0; i < n; i ++)
+            scanf("%ld", &x[i]);
+        sort(x, x + n);
+        for(i = 0; i < n; i ++)
             res = ((long long)res * (long long)eular(x[i])) % mod;
-        printf(&amp;#34;%ld\n&amp;#34;, res);
+        printf("%ld\n", res);
     }
     return 0;
 }</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2010-04-26T14:33:11.000+00:00 itemprop=datePublished>2010-04-26</time></span>

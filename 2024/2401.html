@@ -4,8 +4,8 @@
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
 <button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-01a4aa2caa2ce9a35716c0ba9c7b4f13 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2024/2401.html target=_blank itemprop=url>GCC 14的一个warning to error BUG</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#背景>背景</a></li><li><a href=#分析>分析</a></li><li><a href=#另一个阻塞问题>另一个阻塞问题</a></li><li><a href=#解决>解决</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><h2 id=背景>背景</h2><p>早先社区报过 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 在GCC 14中编译不通过的问题。最近我也是先升级我们项目组的工具链，主要也是把GCC升级到GCC 14，这时候发现有些第三方工具构建失败。
-这里记录一下以防后续其他人碰到参考。</p><h2 id=分析>分析</h2><p>我们在使用新版本GCC 14编译zsh的时候，报 <code>boolcodes</code> 和定义冲突。</p><p>分析下来发现是在 <code>./configure</code> 阶段， <code>boolcodes</code> 这个接口的时候不通过。</p><p>从 <code>./configure</code> 里提取出来的，测试代码如下:</p><pre><code class=language-cpp>#include &amp;lt;curses.h&amp;gt;
-#include &amp;lt;term.h&amp;gt;
+这里记录一下以防后续其他人碰到参考。</p><h2 id=分析>分析</h2><p>我们在使用新版本GCC 14编译zsh的时候，报 <code>boolcodes</code> 和定义冲突。</p><p>分析下来发现是在 <code>./configure</code> 阶段， <code>boolcodes</code> 这个接口的时候不通过。</p><p>从 <code>./configure</code> 里提取出来的，测试代码如下:</p><pre><code class=language-cpp>#include <curses.h>
+#include <term.h>
 int
 main (void)
 {
@@ -35,7 +35,7 @@ waitforpid(pid_t pid, int wait_cmd)
      * the loop body, we expect this to happen in signal_suspend()
      * via zhandler(), after which this test terminates the loop.
      */
-    while (!errflag &amp;amp;&amp;amp; (kill(pid, 0) &amp;gt;= 0 || errno != ESRCH)) {
+    while (!errflag && (kill(pid, 0) >= 0 || errno != ESRCH)) {
 	if (first)
 	    first = 0;
 	else if (!wait_cmd)
@@ -43,11 +43,11 @@ waitforpid(pid_t pid, int wait_cmd)
 
 	last_signal = -1;
 	signal_suspend(SIGCHLD, wait_cmd);
-	if (last_signal != SIGCHLD &amp;amp;&amp;amp; wait_cmd &amp;amp;&amp;amp; last_signal &amp;gt;= 0 &amp;amp;&amp;amp;
-	    (sigtrapped[last_signal] &amp;amp; ZSIG_TRAPPED)) {
+	if (last_signal != SIGCHLD && wait_cmd && last_signal >= 0 &&
+	    (sigtrapped[last_signal] & ZSIG_TRAPPED)) {
 	    /* wait command interrupted, but no error: return */
 	    restore_queue_signals(q);
-	    return 128 &#43; last_signal;
+	    return 128 + last_signal;
 	}
 	child_block();
     }
@@ -58,9 +58,9 @@ waitforpid(pid_t pid, int wait_cmd)
     return 0;
 }</code></pre><p>乍看是没什么问题的，深入到 config.log 我们会发现它在测试 <code>ESRCH</code> 的时候失败了，然后再失败的时候会把 <code>ESRCH</code> 定义成 <code>EINVAL</code> 。
 测试 <code>ESRCH</code> 失败的原因其实和上面的问题一样，也是仅有 <code>-Wimplicit-int</code> 的时候触发了 <code>error</code> 。所以解决方法也是加 <code>-Wno-error=implicit-int</code> 。</p><h2 id=解决>解决</h2><p>最后，我给工具链脚本加了个编译选项检测来解决这类问题。</p><pre><code class=language-bash># Patch for gcc 14
-for TEST_CFLAG in &amp;#34;-Wno-error=incompatible-pointer-types&amp;#34; &amp;#34;-Wno-error=implicit-int&amp;#34; &amp;#34;-Wno-error&amp;#34;; do
-  echo &amp;#34;Test CFLAG: $TEST_CFLAG&amp;#34;
-  (gcc $TEST_CFLAG -x c - -o /dev/null &amp;lt;&amp;lt;&amp;lt;&amp;#39;int main() { return 0; }&amp;#39; &amp;amp;&amp;amp; echo &amp;#34;Test CFLAG: $TEST_CFLAG success&amp;#34; &amp;amp;&amp;amp; ALL_CFLAGS=&amp;#34;$ALL_CFLAGS $TEST_CFLAG&amp;#34;) || echo &amp;#34;Test CFLAG: $TEST_CFLAG failed&amp;#34;
+for TEST_CFLAG in "-Wno-error=incompatible-pointer-types" "-Wno-error=implicit-int" "-Wno-error"; do
+  echo "Test CFLAG: $TEST_CFLAG"
+  (gcc $TEST_CFLAG -x c - -o /dev/null <<<'int main() { return 0; }' && echo "Test CFLAG: $TEST_CFLAG success" && ALL_CFLAGS="$ALL_CFLAGS $TEST_CFLAG") || echo "Test CFLAG: $TEST_CFLAG failed"
 done</code></pre><p>也不排除后面更新构建系统 <a href=https://github.com/atframework/cmake-toolset>cmake-toolset</a> 的时候会发现其他外部组件有相似问题，到时候再打Patch吧。欢迎有兴趣的小伙伴互相交流研究。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2024-05-30T20:39:45.000+00:00 itemprop=datePublished>2024-05-30</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/gcc.html>gcc</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2024/2402.html>上一篇<strong>踩坑一处（GCC）STL `std::async` 实现BUG导致的crash问题</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2023/2309.html>下一篇<strong>给xresloader（Excel导表工具）增强UE读表支持（包含蓝图,Blueprint）</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;owent
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,

@@ -40,42 +40,7 @@ http://zh.wikipedia.org/wiki/%E9%80%89%E6%8B%A9%E6%8E%92%E5%BA%8F
 void select_sort(int *x, int n)
 {
     int i, j, min, t;
-    for (i=0; i&amp;lt;n-1; i&#43;&#43;) /*要选择的次数：~n-2共n-1次*/
-    {
-        min = i; /*假设当前下标为i的数最小，比较后再调整*/
-        for (j=i&#43;1; j&amp;lt;n; j&#43;&#43;)/*循环找出最小的数的下标是哪个*/
-        {
-            if (*(x&#43;j) &amp;lt; *(x&#43;min))
-            {
-                min = j; /*如果后面的数比前面的小，则记下它的下标*/
-            }
-        }
-        if (min != i) /*如果min在循环中改变了，就需要交换数据*/
-        {
-            t = *(x&#43;i);
-            *(x&#43;i) = *(x&#43;min);
-            *(x&#43;min) = t;
-        }
-    }
-}
-/*
-================================================
-
-功能：直接插入排序
-
-输入：数组名称（也就是数组首地址）、数组中元素个数
-http://zh.wikipedia.org/wiki/%E6%8F%92%E5%85%A5%E6%8E%92%E5%BA%8F
-
-================================================
-
-*/
-
-/*
-===================================================
-
-算法思想简单描述：
-
-在要排序的一组数中，假设前面(n-1) [n&amp;gt;=2] 个数已经是排
+    for (i=0; i<n-1; i++) /*要选择的次数：~n-2共n-1次*/ { min=i; /*假设当前下标为i的数最小，比较后再调整*/ for (j=i+1; j<n; j++)/*循环找出最小的数的下标是哪个*/ { if (*(x+j) < *(x+min)) { min=j; /*如果后面的数比前面的小，则记下它的下标*/ } } if (min !=i) /*如果min在循环中改变了，就需要交换数据*/ { t=*(x+i); *(x+i)=*(x+min); *(x+min)=t; } } } /*="===============================================" 功能：直接插入排序 输入：数组名称（也就是数组首地址）、数组中元素个数 http://zh.wikipedia.org/wiki/%e6%8f%92%e5%85%a5%e6%8e%92%e5%ba%8f="===============================================" */ /*="==================================================" 算法思想简单描述： 在要排序的一组数中，假设前面(n-1) [n>=2] 个数已经是排
 
 好顺序的，现在要把第n个数插到前面的有序数中，使得这n个数
 
@@ -90,19 +55,11 @@ http://zh.wikipedia.org/wiki/%E6%8F%92%E5%85%A5%E6%8E%92%E5%BA%8F
 void insert_sort(int *x, int n)
 {
     int i, j, t;
-    for (i=1; i&amp;lt;n; i&#43;&#43;) /*要选择的次数：~n-1共n-1次*/
-    {
-        /*
-        暂存下标为i的数。注意：下标从开始，原因就是开始时
-        第一个数即下标为的数，前面没有任何数，单单一个，认为
-        它是排好顺序的。
-        */
-        t=*(x&#43;i);
-        for (j=i-1; j&amp;gt;=0 &amp;amp;&amp;amp; t&amp;lt;*(x&#43;j); j--) /*注意：j=i-1，j--，这里就是下标为i的数，在它前面有序列中找插入位置。*/
+    for (i=1; i<n; i++) /*要选择的次数：~n-1共n-1次*/ { /* 暂存下标为i的数。注意：下标从开始，原因就是开始时 第一个数即下标为的数，前面没有任何数，单单一个，认为 它是排好顺序的。 */ t=*(x+i); for (j=i-1; j>=0 && t<*(x+j); j--) /*注意：j=i-1，j--，这里就是下标为i的数，在它前面有序列中找插入位置。*/
         {
-            *(x&#43;j&#43;1) = *(x&#43;j); /*如果满足条件就往后挪。最坏的情况就是t比下标为的数都小，它要放在最前面，j==-1，退出循环*/
+            *(x+j+1) = *(x+j); /*如果满足条件就往后挪。最坏的情况就是t比下标为的数都小，它要放在最前面，j==-1，退出循环*/
         }
-        *(x&#43;j&#43;1) = t; /*找到下标为i的数的放置位置*/
+        *(x+j+1) = t; /*找到下标为i的数的放置位置*/
     }
 }
 /*
@@ -144,15 +101,13 @@ http://zh.wikipedia.org/wiki/%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F
 void bubble_sort(int *x, int n)
 {
     int j, k, h, t;
-    for (h=n-1; h&amp;gt;0; h=k) /*循环到没有比较范围*/
+    for (h=n-1; h>0; h=k) /*循环到没有比较范围*/
     {
-        for (j=0, k=0; j&amp;lt;h; j&#43;&#43;) /*每次预置k=0，循环扫描后更新k*/
-        {
-            if (*(x&#43;j) &amp;gt; *(x&#43;j&#43;1)) /*大的放在后面，小的放到前面*/
+        for (j=0, k=0; j<h; j++) /*每次预置k=0，循环扫描后更新k*/ { if (*(x+j)> *(x+j+1)) /*大的放在后面，小的放到前面*/
             {
-                t = *(x&#43;j);
-                *(x&#43;j) = *(x&#43;j&#43;1);
-                *(x&#43;j&#43;1) = t; /*完成交换*/
+                t = *(x+j);
+                *(x+j) = *(x+j+1);
+                *(x+j+1) = t; /*完成交换*/
                 k = j; /*保存最后下沉的位置。这样k后面的都是排序排好了的。*/
             }
         }
@@ -206,16 +161,13 @@ http://zh.wikipedia.org/wiki/%E5%B8%8C%E5%B0%94%E6%8E%92%E5%BA%8F
 void shell_sort(int *x, int n)
 {
     int h, j, k, t;
-    for (h=n/2; h&amp;gt;0; h=h/2) /*控制增量*/
+    for (h=n/2; h>0; h=h/2) /*控制增量*/
     {
-        for (j=h; j&amp;lt;n; j&#43;&#43;) /*这个实际上就是上面的直接插入排序*/
-        {
-            t = *(x&#43;j);
-            for (k=j-h; (k&amp;gt;=0 &amp;amp;&amp;amp; t&amp;lt;*(x&#43;k)); k-=h)
+        for (j=h; j<n; j++) /*这个实际上就是上面的直接插入排序*/ { t=*(x+j); for (k=j-h; (k>=0 && t<*(x+k)); k-=h)
             {
-                *(x&#43;k&#43;h) = *(x&#43;k);
+                *(x+k+h) = *(x+k);
             }
-            *(x&#43;k&#43;h) = t;
+            *(x+k+h) = t;
         }
     }
 }
@@ -264,53 +216,16 @@ C.A.R.Hoare于年提出的。
 void quick_sort(int *x, int low, int high)
 {
     int i, j, t;
-    if (low &amp;lt; high) /*要排序的元素起止下标，保证小的放在左边，大的放在右边。这里以下标为low的元素为基准点*/
+    if (low < high) /*要排序的元素起止下标，保证小的放在左边，大的放在右边。这里以下标为low的元素为基准点*/
     {
         i = low;
         j = high;
-        t = *(x&#43;low); /*暂存基准点的数*/
-        while (i&amp;lt;j) /*循环扫描*/
-        {
-            while (i&amp;lt;j &amp;amp;&amp;amp; *(x&#43;j)&amp;gt;t) /*在右边的只要比基准点大仍放在右边*/
+        t = *(x+low); /*暂存基准点的数*/
+        while (i<j) /*循环扫描*/ { while (i<j && *(x+j)>t) /*在右边的只要比基准点大仍放在右边*/
             {
                 j--; /*前移一个位置*/
             }
-            if (i&amp;lt;j)
-            {
-                *(x&#43;i) = *(x&#43;j); /*上面的循环退出：即出现比基准点小的数，替换基准点的数*/
-                i&#43;&#43;; /*后移一个位置，并以此为基准点*/
-            }
-            while (i&amp;lt;j &amp;amp;&amp;amp; *(x&#43;i)&amp;lt;=t) /*在左边的只要小于等于基准点仍放在左边*/
-            {
-                i&#43;&#43;; /*后移一个位置*/
-            }
-            if (i&amp;lt;j)
-            {
-                *(x&#43;j) = *(x&#43;i); /*上面的循环退出：即出现比基准点大的数，放到右边*/
-                j--; /*前移一个位置*/
-            }
-        }
-        *(x&#43;i) = t; /*一遍扫描完后，放到适当位置*/
-        quick_sort(x,low,i-1);  /*对基准点左边的数再执行快速排序*/
-        quick_sort(x,i&#43;1,high);  /*对基准点右边的数再执行快速排序*/
-    }
-}
-/*
-================================================
-功能：堆排序
-输入：数组名称（也就是数组首地址）、数组中元素个数
-http://zh.wikipedia.org/wiki/%E5%A0%86%E6%8E%92%E5%BA%8F
-================================================
-
-*/
-
-/*
-
-====================================================
-算法思想简单描述：
-堆排序是一种树形选择排序，是对直接选择排序的有效改进。
-堆的定义如下：具有n个元素的序列（h1,h2,...,hn),当且仅当
-满足（hi&amp;gt;=h2i,hi&amp;gt;=2i&#43;1）或（hi&amp;lt;=h2i,hi&amp;lt;=2i&#43;1）(i=1,2,...,n/2)
+            if (i<j) { *(x+i)=*(x+j); /*上面的循环退出：即出现比基准点小的数，替换基准点的数*/ i++; /*后移一个位置，并以此为基准点*/ } while (i<j && *(x+i)<=t) /*在左边的只要小于等于基准点仍放在左边*/ { i++; /*后移一个位置*/ } if (i<j) { *(x+j)=*(x+i); /*上面的循环退出：即出现比基准点大的数，放到右边*/ j--; /*前移一个位置*/ } } *(x+i)=t; /*一遍扫描完后，放到适当位置*/ quick_sort(x,low,i-1); /*对基准点左边的数再执行快速排序*/ quick_sort(x,i+1,high); /*对基准点右边的数再执行快速排序*/ } } /*="===============================================" 功能：堆排序 输入：数组名称（也就是数组首地址）、数组中元素个数 http://zh.wikipedia.org/wiki/%e5%a0%86%e6%8e%92%e5%ba%8f="===============================================" */ /*="===================================================" 算法思想简单描述： 堆排序是一种树形选择排序，是对直接选择排序的有效改进。 堆的定义如下：具有n个元素的序列（h1,h2,...,hn),当且仅当 满足（hi>=h2i,hi>=2i+1）或（hi<=h2i,hi<=2i+1）(i=1,2,...,n/2)
 时称之为堆。在这里只讨论满足前者条件的堆。
 由堆的定义可以看出，堆顶元素（即第一个元素）必为最大项。完全二叉树可以
 很直观地表示堆的结构。堆顶为根，其它为左子树、右子树。
@@ -334,51 +249,18 @@ http://zh.wikipedia.org/wiki/%E5%A0%86%E6%8E%92%E5%BA%8F
 void sift(int *x, int n, int s)
 {
     int t, k, j;
-    t = *(x&#43;s); /*暂存开始元素*/
+    t = *(x+s); /*暂存开始元素*/
     k = s;  /*开始元素下标*/
-    j = 2*k &#43; 1; /*右子树元素下标*/
-    while (j&amp;lt;n)
-    {
-        if (j&amp;lt;n-1 &amp;amp;&amp;amp; *(x&#43;j) &amp;lt; *(x&#43;j&#43;1))/*判断是否满足堆的条件：满足就继续下一轮比较，否则调整。*/
-        {
-            j&#43;&#43;;
-        }
-        if (t&amp;lt;*(x&#43;j)) /*调整*/
-        {
-
-            *(x&#43;k) = *(x&#43;j);
-
-            k = j; /*调整后，开始元素也随之调整*/
-
-            j = 2*k &#43; 1;
-        }
-        else /*没有需要调整了，已经是个堆了，退出循环。*/
-        {
-            break;
-        }
-    }
-
-    *(x&#43;k) = t; /*开始元素放到它正确位置*/
-
-}
-
-/*
-功能：堆排序
-输入：数组名称（也就是数组首地址）、数组中元素个数
-*/
-void heap_sort(int *x, int n)
-{
-    int i, k, t;
-    int *p;
-    for (i=n/2-1; i&amp;gt;=0; i--)
+    j = 2*k + 1; /*右子树元素下标*/
+    while (j<n) { if (j<n-1 && *(x+j) < *(x+j+1))/*判断是否满足堆的条件：满足就继续下一轮比较，否则调整。*/ { j++; } if (t<*(x+j)) /*调整*/ { *(x+k)=*(x+j); k=j; /*调整后，开始元素也随之调整*/ j=2*k + 1; } else /*没有需要调整了，已经是个堆了，退出循环。*/ { break; } } *(x+k)=t; /*开始元素放到它正确位置*/ } /* 功能：堆排序 输入：数组名称（也就是数组首地址）、数组中元素个数 */ void heap_sort(int *x, int n) { int i, k, t; int *p; for (i=n/2-1; i>=0; i--)
     {
         sift(x,n,i); /*初始建堆*/
     }
-    for (k=n-1; k&amp;gt;=1; k--)
+    for (k=n-1; k>=1; k--)
     {
-        t = *(x&#43;0); /*堆顶放到最后*/
-        *(x&#43;0) = *(x&#43;k);
-        *(x&#43;k) = t;
+        t = *(x+0); /*堆顶放到最后*/
+        *(x+0) = *(x+k);
+        *(x+k) = t;
         sift(x,k,0); /*剩下的数再建堆*/
     }
 }
@@ -393,104 +275,11 @@ void main()
 
     p = a;
 
-    printf(&amp;#34;Input %d number for sorting :\n&amp;#34;,MAX);
+    printf("Input %d number for sorting :\n",MAX);
 
-    for (i=0; i&amp;lt;MAX; i&#43;&#43;)
-
-    {
-
-        scanf(&amp;#34;%d&amp;#34;,p&#43;&#43;);
-
-    }
-
-    printf(&amp;#34;\n&amp;#34;);
-
-    /*测试选择排序*/
-
-    p = a;
-
-    select_sort(p,MAX);
-
-    /**/
-
-    /*测试直接插入排序*/
-
-    /*
-
-    p = a;
-
-    insert_sort(p,MAX);
-
-    */
-
-    /*测试冒泡排序*/
-
-    /*
-
-    p = a;
-
-    insert_sort(p,MAX);
-
-    */
-
-    /*测试快速排序*/
-
-    /*
-
-    p = a;
-
-    quick_sort(p,0,MAX-1);
-
-    */
-
-    /*测试堆排序*/
-
-    /*
-
-    p = a;
-
-    heap_sort(p,MAX);
-
-    */
-
-    for (p=a, i=0; i&amp;lt;MAX; i&#43;&#43;)
-
-    {
-
-        printf(&amp;#34;%d &amp;#34;,*p&#43;&#43;);
-
-    }
-
-    printf(&amp;#34;\n&amp;#34;);
-
-    system(&amp;#34;pause&amp;#34;);
-
-}
-/*
-================================================
-功能：归并排序
-输入：数组名称（也就是数组首地址）、起始索引、结束索引
-http://zh.wikipedia.org/wiki/%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F#C.E8.AF.AD.E8.A8.80
-================================================
-*/
-/*
-====================================================
-算法思想简单描述：
-每次对排序区间进行二分，对子区间排序最后把两个子数组按顺序一次还原到原素组
-归并排序能达到稳定的n*log(n)的复杂度
-比较操作的次数介于(nlogn) / 2和nlogn − n &#43; 1。 赋值操作的次数是(2nlogn)。 归并算法的空间复杂度为：Θ (n)
-=====================================================
-*/
-void merge_sort(int array[], unsigned int first, unsigned int last)
-{
-        int mid = 0;
-        if(first&amp;lt;last)
-        {
-                /*mid = (first&#43;last)/2;*/ /*注意防止溢出*/
-                /*mid = first/2 &#43; last/2;*/
-                mid = (first &amp;amp; last) &#43; ((first ^ last) &amp;gt;&amp;gt; 1);
+    for (i=0; i<max; i++) { scanf("%d",p++); } printf("\n"); /*测试选择排序*/ p=a; select_sort(p,max); /**/ /*测试直接插入排序*/ /* p=a; insert_sort(p,max); */ /*测试冒泡排序*/ /* p=a; insert_sort(p,max); */ /*测试快速排序*/ /* p=a; quick_sort(p,0,max-1); */ /*测试堆排序*/ /* p=a; heap_sort(p,max); */ for (p=a, i=0; i<max; i++) { printf("%d ",*p++); } printf("\n"); system("pause"); } /*="===============================================" 功能：归并排序 输入：数组名称（也就是数组首地址）、起始索引、结束索引 http://zh.wikipedia.org/wiki/%e5%bd%92%e5%b9%b6%e6%8e%92%e5%ba%8f#c.e8.af.ad.e8.a8.80="===============================================" */ /*="===================================================" 算法思想简单描述： 每次对排序区间进行二分，对子区间排序最后把两个子数组按顺序一次还原到原素组 归并排序能达到稳定的n*log(n)的复杂度 比较操作的次数介于(nlogn) / 2和nlogn − n + 1。 赋值操作的次数是(2nlogn)。 归并算法的空间复杂度为：Θ (n)="====================================================" */ void merge_sort(int array[], unsigned int first, unsigned int last) { int mid=0; if(first<last) { /*mid=(first+last)/2;*/ /*注意防止溢出*/ /*mid=first/2 + last/2;*/ mid=(first & last) + ((first ^ last)>> 1);
                 merge_sort(array, first, mid);
-                merge_sort(array, mid&#43;1,last);
+                merge_sort(array, mid+1,last);
                 merge(array,first,mid,last);
         }
 }
@@ -525,63 +314,42 @@ wx *headn,*curn,*box[base],*curbox[base];
 void basesort(int t)
 {
         int i,k=1,r,bn;
-        for(i=1;i&amp;lt;=t;i&#43;&#43;)
+        for(i=1;i<=t;i++)
         {
                 k*=base;
         }
         r=k*base;
-        for(i=0;i&amp;lt;base;i&#43;&#43;)
+        for(i=0;i<base;i++) { curbox[i]=box[i]; } for(curn=headn->next;curn!=NULL;curn=curn->next)
         {
-                curbox[i]=box[i];
-        }
-        for(curn=headn-&amp;gt;next;curn!=NULL;curn=curn-&amp;gt;next)
-        {
-                bn=(curn-&amp;gt;num%r)/k;
-                curbox[bn]-&amp;gt;next=curn;
-                curbox[bn]=curbox[bn]-&amp;gt;next;
+                bn=(curn->num%r)/k;
+                curbox[bn]->next=curn;
+                curbox[bn]=curbox[bn]->next;
         }
         curn=headn;
-        for(i=0;i&amp;lt;base;i&#43;&#43;)
-        {
-                if(curbox[i]!=box[i])
-                {
-                        curn-&amp;gt;next=box[i]-&amp;gt;next;
+        for(i=0;i<base;i++) { if(curbox[i]!=box[i]) { curn->next=box[i]->next;
                         curn=curbox[i];
                 }
         }
-        curn-&amp;gt;next=NULL;
+        curn->next=NULL;
 }
 
 void printwx()
 {
-        for(curn=headn-&amp;gt;next;curn!=NULL;curn=curn-&amp;gt;next)
+        for(curn=headn->next;curn!=NULL;curn=curn->next)
         {
-                cout&amp;lt;&amp;lt;curn-&amp;gt;num&amp;lt;&amp;lt;&amp;#39; &amp;#39;;
+                cout<<curn->num<<' ';
         }
-        cout&amp;lt;&amp;lt;endl;
-}
-
-int main()
-{
-        int i,n,z=0,maxn=0;
-        curn=headn=new wx;
-        cin&amp;gt;&amp;gt;n;
-        for(i=0;i&amp;lt;base;i&#43;&#43;)
-        {
-                curbox[i]=box[i]=new wx;
+        cout<<endl; } int main() { int i,n,z="0,maxn=0;" curn="headn=new" wx; cin>>n;
+        for(i=0;i<base;i++) { curbox[i]="box[i]=new" wx; } for(i="1;i<=n;i++)" { curn=curn->next=new wx;
+                cin>>curn->num;
+                maxn=max(maxn,curn->num);
         }
-        for(i=1;i&amp;lt;=n;i&#43;&#43;)
-        {
-                curn=curn-&amp;gt;next=new wx;
-                cin&amp;gt;&amp;gt;curn-&amp;gt;num;
-                maxn=max(maxn,curn-&amp;gt;num);
-        }
-        while(maxn/base&amp;gt;0)
+        while(maxn/base>0)
         {
                 maxn/=base;
-                z&#43;&#43;;
+                z++;
         }
-        for(i=0;i&amp;lt;=z;i&#43;&#43;)
+        for(i=0;i<=z;i++)
         {
                 basesort(i);
         }
@@ -598,7 +366,7 @@ http://zh.wikipedia.org/wiki/%E9%B8%BD%E5%B7%A2%E6%8E%92%E5%BA%8F
 ====================================================
 算法思想简单描述：
 鸽巢排序(Pigeonhole sort), 也被称作基数分类, 是一种时间复杂度为O(n)且在不可避免遍历每一个元素并且排序的情况下效率最好的一种排序算法. 但它只有在差值(或者可被映射在差值)很小的范围内的数值排序的情况下实用.
-当涉及到多个不相等的元素, 且将这些元素放在同一个&amp;#34;鸽巢&amp;#34;的时候, 算法的效率会有所降低.为了简便和保持鸽巢排序在适应不同的情况, 比如两个在同一个存储桶中结束的元素必然相等
+当涉及到多个不相等的元素, 且将这些元素放在同一个"鸽巢"的时候, 算法的效率会有所降低.为了简便和保持鸽巢排序在适应不同的情况, 比如两个在同一个存储桶中结束的元素必然相等
 我们一般很少使用鸽巢排序, 因为它很少可以在灵活性, 简便性, 尤是速度上超过其他排序算法. 事实上, 桶排序较鸽巢排序更加的实用.
 =====================================================
 */
@@ -607,12 +375,12 @@ void pigeonholeSort(int a[],int n)
 {
     int j = 0;
     int b[256] = {0};
-    for(int i = 0;i &amp;lt; n;i &#43;&#43;)
-        b[a[i]] &#43;&#43;;
+    for(int i = 0;i < n;i ++)
+        b[a[i]] ++;
 
-    for(int i = 0;i &amp;lt; 256; i &#43;&#43;)
-       for(int k = 0;k &amp;lt; b[i]; k &#43;&#43;)
-           a[j &#43;&#43;] = i;
+    for(int i = 0;i < 256; i ++)
+       for(int k = 0;k < b[i]; k ++)
+           a[j ++] = i;
 }</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/collection.html>Collection</a></li></ol></span><span class=article-meta-right><time datetime=2009-07-20T12:31:10.000+00:00 itemprop=datePublished>2009-07-20</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/c.html>c</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E6%8E%92%E5%BA%8F.html>排序</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2009/88.html>上一篇<strong>POJ 2606 Rabbit hunt 2780 Linearity 1118 Lining Up 解题报告</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2009/90.html>下一篇<strong>POJ 3267 The Cow Lexicon 解题报告</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,

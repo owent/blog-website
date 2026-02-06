@@ -13,22 +13,22 @@
  *   class EXPLICIT_NODISCARD_ATTR a;
  *   EXPLICIT_NODISCARD_ATTR int a();
  */
-#if defined(__cplusplus) &amp;amp;&amp;amp; __cplusplus &amp;gt;= 201703L
+#if defined(__cplusplus) && __cplusplus >= 201703L
 #  define EXPLICIT_NODISCARD_ATTR [[nodiscard]]
 #elif defined(__clang__)
 #  define EXPLICIT_NODISCARD_ATTR __attribute__((warn_unused_result))
-#elif defined(__GNUC__) &amp;amp;&amp;amp; ((__GNUC__ &amp;gt;= 4) || ((__GNUC__ == 3) &amp;amp;&amp;amp; (__GNUC_MINOR__ &amp;gt;= 1)))
+#elif defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
 #  define EXPLICIT_NODISCARD_ATTR __attribute__((warn_unused_result))
-#elif defined(_MSC_VER) &amp;amp;&amp;amp; _MSC_VER &amp;gt;= 1700  // vs 2012 or higher
-#  if _MSC_VER &amp;gt;= 1910 &amp;amp;&amp;amp; defined(_MSVC_LANG) &amp;amp;&amp;amp; _MSVC_LANG &amp;gt;= 201703L
+#elif defined(_MSC_VER) && _MSC_VER >= 1700  // vs 2012 or higher
+#  if _MSC_VER >= 1910 && defined(_MSVC_LANG) && _MSVC_LANG >= 201703L
 #    define EXPLICIT_NODISCARD_ATTR [[nodiscard]]
 #  else
 #    define EXPLICIT_NODISCARD_ATTR _Check_return_
 #  endif
 #else
 #  define EXPLICIT_NODISCARD_ATTR
-#endif</code></pre><p>给这些接口加 <code>EXPLICIT_NODISCARD_ATTR</code> 属性即可。接下来，我们会要求所有的协程调用必须使用我们提供的宏来 “<code>co_await</code>”，即便是忽略返回值，也需要显式指定 。宏的实现如下：</p><pre><code class=language-cpp>// When using c&#43;&#43;20 coroutine, declare RPC_AWAIT_CODE_RESULT like this
-#if defined(PROJECT_SERVER_FRAME_USE_STD_COROUTINE) &amp;amp;&amp;amp; PROJECT_SERVER_FRAME_USE_STD_COROUTINE
+#endif</code></pre><p>给这些接口加 <code>EXPLICIT_NODISCARD_ATTR</code> 属性即可。接下来，我们会要求所有的协程调用必须使用我们提供的宏来 “<code>co_await</code>”，即便是忽略返回值，也需要显式指定 。宏的实现如下：</p><pre><code class=language-cpp>// When using c++20 coroutine, declare RPC_AWAIT_CODE_RESULT like this
+#if defined(PROJECT_SERVER_FRAME_USE_STD_COROUTINE) && PROJECT_SERVER_FRAME_USE_STD_COROUTINE
 #  define RPC_AWAIT_IGNORE_RESULT(x) (::rpc::details::_ignore_result(co_await (x)))
 #  define RPC_AWAIT_IGNORE_VOID(x) (co_await (x))
 #  define RPC_AWAIT_TYPE_RESULT(...) (co_await (__VA_ARGS__))
@@ -47,51 +47,51 @@
 #define RPC_AWAIT_CODE_RESULT(...) RPC_AWAIT_TYPE_RESULT(__VA_ARGS__)</code></pre><p>可以看到，我们分别对返回 <code>void</code> 类型和返回非 <code>void</code> 类型都提供了await接口和return接口。在启用和不启用协程时走不通的分支。
 另外，可以看到，我们对忽略返回值，采用了 <code>::rpc::details::_ignore_result</code> 和 <code>::rpc::details::_ignore_void</code> 包装，而没有使用 <code>(void)(x)</code> 这种形式。
 这是因为 <code>(void)(x)</code> 这种形式是非标准的，某些编译器上仍然会报为未使用的Warning。
-而我们对 <code>void</code> 类型有栈协程也不能直接返回 <code>void</code> ，而要包一层 <code>result_void_type</code> 也是因为 <code>void</code> 是没法判定 Unused 的。</p><p>在使用上，我们的调用形式就变成了:</p><pre><code class=language-cpp>int32_t res = RPC_AWAIT_CODE_RESULT(rpc::db::TABLE_SERVICE_CONFIGURE_DEF::get(get_shared_context(), 0, global_conf, &amp;amp;global_version));
+而我们对 <code>void</code> 类型有栈协程也不能直接返回 <code>void</code> ，而要包一层 <code>result_void_type</code> 也是因为 <code>void</code> 是没法判定 Unused 的。</p><p>在使用上，我们的调用形式就变成了:</p><pre><code class=language-cpp>int32_t res = RPC_AWAIT_CODE_RESULT(rpc::db::TABLE_SERVICE_CONFIGURE_DEF::get(get_shared_context(), 0, global_conf, &global_version));
 if (PROJECT_NAMESPACE_ID::err::EN_DB_RECORD_NOT_FOUND == res) {
   RPC_AWAIT_IGNORE_RESULT(rpc::db::TABLE_SERVICE_CONFIGURE_DEF::add(get_shared_context(), global_conf));
-  res = RPC_AWAIT_CODE_RESULT(rpc::db::TABLE_SERVICE_CONFIGURE_DEF::get(get_shared_context(), 0, global_conf, &amp;amp;global_version));
-}</code></pre><p>而协程函数的实现，就变成了下面这种形式:</p><pre><code class=language-cpp>rpc::result_code_type player_manager::remove(rpc::context &amp;amp;ctx, player_manager::player_ptr_t u, bool force_kickoff) {
+  res = RPC_AWAIT_CODE_RESULT(rpc::db::TABLE_SERVICE_CONFIGURE_DEF::get(get_shared_context(), 0, global_conf, &global_version));
+}</code></pre><p>而协程函数的实现，就变成了下面这种形式:</p><pre><code class=language-cpp>rpc::result_code_type player_manager::remove(rpc::context &ctx, player_manager::player_ptr_t u, bool force_kickoff) {
   if (!u) {
     RPC_RETURN_CODE(PROJECT_NAMESPACE_ID::err::EN_ROUTER_NOT_FOUND);
   }
 
-  RPC_RETURN_CODE(RPC_AWAIT_CODE_RESULT(remove(ctx, u-&amp;gt;get_user_id(), u-&amp;gt;get_zone_id(), force_kickoff, u.get())));
+  RPC_RETURN_CODE(RPC_AWAIT_CODE_RESULT(remove(ctx, u->get_user_id(), u->get_zone_id(), force_kickoff, u.get())));
 }</code></pre><p>可以看到，就是 <code>return</code> 语句用宏代替掉了。</p><h3 id=task常见接口的切换封装>Task常见接口的切换封装</h3><p>对于之前的一些使用方式，包括获取任务ID、判定退出状态等也需要做一层抽象。这和我们之前的使用方式有关，具体包含:</p><pre><code class=language-cpp>struct task_type_trait {
-  using internal_task_type = cotask::task_future&amp;lt;int32_t, task_private_data_type&amp;gt;;
+  using internal_task_type = cotask::task_future<int32_t, task_private_data_type>;
   using id_type = typename internal_task_type::id_type;
   using task_type = internal_task_type;
   using task_status = typename internal_task_type::task_status_type;
 
-  inline static id_type get_task_id(const task_type&amp;amp; task) noexcept;
-  inline static void reset_task(task_type&amp;amp; task) noexcept;
-  inline static bool empty(const task_type&amp;amp; task) noexcept;
-  inline static int32_t get_result(const task_type&amp;amp; task);
+  inline static id_type get_task_id(const task_type& task) noexcept;
+  inline static void reset_task(task_type& task) noexcept;
+  inline static bool empty(const task_type& task) noexcept;
+  inline static int32_t get_result(const task_type& task);
   inline static bool is_exiting(task_status status) noexcept;
   inline static bool is_timeout(task_status status);
   inline static bool is_cancel(task_status status);
   inline static bool is_fault(task_status status);
-  template &amp;lt;class TVALUE, class TERROR_TRANSFORM&amp;gt;
-  inline static bool is_exiting(const copp::callable_future&amp;lt;TVALUE, TERROR_TRANSFORM&amp;gt;&amp;amp; future) noexcept;
-  template &amp;lt;class TVALUE, class TERROR_TRANSFORM&amp;gt;
-  inline static bool is_timeout(const copp::callable_future&amp;lt;TVALUE, TERROR_TRANSFORM&amp;gt;&amp;amp; future) noexcept;
-  template &amp;lt;class TVALUE, class TERROR_TRANSFORM&amp;gt;
-  inline static bool is_cancel(const copp::callable_future&amp;lt;TVALUE, TERROR_TRANSFORM&amp;gt;&amp;amp; future) noexcept;
-  template &amp;lt;class TVALUE, class TERROR_TRANSFORM&amp;gt;
-  inline static bool is_fault(const copp::callable_future&amp;lt;TVALUE, TERROR_TRANSFORM&amp;gt;&amp;amp; future) noexcept;
-  template &amp;lt;class TVALUE, class TPRIVATE_DATA, class TERROR_TRANSFORM&amp;gt;
-  inline static bool is_exiting(const cotask::task_future&amp;lt;TVALUE, TPRIVATE_DATA, TERROR_TRANSFORM&amp;gt;&amp;amp; task) noexcept;
-  template &amp;lt;class TVALUE, class TPRIVATE_DATA, class TERROR_TRANSFORM&amp;gt;
-  inline static bool is_timeout(const cotask::task_future&amp;lt;TVALUE, TPRIVATE_DATA, TERROR_TRANSFORM&amp;gt;&amp;amp; task) noexcept;
-  template &amp;lt;class TVALUE, class TPRIVATE_DATA, class TERROR_TRANSFORM&amp;gt;
-  inline static bool is_cancel(const cotask::task_future&amp;lt;TVALUE, TPRIVATE_DATA, TERROR_TRANSFORM&amp;gt;&amp;amp; task) noexcept;
-  template &amp;lt;class TVALUE, class TPRIVATE_DATA, class TERROR_TRANSFORM&amp;gt;
-  inline static bool is_fault(const cotask::task_future&amp;lt;TVALUE, TPRIVATE_DATA, TERROR_TRANSFORM&amp;gt;&amp;amp; task) noexcept;
-  inline static task_private_data_type* get_private_data(task_type&amp;amp; task) noexcept;
+  template <class tvalue, class terror_transform>
+  inline static bool is_exiting(const copp::callable_future<tvalue, terror_transform>& future) noexcept;
+  template <class tvalue, class terror_transform>
+  inline static bool is_timeout(const copp::callable_future<tvalue, terror_transform>& future) noexcept;
+  template <class tvalue, class terror_transform>
+  inline static bool is_cancel(const copp::callable_future<tvalue, terror_transform>& future) noexcept;
+  template <class tvalue, class terror_transform>
+  inline static bool is_fault(const copp::callable_future<tvalue, terror_transform>& future) noexcept;
+  template <class tvalue, class tprivate_data, class terror_transform>
+  inline static bool is_exiting(const cotask::task_future<tvalue, tprivate_data, terror_transform>& task) noexcept;
+  template <class tvalue, class tprivate_data, class terror_transform>
+  inline static bool is_timeout(const cotask::task_future<tvalue, tprivate_data, terror_transform>& task) noexcept;
+  template <class tvalue, class tprivate_data, class terror_transform>
+  inline static bool is_cancel(const cotask::task_future<tvalue, tprivate_data, terror_transform>& task) noexcept;
+  template <class tvalue, class tprivate_data, class terror_transform>
+  inline static bool is_fault(const cotask::task_future<tvalue, tprivate_data, terror_transform>& task) noexcept;
+  inline static task_private_data_type* get_private_data(task_type& task) noexcept;
 };</code></pre><p>这里还有一个特殊的地方，新的C++20协程因为主调方无法感知被切出，所以没法像之前有栈协程一样提供一个 <code>this_task</code> 接口，来获取当前运行的协程和获取绑定在上面的用户层私有数据。
 纵观之前使用 <code>this_task</code> 的用例，我们发现主要就三类：第一类用于获取Task ID。然后此类Task可能被其他Task await；第二类是获取状态，是否超时、是否被Kill等等；第三类是判定当前是否在协程中。
 对于Task ID，因为我们要求所有的协程调用必须透传 <code>rpc::context</code> ，所以通过把协程Task ID和用户层私有数据都写入 <code>rpc::context</code> 里来解决。
-对于第二类获取状态的，我们可以用过 <a href=https://github.com/owent/libcopp>libcopp</a> 内置获取当前协程状态的 <code>co_yield</code> 接口来实现：</p><pre><code class=language-cpp>#if defined(PROJECT_SERVER_FRAME_USE_STD_COROUTINE) &amp;amp;&amp;amp; PROJECT_SERVER_FRAME_USE_STD_COROUTINE
+对于第二类获取状态的，我们可以用过 <a href=https://github.com/owent/libcopp>libcopp</a> 内置获取当前协程状态的 <code>co_yield</code> 接口来实现：</p><pre><code class=language-cpp>#if defined(PROJECT_SERVER_FRAME_USE_STD_COROUTINE) && PROJECT_SERVER_FRAME_USE_STD_COROUTINE
 #  define TASK_COMPAT_ASSIGN_CURRENT_STATUS(VAR_NAME) \
     task_type_trait::task_status VAR_NAME = co_yield task_type_trait::internal_pick_current_status()
 #else
@@ -100,30 +100,30 @@ if (PROJECT_NAMESPACE_ID::err::EN_DB_RECORD_NOT_FOUND == res) {
         task_type_trait::get_status(task_type_trait::internal_task_type::this_task())
 
 #endif</code></pre><p>而对于第三类，现在不在协程中的协程调用，会直接编译不过。所以不需要再检查了。</p><h3 id=协程lambda表达式的返回值>协程lambda表达式的返回值</h3><p>对于C++20协程是lambda的情况，由于直接 <code>co_return</code> 并不能让编译器对应的promise是什么类型，所以现在的lambda协程都必须指定返回值类型。</p><pre><code class=language-cpp>auto invoke_result = rpc::async_invoke(
-    ctx, &amp;#34;rpc_lru_cache_map.await_fetch&amp;#34;,
-    [out, key, fn = std::move(fn)](rpc::context &amp;amp;child_ctx) -&amp;gt; rpc::result_code_type {
-      int32_t ret = RPC_AWAIT_CODE_RESULT(fn(child_ctx, key, out-&amp;gt;data_object, &amp;amp;out-&amp;gt;data_version));
+    ctx, "rpc_lru_cache_map.await_fetch",
+    [out, key, fn = std::move(fn)](rpc::context &child_ctx) -> rpc::result_code_type {
+      int32_t ret = RPC_AWAIT_CODE_RESULT(fn(child_ctx, key, out->data_object, &out->data_version));
 
-      if (task_type_trait::get_task_id(out-&amp;gt;pulling_task) == child_ctx.get_task_context().task_id) {
-        task_type_trait::reset_task(out-&amp;gt;pulling_task);
+      if (task_type_trait::get_task_id(out->pulling_task) == child_ctx.get_task_context().task_id) {
+        task_type_trait::reset_task(out->pulling_task);
       }
 
       RPC_RETURN_CODE(ret);
     });</code></pre><p>这里没有想到什么办法可以在使用有栈协程的时候，让编译器能检测出没有显示指定返回值类型。这里有感兴趣的同学也可以一起交流下。</p><h3 id=tasktthen-的生命周期变化><code>task&lt;T>::then()</code> 的生命周期变化</h3><p>在原先的有栈协程中，我们可以通过 <code>task&lt;T>::then(action)</code> 来串联一些相关逻辑。比如在我们的UUID分配器代码中有一些串联和防惊群的逻辑。
 因为要保证调用分配唯一ID接口顺序和实际响应顺序一致，我们分配到ID池后，通过then的回调来判定应该resume FIFO队列头的task。
 在有栈协程的 <code>task&lt;T>::then(action)</code> 中，action的生命周期是绑在 <code>task&lt;T></code> 之后的。而在新式的协程 <code>task_promise</code> 中，为了降低不必要的开销，我没有提供这类事件存储。</p><p>对这类典型的IO收敛任务的例子原先的流程如下:</p><p><img src=2303-03.png alt=2303-03.png loading=lazy></p><p>那么为了实现类似的功能，我这里提供了一个 <code>async_then</code> 接口，内部通过 <code>async_invoke</code> 来启动一个新协程，由同一个 <code>task_manager</code> 管理生命周期。然后内部去 <code>co_await</code> 需要等待的协程。
-实现如下:</p><pre><code class=language-cpp>template &amp;lt;class TCALLABLE, class... TARGS&amp;gt;
-void async_then(context &amp;amp;ctx, gsl::string_view name, task_type_trait::task_type waiting, TCALLABLE &amp;amp;&amp;amp;callable,
-                TARGS &amp;amp;&amp;amp;...args) {
+实现如下:</p><pre><code class=language-cpp>template <class tcallable, class... targs>
+void async_then(context &ctx, gsl::string_view name, task_type_trait::task_type waiting, TCALLABLE &&callable,
+                TARGS &&...args) {
   if (task_type_trait::empty(waiting) || task_type_trait::is_exiting(waiting)) {
-    callable(std::forward&amp;lt;TARGS&amp;gt;(args)...);
+    callable(std::forward<targs>(args)...);
     return;
   }
 
   async_invoke_result result = async_invoke(
-      ctx, name, [waiting = std::move(waiting), callable, args...](rpc::context &amp;amp;child_ctx) -&amp;gt; rpc::result_code_type {
+      ctx, name, [waiting = std::move(waiting), callable, args...](rpc::context &child_ctx) -> rpc::result_code_type {
         auto ret = RPC_AWAIT_CODE_RESULT(rpc::wait_task(child_ctx, waiting));
-        callable(std::forward&amp;lt;TARGS&amp;gt;(args)...);
+        callable(std::forward<targs>(args)...);
         RPC_RETURN_CODE(ret);
       });
 
@@ -131,54 +131,54 @@ void async_then(context &amp;amp;ctx, gsl::string_view name, task_type_trait::ta
     return;
   }
 
-  FWLOGERROR(&amp;#34;Try to invoke task({}) to wait task {} and then call callable failed, try to call it directly.&amp;#34;, name,
+  FWLOGERROR("Try to invoke task({}) to wait task {} and then call callable failed, try to call it directly.", name,
              task_type_trait::get_task_id(waiting));
-  callable(std::forward&amp;lt;TARGS&amp;gt;(args)...);
-}</code></pre><p>使用 <code>async_then</code> ，对应上文提到的典型IO收敛任务，现在的流程如下:</p><p><img src=2303-04.png alt=2303-04.png loading=lazy></p><h2 id=编译器bug>编译器BUG</h2><p>本次发现的新的编译器BUG不是很多，这里记录一下可能其他同学也会碰到。我们封装接口的时候尽量避开就好了。</p><h3 id=gcc-122>GCC 12.2</h3><p>GCC碰到的BUG简单来说就是 使用 <code>obj.member = co_yield TEMPLATE::func();</code> 这种形式的代码时，编译会Crash，报 <code>&lt;source>:79:16: internal compiler error: in instantiate_type, at cp/class.cc:8742</code> 。必须赋值左边是一个结构体。右边是一个模板的函数返回的对象可以被 <code>co_await</code> 。</p><p>重现代码如下:</p><pre><code class=language-cpp>#include &amp;lt;iostream&amp;gt;
-#include &amp;lt;memory&amp;gt;
-#include &amp;lt;coroutine&amp;gt;
+  callable(std::forward<targs>(args)...);
+}</code></pre><p>使用 <code>async_then</code> ，对应上文提到的典型IO收敛任务，现在的流程如下:</p><p><img src=2303-04.png alt=2303-04.png loading=lazy></p><h2 id=编译器bug>编译器BUG</h2><p>本次发现的新的编译器BUG不是很多，这里记录一下可能其他同学也会碰到。我们封装接口的时候尽量避开就好了。</p><h3 id=gcc-122>GCC 12.2</h3><p>GCC碰到的BUG简单来说就是 使用 <code>obj.member = co_yield TEMPLATE::func();</code> 这种形式的代码时，编译会Crash，报 <code>&lt;source>:79:16: internal compiler error: in instantiate_type, at cp/class.cc:8742</code> 。必须赋值左边是一个结构体。右边是一个模板的函数返回的对象可以被 <code>co_await</code> 。</p><p>重现代码如下:</p><pre><code class=language-cpp>#include <iostream>
+#include <memory>
+#include <coroutine>
 
-template&amp;lt;class PrivateDataType&amp;gt;
+template<class privatedatatype>
 struct task;
 
-template &amp;lt;class PrivateDataType&amp;gt;
+template <class privatedatatype>
 struct task_private_data {
   inline task_private_data() noexcept : data_(nullptr) {}
   inline task_private_data(PrivateDataType* input) noexcept : data_(input) {}
-  inline task_private_data(task_private_data&amp;amp;&amp;amp; other) noexcept = default;
-  inline task_private_data&amp;amp; operator=(task_private_data&amp;amp;&amp;amp;) noexcept = default;
-  inline task_private_data(const task_private_data&amp;amp;) = delete;
-  inline task_private_data&amp;amp; operator=(const task_private_data&amp;amp;) = delete;
+  inline task_private_data(task_private_data&& other) noexcept = default;
+  inline task_private_data& operator=(task_private_data&&) noexcept = default;
+  inline task_private_data(const task_private_data&) = delete;
+  inline task_private_data& operator=(const task_private_data&) = delete;
   inline ~task_private_data() {}
 
   inline bool await_ready() const noexcept { return true; }
   inline PrivateDataType* await_resume() const noexcept { return data_; }
-  inline void await_suspend(std::coroutine_handle&amp;lt;&amp;gt;) noexcept {}
+  inline void await_suspend(std::coroutine_handle<>) noexcept {}
 
   PrivateDataType* data_;
 };
 
-template&amp;lt;class PrivateDataType&amp;gt;
+template<class privatedatatype>
 struct task_context {
     PrivateDataType data_;
 };
 
-template&amp;lt;class PrivateDataType&amp;gt;
+template<class privatedatatype>
 struct task {
-    using self_type = task&amp;lt;PrivateDataType&amp;gt;;
-    std::shared_ptr&amp;lt;task_context&amp;lt;PrivateDataType&amp;gt;&amp;gt; context_;
+    using self_type = task<privatedatatype>;
+    std::shared_ptr<task_context<privatedatatype>> context_;
 
-    task(const std::shared_ptr&amp;lt;task_context&amp;lt;PrivateDataType&amp;gt;&amp;gt;&amp;amp; input): context_(input) {}
+    task(const std::shared_ptr<task_context<privatedatatype>>& input): context_(input) {}
 
-    static auto yield_private_data() noexcept { return task_private_data&amp;lt;PrivateDataType&amp;gt;{}; }
+    static auto yield_private_data() noexcept { return task_private_data<privatedatatype>{}; }
 
     struct promise_type {
-      std::shared_ptr&amp;lt;task_context&amp;lt;PrivateDataType&amp;gt;&amp;gt; context_;
+      std::shared_ptr<task_context<privatedatatype>> context_;
 
-      template&amp;lt;class Input, class... Rest&amp;gt;
-      promise_type(Input&amp;amp;&amp;amp; input, Rest&amp;amp;&amp;amp;...) {
-        context_ = std::make_shared&amp;lt;task_context&amp;lt;PrivateDataType&amp;gt;&amp;gt;();
-        context_-&amp;gt;data_ = std::forward&amp;lt;Input&amp;gt;(input);
+      template<class input, class... rest>
+      promise_type(Input&& input, Rest&&...) {
+        context_ = std::make_shared<task_context<privatedatatype>>();
+        context_->data_ = std::forward<input>(input);
       }
 
       auto get_return_object() noexcept { return self_type{context_}; }
@@ -186,21 +186,21 @@ struct task {
       std::suspend_never final_suspend() noexcept { return {}; }
       void unhandled_exception() { throw; }
 
-      template&amp;lt;class ReturnType&amp;gt;
-      void return_value(ReturnType&amp;amp;&amp;amp;) {}
+      template<class returntype>
+      void return_value(ReturnType&&) {}
 
-      template &amp;lt;class InputPrivateDataType&amp;gt;
-      inline task_private_data&amp;lt;InputPrivateDataType&amp;gt; yield_value(
-          task_private_data&amp;lt;InputPrivateDataType&amp;gt;&amp;amp;&amp;amp; input) noexcept {
-        input.data_ = &amp;amp;context_-&amp;gt;data_;
-        return task_private_data&amp;lt;InputPrivateDataType&amp;gt;(input.data_);
+      template <class inputprivatedatatype>
+      inline task_private_data<inputprivatedatatype> yield_value(
+          task_private_data<inputprivatedatatype>&& input) noexcept {
+        input.data_ = &context_->data_;
+        return task_private_data<inputprivatedatatype>(input.data_);
       }
     };
 };
 
-template&amp;lt;class TArg, class OutputType&amp;gt;
-task&amp;lt;std::string&amp;gt; call1(TArg&amp;amp;&amp;amp; arg, OutputType&amp;amp; output) {
-    OutputType* ptr = co_yield task&amp;lt;TArg&amp;gt;::yield_private_data();
+template<class targ, class outputtype>
+task<std::string> call1(TArg&& arg, OutputType& output) {
+    OutputType* ptr = co_yield task<targ>::yield_private_data();
     output = *ptr;
     co_return 0;
 }
@@ -210,22 +210,22 @@ struct container {
     std::string* ptr;
 };
 
-template&amp;lt;class TArg&amp;gt;
-task&amp;lt;std::string&amp;gt; call2(TArg&amp;amp;&amp;amp; arg, container&amp;amp; output) {
-    output.ptr = co_yield task&amp;lt;TArg&amp;gt;::yield_private_data();
+template<class targ>
+task<std::string> call2(TArg&& arg, container& output) {
+    output.ptr = co_yield task<targ>::yield_private_data();
     co_return 0;
 }
 
 int main() {
   // success
   std::string output1;
-  call1(std::string(&amp;#34;hello1&amp;#34;), output1);
-  std::cout&amp;lt;&amp;lt; &amp;#34;output1: &amp;#34;&amp;lt;&amp;lt; output1&amp;lt;&amp;lt; std::endl;
+  call1(std::string("hello1"), output1);
+  std::cout<< "output1: "<< output1<< std::endl;
 
   // crash
   container output2;
-  auto task2 = call2(std::string(&amp;#34;hello2&amp;#34;), output2);
-  std::cout&amp;lt;&amp;lt; &amp;#34;output2: &amp;#34;&amp;lt;&amp;lt; *output2.ptr&amp;lt;&amp;lt; std::endl;
+  auto task2 = call2(std::string("hello2"), output2);
+  std::cout<< "output2: "<< *output2.ptr<< std::endl;
   return 0;
 }</code></pre><p>也可以看 <a href=https://godbolt.org/z/d5M9ca567>https://godbolt.org/z/d5M9ca567</a> 这里对比和Clang的输出结果。</p><p>我给GCC的BUG单 <a href="https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108620">https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108620</a> 也有其他人发现了相似问题，但是似乎目前还没人认领。</p><h3 id=msvc-175>MSVC 17.5</h3><p>MSVC的这个BUG比GCC的要轻微得多，因为首先代码是错误的。
 如上面的cppinsights的展示的C++20协程的原理中，C++20协程函数返回的对象其实是一个Promise类型。

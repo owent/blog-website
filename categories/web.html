@@ -10,9 +10,9 @@
  * 本函数用于创建提示信息
  *
  * Example
- * &amp;lt;code&amp;gt;
+ * <code>
  *      var t = $.noticeMessage(msg, a, b);
- * &amp;lt;/code&amp;gt;
+ * </code>
  *
  *
  * function noticeMessage([msg, a,b])
@@ -25,9 +25,9 @@
  *
  *
  * Example:
- * &amp;lt;code&amp;gt;
- *      var t = $.noticeMessage(&amp;#34;Hello World!&amp;#34;);
- * &amp;lt;/code&amp;gt;
+ * <code>
+ *      var t = $.noticeMessage("Hello World!");
+ * </code>
  *
  *
  * @Author      OWenT
@@ -36,15 +36,15 @@
  */
 jQuery.extend({
     noticeMessage: function (msg, a, b) {
-        msg = msg || &amp;#34;Notice Message!&amp;#34;;
-        var option = { &amp;#34;expire&amp;#34;: 5000, &amp;#34;time&amp;#34;: 500,
-            &amp;#34;from&amp;#34;: { &amp;#34;background-color&amp;#34;: &amp;#34;LightGreen&amp;#34;, &amp;#34;opacity&amp;#34;: &amp;#34;0&amp;#34;, &amp;#34;position&amp;#34;: &amp;#34;fixed&amp;#34;, &amp;#34;bottom&amp;#34;: &amp;#34;0px&amp;#34;, &amp;#34;z-index&amp;#34;: &amp;#34;1000&amp;#34;,
-                &amp;#34;font-size&amp;#34;: &amp;#34;24px&amp;#34;, &amp;#34;color&amp;#34;: &amp;#34;DarkGreen&amp;#34;, &amp;#34;padding&amp;#34;: &amp;#34;3px&amp;#34;, &amp;#34;font-weight&amp;#34;: &amp;#34;bold&amp;#34;
+        msg = msg || "Notice Message!";
+        var option = { "expire": 5000, "time": 500,
+            "from": { "background-color": "LightGreen", "opacity": "0", "position": "fixed", "bottom": "0px", "z-index": "1000",
+                "font-size": "24px", "color": "DarkGreen", "padding": "3px", "font-weight": "bold"
             },
-            &amp;#34;to&amp;#34;: { &amp;#34;opacity&amp;#34;: &amp;#34;1&amp;#34;, &amp;#34;bottom&amp;#34;: &amp;#34;&#43;5px&amp;#34; }
+            "to": { "opacity": "1", "bottom": "+5px" }
         };
         var callback = function () { };
-        if (a &amp;amp;&amp;amp; jQuery.isFunction(a))
+        if (a && jQuery.isFunction(a))
             callback = a;
         else {
             a = a || {};
@@ -52,15 +52,15 @@ jQuery.extend({
             callback = b || function () { };
         }
 
-        var msgDiv = document.createElement(&amp;#34;div&amp;#34;);
+        var msgDiv = document.createElement("div");
 
         jQuery(msgDiv).css(option.from).html(msg);
         jQuery(document.body).append(msgDiv);
         jQuery(msgDiv).stop().animate(option.to, option.time, callback);
-        if (option.expire &amp;gt; 0) {
+        if (option.expire > 0) {
             setTimeout(function () {
                 if (msgDiv) {
-                    jQuery(msgDiv).stop().animate({ &amp;#34;opacity&amp;#34;: &amp;#34;0&amp;#34;, &amp;#34;bottom&amp;#34;: &amp;#34;-5px&amp;#34; }, option.time,
+                    jQuery(msgDiv).stop().animate({ "opacity": "0", "bottom": "-5px" }, option.time,
                         function () { callback(); jQuery(this).remove(); });
                 }
             }, option.expire);

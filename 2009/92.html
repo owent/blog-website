@@ -5,7 +5,7 @@
 <input class=form-control type=text placeholder=搜索 name=q>
 <button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-1cbace1aad044a0102b13b0043c3dd86 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2009/92.html target=_blank itemprop=url>模式匹配(kmp)个人模板</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><pre><code class=language-cpp>/**
  * KMP模式匹配
- * 算法复杂度O(m&#43;n)
+ * 算法复杂度O(m+n)
  * ACM 模板 
  *
  * @Author OWenT
@@ -31,36 +31,36 @@ int kmp_match(char source[],char checked[]) {
     if(!checked[i]) // 被匹配串为空串，直接返回 0
         return 0;
 
-    &#43;&#43; i;
+    ++ i;
     while(checked[i]) {
-        for(j = preMatch[i - 1]; checked[i] != checked[j] &amp;amp;&amp;amp; j; j = preMatch[j - 1]);
-        preMatch[i] = (checked[i] == checked[j])? j &#43; 1 : 0 ;
-        &#43;&#43; i;
+        for(j = preMatch[i - 1]; checked[i] != checked[j] && j; j = preMatch[j - 1]);
+        preMatch[i] = (checked[i] == checked[j])? j + 1 : 0 ;
+        ++ i;
     }
     //计算匹配子串个数(子串间无重叠)(与以下一起二选一)
     int num = 0;//计数变量
-    for(i = j = 0; source[i]; &#43;&#43; i) {
+    for(i = j = 0; source[i]; ++ i) {
         if(checked[j] == source[i])
-            &#43;&#43; j;
+            ++ j;
         else if(j)
             -- i, j = preMatch[j - 1];
 
         if(!checked[j])
-            &#43;&#43; num, j = 0;//如果要子串间重叠 则此句中j = 0 改成 j = preMatch[j - 1]
+            ++ num, j = 0;//如果要子串间重叠 则此句中j = 0 改成 j = preMatch[j - 1]
     }
     return num;
 
     //计算首个匹配子串位置(与以上一起二选一)
-    for(i = j = 0; checked[j] &amp;amp;&amp;amp; source[i]; &#43;&#43; i) {
+    for(i = j = 0; checked[j] && source[i]; ++ i) {
         if(checked[j] == source[i])
-            &#43;&#43; j;
+            ++ j;
         else if(j)
             -- i, j = preMatch[j - 1];
     }
 
     //返回匹配的串的第一个字符出现位置(从1开始计数,0表示无匹配)
     if(!checked[j])
-        return i - j &#43; 1;
+        return i - j + 1;
     else
         return 0;
 

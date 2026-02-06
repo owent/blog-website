@@ -22,7 +22,7 @@ flowchart LR
     MT --> T
     T --> E
 </pre><pre><code class=language-text>Action #700: /bin/sh
-    with arguments:  &amp;#34;/data/Stream_Depot/Client/Engine/Intermediate/Build/Linux/x64/UnrealEditor/Development/Link-libUnrealEditor-ActorSequence.so.link.sh&amp;#34;
+    with arguments:  "/data/Stream_Depot/Client/Engine/Intermediate/Build/Linux/x64/UnrealEditor/Development/Link-libUnrealEditor-ActorSequence.so.link.sh"
     depends on: /data/Stream_Depot/Client/Engine/Binaries/Linux/libUnrealEditor-Core.so
     depends on: /data/Stream_Depot/Client/Engine/Binaries/Linux/libUnrealEditor-CoreUObject.so
     depends on: /data/Stream_Depot/Client/Engine/Binaries/Linux/libUnrealEditor-Engine.so
@@ -37,7 +37,7 @@ flowchart LR
         1270 (produces: /data/Stream_Depot/Client/Engine/Binaries/Linux/libUnrealEditor-MovieScene.so)
         1503 (produces: /data/Stream_Depot/Client/Engine/Binaries/Linux/libUnrealEditor-MovieSceneTracks.so)
         1263 (produces: /data/Stream_Depot/Client/Engine/Binaries/Linux/libUnrealEditor-TimeManagement.so)</code></pre><h3 id=2元数据生成阶段-targetmodules-的-cyclic-actions>2）元数据生成阶段 <code>.target/.modules</code> 的 cyclic actions</h3><p>循环依赖也可能发生在元数据生成阶段，而非 Link 阶段。这类日志的特点是：一个 action 产出 <code>.target</code> 文件，另一个 action 产出多个平台的 <code>.modules</code> 文件，两者互相依赖形成环。</p><pre><code class=language-text>Action #5333: /data/Stream_Depot/Client/Engine/Binaries/ThirdParty/DotNet/6.0.302/linux/dotnet
-    with arguments: &amp;#34;/data/Stream_Depot/Client/Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.dll&amp;#34; -Mode=WriteMetadata -Input=&amp;#34;/data/Stream_Depot/Client/Engine/Intermediate/Build/Linux/x64/UnrealEditor/Development/TargetMetadata.dat&amp;#34; -Version=2
+    with arguments: "/data/Stream_Depot/Client/Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.dll" -Mode=WriteMetadata -Input="/data/Stream_Depot/Client/Engine/Intermediate/Build/Linux/x64/UnrealEditor/Development/TargetMetadata.dat" -Version=2
     depends on: /data/Stream_Depot/Client/Engine/Binaries/Linux/UnrealEditor.version
     depends on: /data/Stream_Depot/Client/Engine/Intermediate/Build/Linux/x64/UnrealEditor/Development/TargetMetadata.dat
     produces:   /data/Stream_Depot/Client/Engine/Binaries/Linux/UnrealEditor.target
@@ -62,15 +62,15 @@ import argparse
 import os
 import sys
 
-__VERSION__ = &amp;#34;1.0.0&amp;#34;
+__VERSION__ = "1.0.0"
 
-UE_LOG_ACTION_START = re.compile(&amp;#34;^\\s*Action #\\s*(?P&amp;lt;ACTION_ID&amp;gt;\\d&#43;)\\s*:&amp;#34;)
-UE_LOG_ACTION_PRODUCE = re.compile(&amp;#34;^\\s\\s*produces\\s*:\\s*(?P&amp;lt;PRODUCE_FILE&amp;gt;.&#43;)$&amp;#34;)
+UE_LOG_ACTION_START = re.compile("^\\s*Action #\\s*(?P<action_id>\\d+)\\s*:")
+UE_LOG_ACTION_PRODUCE = re.compile("^\\s\\s*produces\\s*:\\s*(?P<produce_file>.+)$")
 UE_LOG_ACTION_DEP_START = re.compile(
-    &amp;#34;^\\s\\s*Depends\\s&#43;on\\s&#43;cyclic\\s&#43;actions&amp;#34;, re.IGNORECASE
+    "^\\s\\s*Depends\\s+on\\s+cyclic\\s+actions", re.IGNORECASE
 )
 UE_LOG_ACTION_DEP_ID = re.compile(
-    &amp;#34;^\\s\\s\\s*(?P&amp;lt;ACTION_ID&amp;gt;\\d&#43;)\\s*(\\(\\s*produces\\s*:|$)&amp;#34;
+    "^\\s\\s\\s*(?P<action_id>\\d+)\\s*(\\(\\s*produces\\s*:|$)"
 )
 
 
@@ -88,7 +88,7 @@ class UEActionGraphNode:
     def add_depend_action(self, action):
         if action not in self.depend_actions:
             self.depend_actions.add(action)
-            action.depended_count &#43;= 1
+            action.depended_count += 1
 
 
 class UEActionGraphSet:
@@ -121,9 +121,9 @@ def try_read_file(file_path):
     _err = None
     if not os.path.isabs(file_path):
         file_path = os.path.join(os.getcwd(), file_path)
-    for try_encoding in [&amp;#34;utf-8&amp;#34;, &amp;#34;utf-8-sig&amp;#34;, &amp;#34;GB18030&amp;#34;]:
+    for try_encoding in ["utf-8", "utf-8-sig", "GB18030"]:
         try:
-            ret = codecs.open(file_path, &amp;#34;r&amp;#34;, encoding=try_encoding)
+            ret = codecs.open(file_path, "r", encoding=try_encoding)
             return ret
         except Exception as e:
             if _err is None:
@@ -140,7 +140,7 @@ def build_deps_from_fd(file):
     for line in file:
         mat = UE_LOG_ACTION_START.match(line)
         if mat:
-            last_action_node = actions.mutable_action(int(mat.group(&amp;#34;ACTION_ID&amp;#34;)))
+            last_action_node = actions.mutable_action(int(mat.group("ACTION_ID")))
             deps_started = False
             continue
 
@@ -154,7 +154,7 @@ def build_deps_from_fd(file):
             if deps_started:
                 mat = UE_LOG_ACTION_DEP_ID.match(line)
                 if mat:
-                    dep_action_id = int(mat.group(&amp;#34;ACTION_ID&amp;#34;))
+                    dep_action_id = int(mat.group("ACTION_ID"))
                     last_action_node.add_depend_action(
                         actions.mutable_action(dep_action_id)
                     )
@@ -162,12 +162,12 @@ def build_deps_from_fd(file):
             else:
                 mat = UE_LOG_ACTION_PRODUCE.match(line)
                 if mat:
-                    produce_file = mat.group(&amp;#34;PRODUCE_FILE&amp;#34;)
+                    produce_file = mat.group("PRODUCE_FILE")
                     last_action_node.add_produce_file(produce_file)
                     continue
 
         if last_action_node is not None and (
-            line.strip() == &amp;#34;&amp;#34; or (line and line[0] != &amp;#34; &amp;#34; and line[0] != &amp;#34;\t&amp;#34;)
+            line.strip() == "" or (line and line[0] != " " and line[0] != "\t")
         ):
             last_action_node = None
             deps_started = False
@@ -177,14 +177,14 @@ def build_deps_from_fd(file):
 
 def show_actions(actions):
     for action_id, action_node in actions.actions.items():
-        print(f&amp;#34;Action {action_id}:({action_node.depended_count} dependents)&amp;#34;)
-        print(f&amp;#34;  - produces files:&amp;#34;)
+        print(f"Action {action_id}:({action_node.depended_count} dependents)")
+        print(f"  - produces files:")
         for f in action_node.produce_files:
-            print(f&amp;#34;    - {f}&amp;#34;)
-        print(f&amp;#34;  - depends on actions:&amp;#34;)
+            print(f"    - {f}")
+        print(f"  - depends on actions:")
         for d in action_node.depend_actions:
-            print(f&amp;#34;    - {d.action_id}&amp;#34;)
-    print(f&amp;#34;Total actions: {len(actions.actions)}&amp;#34;)
+            print(f"    - {d.action_id}")
+    print(f"Total actions: {len(actions.actions)}")
 
 
 def mutable_circle_node(
@@ -214,14 +214,14 @@ def __concat_circle_actions(
     sz = len(dep_link_stack)
     for i in range(sz - 1):
         from_action = dep_link_stack[i]
-        to_action = dep_link_stack[i &#43; 1]
+        to_action = dep_link_stack[i + 1]
         circle_node = mutable_circle_node(circle_nodes, from_action, to_action)
-        circle_node.weight &#43;= start.weight
+        circle_node.weight += start.weight
 
     last_circle_node = mutable_circle_node(
         circle_nodes, dep_link_stack[-1], start.from_action
     )
-    last_circle_node.weight &#43;= start.weight
+    last_circle_node.weight += start.weight
 
 
 def __collect_circle_actions(
@@ -232,27 +232,27 @@ def __collect_circle_actions(
         if dep_link_stack[i] == action_node:
             start_idx = i
             break
-    if start_idx &amp;lt; 0:
+    if start_idx < 0:
         raise RuntimeError(
-            f&amp;#34;Internal error: start action {action_node.action_id} not found in stack {&amp;#39; -&amp;gt; &amp;#39;.join([str(n.action_id) for n in dep_link_stack])}&amp;#34;
+            f"Internal error: start action {action_node.action_id} not found in stack {' -> '.join([str(n.action_id) for n in dep_link_stack])}"
         )
 
     sz = len(dep_link_stack)
     first_circle_node = None
     for i in range(sz - start_idx - 1):
-        from_action = dep_link_stack[i &#43; start_idx]
-        to_action = dep_link_stack[i &#43; start_idx &#43; 1]
+        from_action = dep_link_stack[i + start_idx]
+        to_action = dep_link_stack[i + start_idx + 1]
         circle_node = mutable_circle_node(circle_nodes, from_action, to_action)
-        circle_node.weight &#43;= from_action.depended_count / sz
+        circle_node.weight += from_action.depended_count / sz
         if first_circle_node is None:
             first_circle_node = circle_node
 
     last_circle_node = mutable_circle_node(
         circle_nodes, dep_link_stack[-1], dep_link_stack[start_idx]
     )
-    last_circle_node.weight &#43;= dep_link_stack[-1].depended_count
+    last_circle_node.weight += dep_link_stack[-1].depended_count
 
-    if start_idx &amp;gt; 0:
+    if start_idx > 0:
         __concat_circle_actions(
             circle_nodes,
             dep_link_stack[0:start_idx],
@@ -262,16 +262,16 @@ def __collect_circle_actions(
 
 
 def __cal_circle_actions_weight(circle_nodes: dict, dep_link_stack: list):
-    if len(dep_link_stack) &amp;lt;= 1:
+    if len(dep_link_stack) <= 1:
         return 0
 
     sz = len(dep_link_stack)
     ret = 0
     for i in range(sz - 1):
         from_action = dep_link_stack[i]
-        to_action = dep_link_stack[i &#43; 1]
+        to_action = dep_link_stack[i + 1]
         circle_node = mutable_circle_node(circle_nodes, from_action, to_action)
-        ret &#43;= circle_node.weight
+        ret += circle_node.weight
     return ret
 
 
@@ -287,7 +287,7 @@ def __dfs_scan_actions(
     dep_link_dict[action_node.action_id] = action_node
     dep_link_stack.append(action_node)
 
-    # 优先找短的链：这里用 DFS &#43; 遇到环就提前返回的策略，实践里足够快
+    # 优先找短的链：这里用 DFS + 遇到环就提前返回的策略，实践里足够快
     dfs_depend_actions = []
     for dep_action in action_node.depend_actions:
         existed_chain = get_circle_node(circle_nodes, action_node, dep_action)
@@ -298,8 +298,8 @@ def __dfs_scan_actions(
         if dep_action.action_id in dep_link_dict:
             if show_verbose:
                 print(
-                    f&amp;#34;Found circle: &amp;#34;
-                    &#43; &amp;#34; -&amp;gt; &amp;#34;.join([str(n.action_id) for n in dep_link_stack])
+                    f"Found circle: "
+                    + " -> ".join([str(n.action_id) for n in dep_link_stack])
                 )
             ret.append(
                 __collect_circle_actions(circle_nodes, dep_link_stack, dep_action)
@@ -318,7 +318,7 @@ def __dfs_scan_actions(
                 show_verbose,
             )
             if res:
-                ret &#43;= res
+                ret += res
                 break
 
     del dep_link_dict[action_node.action_id]
@@ -337,7 +337,7 @@ def dfs_scan_actions(actions: UEActionGraphSet, show_verbose=False):
             continue
 
         if show_verbose:
-            print(f&amp;#34;Scanning action {action_node.action_id} ...&amp;#34;)
+            print(f"Scanning action {action_node.action_id} ...")
         for circle_stack in __dfs_scan_actions(
             actions,
             circle_nodes,
@@ -348,54 +348,54 @@ def dfs_scan_actions(actions: UEActionGraphSet, show_verbose=False):
         ):
             circle_chains.append(
                 {
-                    &amp;#34;weight&amp;#34;: __cal_circle_actions_weight(circle_nodes, circle_stack),
-                    &amp;#34;chains&amp;#34;: circle_stack,
+                    "weight": __cal_circle_actions_weight(circle_nodes, circle_stack),
+                    "chains": circle_stack,
                 }
             )
 
-    circle_chains.sort(key=lambda x: (len(x[&amp;#34;chains&amp;#34;]), -x[&amp;#34;weight&amp;#34;]))
+    circle_chains.sort(key=lambda x: (len(x["chains"]), -x["weight"]))
     for circle_chain in circle_chains:
         print(
-            f&amp;#34;Found circle chain: {&amp;#39; -&amp;gt; &amp;#39;.join([str(x.action_id) for x in circle_chain[&amp;#39;chains&amp;#39;]])}&amp;#34;
+            f"Found circle chain: {' -> '.join([str(x.action_id) for x in circle_chain['chains']])}"
         )
-        for circle_node in circle_chain[&amp;#34;chains&amp;#34;]:
+        for circle_node in circle_chain["chains"]:
             print(
-                f&amp;#34;  - ActionGraphNode #{circle_node.action_id} , depended: {circle_node.depended_count}, produces:&amp;#34;
+                f"  - ActionGraphNode #{circle_node.action_id} , depended: {circle_node.depended_count}, produces:"
             )
             for produce in circle_node.produce_files:
-                print(f&amp;#34;    * {produce}&amp;#34;)
+                print(f"    * {produce}")
 
 
 def main():
     global __VERSION__
 
-    parser = argparse.ArgumentParser(usage=&amp;#34;%(prog)s [options...]&amp;#34;)
-    parser.add_argument(&amp;#34;REMAINDER&amp;#34;, nargs=argparse.REMAINDER, help=&amp;#34;task names&amp;#34;)
+    parser = argparse.ArgumentParser(usage="%(prog)s [options...]")
+    parser.add_argument("REMAINDER", nargs=argparse.REMAINDER, help="task names")
     parser.add_argument(
-        &amp;#34;-v&amp;#34;,
-        &amp;#34;--version&amp;#34;,
-        action=&amp;#34;store_true&amp;#34;,
-        help=&amp;#34;show version and exit&amp;#34;,
-        dest=&amp;#34;version&amp;#34;,
+        "-v",
+        "--version",
+        action="store_true",
+        help="show version and exit",
+        dest="version",
         default=False,
     )
 
     parser.add_argument(
-        &amp;#34;-V&amp;#34;,
-        &amp;#34;--verbose&amp;#34;,
-        action=&amp;#34;store_true&amp;#34;,
-        help=&amp;#34;show verbose&amp;#34;,
-        dest=&amp;#34;verbose&amp;#34;,
+        "-V",
+        "--verbose",
+        action="store_true",
+        help="show verbose",
+        dest="verbose",
         default=False,
     )
 
     parser.add_argument(
-        &amp;#34;-i&amp;#34;,
-        &amp;#34;--input&amp;#34;,
-        action=&amp;#34;store&amp;#34;,
-        help=&amp;#34;set input build log file, (use - to read from stdin)&amp;#34;,
-        dest=&amp;#34;input&amp;#34;,
-        default=&amp;#34;-&amp;#34;,
+        "-i",
+        "--input",
+        action="store",
+        help="set input build log file, (use - to read from stdin)",
+        dest="input",
+        default="-",
     )
 
     options = parser.parse_args()
@@ -403,7 +403,7 @@ def main():
         print(__VERSION__)
         return 0
 
-    if options.input.strip() == &amp;#34;-&amp;#34;:
+    if options.input.strip() == "-":
         log_file = sys.stdin
     else:
         log_file = try_read_file(options.input)
@@ -417,8 +417,8 @@ def main():
     return 0
 
 
-if __name__ == &amp;#34;__main__&amp;#34;:
-    exit(main())</code></pre><h2 id=输出解读>输出解读</h2><p>脚本输出类似如下信息：</p><ul><li><code>Found circle chain: 2282 -> 1270 -> 1503 -> 1263</code></li><li>链路上每个 action 的 <code>produces:</code> 文件列表</li></ul><p>这表明这些 action 之间存在有向环。<strong>下一步是将 action 级别的环映射回模块级别的环。</strong></p><p>常用的映射规则：</p><table><thead><tr><th>产物路径模式</th><th>对应内容</th></tr></thead><tbody><tr><td><code>.../libUnrealEditor-XXX.so</code></td><td>模块 <code>XXX</code></td></tr><tr><td><code>Engine/Plugins/.../Binaries/.../libUnrealEditor-PluginName.so</code></td><td>插件模块</td></tr><tr><td><code>.modules</code> / <code>.target</code></td><td>Target/元数据生成流程</td></tr></tbody></table><p>确认环上的产物对应哪些模块后，下一步是检查 <code>*.Build.cs</code> / <code>Target.cs</code> 中的依赖引用。</p><h2 id=使用方法>使用方法</h2><h3 id=1收集构建日志>1）收集构建日志</h3><p>将 UBT 的输出重定向到文本文件，并启用 <code>-Verbose</code> 选项以获取完整的 action 信息。</p><p><strong>Linux</strong>：</p><pre><code class=language-bash>./Engine/Build/BatchFiles/Linux/Build.sh UnrealEditor Linux Development -Verbose &amp;gt; build.log 2&amp;gt;&amp;amp;1</code></pre><p><strong>Windows PowerShell</strong>：</p><pre><code class=language-powershell>./Engine/Build/BatchFiles/Build.bat UnrealEditor Win64 Development -Verbose *&amp;gt; build.log</code></pre><h3 id=2运行脚本>2）运行脚本</h3><pre><code class=language-bash>python3 ue_cycle_finder.py -i build.log</code></pre><p>支持从 stdin 读取：</p><pre><code class=language-bash>cat build.log | python3 ue_cycle_finder.py -i -</code></pre><h2 id=效果示例>效果示例</h2><p>以上述日志为例，UBT 原始信息是：</p><blockquote><p>Action #700 depends on cyclic actions: 2282/1270/1503/1263</p></blockquote><p>真正需要的是"哪个模块与哪个模块形成环"。脚本输出环链路和 <code>produces:</code> 后，可以得到如下模块关系：</p><pre class=mermaid>
+if __name__ == "__main__":
+    exit(main())</code></pre><h2 id=输出解读>输出解读</h2><p>脚本输出类似如下信息：</p><ul><li><code>Found circle chain: 2282 -> 1270 -> 1503 -> 1263</code></li><li>链路上每个 action 的 <code>produces:</code> 文件列表</li></ul><p>这表明这些 action 之间存在有向环。<strong>下一步是将 action 级别的环映射回模块级别的环。</strong></p><p>常用的映射规则：</p><table><thead><tr><th>产物路径模式</th><th>对应内容</th></tr></thead><tbody><tr><td><code>.../libUnrealEditor-XXX.so</code></td><td>模块 <code>XXX</code></td></tr><tr><td><code>Engine/Plugins/.../Binaries/.../libUnrealEditor-PluginName.so</code></td><td>插件模块</td></tr><tr><td><code>.modules</code> / <code>.target</code></td><td>Target/元数据生成流程</td></tr></tbody></table><p>确认环上的产物对应哪些模块后，下一步是检查 <code>*.Build.cs</code> / <code>Target.cs</code> 中的依赖引用。</p><h2 id=使用方法>使用方法</h2><h3 id=1收集构建日志>1）收集构建日志</h3><p>将 UBT 的输出重定向到文本文件，并启用 <code>-Verbose</code> 选项以获取完整的 action 信息。</p><p><strong>Linux</strong>：</p><pre><code class=language-bash>./Engine/Build/BatchFiles/Linux/Build.sh UnrealEditor Linux Development -Verbose > build.log 2>&1</code></pre><p><strong>Windows PowerShell</strong>：</p><pre><code class=language-powershell>./Engine/Build/BatchFiles/Build.bat UnrealEditor Win64 Development -Verbose *> build.log</code></pre><h3 id=2运行脚本>2）运行脚本</h3><pre><code class=language-bash>python3 ue_cycle_finder.py -i build.log</code></pre><p>支持从 stdin 读取：</p><pre><code class=language-bash>cat build.log | python3 ue_cycle_finder.py -i -</code></pre><h2 id=效果示例>效果示例</h2><p>以上述日志为例，UBT 原始信息是：</p><blockquote><p>Action #700 depends on cyclic actions: 2282/1270/1503/1263</p></blockquote><p>真正需要的是"哪个模块与哪个模块形成环"。脚本输出环链路和 <code>produces:</code> 后，可以得到如下模块关系：</p><pre class=mermaid>
 graph LR
     Engine[Engine.so] --> MovieScene[MovieScene.so]
     MovieScene --> MovieSceneTracks[MovieSceneTracks.so]

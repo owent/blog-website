@@ -3,10 +3,10 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-44789d0ad029eccb803169a668c81414 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2017/1367.html target=_blank itemprop=url>atapp的c binding和c#适配</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#c-binding>C Binding</a></li><li><a href=#c适配>C#适配</a><ul><li><a href=#回调函数的生命周期问题>回调函数的生命周期问题</a></li><li><a href=#c的string类型和c的charconst-char>C#的string类型和C的char*/const char*</a></li><li><a href=#非托管数据到托管数据的开销>非托管数据到托管数据的开销</a></li><li><a href=#net的支持十分的诡异>.net的支持十分的诡异</a></li></ul></li><li><a href=#写在最后>写在最后</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>这两天在做服务器框架的C的接口导出和C#的接入。之所以要做这么个东西是因为之前的服务器框架（<a href=https://github.com/atframework/atsf4g-co>atsf4g-co</a>）已经完成了通信层面和基本设计模式的细节部分，而且基本算是最大化性能了吧。但是现在的项目的战斗引擎是从以前Unity游戏上抽象而来的，全部由C#编写。再加上最近再考虑接入实时战斗，这样就不能像之前一样用一个简单的通信方式了，必须使用一个高效并且实时性更高通信机制。需要能够处理好比较高的集中式的组播和容灾的通信方式。于是就有了把之前的C++的框架抽离出API来驱动逻辑的想法。这样也比较容易地兼顾开发成本和性能之间地权衡。</p><h2 id=c-binding>C Binding</h2><p>那么抽离出框架地目的是抽象出应用底层，这个刚好是<a href=https://github.com/atframework/libatapp>atapp</a>做的事，而且<a href=https://github.com/atframework/libatapp>atapp</a>的层面对外暴露的接口数量也比较少，使用比较简单，所以索性就直接对它下手了。</p><p>让后第一步是把<a href=https://github.com/atframework/libatapp>atapp</a>需要使用的基本接口抽离出纯C的导出API。之所以要导出成纯C是因为，不同系统环境和编译器环境在C++层符号规则、入栈出栈顺序、内存布局、对其规则等等都不一样。这种情况要做跨平台就很是困难，然而这些在纯C的ISO里都是有明确规范的。所以最简单的方式就是导出到纯C，然后其他语言导入接口。这里的其他语言目前就只有C#，但是纯C接口的话如果想导出到lua或者其他语言的接口也不困难。</p><p>这里导出的时候有一点点小细节，那就是在Linux上的c api是默认导出的，但是在Windows里是默认不导出的，然后再加上不同编译器的导出用法不一样，所以第一步当然是统一导出标记。最终就是下面这一段</p><pre><code class=language-c>#if !defined(ATFRAME_SYMBOL_EXPORT) &amp;amp;&amp;amp; defined(_MSC_VER)
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-44789d0ad029eccb803169a668c81414 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2017/1367.html target=_blank itemprop=url>atapp的c binding和c#适配</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#c-binding>C Binding</a></li><li><a href=#c适配>C#适配</a><ul><li><a href=#回调函数的生命周期问题>回调函数的生命周期问题</a></li><li><a href=#c的string类型和c的charconst-char>C#的string类型和C的char*/const char*</a></li><li><a href=#非托管数据到托管数据的开销>非托管数据到托管数据的开销</a></li><li><a href=#net的支持十分的诡异>.net的支持十分的诡异</a></li></ul></li><li><a href=#写在最后>写在最后</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>这两天在做服务器框架的C的接口导出和C#的接入。之所以要做这么个东西是因为之前的服务器框架（<a href=https://github.com/atframework/atsf4g-co>atsf4g-co</a>）已经完成了通信层面和基本设计模式的细节部分，而且基本算是最大化性能了吧。但是现在的项目的战斗引擎是从以前Unity游戏上抽象而来的，全部由C#编写。再加上最近再考虑接入实时战斗，这样就不能像之前一样用一个简单的通信方式了，必须使用一个高效并且实时性更高通信机制。需要能够处理好比较高的集中式的组播和容灾的通信方式。于是就有了把之前的C++的框架抽离出API来驱动逻辑的想法。这样也比较容易地兼顾开发成本和性能之间地权衡。</p><h2 id=c-binding>C Binding</h2><p>那么抽离出框架地目的是抽象出应用底层，这个刚好是<a href=https://github.com/atframework/libatapp>atapp</a>做的事，而且<a href=https://github.com/atframework/libatapp>atapp</a>的层面对外暴露的接口数量也比较少，使用比较简单，所以索性就直接对它下手了。</p><p>让后第一步是把<a href=https://github.com/atframework/libatapp>atapp</a>需要使用的基本接口抽离出纯C的导出API。之所以要导出成纯C是因为，不同系统环境和编译器环境在C++层符号规则、入栈出栈顺序、内存布局、对其规则等等都不一样。这种情况要做跨平台就很是困难，然而这些在纯C的ISO里都是有明确规范的。所以最简单的方式就是导出到纯C，然后其他语言导入接口。这里的其他语言目前就只有C#，但是纯C接口的话如果想导出到lua或者其他语言的接口也不困难。</p><p>这里导出的时候有一点点小细节，那就是在Linux上的c api是默认导出的，但是在Windows里是默认不导出的，然后再加上不同编译器的导出用法不一样，所以第一步当然是统一导出标记。最终就是下面这一段</p><pre><code class=language-c>#if !defined(ATFRAME_SYMBOL_EXPORT) && defined(_MSC_VER)
 #define ATFRAME_SYMBOL_EXPORT __declspec(dllexport)
 
-#elif !defined(ATFRAME_SYMBOL_EXPORT) &amp;amp;&amp;amp; defined(__GNUC__)
+#elif !defined(ATFRAME_SYMBOL_EXPORT) && defined(__GNUC__)
 
 #ifndef __cdecl
 // see https://gcc.gnu.org/onlinedocs/gcc-4.0.0/gcc/Function-Attributes.html
@@ -20,17 +20,17 @@
 
 #if defined(__clang__)
 
-#if !defined(_WIN32) &amp;amp;&amp;amp; !defined(__WIN32__) &amp;amp;&amp;amp; !defined(WIN32)
-#define ATFRAME_SYMBOL_EXPORT __attribute__((__visibility__(&amp;#34;default&amp;#34;)))
+#if !defined(_WIN32) && !defined(__WIN32__) && !defined(WIN32)
+#define ATFRAME_SYMBOL_EXPORT __attribute__((__visibility__("default")))
 #endif
 
 #else
 
-#if __GNUC__ &amp;gt;= 4
-#if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) &amp;amp;&amp;amp; !defined(__CYGWIN__)
+#if __GNUC__ >= 4
+#if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) && !defined(__CYGWIN__)
 #define ATFRAME_SYMBOL_EXPORT __attribute__((__dllexport__))
 #else
-#define ATFRAME_SYMBOL_EXPORT __attribute__((__visibility__(&amp;#34;default&amp;#34;)))
+#define ATFRAME_SYMBOL_EXPORT __attribute__((__visibility__("default")))
 #endif
 #endif
 
@@ -41,7 +41,7 @@
 #ifndef ATFRAME_SYMBOL_EXPORT
 #define ATFRAME_SYMBOL_EXPORT
 #endif</code></pre><p>可以看到即便同一个编译器，在不同系统上都还不一样。上面这些基本上兼顾了主流的平台和编译器了。然后如果要导出c函数就是类似这样：</p><pre><code class=language-cpp>#ifdef __cplusplus
-extern &amp;#34;C&amp;#34; {
+extern "C" {
 #endif
     typedef union {
         void *pa;
@@ -58,7 +58,7 @@ extern &amp;#34;C&amp;#34; {
   }
   set {
     if (IntPtr.Zero == _native_app) {
-      throw new InvalidOperationException(&amp;#34;native object invalid&amp;#34;);
+      throw new InvalidOperationException("native object invalid");
     }
 
     _on_disconnected_fn = value;
@@ -70,7 +70,7 @@ extern &amp;#34;C&amp;#34; {
 
     libatapp_c_set_on_disconnected_fn(_native_app, fn, IntPtr.Zero);
   }
-}</code></pre><p>这里就有两个对象，一个是value，保存到了*_on_disconnected_fn*，另一个是libatapp_c_on_disconnected_fn(即便他是静态函数也一样)保存到了*_on_disconnected_holder*。为啥有两个呢？回调函数不就一个嘛？这就是坑之一，我必须保存这个<em>libatapp_c_on_disconnected_fn</em>，否者这个函数会被.net GC回收掉，然后C API回调的时候<strong>可能</strong>会崩溃。之所以是<strong>可能</strong>是因为你不知道.net会什么时候释放掉它。</p><p>这还引出一个问题就是这类的回调函数的数据组很多，也可能是我不太会用C#的泛型，导致这些API都是手写的。感觉写的时候很危险很容易出错啊。我最多就用到了这样:</p><pre><code class=language-csharp>class EventCallbackRefGroup&amp;lt;TC&amp;gt; where TC: class {
+}</code></pre><p>这里就有两个对象，一个是value，保存到了*_on_disconnected_fn*，另一个是libatapp_c_on_disconnected_fn(即便他是静态函数也一样)保存到了*_on_disconnected_holder*。为啥有两个呢？回调函数不就一个嘛？这就是坑之一，我必须保存这个<em>libatapp_c_on_disconnected_fn</em>，否者这个函数会被.net GC回收掉，然后C API回调的时候<strong>可能</strong>会崩溃。之所以是<strong>可能</strong>是因为你不知道.net会什么时候释放掉它。</p><p>这还引出一个问题就是这类的回调函数的数据组很多，也可能是我不太会用C#的泛型，导致这些API都是手写的。感觉写的时候很危险很容易出错啊。我最多就用到了这样:</p><pre><code class=language-csharp>class EventCallbackRefGroup<tc> where TC: class {
   public TC native = null;
   public EventFunction cs = null;
 }
@@ -93,14 +93,14 @@ static int _on_init_call(IntPtr mod, IntPtr priv_data) {
   return m._on_init.cs(m);
 }
 
-private EventCallbackRefGroup&amp;lt;libatapp_c_module_on_init_fn_t&amp;gt; _on_init = new EventCallbackRefGroup&amp;lt;libatapp_c_module_on_init_fn_t&amp;gt;();
+private EventCallbackRefGroup<libatapp_c_module_on_init_fn_t> _on_init = new EventCallbackRefGroup<libatapp_c_module_on_init_fn_t>();
 public EventFunction OnInit {
   get {
     return _on_init.cs;
   }
   set {
     if (IntPtr.Zero == _native_module) {
-      throw new InvalidOperationException(&amp;#34;Module released&amp;#34;);
+      throw new InvalidOperationException("Module released");
     }
 
     _on_init.cs = value;
@@ -119,7 +119,7 @@ private static extern void libatapp_c_get_app_version(IntPtr context, out IntPtr
 public string AppVersion {
   get {
     if (IntPtr.Zero == _native_app) {
-      return &amp;#34;&amp;#34;;
+      return "";
     }
 
     IntPtr verbuf;
@@ -127,7 +127,7 @@ public string AppVersion {
 
     libatapp_c_get_app_version(_native_app, out verbuf, out bufsz);
     if (IntPtr.Zero == verbuf) {
-      return &amp;#34;&amp;#34;;
+      return "";
     }
 
     return Marshal.PtrToStringAnsi(verbuf, (int)bufsz);

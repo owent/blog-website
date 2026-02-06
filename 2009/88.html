@@ -4,40 +4,27 @@
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
 <button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-d3995cec477639b01fd22d44d82cd212 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2009/88.html target=_blank itemprop=url>POJ 2606 Rabbit hunt 2780 Linearity 1118 Lining Up 解题报告</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>POJ打破传统,以前是做一题送一题,现在是做一题送两题,那么我们就不用客气了</p><p>言归正传 题号:<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=2606">2606 Rabbit hunt</a> <a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=2780">2780 Linearity</a> <a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=1118">1118 Lining Up</a></p><p>大致题意是输入N个点.计算能穿过最多的点的直线,并输出最大点的个数</p><p>最初的想法很简单</p><p>枚举没两个点连成的直线,然后枚举每个点,计算通过这条直线的点的个数,但是这个方法的复杂度为O(n^3)</p><p>例:(2606代码)</p><pre><code class=language-cpp>
-#include&amp;lt;iostream&amp;gt;
+#include<iostream>
 using namespace std;
 long x[300],y[300];
 int main()
 {
     int n,i,j,k,counter,max;
-    cin&amp;gt;&amp;gt;n;
+    cin>>n;
     max = 0;
-    for(i = 0 ; i &amp;lt; n ; i&#43;&#43;)
-        cin&amp;gt;&amp;gt;x[i]&amp;gt;&amp;gt;y[i];
-    for(i = 0 ; i &amp;lt; n ; i &#43;&#43;)
-        for(j = i &#43; 1 ; j &amp;lt; n ; j &#43;&#43;)
+    for(i = 0 ; i < n ; i++)
+        cin>>x[i]>>y[i];
+    for(i = 0 ; i < n ; i ++)
+        for(j = i + 1 ; j < n ; j ++)
         {
             counter = 0;
-            for(k = j &#43; 1; k &amp;lt; n ; k&#43;&#43;)
+            for(k = j + 1; k < n ; k++)
                 if((y[k] - y[i]) * (x[j] - x[i]) == (y[j] - y[i]) * (x[k] - x[i]))
-                    counter &#43;&#43;;
-            if(max &amp;lt; counter)
+                    counter ++;
+            if(max < counter)
                 max = counter;
         };
-    cout&amp;lt;&amp;lt;max &#43; 2;
-    return 0;
-}
-
-我们也可以这样,
-1.选出一个点,计算所有与这个点相连的直线斜率
-2.然后对斜率排序
-3.依次处理斜率,斜率相同则通过该直线的点数量&#43;1,否则重置通过数量为2(两点确定一条直线)
-4.重置前与已记录的最大值比较,记录最大值
-这样的复杂度就变成了O(n*n*log(n))了
-例:(1118代码)
-
-
-#include&amp;lt;iostream&amp;gt;
+    cout<<max + 2; return 0; } 我们也可以这样, 1.选出一个点,计算所有与这个点相连的直线斜率 2.然后对斜率排序 3.依次处理斜率,斜率相同则通过该直线的点数量+1,否则重置通过数量为2(两点确定一条直线) 4.重置前与已记录的最大值比较,记录最大值 这样的复杂度就变成了o(n*n*log(n))了 例:(1118代码) #include<iostream>
 using namespace std;
 struct point
 {
@@ -49,45 +36,45 @@ struct node
 };
 int cmp(const void * a, const void * b)
 {
-    return((*(float*)a-*(float*)b&amp;gt;0)?1:-1);
+    return((*(float*)a-*(float*)b>0)?1:-1);
 }
 int main()
 {
     node numK[1005 * 1005 / 2];
     int n , maxNum = 2 , tmpNum = 0;
-    while(scanf(&amp;#34;%d&amp;#34;,&amp;amp;n),n)
+    while(scanf("%d",&n),n)
     {
         point pt[1005];
-        for(int i = 0 ; i &amp;lt; n ; i &#43;&#43;)
-            scanf(&amp;#34;%f %f&amp;#34;,&amp;amp;pt[i].x,&amp;amp;pt[i].y);
-        for(int i = 0 ; i &amp;lt;  n ; i &#43;&#43;)
+        for(int i = 0 ; i < n ; i ++)
+            scanf("%f %f",&pt[i].x,&pt[i].y);
+        for(int i = 0 ; i <  n ; i ++)
         {
             int pos = 0;
-            for(int j = i &#43; 1 ; j &amp;lt; n ; j &#43;&#43;)
+            for(int j = i + 1 ; j < n ; j ++)
                 if(pt[i].x != pt[j].x)
-                    numK[pos &#43;&#43;].k = (pt[j].y - pt[i].y) / (pt[j].x - pt[i].x);
+                    numK[pos ++].k = (pt[j].y - pt[i].y) / (pt[j].x - pt[i].x);
                 else
-                    numK[pos &#43;&#43;].k = 100000;
+                    numK[pos ++].k = 100000;
 
             qsort(numK,pos,sizeof(numK[0]),cmp);
             int tmpNum = 2;
-            for(int j = 1 ; j &amp;lt; pos ; j &#43;&#43;)
+            for(int j = 1 ; j < pos ; j ++)
             {
                 if(numK[j].k == numK[j - 1].k)
-                    tmpNum &#43;&#43;;
+                    tmpNum ++;
                 else
                 {
-                    if(tmpNum &amp;gt; maxNum)
+                    if(tmpNum > maxNum)
                         maxNum = tmpNum;
                     tmpNum = 2;
                 }
             }
-            if(tmpNum &amp;gt; maxNum)
+            if(tmpNum > maxNum)
                 maxNum = tmpNum;
         }
 
 
-        printf(&amp;#34;%d\n&amp;#34;,maxNum);
+        printf("%d\n",maxNum);
         maxNum = 2;
     }
     return 0;

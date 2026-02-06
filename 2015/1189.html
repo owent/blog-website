@@ -3,28 +3,28 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-2b201a0524a003dbc558c55126e64f2a class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2015/1189.html target=_blank itemprop=url>小记最近踩得两个C++坑</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#坑一常量引用失效>坑一：常量引用失效</a></li><li><a href=#坑二linux环境下共享静态库的问题>坑二：Linux环境下共享静态库的问题</a></li><li><a href=#结论>结论</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><h1 id=小记最近踩得两个c坑>小记最近踩得两个C++坑</h1><p>记一下最近踩得两个C++独有的暗坑，其中一个和ABI相关。第二个坑其实之前研究过，但是没有实例，这次算是碰到了个典型的实例。</p><h2 id=坑一常量引用失效>坑一：常量引用失效</h2><p>在项目中碰到的实例的大致流程是:</p><ol><li>获取某个容易的迭代器，迭代器内包含智能指针（std::shared_ptr）</li><li>把智能指针通过常量引用方式传入函数</li><li>执行过程中智能指针被释放</li><li>于是这时候，我们有了一个空悬的智能指针引用了</li></ol><p>用代码表示的话，流程如下:</p><pre><code class=language-cpp>std::map&amp;lt;int, std::shared_ptr&amp;lt;T&amp;gt; &amp;gt; outter_map;
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-2b201a0524a003dbc558c55126e64f2a class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2015/1189.html target=_blank itemprop=url>小记最近踩得两个C++坑</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#坑一常量引用失效>坑一：常量引用失效</a></li><li><a href=#坑二linux环境下共享静态库的问题>坑二：Linux环境下共享静态库的问题</a></li><li><a href=#结论>结论</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><h1 id=小记最近踩得两个c坑>小记最近踩得两个C++坑</h1><p>记一下最近踩得两个C++独有的暗坑，其中一个和ABI相关。第二个坑其实之前研究过，但是没有实例，这次算是碰到了个典型的实例。</p><h2 id=坑一常量引用失效>坑一：常量引用失效</h2><p>在项目中碰到的实例的大致流程是:</p><ol><li>获取某个容易的迭代器，迭代器内包含智能指针（std::shared_ptr）</li><li>把智能指针通过常量引用方式传入函数</li><li>执行过程中智能指针被释放</li><li>于是这时候，我们有了一个空悬的智能指针引用了</li></ol><p>用代码表示的话，流程如下:</p><pre><code class=language-cpp>std::map<int, std::shared_ptr<t> > outter_map;
 
 void func1(int a) {
-    std::map&amp;lt;int, std::shared_ptr&amp;lt;T&amp;gt; &amp;gt;::const_iterator iter = outter_map.find(a);
+    std::map<int, std::shared_ptr<t> >::const_iterator iter = outter_map.find(a);
     if (iter != outter_map.end()) {
-        func2(iter-&amp;gt;second);
+        func2(iter->second);
     }
 }
 
-void func2(const std::shared_ptr&amp;lt;T&amp;gt;&amp;amp; obj_ptr) {
+void func2(const std::shared_ptr<t>& obj_ptr) {
     if (!obj_ptr) {
         return;
     }
     // 从逻辑隔离的角度，按照正常的语义，这里之后obj_ptr应该一直有效了吧 
     // ... ,执行了茫茫多操作以后,间接调用了outter_map.erase([上一层函数用到的a])
     
-    obj_ptr-&amp;gt;xxx; // 这里崩溃了，因为智能指针常量不再有效
+    obj_ptr->xxx; // 这里崩溃了，因为智能指针常量不再有效
 }</code></pre><p>如果这两个函数分散在两个模块里，并且是不同人写得话，很难发现这个问题。因为对双方各自的使用来说，似乎都没什么问题（上层不关心下层的内部实现，下层不应该认为常量是不会变化的）。但是放一起的话问题就来了。所以算是C++ 使用上的一个坑。解决办法也很简单，强制造成一次引用计数即可。</p><p>以下是对<strong>func1</strong>的改造</p><pre><code class=language-cpp>void func1(int a) {
-    std::map&amp;lt;int, std::shared_ptr&amp;lt;T&amp;gt; &amp;gt;::const_iterator iter = outter_map.find(a);
+    std::map<int, std::shared_ptr<t> >::const_iterator iter = outter_map.find(a);
     if (iter != outter_map.end()) {
         // 这意味着调用方要保证被调用方不会出现问题，而间接关心被调用方的实现
-        std::shared_ptr&amp;lt;T&amp;gt; cache = iter-&amp;gt;second; 
+        std::shared_ptr<t> cache = iter->second; 
         func2(cache);
     }
 }</code></pre><p>并且这个问题在迭代器内容不是智能指针的时候也存在，不过会导致解决方法更加复杂（因为不应该有对象的拷贝复制）。这里不再列举。</p><h2 id=坑二linux环境下共享静态库的问题>坑二：Linux环境下共享静态库的问题</h2><p>这个问题之前就提及过<a href=https://www.owent.net/2014/962.html>《C++又一坑:动态链接库中的全局变量》</a>现在则是碰到了更有代表性的实例。</p><p>我们的程序框架和逻辑模块的关系是。逻辑服务器编译成一个动态链接库，由框架执行<strong>dlopen</strong>加载。框架之间通信是采用<a href=https://github.com/google/protobuf>protobuf</a>,逻辑服务器和哭护短通信也采用的是<a href=https://github.com/google/protobuf>protobuf</a>。那么问题就来了，两个模块都使用了<a href=https://github.com/google/protobuf>protobuf</a>并且都是<strong>静态链接</strong>，而<a href=https://github.com/google/protobuf>protobuf</a>里的协议描述信息又是全局的（我们这里体现在了<strong>google::protobuf::FileDescriptorTables</strong>这个类上，并且它在常量区），并且存在多种协议集合。</p><p>按照Linux的ABI的实现逻辑，这个全局的对象在框架层面会进行一次初始化构造，在动态链接库里又会执行一次初始化构造。并且次执行构造函数的this指针地址一样，成员（特别是STL）的构造数据地址不一样。</p><p>这些导致少量的内存泄露都还是其次，最重要的问题是，在析构的时候，dlclose会进行析构的内存回收，主框架也会。这就导致了回收了两遍，并且回收不完全。</p><p>我们这里检测到是在<strong>google::protobuf::FileDescriptorTables</strong>析构时hash table的析构的时候内存错误。而且由于现在的内存分配器都有容错，意味着<strong>这个崩溃不是必现</strong>的。使用debug版本的jemalloc可以100%复现这个问题，而使用release版的jemalloc或者ptmalloc或者tcmalloc的时候都不能及时发现。valgrind的检测信息大致如下：</p><pre><code class=language-text>==29910== Invalid read of size 8
@@ -38,7 +38,7 @@ void func2(const std::shared_ptr&amp;lt;T&amp;gt;&amp;amp; obj_ptr) {
 ==29910==    by 0x6212E48: __run_exit_handlers (in /usr/lib64/libc-2.17.so)
 ==29910==    by 0x6212E94: exit (in /usr/lib64/libc-2.17.so)
 ==29910==    by 0x61FBAFB: (below main) (in /usr/lib64/libc-2.17.so)
-==29910==  Address 0x702f020 is 0 bytes inside a block of size 96 free&amp;#39;d
+==29910==  Address 0x702f020 is 0 bytes inside a block of size 96 free'd
 ==29910==    at 0x4C2B131: operator delete(void*) (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
 ==29910==    by 0x4F7650: deallocate (new_allocator.h:110)
 ==29910==    by 0x4F7650: _M_deallocate_buckets (hashtable.h:509)

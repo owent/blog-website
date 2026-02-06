@@ -9,10 +9,10 @@
 #define THREAD_TLS
 #elif defined(__clang__)
 #define THREAD_TLS __thread
-#elif defined(__cplusplus) &amp;amp;amp;&amp;amp;amp; __cplusplus &amp;amp;gt;= 201103L
+#elif defined(__cplusplus) &amp;&amp; __cplusplus &gt;= 201103L
 #define THREAD_TLS thread_local
 // VC 2003
-#elif defined(_MSC_VER) &amp;amp;amp;&amp;amp;amp; (_MSC_VER &amp;amp;gt;= 1300)
+#elif defined(_MSC_VER) &amp;&amp; (_MSC_VER &gt;= 1300)
 #define THREAD_TLS __declspec( thread )
 #else
 #define THREAD_TLS __thread

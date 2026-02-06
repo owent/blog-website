@@ -13,7 +13,7 @@
     }
 
     int ret = await_io_task(self_task);
-    if (ret &amp;lt; 0) {
+    if (ret < 0) {
         return ret;
     }
 
@@ -25,7 +25,7 @@
     ret = pull_cache(priv_data);
     io_task_.reset();
 
-    if (ret &amp;lt; 0) {
+    if (ret < 0) {
         return ret;
     }
 

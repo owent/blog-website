@@ -14,12 +14,12 @@
   static foo _;
 };
 
-void print_static_global(const char*);</code></pre><p><em><strong>a.cpp</strong></em></p><pre><code class=language-cpp>#include &amp;#34;a.h&amp;#34;
+void print_static_global(const char*);</code></pre><p><em><strong>a.cpp</strong></em></p><pre><code class=language-cpp>#include "a.h"
 
-#include &amp;lt;iostream&amp;gt;
-#include &amp;lt;thread&amp;gt;
-#include &amp;lt;chrono&amp;gt;
-#include &amp;lt;memory&amp;gt;
+#include <iostream>
+#include <thread>
+#include <chrono>
+#include <memory>
 
 struct bar {
   foo* ptr = nullptr;
@@ -30,43 +30,43 @@ static bar s_;
 
 foo::foo(): bar(127) {
     s_.ptr = this;
-    std::cout&amp;lt;&amp;lt; &amp;#34;construct &amp;#34;&amp;lt;&amp;lt; this&amp;lt;&amp;lt; std::endl;
+    std::cout<< "construct "<< this<< std::endl;
 }
 
 foo::~foo() {
-    std::cout&amp;lt;&amp;lt; &amp;#34;destroy &amp;#34;&amp;lt;&amp;lt; this&amp;lt;&amp;lt; std::endl;
+    std::cout<< "destroy "<< this<< std::endl;
 }
 
 void foo::print(const char* prefix) {
-    std::cout&amp;lt;&amp;lt; prefix&amp;lt;&amp;lt; &amp;#34;-foo: &amp;#34;&amp;lt;&amp;lt; this&amp;lt;&amp;lt; &amp;#34;: &amp;#34;&amp;lt;&amp;lt; bar&amp;lt;&amp;lt; std::endl;
+    std::cout<< prefix<< "-foo: "<< this<< ": "<< bar<< std::endl;
 }
 
 void print_static_global(const char* prefix) {
     foo::_.print(prefix);
-    std::cout&amp;lt;&amp;lt; prefix&amp;lt;&amp;lt; &amp;#34;-piblic API bar: &amp;#34;&amp;lt;&amp;lt; s_.ptr&amp;lt;&amp;lt; std::endl;
+    std::cout<< prefix<< "-piblic API bar: "<< s_.ptr<< std::endl;
 }
 
-std::shared_ptr&amp;lt;std::thread&amp;gt; g_t(new std::thread([]() {
+std::shared_ptr<std::thread> g_t(new std::thread([]() {
   std::this_thread::sleep_for(std::chrono::seconds{1});
-  std::cout&amp;lt;&amp;lt; &amp;#34;internal API bar: &amp;#34;&amp;lt;&amp;lt; s_.ptr&amp;lt;&amp;lt; std::endl;
+  std::cout<< "internal API bar: "<< s_.ptr<< std::endl;
 }), [](std::thread* thd) {
-  thd-&amp;gt;join();
+  thd->join();
   delete thd;
-});</code></pre><p><em><strong>b.cpp</strong></em></p><pre><code class=language-cpp>#include &amp;#34;a.h&amp;#34;
+});</code></pre><p><em><strong>b.cpp</strong></em></p><pre><code class=language-cpp>#include "a.h"
 
 void dll_func_b() {
-    print_static_global(&amp;#34;b&amp;#34;);
-}</code></pre><p><em><strong>c.cpp</strong></em></p><pre><code class=language-cpp>#include &amp;#34;a.h&amp;#34;
+    print_static_global("b");
+}</code></pre><p><em><strong>c.cpp</strong></em></p><pre><code class=language-cpp>#include "a.h"
 
 void dll_func_b();
 
 int main() {
-  print_static_global(&amp;#34;c&amp;#34;);
+  print_static_global("c");
   dll_func_b();
   return 0;
-}</code></pre><p>我们执行以下编译命令，结果如下:</p><pre><code class=language-bash>[owent@VM-144-59-centos test]$ clang&#43;&#43; a.cpp -o libtest_a.a -c -fPIC -pthread 
-[owent@VM-144-59-centos test]$ clang&#43;&#43; b.cpp -o libtest_b.so -shared -fPIC -L$PWD -ltest_a -pthread
-[owent@VM-144-59-centos test]$ clang&#43;&#43; c.cpp -fPIC -L$PWD -ltest_b -ltest_a &amp;#39;-Wl,-rpath=$ORIGIN&amp;#39; -pthread
+}</code></pre><p>我们执行以下编译命令，结果如下:</p><pre><code class=language-bash>[owent@VM-144-59-centos test]$ clang++ a.cpp -o libtest_a.a -c -fPIC -pthread 
+[owent@VM-144-59-centos test]$ clang++ b.cpp -o libtest_b.so -shared -fPIC -L$PWD -ltest_a -pthread
+[owent@VM-144-59-centos test]$ clang++ c.cpp -fPIC -L$PWD -ltest_b -ltest_a '-Wl,-rpath=$ORIGIN' -pthread
 [owent@VM-144-59-centos test]$ ./a.out 
 [owent@VM-144-59-centos test]$ ./a.out 
 construct 0x55af97755338

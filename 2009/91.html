@@ -8,7 +8,7 @@
 const int maxn = 100002;
 int DSet[maxn];
 void init(int n) {
-    for(int i = 0 ; i &amp;lt;= n ; i &#43;&#43;)
+    for(int i = 0 ; i <= n ; i ++)
         DSet[i] = i;
 }
 int findP(int id) {
@@ -20,7 +20,7 @@ if(DSet[id] != id)
 int UnionEle(int a,int b) {
     a = findP(a);
     b = findP(b);
-    if(a &amp;gt; b)
+    if(a > b)
         a ^= b ^= a ^= b;
     DSet[b] = a;
     return a;

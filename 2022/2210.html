@@ -15,44 +15,44 @@
   ServeDNS(context.Context, dns.ResponseWriter, *dns.Msg) (int, error)
   Name() string
 }</code></pre><p>然后初始化的时候需要实现</p><pre><code class=language-go>func init() {
-  plugin.Register(&amp;#34;插件名&amp;#34;, setup)
+  plugin.Register("插件名", setup)
 }
 
 func setup(c *caddy.Controller) error {
   handle := NewHandler()    // 创建插件实例
-  err := parse(c, &amp;amp;handle)  // 解析配置
+  err := parse(c, &handle)  // 解析配置
   if err != nil {
-    return plugin.Error(&amp;#34;插件名&amp;#34;, err)
+    return plugin.Error("插件名", err)
   }
 
   // 设置串联插件的回调（设置下一个插件）
   dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
     handle.Next = next
-    return &amp;amp;handle
+    return &handle
   })
 
-  log.Debug(&amp;#34;Add 插件名 plugin to dnsserver&amp;#34;)
+  log.Debug("Add 插件名 plugin to dnsserver")
 
   return nil
 }</code></pre><p><a href=https://coredns.io/>coredns</a> 的插件是静态的，就是增减插件都需要把插件名字和地址写进 <code>plugin.cfg</code> 里然后重新编译。而 <a href=https://coredns.io/>coredns</a> 的插件触发顺序是按 <code>plugin.cfg</code> 里的顺序，和用户写配置的顺序无关。
 实际上 <a href=https://coredns.io/>coredns</a> 会对每个Zone建立一个插件的链表，然后从尾部开始触发插件的 <code>setup</code> 接口。</p><p>比如，如果 <code>plugin.cfg</code> 里插件 <code>A</code> , <code>B</code> 的配置顺序是</p><pre><code class=language-text>A
 B</code></pre><p>那么会先调用 <code>B</code> 的 <code>func(next plugin.Handler) plugin.Handler</code> ，然后在调用 <code>A</code> 的 <code>func(next plugin.Handler) plugin.Handler</code> 时候 <code>next</code> 传入 <code>B</code> 的返回值。</p><p>而执行的时候，几乎所有的插件都是使用 <code>plugin.NextOrFailure(m.Name(), m.Next, ctx, w, r)</code> 来先触发下一跳，通过协程的等待机制等下一跳完成在执行自己的逻辑。
-如果需要修改下一跳的返回结果，可以通过 <a href=https://coredns.io/>coredns</a> 提供的 <a href=github.com/coredns/coredns/plugin/pkg/nonwriter>nonwriter</a> 模块对插件链的解析结果进行劫持再重新写入。</p><p>这些操作最终使得整体像是一个链表按配置的顺序执行，实际上它是一个栈。</p><p>当然也可以不用这种标准方式执行，比如说我们也可以像 <a href=https://github.com/pymumu/smartdns>smartdns</a> 一样并发发起多个请求，返回最快的那个。（说不定哪天有时间了我可以再写个插件完成这个功能）</p><p>其中 <code>ServeDNS</code> 接口的返回值如果无错误的话要返回 DNS解析的 RCODE 。</p><p>所以实现插件只要把我们要加的功能插入到合适的位置。</p><h2 id=coredns-nftables>coredns-nftables</h2><p><a href=https://github.com/owent/coredns-nftables>coredns-nftables</a> 用于操作 <a href=https://nftables.org/projects/nftables/index.html>nftables</a>。先预留了也许以后还可以由其他操作，所以插件名字就叫 <code>nftables</code> 。只是当前版本还是仅支持添加 set 。</p><p><a href=https://go.dev/>golang</a> 其实没有成熟的能够直接操作 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 的库，所幸 Google 有一个没有Release的库 <a href=https://github.com/google/nftables>https://github.com/google/nftables</a> ，可以直接用。</p><p>然后由于这个库是对解析出的最终结果写入set，对于返回 CNAME 的域名，其实需要进一步递归解析，这时候可以使用 <a href=https://coredns.io/>coredns</a> 的外部插件 <a href=https://coredns.io/explugins/finalize/>finalize</a> 。</p><p>那么由于我们要对 <a href=https://coredns.io/explugins/finalize/>finalize</a> 的最终结果做处理，所以我们的这个插件要挂在 <a href=https://coredns.io/explugins/finalize/>finalize</a> 的后面。</p><p>我测试的时候发现操作 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 的时候延迟还是比较大的，能有上百毫秒。所以为了不拖慢域名解析的速度，我把这个插件写成了先写出和返回解析结果，然后后台起了个 goroutine 去执行 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 的写入。同时也为了降低不必要的开销，建议是把这个插件放在 <a href=https://coredns.io/plugins/cache/>cache</a> 插件后，并且超时时间大于 <a href=https://coredns.io/plugins/cache/>cache</a> 的超时时间。</p><pre><code class=language-bash>sed -i.bak -r &amp;#39;/finalize:.*/d&amp;#39; plugin.cfg
-sed -i.bak &amp;#39;/cache:.*/a finalize:github.com/tmeckel/coredns-finalizer&amp;#39; plugin.cfg
+如果需要修改下一跳的返回结果，可以通过 <a href=https://coredns.io/>coredns</a> 提供的 <a href=github.com/coredns/coredns/plugin/pkg/nonwriter>nonwriter</a> 模块对插件链的解析结果进行劫持再重新写入。</p><p>这些操作最终使得整体像是一个链表按配置的顺序执行，实际上它是一个栈。</p><p>当然也可以不用这种标准方式执行，比如说我们也可以像 <a href=https://github.com/pymumu/smartdns>smartdns</a> 一样并发发起多个请求，返回最快的那个。（说不定哪天有时间了我可以再写个插件完成这个功能）</p><p>其中 <code>ServeDNS</code> 接口的返回值如果无错误的话要返回 DNS解析的 RCODE 。</p><p>所以实现插件只要把我们要加的功能插入到合适的位置。</p><h2 id=coredns-nftables>coredns-nftables</h2><p><a href=https://github.com/owent/coredns-nftables>coredns-nftables</a> 用于操作 <a href=https://nftables.org/projects/nftables/index.html>nftables</a>。先预留了也许以后还可以由其他操作，所以插件名字就叫 <code>nftables</code> 。只是当前版本还是仅支持添加 set 。</p><p><a href=https://go.dev/>golang</a> 其实没有成熟的能够直接操作 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 的库，所幸 Google 有一个没有Release的库 <a href=https://github.com/google/nftables>https://github.com/google/nftables</a> ，可以直接用。</p><p>然后由于这个库是对解析出的最终结果写入set，对于返回 CNAME 的域名，其实需要进一步递归解析，这时候可以使用 <a href=https://coredns.io/>coredns</a> 的外部插件 <a href=https://coredns.io/explugins/finalize/>finalize</a> 。</p><p>那么由于我们要对 <a href=https://coredns.io/explugins/finalize/>finalize</a> 的最终结果做处理，所以我们的这个插件要挂在 <a href=https://coredns.io/explugins/finalize/>finalize</a> 的后面。</p><p>我测试的时候发现操作 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 的时候延迟还是比较大的，能有上百毫秒。所以为了不拖慢域名解析的速度，我把这个插件写成了先写出和返回解析结果，然后后台起了个 goroutine 去执行 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 的写入。同时也为了降低不必要的开销，建议是把这个插件放在 <a href=https://coredns.io/plugins/cache/>cache</a> 插件后，并且超时时间大于 <a href=https://coredns.io/plugins/cache/>cache</a> 的超时时间。</p><pre><code class=language-bash>sed -i.bak -r '/finalize:.*/d' plugin.cfg
+sed -i.bak '/cache:.*/a finalize:github.com/tmeckel/coredns-finalizer' plugin.cfg
 go get github.com/tmeckel/coredns-finalizer
 
-sed -i.bak -r &amp;#39;/nftables:.*/d&amp;#39; plugin.cfg
-sed -i.bak &amp;#39;/cache:.*/i nftables:github.com/owent/coredns-nftables&amp;#39; plugin.cfg
+sed -i.bak -r '/nftables:.*/d' plugin.cfg
+sed -i.bak '/cache:.*/i nftables:github.com/owent/coredns-nftables' plugin.cfg
 go get github.com/owent/coredns-nftables
 
 go generate</code></pre><p>最终的配置结构如下:</p><pre><code class=language-text>nftables [ip/ip6]... {
-  set add element &amp;lt;TABLE_NAME&amp;gt; &amp;lt;SET_NAME&amp;gt; [ip/ip6/auto] [interval] [timeout]
-  [connection timeout &amp;lt;timeout&amp;gt;]
+  set add element <table_name> <set_name> [ip/ip6/auto] [interval] [timeout]
+  [connection timeout <timeout>]
 }
 
 nftables [inet/bridge/arp/netdev]... {
-  set add element &amp;lt;TABLE_NAME&amp;gt; &amp;lt;SET_NAME&amp;gt; &amp;lt;ip/ip6&amp;gt; [interval] [timeout]
-  [connection timeout &amp;lt;timeout&amp;gt;]
+  set add element <table_name> <set_name> <ip/ip6> [interval] [timeout]
+  [connection timeout <timeout>]
 }</code></pre><p>这里还利用了 <a href=https://nftables.org/projects/nftables/index.html>nftables</a> 的 set 自带的超时机制去设置定时淘汰。
 对于 <code>ip</code> 和 <code>ip6</code> 的 family 类型，可以设置 set 类型为 auto，这样就只会写入符合条件对的ip。
 而对于其他的 family 类型，就必须自己设置建立 set 时要使用哪种类型了。当然如果set本身就已存在会用已存在的set的类型。</p><h2 id=coredns-filter>coredns-filter</h2><p><a href=https://github.com/owent/coredns-filter>coredns-filter</a> 插件就更简单一些了。当然也是建议放在 <a href=https://coredns.io/plugins/cache/>cache</a> 和 <a href=https://github.com/owent/coredns-nftables>coredns-nftables</a> 插件后，但是应该在 <a href=https://coredns.io/explugins/finalize/>finalize</a> 前。这样能减少 <a href=https://github.com/owent/coredns-nftables>coredns-nftables</a> 不必要的开销。</p><p>整个配置的语法大概是:</p><pre><code class=language-text>filter [command options...] {
