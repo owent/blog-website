@@ -10,7 +10,7 @@
 modinfo tun;
 
 # EPEL源
-rpm -ivh &quot;http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm&quot;;
+rpm -ivh &amp;#34;http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm&amp;#34;;
 
 # 安装软件包
 yum install -y easy-rsa openvpn;
@@ -23,13 +23,12 @@ cp -rf /usr/share/easy-rsa /etc/openvpn/ ;
 # 配置openvpn-startup.sh里要启动的VPN配置文件（最后几行）
 
 # 启动openvpn
-cd /etc/openvpn &amp;&amp; ./openvpn-startup.sh
+cd /etc/openvpn &amp;amp;&amp;amp; ./openvpn-startup.sh
 # 关闭openvpn
-cd /etc/openvpn &amp;&amp; ./openvpn-shutdown.sh
-</code></pre><p><strong>建议尝试配置的过程中先使用虚拟机试一下</strong>，因为GFW灰常牛逼的可以按协议把握手包和丢掉。我就是卡在这非常久，UDP连接提示验证失败，TCP连接客户端和服务器都收到错误码为-1的断开连接报文。死活没连上，最后我换用国内的一个VPS同样的搭建方法就直接正常连上了。</p><h2 id=ppp和pptpd>PPP和PPTPD</h2><p>由于OpenVPN各种墙，所以我就想换一个支持度比较高的解决方案，使用pptp协议。CentOS 6 下大致过程如下：</p><pre><code class=language-bash>#!/bin/sh
+cd /etc/openvpn &amp;amp;&amp;amp; ./openvpn-shutdown.sh</code></pre><p><strong>建议尝试配置的过程中先使用虚拟机试一下</strong>，因为GFW灰常牛逼的可以按协议把握手包和丢掉。我就是卡在这非常久，UDP连接提示验证失败，TCP连接客户端和服务器都收到错误码为-1的断开连接报文。死活没连上，最后我换用国内的一个VPS同样的搭建方法就直接正常连上了。</p><h2 id=ppp和pptpd>PPP和PPTPD</h2><p>由于OpenVPN各种墙，所以我就想换一个支持度比较高的解决方案，使用pptp协议。CentOS 6 下大致过程如下：</p><pre><code class=language-bash>#!/bin/sh
 # 1. 安装软件包
 # EPEL源
-rpm -ivh &quot;http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm&quot;;
+rpm -ivh &amp;#34;http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm&amp;#34;;
 yum install ppp pptp pptpd pptp-setup -y;
 
 # 2. 配置
@@ -45,9 +44,9 @@ vim /etc/ppp/chap/secrets
 # 3. 启动模块和添加初始化启动模块
 modprobe ppp_mppe
 modprobe ip_gre
-echo &quot;#!/bin/sh&quot; &gt; /etc/sysconfig/modules/pptpd.modules
-echo &quot;modprobe ppp_mppe&quot; &gt;&gt; /etc/sysconfig/modules/pptpd.modules
-echo &quot;modprobe ip_gre&quot; &gt;&gt; /etc/sysconfig/modules/pptpd.modules
+echo &amp;#34;#!/bin/sh&amp;#34; &amp;gt; /etc/sysconfig/modules/pptpd.modules
+echo &amp;#34;modprobe ppp_mppe&amp;#34; &amp;gt;&amp;gt; /etc/sysconfig/modules/pptpd.modules
+echo &amp;#34;modprobe ip_gre&amp;#34; &amp;gt;&amp;gt; /etc/sysconfig/modules/pptpd.modules
 
 # 4. pptpd启动和开机启动
 service pptpd start
@@ -62,15 +61,14 @@ iptables -A INPUT -p gre -j ACCEPT
 iptables -A POSTROUTING -t nat -s 192.168.10.0/24 -o eth0 -j MASQUERADE
 iptables -A INPUT -p UDP --dport 53 -j ACCEPT
 iptables -A INPUT -p tcp --dport 53 -j ACCEPT
-service iptables save
-</code></pre><p>最后客户端连接的时候的配置里要注意</p><ol><li>关闭EAP</li><li>打开 使用点到点加密(MPPE)</li><li>放心地使用MS-Chapv2吧</li><li>另外貌似要内核支持某个功能，可以通过dkms提供（忘记哪个模块了但是我的VPS里自带）</li></ol><p>我按这个配置成功连上了，但是后来配置l2tp的时候给搞乱了配置，又不知道为什么连不上了，好麻烦。</p><h2 id=ipsec和l2tp协议>IPSec和l2tp协议</h2><p>这个协议最麻烦，而且我没连成功过。不过记录一下操作流程。</p><pre><code class=language-bash># 1. 安装 yum install openswan xl2tpd openswan-doc lsof libpcap-devel
+service iptables save</code></pre><p>最后客户端连接的时候的配置里要注意</p><ol><li>关闭EAP</li><li>打开 使用点到点加密(MPPE)</li><li>放心地使用MS-Chapv2吧</li><li>另外貌似要内核支持某个功能，可以通过dkms提供（忘记哪个模块了但是我的VPS里自带）</li></ol><p>我按这个配置成功连上了，但是后来配置l2tp的时候给搞乱了配置，又不知道为什么连不上了，好麻烦。</p><h2 id=ipsec和l2tp协议>IPSec和l2tp协议</h2><p>这个协议最麻烦，而且我没连成功过。不过记录一下操作流程。</p><pre><code class=language-bash># 1. 安装 yum install openswan xl2tpd openswan-doc lsof libpcap-devel
 # 2. 配置
 vim  /etc/ipsec.conf
 # 编辑 dumpdir=/var/run/pluto/
 # 编辑 virtual_private=%v4:10.0.0.0/8,%v4:192.168.11.0/24,%v4:172.16.0.0/12,%v4:25.0.0.0/8,%v6:fd00::/8,%v6:fe80::/10
 
 # /etc/ipsec.d/xl2tpd.conf
-cat &gt; /etc/ipsec.d/xl2tpd.conf &lt;&lt;EOF
+cat &amp;gt; /etc/ipsec.d/xl2tpd.conf &amp;lt;&amp;lt;EOF
 # Add connections here
 
 # sample VPN connection
@@ -109,7 +107,7 @@ EOF;
 
 # 设置预共享密钥
 vim  /etc/ipsec.d/xl2tpd.secrets
-echo ': PSK &quot;l2tpd.owent.net&quot;' &gt; /etc/ipsec.d/xl2tpd.secrets;
+echo &amp;#39;: PSK &amp;#34;l2tpd.owent.net&amp;#34;&amp;#39; &amp;gt; /etc/ipsec.d/xl2tpd.secrets;
 # 3. 网络设置
 sysctl -w net.ipv4.ip_forward=1
 sysctl -w net.ipv4.conf.default.rp_filter=0
@@ -148,8 +146,7 @@ iptables -A FORWARD -d 192.168.11.0/24 -j ACCEPT
 service iptables save
 # 6. 启动xl2tpd和自动运行
 chkconfig --level 2345 ipsec on
-chkconfig --level 2345 xl2tpd on
-</code></pre><p>不过这个我没连接成功过，不知道什么原因。
+chkconfig --level 2345 xl2tpd on</code></pre><p>不过这个我没连接成功过，不知道什么原因。
 另外据说也可以使用<a href=https://www.strongswan.org/><strong>strongswan</strong></a>取代openswan，而且strongswan还可以用来配置<strong>IKEv1和IKEv2</strong>协议。</p><h2 id=简化vpn服务器安装softether-vpn>简化VPN服务器安装Softether VPN</h2><p>痛苦了两周之后，发现其实有简单暴力的VPN方案，就是日本的开源软件<a href=https://www.softether.org/>Softether VPN</a></p><p>Source列表: <a href=https://www.softether.org/5-download/src>https://www.softether.org/5-download/src</a>
 Github地址: <a href=https://github.com/SoftEtherVPN/SoftEtherVPN/>https://github.com/SoftEtherVPN/SoftEtherVPN/</a>
 Google Code地址: <a href=https://code.google.com/p/softether/source/browse/>https://code.google.com/p/softether/source/browse/</a>
@@ -164,8 +161,7 @@ iptables -A INPUT -p udp --dport 500 -j ACCEPT
 iptables -A INPUT -p tcp --dport 1723 -j ACCEPT
 iptables -A INPUT -p udp --dport 4500 -j ACCEPT
 iptables -A INPUT -p tcp --dport 5555 -j ACCEPT
-service iptables save
-</code></pre><h2 id=通用要注意的地方>通用要注意的地方</h2><ol><li>最后检查一下/etc/sysconfig/iptables里的重复项，去掉保存</li><li><strong>CentOS 7下默认使用firewall</strong>而不是iptables，需要相应地修改配置才行</li><li>一些系统，比如CentOS 7下默认<strong>使用systemd的systemctl命令</strong>而不是传统的chkconfig来控制服务，也要做相应得变更</li><li>注意CentOS里的selinux(可通过sestatus查看状态，建议关掉就好，没啥作用)</li><li>注意Ubuntu下的防火墙ufw</li></ol></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/work.html>Work</a></li></ol></span><span class=article-meta-right><time datetime=2014-09-28T20:36:46.000+00:00 itemprop=datePublished>2014-09-28</time></span>
+service iptables save</code></pre><h2 id=通用要注意的地方>通用要注意的地方</h2><ol><li>最后检查一下/etc/sysconfig/iptables里的重复项，去掉保存</li><li><strong>CentOS 7下默认使用firewall</strong>而不是iptables，需要相应地修改配置才行</li><li>一些系统，比如CentOS 7下默认<strong>使用systemd的systemctl命令</strong>而不是传统的chkconfig来控制服务，也要做相应得变更</li><li>注意CentOS里的selinux(可通过sestatus查看状态，建议关掉就好，没啥作用)</li><li>注意Ubuntu下的防火墙ufw</li></ol></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/work.html>Work</a></li></ol></span><span class=article-meta-right><time datetime=2014-09-28T20:36:46.000+00:00 itemprop=datePublished>2014-09-28</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/l2tp.html>l2tp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/openswan.html>openswan</a></li><li class=article-tag-list-item><a href=//owent.net/tags/openvpn.html>openvpn</a></li><li class=article-tag-list-item><a href=//owent.net/tags/packetix.html>PacketiX</a></li><li class=article-tag-list-item><a href=//owent.net/tags/pptp.html>pptp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/softether.html>softether</a></li><li class=article-tag-list-item><a href=//owent.net/tags/strongswan.html>strongswan</a></li><li class=article-tag-list-item><a href=//owent.net/tags/vpn.html>vpn</a></li><li class=article-tag-list-item><a href=//owent.net/tags/vpnc.html>vpnc</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2014/1110.html>上一篇<strong>Gitlab环境搭建小计</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2014/1101.html>下一篇<strong>LLVM + Clang + Libcxx + Libcxxabi 工具链编译</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,

@@ -10,20 +10,19 @@
   4  [||||||||||||||||||                                                             20.9%]   8  [||||||||||||||                                                                 16.1%]
   Mem[|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||17.0G/23.3G]   Tasks: 178, 215 thr; 3 running
   Swp[                                                                               0K/0K]   Load average: 1.78 1.82 1.79 
-                                                                                              Uptime: 142 days(!), 13:03:09
-</code></pre><h2 id=优化前的压力测试---run-on-2016-07-01>优化前的压力测试 - Run On 2016-07-01、</h2><table><thead><tr><th>测试项</th><th>连接数</th><th>包长度</th><th>CPU消耗</th><th>内存消耗</th><th>吞吐量</th><th>QPS</th></tr></thead><tbody><tr><td>Linux+本地回环+ipv6+静态缓冲区</td><td>1</td><td>8-16384字节</td><td>93%/100%</td><td>5.6MB/24MB</td><td>467MB/s</td><td>80K/s</td></tr><tr><td>Linux+本地回环+ipv6+静态缓冲区</td><td>1</td><td>8-128字节(模拟ping包)</td><td>97%/100%</td><td>5.6MB/28MB</td><td>8.67MB/s</td><td>165K/s</td></tr><tr><td>Linux+本地回环+ipv6+动态缓冲区(ptmalloc)</td><td>1</td><td>8-16384字节</td><td>95%/100%</td><td>5.6MB/28MB</td><td>484MB/s</td><td>82.6K/s</td></tr><tr><td>Linux+本地回环+ipv6+动态缓冲区(ptmalloc)</td><td>1</td><td>8-128字节(模拟ping包)</td><td>97%/100%</td><td>5.6MB/28MB</td><td>8.5MB/s</td><td>163K/s</td></tr><tr><td>Linux+共享内存</td><td>1</td><td>8-16384字节</td><td>98%/98%</td><td>74MB/74MB</td><td>1.56GB/s</td><td>199K/s</td></tr><tr><td>Linux+共享内存</td><td>1</td><td>8-128字节(模拟ping包)</td><td>100%/83%</td><td>74MB/74MB</td><td>303MB/s</td><td>5253K/s</td></tr></tbody></table><p>这里面可以看出来，其实使用共享内存通道的时候，性能已经足够不错了，但是对于使用tcp的时候，特别是小数据包其实QPS不是很高。</p><p>如果说对比大部分其他开源的类似的库，这个QPS应该还算还可以。虽然现在忘记了那些个框架的名字，我以前接触过的一些用于游戏的通信中间件，QPS在10w-20w/s之间已经算是比较高的了。
+                                                                                              Uptime: 142 days(!), 13:03:09</code></pre><h2 id=优化前的压力测试---run-on-2016-07-01>优化前的压力测试 - Run On 2016-07-01、</h2><table><thead><tr><th>测试项</th><th>连接数</th><th>包长度</th><th>CPU消耗</th><th>内存消耗</th><th>吞吐量</th><th>QPS</th></tr></thead><tbody><tr><td>Linux+本地回环+ipv6+静态缓冲区</td><td>1</td><td>8-16384字节</td><td>93%/100%</td><td>5.6MB/24MB</td><td>467MB/s</td><td>80K/s</td></tr><tr><td>Linux+本地回环+ipv6+静态缓冲区</td><td>1</td><td>8-128字节(模拟ping包)</td><td>97%/100%</td><td>5.6MB/28MB</td><td>8.67MB/s</td><td>165K/s</td></tr><tr><td>Linux+本地回环+ipv6+动态缓冲区(ptmalloc)</td><td>1</td><td>8-16384字节</td><td>95%/100%</td><td>5.6MB/28MB</td><td>484MB/s</td><td>82.6K/s</td></tr><tr><td>Linux+本地回环+ipv6+动态缓冲区(ptmalloc)</td><td>1</td><td>8-128字节(模拟ping包)</td><td>97%/100%</td><td>5.6MB/28MB</td><td>8.5MB/s</td><td>163K/s</td></tr><tr><td>Linux+共享内存</td><td>1</td><td>8-16384字节</td><td>98%/98%</td><td>74MB/74MB</td><td>1.56GB/s</td><td>199K/s</td></tr><tr><td>Linux+共享内存</td><td>1</td><td>8-128字节(模拟ping包)</td><td>100%/83%</td><td>74MB/74MB</td><td>303MB/s</td><td>5253K/s</td></tr></tbody></table><p>这里面可以看出来，其实使用共享内存通道的时候，性能已经足够不错了，但是对于使用tcp的时候，特别是小数据包其实QPS不是很高。</p><p>如果说对比大部分其他开源的类似的库，这个QPS应该还算还可以。虽然现在忘记了那些个框架的名字，我以前接触过的一些用于游戏的通信中间件，QPS在10w-20w/s之间已经算是比较高的了。
 而且这个中间件主要是面向游戏服务器的通信，而在一个游戏服务器进程中，一般不会有这么高的请求频次。而且游戏服务器一般是逻辑比较复杂，CPU和内存比较容易成为瓶颈。
 所以也是这些原因，要不是看了一下以前跑的腾讯的tbus的压力测试，还真没优化的计划。</p><h2 id=tbus的性能---run-on-2014-01-14>tbus的性能 - Run On 2014-01-14</h2><ul><li>环境: tlinux 1.0.7 (based on CentOS 6.2), GCC 4.8.2, gperftools 2.1(启用tcmalloc和cpu profile)</li><li>CPU: Xeon X3440 2.53GHz*8</li><li>内存: 8GB (这是总内存，具体使用数根据配置不同而不同)</li><li>网络: 千兆网卡 * 1</li><li>编译选项: -O2 -g -DNDEBUG -ggdb -Wall -Werror -Wno-unused-local-typedefs -std=gnu++11 -D_POSIX_MT_</li><li>配置选项: 无</li></ul><table><thead><tr><th>测试项</th><th>连接数</th><th>包长度</th><th>CPU消耗</th><th>内存消耗</th><th>吞吐量</th><th>QPS</th></tr></thead><tbody><tr><td>Linux+跨机器转发+ipv4</td><td>2(仅一个连接压力测试)</td><td>16KB</td><td>13%/100%</td><td>280MB</td><td>86.4MB/s</td><td>5.4K/s</td></tr><tr><td>Linux+跨机器转发+ipv4</td><td>2(仅一个连接压力测试)</td><td>8KB</td><td>13%/100%</td><td>280MB</td><td>96MB/s</td><td>12K/s</td></tr><tr><td>Linux+跨机器转发+ipv4</td><td>2(仅一个连接压力测试)</td><td>4KB</td><td>13%/100%</td><td>280MB</td><td>92MB/s</td><td>23K/s</td></tr><tr><td>Linux+跨机器转发+ipv4</td><td>2(仅一个连接压力测试)</td><td>2KB</td><td>15%/100%</td><td>280MB</td><td>88MB/s</td><td>44K/s</td></tr><tr><td>Linux+跨机器转发+ipv4</td><td>2(仅一个连接压力测试)</td><td>1KB</td><td>16%/100%</td><td>280MB</td><td>82MB/s</td><td>82K/s</td></tr><tr><td>Linux+跨机器转发+ipv4</td><td>2(仅一个连接压力测试)</td><td>512字节</td><td>22%/100%</td><td>280MB</td><td>79.5MB/s</td><td>159K/s</td></tr><tr><td>Linux+跨机器转发+ipv4</td><td>2(仅一个连接压力测试)</td><td>256字节</td><td>33%/100%</td><td>280MB</td><td>73.5MB/s</td><td>294K/s</td></tr><tr><td>Linux+跨机器转发+ipv4</td><td>2(仅一个连接压力测试)</td><td>128字节</td><td>50%/100%</td><td>280MB</td><td>65.75MB/s</td><td>526K/s</td></tr><tr><td>Linux+共享内存</td><td>3(仅一个连接压力测试)</td><td>32KB</td><td>100%/100%</td><td>280MB</td><td>3.06GB/s</td><td>98K/s</td></tr><tr><td>Linux+共享内存</td><td>3(仅一个连接压力测试)</td><td>16KB</td><td>61%/71%</td><td>280MB</td><td>1.59GB/s</td><td>102K/s</td></tr><tr><td>Linux+共享内存</td><td>3(仅一个连接压力测试)</td><td>8KB</td><td>36%/70%</td><td>280MB</td><td>1.27GB/s</td><td>163K/s</td></tr><tr><td>Linux+共享内存</td><td>3(仅一个连接压力测试)</td><td>4KB</td><td>40%/73%</td><td>280MB</td><td>1.30MB/s</td><td>333K/s</td></tr><tr><td>Linux+共享内存</td><td>3(仅一个连接压力测试)</td><td>2KB</td><td>43%/93%</td><td>280MB</td><td>1.08GB/s</td><td>556K/s</td></tr><tr><td>Linux+共享内存</td><td>3(仅一个连接压力测试)</td><td>1KB</td><td>54%/100%</td><td>280MB</td><td>977MB/s</td><td>1000K/s</td></tr><tr><td>Linux+共享内存</td><td>3(仅一个连接压力测试)</td><td>512字节</td><td>44%/100%</td><td>280MB</td><td>610MB/s</td><td>1250K/s</td></tr><tr><td>Linux+共享内存</td><td>3(仅一个连接压力测试)</td><td>256字节</td><td>42%/100%</td><td>280MB</td><td>305MB/s</td><td>1250K/s</td></tr><tr><td>Linux+共享内存</td><td>3(仅一个连接压力测试)</td><td>128字节</td><td>42%/100%</td><td>280MB</td><td>174MB/s</td><td>1429K/s</td></tr></tbody></table><p>由于测试tbus的时候有跨机器的，所以某些进程CPU跑不满也是正常情况。算上CPU的消耗比例，atbus的读性能和tbus对比的话，主要是</p><ul><li>使用<strong>共享内存通道</strong>的时候，读性能是差不多的，写性能atbus要高过tbus大约不到一倍。</li><li>atbus能够<strong>收敛共享内存通道数量</strong>，能大幅减少不必要的内存消耗。这个设计详见：<a href=https://owent.net/2014/1099.html>关于BUS通信系统的一些思考（二）</a> 或 <a href=https://github.com/atframework/libatbus/tree/master/doc>https://github.com/atframework/libatbus/tree/master/doc</a></li><li>对于<strong>网络通道的大数据包</strong>，读性能仍然是差不多。但是atbus的写性能大约是tbus的4-5倍，QPS大约是6-7倍。</li><li>但是对于<strong>网络通道的小数据包</strong>，读写都落后tbus很多</li></ul><h2 id=优化分析>优化分析</h2><p>然后因为我看不到tbus的源码，就只能是分析tbus的压力测试结果了。可以很明显的看到从大数据包到小数据包，tbus的整个吞吐量变化非常小，所以猜测tbus可能做了小包合并。</p><p>而且很明显在atbus里出现小包时，QPS上升的同时对uv_write调用的次数也变多了。我看了下libuv的源码，虽然它内部有做发送队列，但是每次pop front的时候还是会调用<strong>sendmsg</strong>函数或<strong>write</strong>函数，而这两个都是系统调用消耗很高的。</p><p>libuv内的代码大致如下:</p><pre><code class=language-c>start:
 
-  assert(uv__stream_fd(stream) &gt;= 0);
+  assert(uv__stream_fd(stream) &amp;gt;= 0);
 
-  if (QUEUE_EMPTY(&amp;stream-&gt;write_queue))
+  if (QUEUE_EMPTY(&amp;amp;stream-&amp;gt;write_queue))
     return;
 
   // 每次pop front一个发送项目
-  q = QUEUE_HEAD(&amp;stream-&gt;write_queue);
+  q = QUEUE_HEAD(&amp;amp;stream-&amp;gt;write_queue);
   req = QUEUE_DATA(q, uv_write_t, queue);
-  assert(req-&gt;handle == stream);
+  assert(req-&amp;gt;handle == stream);
 
   // blablabla 好多代码 ...
 
@@ -35,18 +34,18 @@
     }
 
     do {
-      n = sendmsg(uv__stream_fd(stream), &amp;msg, 0);
+      n = sendmsg(uv__stream_fd(stream), &amp;amp;msg, 0);
     }
 #if defined(__APPLE__)
     /*
-     * Due to a possible kernel bug at least in OS X 10.10 &quot;Yosemite&quot;,
+     * Due to a possible kernel bug at least in OS X 10.10 &amp;#34;Yosemite&amp;#34;,
      * EPROTOTYPE can be returned while trying to write to a socket that is
      * shutting down. If we retry the write, we should get the expected EPIPE
      * instead.
      */
-    while (n == -1 &amp;&amp; (errno == EINTR || errno == EPROTOTYPE));
+    while (n == -1 &amp;amp;&amp;amp; (errno == EINTR || errno == EPROTOTYPE));
 #else
-    while (n == -1 &amp;&amp; errno == EINTR);
+    while (n == -1 &amp;amp;&amp;amp; errno == EINTR);
 #endif
   } else {
     do {
@@ -58,20 +57,19 @@
     }
 #if defined(__APPLE__)
     /*
-     * Due to a possible kernel bug at least in OS X 10.10 &quot;Yosemite&quot;,
+     * Due to a possible kernel bug at least in OS X 10.10 &amp;#34;Yosemite&amp;#34;,
      * EPROTOTYPE can be returned while trying to write to a socket that is
      * shutting down. If we retry the write, we should get the expected EPIPE
      * instead.
      */
-    while (n == -1 &amp;&amp; (errno == EINTR || errno == EPROTOTYPE));
+    while (n == -1 &amp;amp;&amp;amp; (errno == EINTR || errno == EPROTOTYPE));
 #else
-    while (n == -1 &amp;&amp; errno == EINTR);
+    while (n == -1 &amp;amp;&amp;amp; errno == EINTR);
 #endif
   }
 
   // blablabla 好多代码 ...
-  // 如果还有带发送数据并且fd处于writable状态，goto start
-</code></pre><p>那么优化方向就很明了了。合并小数据包呗。</p><h2 id=优化实现>优化实现</h2><p>合包的话最简单的就是在<strong>io_stream_send</strong>里坐点手脚。原先这个函数每调用一次都会调用<strong>uv_write</strong>。现在如果某个连接有数据正在发送，则需要先把要发送的数据保存下来，直接返回成功，然后发送完毕后对保存的数据做合包，然后再一起发送。
+  // 如果还有带发送数据并且fd处于writable状态，goto start</code></pre><p>那么优化方向就很明了了。合并小数据包呗。</p><h2 id=优化实现>优化实现</h2><p>合包的话最简单的就是在<strong>io_stream_send</strong>里坐点手脚。原先这个函数每调用一次都会调用<strong>uv_write</strong>。现在如果某个连接有数据正在发送，则需要先把要发送的数据保存下来，直接返回成功，然后发送完毕后对保存的数据做合包，然后再一起发送。
 然后如果发送时发现不能发送了，或者write失败，都要走以前的契约，那就是调用发送失败的回调。</p><p>起先我给atbus里的buffer_manager模块加了个merge_front和merge_back功能。实现非常复杂，但是写完之后转念一想，如果每次调用都使用merge的话，那岂不是如果要merge N个包，第一个包要copy N次？因为每次都要扩充缓冲区。
 我觉得这个消耗也是没有必要的，所以最终没用这个merge功能，而是采用了一个更简单的方法，定一个<strong>合包缓冲区</strong>。</p><p>那么这个<strong>合包缓冲区</strong>该是多大呢？也很简单，因为现在的每个connection的write队列里的数据块结构是write_req_t+4字节hash+动态长度int+数据包长度。
 那么缓冲区太大也没意义，我就设成了: 包大小限制(默认64K)-sizeof(write_req_t)-一个对齐大小（以防数据写乱，目前64位系统是8字节）。</p><p>缓冲区也没必要每个connection一个，可以每个线程一个。这个可以用TLS机制实现，方法上一篇文章（Android和IOS的TLS问题）里提到过了，这里不再复述。</p><p>然后每次写出时给connection加<em><strong>WRITING</strong></em>标记，写完的回调之后移除，如果调用<strong>io_stream_send</strong>的时候有<em><strong>WRITING</strong></em>标记，则往write队列里加，但不执行实际写操作，如果没有就执行实际写操作。

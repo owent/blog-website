@@ -10,24 +10,24 @@
 按照我自己风格还是喜欢C++，所以协程库定名为 libcopp 。
 源码托管在 github: <a href=https://github.com/owent/libcopp>https://github.com/owent/libcopp</a>
 镜像托管 <a href=http://git.oschina.net/owent/distinctionpp>http://git.oschina.net/owent/distinctionpp</a></p></div><div class=article-more><a href=//owent.net/2014/1000.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2014-03-05T21:52:49.000+00:00 itemprop=datePublished>2014-03-05</time></div></div></article><article class="article-panel archive-article archive-type-962"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2014/962.html target=_blank itemprop=url>C++又一坑:动态链接库中的全局变量</a></h1></header><div class=article-summary><p>前几天我们项目的日志系统出现了一点问题，但是一直没有时间去深究。
-昨天在同事的帮助下，无意中猜了一种可能性，结果还真被我猜中了，于是今天就特别研究了一下，记录下来。</p></div><div class=article-more><a href=//owent.net/2014/962.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2014-01-04T17:30:32.000+00:00 itemprop=datePublished>2014-01-04</time></div></div></article><article class="article-panel archive-article archive-type-930"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/930.html target=_blank itemprop=url>不知道是哪一年的腾讯马拉松题目 照片评级 解题报告</a></h1></header><div class=article-summary><p>在某个神奇的下午，收到一个垃圾邮件（至少被邮件系统当成了垃圾邮件）。</p><p>结果就一不小心看到了这个充满回忆的ACM模式竞赛，还有咱腾讯的，就忍不住看了一下。</p></div><div class=article-more><a href=//owent.net/2013/930.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-10-25T15:45:05.000+00:00 itemprop=datePublished>2013-10-25</time></div></div></article><article class="article-panel archive-article archive-type-918"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/918.html target=_blank itemprop=url>Lua 挺好用的样子</a></h1></header><div class=article-summary><p>项目里面引入了Lua，就特别学习了一下。</p><p>其实对于理解Javascipt的人来说，Lua也很容易理解，因为他们太多的地方相像了。</p><p>初步看来，Lua的设计模式和思想很像Javascript，也是原型模型（Javascript里叫<strong>prototype</strong>，Lua里是<strong>metatable</strong>）</p></div><div class=article-more><a href=//owent.net/2013/918.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-10-24T20:59:44.000+00:00 itemprop=datePublished>2013-10-24</time></div></div></article><article class="article-panel archive-article archive-type-902"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/902.html target=_blank itemprop=url>VC和GCC成员函数指针实现的研究(三)</a></h1></header><div class=article-summary><p>接上一篇 <a href=https://www.owent.net/2013/896.html>VC和GCC内成员函数指针实现的研究(二)</a></p><h2 id=虚继承>虚继承</h2><p>终于到最后的虚继承了。</p><p>测试代码如下:</p><pre><code class=language-cpp>#include &lt;ctime&gt;
-#include &lt;vector&gt;
-#include &lt;algorithm&gt;
-#include &lt;cstdio&gt;
-#include &lt;stdint.h&gt;
-#include &lt;cstddef&gt;
-#include &lt;string&gt;
+昨天在同事的帮助下，无意中猜了一种可能性，结果还真被我猜中了，于是今天就特别研究了一下，记录下来。</p></div><div class=article-more><a href=//owent.net/2014/962.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2014-01-04T17:30:32.000+00:00 itemprop=datePublished>2014-01-04</time></div></div></article><article class="article-panel archive-article archive-type-930"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/930.html target=_blank itemprop=url>不知道是哪一年的腾讯马拉松题目 照片评级 解题报告</a></h1></header><div class=article-summary><p>在某个神奇的下午，收到一个垃圾邮件（至少被邮件系统当成了垃圾邮件）。</p><p>结果就一不小心看到了这个充满回忆的ACM模式竞赛，还有咱腾讯的，就忍不住看了一下。</p></div><div class=article-more><a href=//owent.net/2013/930.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-10-25T15:45:05.000+00:00 itemprop=datePublished>2013-10-25</time></div></div></article><article class="article-panel archive-article archive-type-918"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/918.html target=_blank itemprop=url>Lua 挺好用的样子</a></h1></header><div class=article-summary><p>项目里面引入了Lua，就特别学习了一下。</p><p>其实对于理解Javascipt的人来说，Lua也很容易理解，因为他们太多的地方相像了。</p><p>初步看来，Lua的设计模式和思想很像Javascript，也是原型模型（Javascript里叫<strong>prototype</strong>，Lua里是<strong>metatable</strong>）</p></div><div class=article-more><a href=//owent.net/2013/918.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-10-24T20:59:44.000+00:00 itemprop=datePublished>2013-10-24</time></div></div></article><article class="article-panel archive-article archive-type-902"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/902.html target=_blank itemprop=url>VC和GCC成员函数指针实现的研究(三)</a></h1></header><div class=article-summary><p>接上一篇 <a href=https://www.owent.net/2013/896.html>VC和GCC内成员函数指针实现的研究(二)</a></p><h2 id=虚继承>虚继承</h2><p>终于到最后的虚继承了。</p><p>测试代码如下:</p><pre><code class=language-cpp>#include &amp;lt;ctime&amp;gt;
+#include &amp;lt;vector&amp;gt;
+#include &amp;lt;algorithm&amp;gt;
+#include &amp;lt;cstdio&amp;gt;
+#include &amp;lt;stdint.h&amp;gt;
+#include &amp;lt;cstddef&amp;gt;
+#include &amp;lt;string&amp;gt;
 
 class foo_a
 {
 public:
     virtual ~foo_a(){}
     virtual void info() {
-        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
     }
 
     void print(){
-        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
     }
 };
 
@@ -38,7 +38,7 @@ public:
     foo_l(): l(1){}
 
     virtual void info() {
-        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
     }
 };
 
@@ -53,24 +53,24 @@ class foo_c: virtual public foo_l, public foo_r
 {
 public:
     virtual void info() {
-        printf(&quot;%d,%d. %s:%d\n&quot;, l, r, __FUNCTION__, __LINE__);
+        printf(&amp;#34;%d,%d. %s:%d\n&amp;#34;, l, r, __FUNCTION__, __LINE__);
     }
 };
 
 
 int main(int argc, char* argv[]) {
-    void (foo_a::*vptr1)() = &amp;foo_a::info;
-    void (foo_l::*vptr2)() = &amp;foo_l::info;
-    void (foo_a::*ptr)() = &amp;foo_a::print;
+    void (foo_a::*vptr1)() = &amp;amp;foo_a::info;
+    void (foo_l::*vptr2)() = &amp;amp;foo_l::info;
+    void (foo_a::*ptr)() = &amp;amp;foo_a::print;
 
     foo_c c;
     foo_r r;
     foo_a a;
 
-    printf(&quot;pword size = %d\n&quot;, (int)(sizeof(size_t)));
-    printf(&quot;address of &amp;foo_a::info = 0x%llxH\n&quot;, &amp;foo_a::info);
-    printf(&quot;pointer to &amp;foo_a::info = 0x%llxH\n&quot;, vptr1);
-    printf(&quot;sizeof vptr = %d\n&quot;, (int)(sizeof(vptr1)));
+    printf(&amp;#34;pword size = %d\n&amp;#34;, (int)(sizeof(size_t)));
+    printf(&amp;#34;address of &amp;amp;foo_a::info = 0x%llxH\n&amp;#34;, &amp;amp;foo_a::info);
+    printf(&amp;#34;pointer to &amp;amp;foo_a::info = 0x%llxH\n&amp;#34;, vptr1);
+    printf(&amp;#34;sizeof vptr = %d\n&amp;#34;, (int)(sizeof(vptr1)));
 
     (a.*vptr1)();
     (r.*vptr1)();
@@ -81,21 +81,20 @@ int main(int argc, char* argv[]) {
     (c.*ptr)();
 
     return 0;
-}
-</code></pre><h2 id=vc虚继承成员函数指针实现>VC虚继承成员函数指针实现</h2><p>因为是兼容虚继承和非虚继承的，所以赋值的部分的汇编是一样的。这里就不贴了。关键在于执行期它是怎么找到虚基类的。请往下看：</p></div><div class=article-more><a href=//owent.net/2013/902.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-11T14:57:15.000+00:00 itemprop=datePublished>2013-09-11</time></div></div></article><article class="article-panel archive-article archive-type-896"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/896.html target=_blank itemprop=url>VC和GCC成员函数指针实现的研究(二)</a></h1></header><div class=article-summary><p>接上一篇 <a href=https://www.owent.net/2013/890.html>VC和GCC内成员函数指针实现的研究(一)</a></p><p>接下来是多重继承，用到的测试代码如下所示:</p><pre><code class=language-cpp>#include &lt;ctime&gt;
-#include &lt;vector&gt;
-#include &lt;algorithm&gt;
-#include &lt;cstdio&gt;
-#include &lt;stdint.h&gt;
-#include &lt;cstddef&gt;
-#include &lt;string&gt;
+}</code></pre><h2 id=vc虚继承成员函数指针实现>VC虚继承成员函数指针实现</h2><p>因为是兼容虚继承和非虚继承的，所以赋值的部分的汇编是一样的。这里就不贴了。关键在于执行期它是怎么找到虚基类的。请往下看：</p></div><div class=article-more><a href=//owent.net/2013/902.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-11T14:57:15.000+00:00 itemprop=datePublished>2013-09-11</time></div></div></article><article class="article-panel archive-article archive-type-896"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/896.html target=_blank itemprop=url>VC和GCC成员函数指针实现的研究(二)</a></h1></header><div class=article-summary><p>接上一篇 <a href=https://www.owent.net/2013/890.html>VC和GCC内成员函数指针实现的研究(一)</a></p><p>接下来是多重继承，用到的测试代码如下所示:</p><pre><code class=language-cpp>#include &amp;lt;ctime&amp;gt;
+#include &amp;lt;vector&amp;gt;
+#include &amp;lt;algorithm&amp;gt;
+#include &amp;lt;cstdio&amp;gt;
+#include &amp;lt;stdint.h&amp;gt;
+#include &amp;lt;cstddef&amp;gt;
+#include &amp;lt;string&amp;gt;
 
 class foo_a
 {
 public:
     virtual ~foo_a(){}
     virtual void info() {
-        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
     }
 };
 
@@ -105,17 +104,17 @@ public:
     virtual ~foo_b(){}
 
     // 这个函数用于试foo_b的结构与foo_a不同
-    // 以防止VC对foo_a和foo_b的`vcall'{8}'的代码合并
+    // 以防止VC对foo_a和foo_b的`vcall&amp;#39;{8}&amp;#39;的代码合并
     virtual void inspect() { 
-        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
     } 
 
     virtual void info() {
-        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
     }
 
     void print() {
-        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
     }
 };
 
@@ -124,27 +123,27 @@ class foo_c: public foo_a, public foo_b
 {
 public:
     virtual void info() {
-        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
     }
 };
 
 
 int main(int argc, char* argv[]) {
-    void (foo_a::*vptr1)() = &amp;foo_a::info;
-    void (foo_b::*vptr2)() = &amp;foo_b::info;
-    void (foo_b::*ptr)() = &amp;foo_b::print;
+    void (foo_a::*vptr1)() = &amp;amp;foo_a::info;
+    void (foo_b::*vptr2)() = &amp;amp;foo_b::info;
+    void (foo_b::*ptr)() = &amp;amp;foo_b::print;
 
     foo_c c;
     foo_b b;
     foo_a a;
 
     
-    printf(&quot;word size = %d\n&quot;, (int)(sizeof(size_t)));
-    printf(&quot;address of &amp;foo_a::info = 0x%llxH\n&quot;, &amp;foo_a::info);
-    printf(&quot;pointer to &amp;foo_a::info = 0x%llxH\n&quot;, vptr1);
-    printf(&quot;address of &amp;foo_b::info = 0x%llxH\n&quot;, &amp;foo_b::info);
-    printf(&quot;pointer to &amp;foo_b::info = 0x%llxH\n&quot;, vptr2);
-    printf(&quot;sizeof vptr = %d\n&quot;, (int)(sizeof(vptr1)));
+    printf(&amp;#34;word size = %d\n&amp;#34;, (int)(sizeof(size_t)));
+    printf(&amp;#34;address of &amp;amp;foo_a::info = 0x%llxH\n&amp;#34;, &amp;amp;foo_a::info);
+    printf(&amp;#34;pointer to &amp;amp;foo_a::info = 0x%llxH\n&amp;#34;, vptr1);
+    printf(&amp;#34;address of &amp;amp;foo_b::info = 0x%llxH\n&amp;#34;, &amp;amp;foo_b::info);
+    printf(&amp;#34;pointer to &amp;amp;foo_b::info = 0x%llxH\n&amp;#34;, vptr2);
+    printf(&amp;#34;sizeof vptr = %d\n&amp;#34;, (int)(sizeof(vptr1)));
 
     (a.*vptr1)();
     (b.*vptr2)();
@@ -154,9 +153,8 @@ int main(int argc, char* argv[]) {
     (c.*ptr)();
 
     return 0;
-}
-</code></pre><h2 id=vc多重继承成员函数指针实现>VC多重继承成员函数指针实现</h2><p><img src=p896_img8.png loading=lazy></p></div><div class=article-more><a href=//owent.net/2013/896.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-11T14:44:06.000+00:00 itemprop=datePublished>2013-09-11</time></div></div></article><article class="article-panel archive-article archive-type-890"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/890.html target=_blank itemprop=url>VC和GCC内成员函数指针实现的研究(一)</a></h1></header><div class=article-summary><p>最近在《C++对象模型》一书里说到的virtual的成员函数指针，低于128的被cfront编译器认为是虚表偏移量（支持子类对父类函数的覆盖）。VC只是提了下单继承、多继承和虚继承的实现方案不同，GCC没有提及，所以就专门稍微深入分析研究下他们的实现机制。</p></div><div class=article-more><a href=//owent.net/2013/890.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-06T12:55:58.000+00:00 itemprop=datePublished>2013-09-06</time></div></div></article><article class="article-panel archive-article archive-type-879"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/879.html target=_blank itemprop=url>一个C++关于成员变量偏移地址的小Trick</a></h1></header><div class=article-summary><p>今天看到一个小例子，发现了一个小trick。见代码：</p><pre><code class=language-cpp>#include &lt;cstdio&gt;
-#include &lt;cstdlib&gt;
+}</code></pre><h2 id=vc多重继承成员函数指针实现>VC多重继承成员函数指针实现</h2><p><img src=p896_img8.png loading=lazy></p></div><div class=article-more><a href=//owent.net/2013/896.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-11T14:44:06.000+00:00 itemprop=datePublished>2013-09-11</time></div></div></article><article class="article-panel archive-article archive-type-890"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/890.html target=_blank itemprop=url>VC和GCC内成员函数指针实现的研究(一)</a></h1></header><div class=article-summary><p>最近在《C++对象模型》一书里说到的virtual的成员函数指针，低于128的被cfront编译器认为是虚表偏移量（支持子类对父类函数的覆盖）。VC只是提了下单继承、多继承和虚继承的实现方案不同，GCC没有提及，所以就专门稍微深入分析研究下他们的实现机制。</p></div><div class=article-more><a href=//owent.net/2013/890.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-06T12:55:58.000+00:00 itemprop=datePublished>2013-09-06</time></div></div></article><article class="article-panel archive-article archive-type-879"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/879.html target=_blank itemprop=url>一个C++关于成员变量偏移地址的小Trick</a></h1></header><div class=article-summary><p>今天看到一个小例子，发现了一个小trick。见代码：</p><pre><code class=language-cpp>#include &amp;lt;cstdio&amp;gt;
+#include &amp;lt;cstdlib&amp;gt;
 
 class base_1
 {
@@ -178,11 +176,11 @@ public:
 
 int main(int argc, char* argv[]) {
 
-    printf(&quot;&amp;base_1::a = %p\n&quot;, &amp;base_1::a);
-    printf(&quot;&amp;base_2::b = %p\n&quot;, &amp;base_2::b);
-    printf(&quot;&amp;base_3::a = %p\n&quot;, &amp;base_3::a);
-    printf(&quot;&amp;base_3::b = %p\n&quot;, &amp;base_3::b);
-    printf(&quot;&amp;base_3::c = %p\n&quot;, &amp;base_3::c);
+    printf(&amp;#34;&amp;amp;base_1::a = %p\n&amp;#34;, &amp;amp;base_1::a);
+    printf(&amp;#34;&amp;amp;base_2::b = %p\n&amp;#34;, &amp;amp;base_2::b);
+    printf(&amp;#34;&amp;amp;base_3::a = %p\n&amp;#34;, &amp;amp;base_3::a);
+    printf(&amp;#34;&amp;amp;base_3::b = %p\n&amp;#34;, &amp;amp;base_3::b);
+    printf(&amp;#34;&amp;amp;base_3::c = %p\n&amp;#34;, &amp;amp;base_3::c);
 
 
     base_3 t;
@@ -193,20 +191,19 @@ int main(int argc, char* argv[]) {
     typedef int (base_3::*tip);
     tip pm = NULL;
 
-    printf(&quot;base_3::a = %d\n&quot;, t.base_3::a);
-    printf(&quot;base_3::b = %d\n&quot;, t.base_3::b);
-    printf(&quot;base_3::c = %d\n&quot;, t.base_3::c);
+    printf(&amp;#34;base_3::a = %d\n&amp;#34;, t.base_3::a);
+    printf(&amp;#34;base_3::b = %d\n&amp;#34;, t.base_3::b);
+    printf(&amp;#34;base_3::c = %d\n&amp;#34;, t.base_3::c);
 
-    pm = &amp;base_3::a;
-    printf(&quot;base_3::a(%p) = %d(ptr)\n&quot;, pm, t.*pm);
-    pm = &amp;base_3::b;
-    printf(&quot;base_3::b(%p) = %d(ptr)\n&quot;, pm, t.*pm);
-    pm = &amp;base_3::c;
-    printf(&quot;base_3::c(%p) = %d(ptr)\n&quot;, pm, t.*pm);
+    pm = &amp;amp;base_3::a;
+    printf(&amp;#34;base_3::a(%p) = %d(ptr)\n&amp;#34;, pm, t.*pm);
+    pm = &amp;amp;base_3::b;
+    printf(&amp;#34;base_3::b(%p) = %d(ptr)\n&amp;#34;, pm, t.*pm);
+    pm = &amp;amp;base_3::c;
+    printf(&amp;#34;base_3::c(%p) = %d(ptr)\n&amp;#34;, pm, t.*pm);
 
     return 0;
-}
-</code></pre><p>猜猜看这个代码输出什么？
+}</code></pre><p>猜猜看这个代码输出什么？
 答案是：</p></div><div class=article-more><a href=//owent.net/2013/879.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-08-26T14:16:37.000+00:00 itemprop=datePublished>2013-08-26</time></div></div></article><article class="article-panel archive-article archive-type-867"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/867.html target=_blank itemprop=url>ptmalloc,tcmalloc和jemalloc内存分配策略研究</a></h1></header><div class=article-summary><p>最近看了glibc的ptmaoolc，Goolge的tcmalloc和jemalloc，顺便做了一点记录。可能有些地方理解地不太对，如有发现还请大神指出。</p></div><div class=article-more><a href=//owent.net/2013/867.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-07-31T13:02:53.000+00:00 itemprop=datePublished>2013-07-31</time></div></div></article><article class="article-panel archive-article archive-type-674"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/674.html target=_blank itemprop=url>Boost.Spirit 初体验</a></h1></header><div class=article-summary><p>使用代码生成代码是一件十分美妙的事情，于是有了各种代码生成器。但是生成代码，意味着要有对生成规则的分析和处理。
 Boost.Spirit 就是这么一个语法分析工具，它实现了对<strong>上下文无关文法的LL分析</strong>。支持<strong>EBNF(扩展巴科斯范式)</strong>。
 Boost.Spirit 的使用真的是把模板嵌套用到了极致。确实这么做造成了非常强的扩展性，生成的代码也非常高效，但是嵌套的太复杂了，对于初学者而言真心难看懂。

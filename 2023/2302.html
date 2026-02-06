@@ -55,77 +55,74 @@ classDiagram
   *
   * @param log_record Log record
   * @tparam args Arguments which can be used to set data of log record by type.
-  *  Severity                                -&gt; severity, severity_text
-  *  string_view                             -&gt; body
-  *  AttributeValue                          -&gt; body
-  *  SpanContext                             -&gt; span_id,tace_id and trace_flags
-  *  SpanId                                  -&gt; span_id
-  *  TraceId                                 -&gt; tace_id
-  *  TraceFlags                              -&gt; trace_flags
-  *  SystemTimestamp                         -&gt; timestamp
-  *  system_clock::time_point                -&gt; timestamp
-  *  KeyValueIterable                        -&gt; attributes
-  *  Key value iterable container            -&gt; attributes
-  *  span&lt;pair&lt;string_view, AttributeValue&gt;&gt; -&gt; attributes(return type of MakeAttributes)
+  *  Severity                                -&amp;gt; severity, severity_text
+  *  string_view                             -&amp;gt; body
+  *  AttributeValue                          -&amp;gt; body
+  *  SpanContext                             -&amp;gt; span_id,tace_id and trace_flags
+  *  SpanId                                  -&amp;gt; span_id
+  *  TraceId                                 -&amp;gt; tace_id
+  *  TraceFlags                              -&amp;gt; trace_flags
+  *  SystemTimestamp                         -&amp;gt; timestamp
+  *  system_clock::time_point                -&amp;gt; timestamp
+  *  KeyValueIterable                        -&amp;gt; attributes
+  *  Key value iterable container            -&amp;gt; attributes
+  *  span&amp;lt;pair&amp;lt;string_view, AttributeValue&amp;gt;&amp;gt; -&amp;gt; attributes(return type of MakeAttributes)
   */
-template &lt;class... ArgumentType&gt;
-void EmitLogRecord(nostd::unique_ptr&lt;LogRecord&gt; &amp;&amp;log_record, ArgumentType &amp;&amp;... args);
-</code></pre><p>这上面列出了如何按参数类型会影响哪些字段。那么如何实现呢？首先由于传入的参数 <code>ArgumentType</code> 是个通用引用，它既能匹配左值引用，又能匹配右值，还能匹配是否带 <code>const</code> 和 <code>violate</code> ，所以第一层模板类型提取我们可以用 <code>std::decay&lt;ArgumentType>::type</code> 来移除这些类型修饰。然后通过一个特殊类型的特化来实现不同的功能，参数传递走完美转发就可以了。比如:</p><pre><code class=language-cpp>template &lt;&gt;
-struct LogRecordSetterTrait&lt;trace::SpanContext&gt;
+template &amp;lt;class... ArgumentType&amp;gt;
+void EmitLogRecord(nostd::unique_ptr&amp;lt;LogRecord&amp;gt; &amp;amp;&amp;amp;log_record, ArgumentType &amp;amp;&amp;amp;... args);</code></pre><p>这上面列出了如何按参数类型会影响哪些字段。那么如何实现呢？首先由于传入的参数 <code>ArgumentType</code> 是个通用引用，它既能匹配左值引用，又能匹配右值，还能匹配是否带 <code>const</code> 和 <code>violate</code> ，所以第一层模板类型提取我们可以用 <code>std::decay&lt;ArgumentType>::type</code> 来移除这些类型修饰。然后通过一个特殊类型的特化来实现不同的功能，参数传递走完美转发就可以了。比如:</p><pre><code class=language-cpp>template &amp;lt;&amp;gt;
+struct LogRecordSetterTrait&amp;lt;trace::SpanContext&amp;gt;
 {
-  template &lt;class ArgumentType&gt;
-  inline static LogRecord *Set(LogRecord *log_record, ArgumentType &amp;&amp;arg) noexcept
+  template &amp;lt;class ArgumentType&amp;gt;
+  inline static LogRecord *Set(LogRecord *log_record, ArgumentType &amp;amp;&amp;amp;arg) noexcept
   {
-    log_record-&gt;SetSpanId(arg.span_id());
-    log_record-&gt;SetTraceId(arg.trace_id());
-    log_record-&gt;SetTraceFlags(arg.trace_flags());
+    log_record-&amp;gt;SetSpanId(arg.span_id());
+    log_record-&amp;gt;SetTraceId(arg.trace_id());
+    log_record-&amp;gt;SetTraceFlags(arg.trace_flags());
 
     return log_record;
   }
 };
 
-template &lt;&gt;
-struct LogRecordSetterTrait&lt;trace::SpanId&gt;
+template &amp;lt;&amp;gt;
+struct LogRecordSetterTrait&amp;lt;trace::SpanId&amp;gt;
 {
-  template &lt;class ArgumentType&gt;
-  inline static LogRecord *Set(LogRecord *log_record, ArgumentType &amp;&amp;arg) noexcept
+  template &amp;lt;class ArgumentType&amp;gt;
+  inline static LogRecord *Set(LogRecord *log_record, ArgumentType &amp;amp;&amp;amp;arg) noexcept
   {
-    log_record-&gt;SetSpanId(std::forward&lt;ArgumentType&gt;(arg));
+    log_record-&amp;gt;SetSpanId(std::forward&amp;lt;ArgumentType&amp;gt;(arg));
 
     return log_record;
   }
-};
-</code></pre><p>可以看到，如果参数类型是 <code>trace::SpanContext</code> 我们会同时设置 trace_id 、 span_id 和 trace_flags 。但是如果传入的是 <code>trace::SpanId</code> 我们就只会设置 <code>trace_id</code> 。</p><p>这里还有一处和之前不太兼容的特殊的地方，就是通用引用（Universal Reference），就是 <code>ArgumentType &&</code> 不能匹配 <code>std::initializer_list&lt;T></code> 。而我们之前是可以通过 <code>std::initializer_list&lt;std::pair&lt;nostd::string_view, common::AttributeValue>></code> 来传递attributes的。
-这里为了适配，我们提供了一组 <code>MakeAttributes(...)</code> 接口，通过重载来适配attributes的传递。整个实现大概是这样:</p><pre><code class=language-cpp>inline static nostd::span&lt;const std::pair&lt;nostd::string_view, common::AttributeValue&gt;&gt;
-MakeAttributes(std::initializer_list&lt;std::pair&lt;nostd::string_view, common::AttributeValue&gt;&gt;
+};</code></pre><p>可以看到，如果参数类型是 <code>trace::SpanContext</code> 我们会同时设置 trace_id 、 span_id 和 trace_flags 。但是如果传入的是 <code>trace::SpanId</code> 我们就只会设置 <code>trace_id</code> 。</p><p>这里还有一处和之前不太兼容的特殊的地方，就是通用引用（Universal Reference），就是 <code>ArgumentType &&</code> 不能匹配 <code>std::initializer_list&lt;T></code> 。而我们之前是可以通过 <code>std::initializer_list&lt;std::pair&lt;nostd::string_view, common::AttributeValue>></code> 来传递attributes的。
+这里为了适配，我们提供了一组 <code>MakeAttributes(...)</code> 接口，通过重载来适配attributes的传递。整个实现大概是这样:</p><pre><code class=language-cpp>inline static nostd::span&amp;lt;const std::pair&amp;lt;nostd::string_view, common::AttributeValue&amp;gt;&amp;gt;
+MakeAttributes(std::initializer_list&amp;lt;std::pair&amp;lt;nostd::string_view, common::AttributeValue&amp;gt;&amp;gt;
                    attributes) noexcept
 {
-  return nostd::span&lt;const std::pair&lt;nostd::string_view, common::AttributeValue&gt;&gt;{
+  return nostd::span&amp;lt;const std::pair&amp;lt;nostd::string_view, common::AttributeValue&amp;gt;&amp;gt;{
       attributes.begin(), attributes.end()};
 }
 
-inline static nostd::span&lt;const std::pair&lt;nostd::string_view, common::AttributeValue&gt;&gt;
+inline static nostd::span&amp;lt;const std::pair&amp;lt;nostd::string_view, common::AttributeValue&amp;gt;&amp;gt;
 MakeAttributes(
-    nostd::span&lt;const std::pair&lt;nostd::string_view, common::AttributeValue&gt;&gt; attributes) noexcept
+    nostd::span&amp;lt;const std::pair&amp;lt;nostd::string_view, common::AttributeValue&amp;gt;&amp;gt; attributes) noexcept
 {
   return attributes;
 }
 
-inline static const common::KeyValueIterable &amp;MakeAttributes(
-    const common::KeyValueIterable &amp;attributes) noexcept
+inline static const common::KeyValueIterable &amp;amp;MakeAttributes(
+    const common::KeyValueIterable &amp;amp;attributes) noexcept
 {
   return attributes;
 }
 
-template &lt;
+template &amp;lt;
     class ArgumentType,
-    nostd::enable_if_t&lt;common::detail::is_key_value_iterable&lt;ArgumentType&gt;::value&gt; * = nullptr&gt;
-inline static common::KeyValueIterableView&lt;ArgumentType&gt; MakeAttributes(
-    const ArgumentType &amp;arg) noexcept
+    nostd::enable_if_t&amp;lt;common::detail::is_key_value_iterable&amp;lt;ArgumentType&amp;gt;::value&amp;gt; * = nullptr&amp;gt;
+inline static common::KeyValueIterableView&amp;lt;ArgumentType&amp;gt; MakeAttributes(
+    const ArgumentType &amp;amp;arg) noexcept
 {
-  return common::KeyValueIterableView&lt;ArgumentType&gt;(arg);
-}
-</code></pre><p>使用起来可以类似这种 <code>logger->EmitLogRecord(Severity::kError, MakeAttributes({ {"key1", "value 1"}, {"key2", 2} }));</code> 或 <code>logger->Debug("Test log message", MakeAttributes(std::map&lt;std::string, std::string>()));</code> 。应该也不会造成太大困扰。</p><h2 id=总结>总结</h2><p>主要的改动也就这么多，也欢迎有兴趣的小伙伴们互相交流。
+  return common::KeyValueIterableView&amp;lt;ArgumentType&amp;gt;(arg);
+}</code></pre><p>使用起来可以类似这种 <code>logger->EmitLogRecord(Severity::kError, MakeAttributes({ {"key1", "value 1"}, {"key2", 2} }));</code> 或 <code>logger->Debug("Test log message", MakeAttributes(std::map&lt;std::string, std::string>()));</code> 。应该也不会造成太大困扰。</p><h2 id=总结>总结</h2><p>主要的改动也就这么多，也欢迎有兴趣的小伙伴们互相交流。
 如有遗漏，也欢迎小伙伴们指出和补充。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2023-02-25T11:39:45.000+00:00 itemprop=datePublished>2023-02-25</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/opentelemetry.html>opentelemetry</a></li><li class=article-tag-list-item><a href=//owent.net/tags/otel.html>otel</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cpp.html>cpp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/logs.html>logs</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2023/2303.html>上一篇<strong>打通游戏服务端框架的C++20协程改造的最后一环</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2023/2301.html>下一篇<strong>给cmake-toolset和工具链(curl等)加HTTP/2和HTTP/3支持</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;owent
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,

@@ -6,26 +6,24 @@
 <button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-ac6e2b6d4609d382ed0792c4951cbd16 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2016/1273.html target=_blank itemprop=url>pbc的一个陈年老BUG</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#bug分析>BUG分析</a></li><li><a href=#bug验证>BUG验证</a></li><li><a href=#fix-it>Fix it</a></li><li><a href=#后记>后记</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>近期跟了一下pbc的lua-binding的一个老BUG，起源是我们客户端报了一个奇怪的问题，我们游戏里的某些功能的optional字段，服务器并没有下发数据，但是客户端竟然能读到。</p><p>一开始我去issues里翻，翻到了个这个， <a href=https://github.com/cloudwu/pbc/issues/27>https://github.com/cloudwu/pbc/issues/27</a> 。
 这是2014年就发现的BUG了，然而云风说考虑到性能问题不想改。大事我觉得吧，就算一些性能损失，也好过容易出BUG，并且协议打解包在游戏中的CPU占用本身就不重。所以这能自己动手，丰衣足食喽。</p><h2 id=bug分析>BUG分析</h2><p>这里就得提到pbc的两个feature。第一个是，如果一个optional字段的数据不存在，那么你尝试去读的时候，会返回一个默认值。这个默认值的话如果协议里不定义，整数是0，字符串是空串，而table就会生成一个新table，里面的数据全是默认值。
 第二个是，如果某个optional的字段的内容是默认值，那么打包的时候会忽略。也就是说pack的结果的二进制里什么也没有。</p><p>说它是两个feature是因为，原生的protobuf是没有这回事儿的。二进制里没有，unpack的结果里去读也不会有；有数据但是是默认值，打包的二进制里也会有key-value，只是value是默认值（0或者空串），默认值一般都很小。</p><p>然后既然要自己动手，就得去读代码了。对以上features的实现，特别是读取不存在的数据的实现，并且为了高效pbc采用了默认值table的方法。什么叫默认值table呢？就是每一个protubuf的message，在第一次解包的时候，pbc的lua-binding都会生成一个默认值的table。
-假设某个要读取的数据不存在，pbc的lua-binding会返回这个默认值的table。举个例子：</p><pre><code class=language-lua>local msg1 = pbc.unpack('abc', buffer1)
+假设某个要读取的数据不存在，pbc的lua-binding会返回这个默认值的table。举个例子：</p><pre><code class=language-lua>local msg1 = pbc.unpack(&amp;#39;abc&amp;#39;, buffer1)
 
 -- 假设这时候nodata这个数据不存在
 print(msg1.nodata.int_type)
 -- 假设0是默认值，这里会输出0
 
-local msg2 = pbc.unpack('abc', buffer2)
+local msg2 = pbc.unpack(&amp;#39;abc&amp;#39;, buffer2)
 -- 如果buffer1和buffer2里都没有nodata的数据，下面两行会输出同一个table
 print(msg1.nodata)
-print(msg2.nodata)
-</code></pre><p>那么问题就来了，这种情况，如果对解包数据是只读还好，一旦进行了写入，假设执行了msg1.nodata.int_type = 100，那么msg2.nodata.int_type也变成了100，并且以后解包的这个message的空数据里的nodata.int_type都变成了100。这也是最开始提到的那个BUG的原因。</p><p>以上在lua-binding 5.1里的代码如下：</p><pre><code class=language-lua>local function default_table(typename)
+print(msg2.nodata)</code></pre><p>那么问题就来了，这种情况，如果对解包数据是只读还好，一旦进行了写入，假设执行了msg1.nodata.int_type = 100，那么msg2.nodata.int_type也变成了100，并且以后解包的这个message的空数据里的nodata.int_type都变成了100。这也是最开始提到的那个BUG的原因。</p><p>以上在lua-binding 5.1里的代码如下：</p><pre><code class=language-lua>local function default_table(typename)
     local v = default_cache[typename]
     if v then
         return v
     end
-    v = { __index = assert(decode_message(typename , &quot;&quot;)) }
+    v = { __index = assert(decode_message(typename , &amp;#34;&amp;#34;)) }
     default_cache[typename]  = v
     return v
-end
-</code></pre><h2 id=bug验证>BUG验证</h2><p>知道问题原因了，验证这个BUG就很容易了。并且这个BUG并不仅仅是 <a href=https://github.com/cloudwu/pbc/issues/27>https://github.com/cloudwu/pbc/issues/27</a> 里提到的repeated字段的问题，所有的默认table都有。
+end</code></pre><h2 id=bug验证>BUG验证</h2><p>知道问题原因了，验证这个BUG就很容易了。并且这个BUG并不仅仅是 <a href=https://github.com/cloudwu/pbc/issues/27>https://github.com/cloudwu/pbc/issues/27</a> 里提到的repeated字段的问题，所有的默认table都有。
 很简单地改动一下，给test/addressbook.proto加一个optional的message</p><pre><code class=language-protobuf>**message Profile** {
   optional string nick_name = 1;
   optional string icon = 2;
@@ -53,53 +51,51 @@ message Person {
   **optional Profile profile = 6;**
 
   extensions 10 to max;
-}
-</code></pre><p>我标记了新增的协议部分，完整内容见: <a href=https://github.com/owent-contrib/pbc/blob/master/test/addressbook.proto>https://github.com/owent-contrib/pbc/blob/master/test/addressbook.proto</a> 。然后 binding/lua/testparser.lua 里多加一个对比数据</p><pre><code class=language-lua>local addressbook1 = {
-	name = &quot;Alice&quot;,
+}</code></pre><p>我标记了新增的协议部分，完整内容见: <a href=https://github.com/owent-contrib/pbc/blob/master/test/addressbook.proto>https://github.com/owent-contrib/pbc/blob/master/test/addressbook.proto</a> 。然后 binding/lua/testparser.lua 里多加一个对比数据</p><pre><code class=language-lua>local addressbook1 = {
+	name = &amp;#34;Alice&amp;#34;,
 	id = 12345,
 	phone = {
-		{ number = &quot;1301234567&quot; },
-		{ number = &quot;87654321&quot;, type = &quot;WORK&quot; },
-		{ number = &quot;13912345678&quot;, type = &quot;MOBILE&quot; },
+		{ number = &amp;#34;1301234567&amp;#34; },
+		{ number = &amp;#34;87654321&amp;#34;, type = &amp;#34;WORK&amp;#34; },
+		{ number = &amp;#34;13912345678&amp;#34;, type = &amp;#34;MOBILE&amp;#34; },
 	},
-	email = &quot;username@domain.com&quot;
+	email = &amp;#34;username@domain.com&amp;#34;
 }
 
 local addressbook2 = {
-	name = &quot;Bob&quot;,
+	name = &amp;#34;Bob&amp;#34;,
 	id = 12346,
 	phone = {
-		{ number = &quot;1301234568&quot; },
-		{ number = &quot;98765432&quot;, type = &quot;HOME&quot; },
-		{ number = &quot;13998765432&quot;, type = &quot;MOBILE&quot; },
+		{ number = &amp;#34;1301234568&amp;#34; },
+		{ number = &amp;#34;98765432&amp;#34;, type = &amp;#34;HOME&amp;#34; },
+		{ number = &amp;#34;13998765432&amp;#34;, type = &amp;#34;MOBILE&amp;#34; },
 	}
 }
 
 
-code1 = protobuf.encode(&quot;tutorial.Person&quot;, addressbook1)
-code2 = protobuf.encode(&quot;tutorial.Person&quot;, addressbook2)
+code1 = protobuf.encode(&amp;#34;tutorial.Person&amp;#34;, addressbook1)
+code2 = protobuf.encode(&amp;#34;tutorial.Person&amp;#34;, addressbook2)
 
-decode1 = protobuf.decode(&quot;tutorial.Person&quot; , code1)
+decode1 = protobuf.decode(&amp;#34;tutorial.Person&amp;#34; , code1)
 
 -- BUG [ISSUE#27](https://github.com/cloudwu/pbc/issues/27)
-decode1.profile.nick_name = &quot;AHA&quot;
-decode1.profile.icon = &quot;id:1&quot;
+decode1.profile.nick_name = &amp;#34;AHA&amp;#34;
+decode1.profile.icon = &amp;#34;id:1&amp;#34;
 
-decode2 = protobuf.decode(&quot;tutorial.Person&quot; , code2)
+decode2 = protobuf.decode(&amp;#34;tutorial.Person&amp;#34; , code2)
 
 function print_addr(decoded)
-	print(string.format('ID: %d, Name: %s, Email: %s', decoded.id, decoded.name, tostring(decoded.email)))
+	print(string.format(&amp;#39;ID: %d, Name: %s, Email: %s&amp;#39;, decoded.id, decoded.name, tostring(decoded.email)))
 	if decoded.profile then
-		print(string.format('\tNickname: %s, Icon: %s', tostring(decoded.profile.nick_name), tostring(decoded.profile.icon)))
+		print(string.format(&amp;#39;\tNickname: %s, Icon: %s&amp;#39;, tostring(decoded.profile.nick_name), tostring(decoded.profile.icon)))
 	end
 	for k, v in ipairs(decoded.phone) do
-		print(string.format(&quot;\tPhone NO.%s: %16s %s&quot;, k, v.number, tostring(v.type)))
+		print(string.format(&amp;#34;\tPhone NO.%s: %16s %s&amp;#34;, k, v.number, tostring(v.type)))
 	end
 end
 
 print_addr(decode1)
-print_addr(decode2)
-</code></pre><p>完整内容见: <a href=https://github.com/owent-contrib/pbc/blob/master/binding/lua/testparser.lua>https://github.com/owent-contrib/pbc/blob/master/binding/lua/testparser.lua</a></p><p>输出的内容如下</p><pre><code class=language-text>$ lua5.1 testparser.lua
+print_addr(decode2)</code></pre><p>完整内容见: <a href=https://github.com/owent-contrib/pbc/blob/master/binding/lua/testparser.lua>https://github.com/owent-contrib/pbc/blob/master/binding/lua/testparser.lua</a></p><p>输出的内容如下</p><pre><code class=language-text>$ lua5.1 testparser.lua
 ID: 12345, Name: Alice, Email: username@domain.com
         Nickname: AHA, Icon: id:1
         Phone NO.1:       1301234567 HOME
@@ -109,18 +105,17 @@ ID: 12346, Name: Bob, Email:
         Nickname: AHA, Icon: id:1
         Phone NO.1:       1301234568 HOME
         Phone NO.2:         98765432 HOME
-        Phone NO.3:      13998765432 MOBILE
-</code></pre><p>第二个地址簿的Profile字段不应该有内容</p><h2 id=fix-it>Fix it</h2><p>接下来就是修这个BUG了，前面已经说了是改掉了默认table。首先因为要向前兼容，之前提到的两个feature不能破坏掉，其次还要尽可能减少只读情况下的消耗。那么有一个简单的实现方式，那就是和我之前写得一个小函数类似。
+        Phone NO.3:      13998765432 MOBILE</code></pre><p>第二个地址簿的Profile字段不应该有内容</p><h2 id=fix-it>Fix it</h2><p>接下来就是修这个BUG了，前面已经说了是改掉了默认table。首先因为要向前兼容，之前提到的两个feature不能破坏掉，其次还要尽可能减少只读情况下的消耗。那么有一个简单的实现方式，那就是和我之前写得一个小函数类似。
 <a href=https://github.com/owent-utils/lua/blob/master/src/utils/class.lua>https://github.com/owent-utils/lua/blob/master/src/utils/class.lua</a> 里的<strong>class.protect</strong></p><p>这个功能大致是新建一个table，然后把metatable的__index指向原来的table。那么访问的时候如果没有改变过数据，会访问原来的table，然后如果有修改，也不会修改原table里的数据。代码改动如下:</p><pre><code class=language-lua>local function default_table(typename)
     local v = default_cache[typename]
     if v then
         return v
     end
-    local default_inst = assert(decode_message(typename , &quot;&quot;))
+    local default_inst = assert(decode_message(typename , &amp;#34;&amp;#34;))
     v = {
         __index = function(tb, key)
             local ret = default_inst[key]
-            if 'table' ~= type(ret) then
+            if &amp;#39;table&amp;#39; ~= type(ret) then
                 return ret
             end
             ret = setmetatable({}, { __index = ret })
@@ -130,8 +125,7 @@ ID: 12346, Name: Bob, Email:
     }
     default_cache[typename]  = v
     return v
-end
-</code></pre><p>这里新建了两个table，其中一个作为metatable。之所以不走“只建立一个table并把__index设为自己”这种方式。是因为在我们的代码中很多情况是解包的数据改一改然后直接又扔给pbc作打包了。那么这时候就不想新增这个莫名其妙的__index字段。</p><p>改完以后上面的test输出如下:</p><pre><code class=language-text>$ lua5.1 testparser.lua
+end</code></pre><p>这里新建了两个table，其中一个作为metatable。之所以不走“只建立一个table并把__index设为自己”这种方式。是因为在我们的代码中很多情况是解包的数据改一改然后直接又扔给pbc作打包了。那么这时候就不想新增这个莫名其妙的__index字段。</p><p>改完以后上面的test输出如下:</p><pre><code class=language-text>$ lua5.1 testparser.lua
 ID: 12345, Name: Alice, Email: username@domain.com
         Nickname: AHA, Icon: id:1
         Phone NO.1:       1301234567 HOME
@@ -143,8 +137,7 @@ ID: 12346, Name: Bob, Email:
         Phone NO.2:         98765432 HOME
         Phone NO.3:      13998765432 MOBILE
 Alice   123
-Phone:      18612345678 HOME
-</code></pre><p>这样的话，仅仅在尝试解包不存在的数据时会有一次RTTI的开销和两个table的开销。而如果数据存在的话，开销和之前没有变化，我觉得还是可以接受的。
+Phone:      18612345678 HOME</code></pre><p>这样的话，仅仅在尝试解包不存在的数据时会有一次RTTI的开销和两个table的开销。而如果数据存在的话，开销和之前没有变化，我觉得还是可以接受的。
 另外 <a href=https://github.com/cloudwu/pbc/issues/27>https://github.com/cloudwu/pbc/issues/27</a> 里提到的BUG也就没有了。</p><h2 id=后记>后记</h2><p>这个fix已经推送给云风 <a href=https://github.com/cloudwu/pbc/pull/80>https://github.com/cloudwu/pbc/pull/80</a> ，然而他说不想做得更复杂和建议做深拷贝，而不是这种方式，所以没有merge。
 但是做深拷贝确实开销会比较大，感觉得不偿失。同时
 这个BUG很容带来使用者的误解而且容易遗漏。因为一个不正确的数据往往不会立即引发问题，而是绕了好几轮以后才发现。所以目前我们的client的pbc还是使用这个打了patch的分支。</p><p>分支地址是： <a href=https://github.com/owent-contrib/pbc/>https://github.com/owent-contrib/pbc/</a></p><p><strong>最新进展： 此PR已被云风官方仓库合入</strong></p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/work.html>Work</a></li></ol></span><span class=article-meta-right><time datetime=2016-07-04T13:01:42.000+00:00 itemprop=datePublished>2016-07-04</time></span>

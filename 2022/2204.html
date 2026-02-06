@@ -35,70 +35,69 @@ stateDiagram-v2
 对于不要求故障时高可用的系统(故障转移期间允许正在进行的事务失败)，可以设置 <strong>保存完离线数据后才执行</strong> 并设置 <code>W=1,R=1,N=1</code> 。
 这时候数据一致性仍然能够得到保证，但是事务恢复和一致性保证依赖保存离线数据的一致性(通常时保存到KV数据库)。</p></blockquote><p>对于一些涉及等待回包操作但标识为 <strong>(同步)</strong> 的接口，需要外部的机制来发起任务管理并最终调用 <code>receive_xxx_response(...)</code> 接口 。</p><blockquote><p>比如在 <a href=https://github.com/atframework/atsf4g-co/tree/sample_solution>atsf4g-co</a> 中可以使用 <code>rpc::async_invoke(...)</code> 来发起协程任务来处理IO。</p></blockquote><h2 id=协调者coordinator>协调者(coordinator)</h2><p>协调者主要目的是提供一个事务协调方，保证整个事务是否执行成功都是咦这个协调者内的状态为基准。其中管理逻辑是弱状态的，即使用CAS来保存数据，如果失败直接重新从数据库读取然后Retry。对于单个事务而言，流程图大致如下：</p><p><img src=2204-02.png alt=2204-02.png loading=lazy></p><p>那么，我们需要实现以下协议:</p><pre><code class=language-protobuf>service DtcoordsvrService {
   option (atframework.service_options) = {
-    module_name: &quot;transaction&quot;
+    module_name: &amp;#34;transaction&amp;#34;
   };
 
   rpc query(SSDistributeTransactionQueryReq) returns (SSDistributeTransactionQueryRsp) {
     option (atframework.rpc_options) = {
-      api_name: &quot;拉取事务数据&quot;
+      api_name: &amp;#34;拉取事务数据&amp;#34;
       allow_no_wait: true
-      warning_log_response_code: &quot;PROJECT_NAMESPACE_ID::err::EN_SYS_NOTFOUND&quot;
+      warning_log_response_code: &amp;#34;PROJECT_NAMESPACE_ID::err::EN_SYS_NOTFOUND&amp;#34;
     };
   };
 
   rpc create(SSDistributeTransactionCreateReq) returns (SSDistributeTransactionCreateRsp) {
     option (atframework.rpc_options) = {
-      api_name: &quot;创建分布式事务&quot;
+      api_name: &amp;#34;创建分布式事务&amp;#34;
       allow_no_wait: true
     };
   };
 
   rpc commit(SSDistributeTransactionCommitReq) returns (SSDistributeTransactionCommitRsp) {
     option (atframework.rpc_options) = {
-      api_name: &quot;分布式事务-提交&quot;
+      api_name: &amp;#34;分布式事务-提交&amp;#34;
       allow_no_wait: true
-      warning_log_response_code: &quot;PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION&quot;
+      warning_log_response_code: &amp;#34;PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION&amp;#34;
     };
   };
 
   rpc reject(SSDistributeTransactionRejectReq) returns (SSDistributeTransactionRejectRsp) {
     option (atframework.rpc_options) = {
-      api_name: &quot;分布式事务-拒绝&quot;
+      api_name: &amp;#34;分布式事务-拒绝&amp;#34;
       allow_no_wait: true
-      warning_log_response_code: &quot;PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION&quot;
+      warning_log_response_code: &amp;#34;PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION&amp;#34;
     };
   };
 
   rpc commit_participator(SSDistributeTransactionCommitParticipatorReq)
       returns (SSDistributeTransactionCommitParticipatorRsp) {
     option (atframework.rpc_options) = {
-      api_name: &quot;分布式事务-单个参与者提交&quot;
+      api_name: &amp;#34;分布式事务-单个参与者提交&amp;#34;
       allow_no_wait: true
-      warning_log_response_code: &quot;PROJECT_NAMESPACE_ID::err::EN_SYS_NOTFOUND&quot;
-      warning_log_response_code: &quot;PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION&quot;
+      warning_log_response_code: &amp;#34;PROJECT_NAMESPACE_ID::err::EN_SYS_NOTFOUND&amp;#34;
+      warning_log_response_code: &amp;#34;PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION&amp;#34;
     };
   };
 
   rpc reject_participator(SSDistributeTransactionRejectParticipatorReq)
       returns (SSDistributeTransactionRejectParticipatorRsp) {
     option (atframework.rpc_options) = {
-      api_name: &quot;分布式事务-单个参与者拒绝&quot;
+      api_name: &amp;#34;分布式事务-单个参与者拒绝&amp;#34;
       allow_no_wait: true
-      warning_log_response_code: &quot;PROJECT_NAMESPACE_ID::err::EN_SYS_NOTFOUND&quot;
-      warning_log_response_code: &quot;PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION&quot;
+      warning_log_response_code: &amp;#34;PROJECT_NAMESPACE_ID::err::EN_SYS_NOTFOUND&amp;#34;
+      warning_log_response_code: &amp;#34;PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION&amp;#34;
     };
   };
 
   rpc remove(SSDistributeTransactionRemoveReq) returns (SSDistributeTransactionRemoveRsp) {
     option (atframework.rpc_options) = {
-      api_name: &quot;强制删除分布式事务&quot;
+      api_name: &amp;#34;强制删除分布式事务&amp;#34;
       allow_no_wait: true
-      warning_log_response_code: &quot;PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION&quot;
-      info_log_response_code: &quot;PROJECT_NAMESPACE_ID::err::EN_DB_RECORD_NOT_FOUND&quot;
+      warning_log_response_code: &amp;#34;PROJECT_NAMESPACE_ID::err::EN_DB_OLD_VERSION&amp;#34;
+      info_log_response_code: &amp;#34;PROJECT_NAMESPACE_ID::err::EN_DB_RECORD_NOT_FOUND&amp;#34;
     };
   };
-}
-</code></pre><p>对于管理器而言，还需要实现以下功能:</p><ul><li>管理正在进行的事务: LRU Cache</li><li>管理已经结束但是尚未淘汰的事务: LRU Cache</li><li>调度层流程要求<ul><li>定期 <code>tick()</code><ul><li>对超时且超出容忍值的日志做清理操作（否决）</li><li>GC掉可以淘汰的事务</li></ul></li></ul></li></ul><p>以上功能都已经提供实现了，所以使用者使用的时候只需要部署服务就好了。不需要做额外操作。</p><h2 id=参与者participator>参与者(participator)</h2><p><strong>参与者(participator)</strong> 是事务Log的业务逻辑真正的执行的地方。其数据分为两部分，第一部分是和协调者类似的事务管理层。第二部分是和具体执行的功能相关的逻辑模块，这部分可以使用 <a href=https://owent.net/2022/2203.html><strong>WAL</strong> 模块</a>。
+}</code></pre><p>对于管理器而言，还需要实现以下功能:</p><ul><li>管理正在进行的事务: LRU Cache</li><li>管理已经结束但是尚未淘汰的事务: LRU Cache</li><li>调度层流程要求<ul><li>定期 <code>tick()</code><ul><li>对超时且超出容忍值的日志做清理操作（否决）</li><li>GC掉可以淘汰的事务</li></ul></li></ul></li></ul><p>以上功能都已经提供实现了，所以使用者使用的时候只需要部署服务就好了。不需要做额外操作。</p><h2 id=参与者participator>参与者(participator)</h2><p><strong>参与者(participator)</strong> 是事务Log的业务逻辑真正的执行的地方。其数据分为两部分，第一部分是和协调者类似的事务管理层。第二部分是和具体执行的功能相关的逻辑模块，这部分可以使用 <a href=https://owent.net/2022/2203.html><strong>WAL</strong> 模块</a>。
 我们仅仅能提供SDK封装掉一些复杂的流程，让使用者接口尽可能简化。它做的事情大致如下:</p><ul><li>需要离线保存和恢复的数据<ul><li>(必须)正在执行的事务</li><li>(必须)已完成的事务</li><li>(可选)私有数据</li></ul></li><li>定义行为（回调， <code>vtable</code> ）<ul><li>(必须)事件执行回调(Do)</li><li>(可选)事件回滚回调(Undo,进force_commit模式有效)</li><li>(必须)检查事务是否可执行</li><li>(可选)启动事务</li><li>(可选)事务结束</li><li>(可选)事务进入已完成待清理队列</li><li>(可选)事务进入已完成清理</li></ul></li><li>接口<ul><li><code>load/dump</code> : 用于读取和转储离线数据。<ul><li>拉取数据完成后要执行:<ul><li>更新事务状态，如果处于已完成或移除状态，直接移入 <strong>已完成的事务</strong> 集合</li><li>根据当前状态决定是触发 <strong>提交事务回调</strong> 还是 <strong>否决事务回调</strong> 还是待定</li></ul></li><li>保存离线数据完成后移除已完成的事务集合</li><li>读取离线数据恢复当前状态后还需要重新向协调者请求数据，以拿到最新的事务状态</li><li>如果读取完以后处于超时状态，要发起 <strong>拉取事务当前状态数据(发起请求)</strong></li></ul></li><li>准备事务</li><li>提交事务(主要用于通知协调者可以清理数据了)<ul><li>要先发起 <strong>变更参与者状态数据</strong> 请求</li></ul></li><li>否决事务(主要用于通知协调者可以清理数据了)<ul><li>要先发起 <strong>变更参与者状态数据</strong> 请求</li></ul></li><li><code>tick()</code> 接口，用于处理超时事务。超时不能直接删除，要重新向协调者请求数据更新状态。</li><li><code>check_lock()/lock()/unlock()</code> 接口，以便使用 <a href=http://www.mathcs.emory.edu/~cheung/Courses/554/Syllabus/8-recv+serial/deadlock-compare.html>Wound-Wait</a> 的冲突处理策略。（后面会提到，详见 <a href=#%E8%B5%84%E6%BA%90%E9%94%81>资源锁</a>）<ul><li>业务层可以自己定义资源锁的粒度。</li><li>锁的生命周期一方面跟随上述 <code>lock()/unlock()</code> 接口，另一方面跟随事务本身。</li></ul></li></ul></li></ul><p><strong>参与者(participator)</strong> SDK内部的实现流程较繁琐，单对用户侧暴露的接口并不多。同时对用户，我们有几点要求。</p><ul><li>所有的事务事件必须满足 <a href=https://zh.wikipedia.org/zh-cn/%E4%BA%A4%E6%8F%9B%E5%BE%8B>交换律</a></li><li>定期调用 <code>tick()</code> 接口</li><li>定义上述 <code>vtable</code> 内的必须接口</li></ul><p>由于我们只提供了SDK，对于RPC操作， <strong>参与者(participator)</strong> 服务还必须接入以下服务:</p><pre><code class=language-protobuf>// ====== 事件准备阶段 ======
 message SSParticipatorTransactionPrepareReq {
   transaction_participator_storage storage = 1;
@@ -132,7 +131,7 @@ message SSParticipatorTransactionRejectRsp {}
 service ParticipatorService {
   rpc transaction_prepare(SSParticipatorTransactionPrepareReq) returns (SSParticipatorTransactionPrepareRsp) {
     option (atframework.rpc_options) = {
-      api_name: &quot;事务准备阶段(Try)&quot;
+      api_name: &amp;#34;事务准备阶段(Try)&amp;#34;
       router_rpc: true
       user_rpc: true
       allow_no_wait: true
@@ -141,7 +140,7 @@ service ParticipatorService {
 
   rpc transaction_commit(SSParticipatorTransactionCommitReq) returns (SSParticipatorTransactionCommitRsp) {
     option (atframework.rpc_options) = {
-      api_name: &quot;事务提交(Commit)&quot;
+      api_name: &amp;#34;事务提交(Commit)&amp;#34;
       router_rpc: true
       user_rpc: true
       allow_no_wait: true
@@ -150,14 +149,13 @@ service ParticipatorService {
 
   rpc transaction_reject(SSParticipatorTransactionRejectReq) returns (SSParticipatorTransactionRejectRsp) {
     option (atframework.rpc_options) = {
-      api_name: &quot;事务拒绝(Commit)&quot;
+      api_name: &amp;#34;事务拒绝(Commit)&amp;#34;
       router_rpc: true
       user_rpc: true
       allow_no_wait: true
     };
   };
-}
-</code></pre><p>然后收到相应事件消息的时候去调用 <code>transaction_participator_handle</code> 里的 <code>prepare(...)/commit(...)/reject(...)/</code> 接口就可以了。</p><p>另外，我们提供了一种额外的模式，在 <code>transaction_participator_storage</code> 的配置选项里有个 <code>force_commit</code> 字段。这表示强制提交，收到Prepare消息后强制提交，直接执行Event Log。这时候如果后面收到 Reject 请求，则直接走 Undo 。用这种方式我们顺带还实现了 <a href=https://en.wikipedia.org/wiki/Two-phase_commit_protocol>2PC(两阶段提交)</a> 事务。</p><h2 id=执行者client>执行者(client)</h2><p>有一些系统中 <strong>执行者</strong> 是合并进了参与者或者协调者的，我们这里按模块分开了这个功能，如果业务想要合并某些角色，直接在某类服务上同时创建这两个角色的对象即可。</p><p><strong>执行者</strong> 接入的要求有</p><ul><li>扩展配置<ul><li>最大重试次数</li><li>锁冲突随机等待时间的范围</li></ul></li><li>定义行为（回调， <code>vtable</code> ）<ul><li>(必须)通知参与者准备(发起请求)</li><li>(可选)通知参与者否决(发起请求)</li><li>(可选)通知参与者提交(发起请求)</li></ul></li><li>接口<ul><li>创建事务<ul><li>决定采用哪种模式（数据库CAS、纯内存、<a href=http://www.dbms2.com/2010/05/01/ryw-read-your-writes-consistency/>Read-Your-Writes 一致性</a>）</li><li>决定是否采用Force Commit( <a href=https://en.wikipedia.org/wiki/Two-phase_commit_protocol>2PC(两阶段提交)</a> )</li><li>内部会根据模式选择是</li></ul></li><li>设置事务数据</li><li>添加参与者</li><li>提交事务</li></ul></li></ul><p>可以看到，<strong>执行者</strong> 的接入还是相当简单的，接口也很少。如果用户不定义 <strong>通知参与者否决</strong> 和 <strong>通知参与者提交</strong> 的话，</p><p>我们采用 <a href=https://en.wikipedia.org/wiki/Universally_unique_identifier>标准UUID</a> 的BASE64来作为事务的Key。这样长度在24以内，对于C++11 <code>std::string</code> 还能触发小字符串优化。</p><p><strong>执行者</strong> 的执行流程大致如下:</p><p><img src=2204-04.png alt=2204-04.png loading=lazy></p><h2 id=资源锁>资源锁</h2><p>前面提到，对于某些互斥的资源我们提供了加锁策略。那么既然涉及加锁，必然也会涉及死锁问题。我们采用了两种方式来解决锁冲突问题。</p><p>首先是对使用约定上的，没有程序化的约束。一个事务对所有的要占用的资源按某种固定的规则排序，我们加锁一定是有序的。
+}</code></pre><p>然后收到相应事件消息的时候去调用 <code>transaction_participator_handle</code> 里的 <code>prepare(...)/commit(...)/reject(...)/</code> 接口就可以了。</p><p>另外，我们提供了一种额外的模式，在 <code>transaction_participator_storage</code> 的配置选项里有个 <code>force_commit</code> 字段。这表示强制提交，收到Prepare消息后强制提交，直接执行Event Log。这时候如果后面收到 Reject 请求，则直接走 Undo 。用这种方式我们顺带还实现了 <a href=https://en.wikipedia.org/wiki/Two-phase_commit_protocol>2PC(两阶段提交)</a> 事务。</p><h2 id=执行者client>执行者(client)</h2><p>有一些系统中 <strong>执行者</strong> 是合并进了参与者或者协调者的，我们这里按模块分开了这个功能，如果业务想要合并某些角色，直接在某类服务上同时创建这两个角色的对象即可。</p><p><strong>执行者</strong> 接入的要求有</p><ul><li>扩展配置<ul><li>最大重试次数</li><li>锁冲突随机等待时间的范围</li></ul></li><li>定义行为（回调， <code>vtable</code> ）<ul><li>(必须)通知参与者准备(发起请求)</li><li>(可选)通知参与者否决(发起请求)</li><li>(可选)通知参与者提交(发起请求)</li></ul></li><li>接口<ul><li>创建事务<ul><li>决定采用哪种模式（数据库CAS、纯内存、<a href=http://www.dbms2.com/2010/05/01/ryw-read-your-writes-consistency/>Read-Your-Writes 一致性</a>）</li><li>决定是否采用Force Commit( <a href=https://en.wikipedia.org/wiki/Two-phase_commit_protocol>2PC(两阶段提交)</a> )</li><li>内部会根据模式选择是</li></ul></li><li>设置事务数据</li><li>添加参与者</li><li>提交事务</li></ul></li></ul><p>可以看到，<strong>执行者</strong> 的接入还是相当简单的，接口也很少。如果用户不定义 <strong>通知参与者否决</strong> 和 <strong>通知参与者提交</strong> 的话，</p><p>我们采用 <a href=https://en.wikipedia.org/wiki/Universally_unique_identifier>标准UUID</a> 的BASE64来作为事务的Key。这样长度在24以内，对于C++11 <code>std::string</code> 还能触发小字符串优化。</p><p><strong>执行者</strong> 的执行流程大致如下:</p><p><img src=2204-04.png alt=2204-04.png loading=lazy></p><h2 id=资源锁>资源锁</h2><p>前面提到，对于某些互斥的资源我们提供了加锁策略。那么既然涉及加锁，必然也会涉及死锁问题。我们采用了两种方式来解决锁冲突问题。</p><p>首先是对使用约定上的，没有程序化的约束。一个事务对所有的要占用的资源按某种固定的规则排序，我们加锁一定是有序的。
 其次我们采用 <a href=http://www.mathcs.emory.edu/~cheung/Courses/554/Syllabus/8-recv+serial/deadlock-compare.html>Wound-Wait</a> 策略来解除锁冲突（和死锁）。</p><h3 id=关于-wound-wait-策略的实现>关于 <a href=http://www.mathcs.emory.edu/~cheung/Courses/554/Syllabus/8-recv+serial/deadlock-compare.html>Wound-Wait</a> 策略的实现</h3><p>在 <strong>参与者(participator)</strong> 接口和 <strong>执行者(client)</strong> 协议中，我们提供 <code>lock()</code> 接口把资源锁在事务上，<strong>参与者(participator)</strong> 在事务结束时，自动释放锁。
 按照 <a href=http://www.mathcs.emory.edu/~cheung/Courses/554/Syllabus/8-recv+serial/deadlock-compare.html>Wound-Wait</a> 策略的标准实现，在事务 $T_n$ 和 $T_k$ 中，如果 $T_k$ 先到（先获得锁），采用以下策略：</p><ol><li>$Timepoint(T_n) &lt; Timepoint(T_k)$ : $T_n$ 抢占 $T_k$ 的锁， $T_k$ 被终止，并在一个随机时间后重试。</li><li>$Timepoint(T_n) > Timepoint(T_k)$ : $T_n$ 等待资源可用。</li></ol><p>首先，我们对所有的参与者排序，锁资源约定按照参与者的顺序，以规避 <a href=https://www.oreilly.com/library/view/hands-on-system-programming/9781788998475/edf57b67-a572-4202-8e56-18c85c2141e4.xhtml>ABBA死锁</a> 问题。
 然后,对于AB,BC资源锁，我们在 <code>prepare</code> 阶段加锁。对于上述的第一种场景，可以由 <code>prepare</code> 返回占用来告知 $T_k$ 被终止。在重试时重新 <code>prepare</code> 所有 <strong>参与者(participator)</strong> 。

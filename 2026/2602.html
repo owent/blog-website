@@ -9,20 +9,7 @@
 同时现在很多插件可以直接按文件后缀编辑文件，然后直接指向文件的形式引用进来，这样可维护性会好很多。</p><p>我之前也懒得一个一个组件去研究和何种模式的测试搭配，现在AI很强了，刚好可以让它帮我把这个优化干了。
 并且可以让这些插件都支持各种引入方式，确实是省事儿不少。</p><p>实测下来写代码还是Claude强，Google Gemini 3 Pro/Flash 也好，GPT 5.2/5.1-Codex-Max也好都会不同层度的瞎写。
 Google Gemini 3 Pro写代码感觉比GPT 5.2强一点。但是通用总结，比如让它给我改Markdown的lingt错误Google Gemini 3 Pro比GPT 5.2差很多。</p><p>以下就是花了差不多2个小时，使用的Claude Opus 4.5模型，一口气消耗了Github copilot 75个高级Request（Copilot Pro+订阅的5%）。
-最后完成了对 <a href=https://mermaid.js.org/>Mermaid</a>、<a href=https://www.chartjs.org/>Chart.js</a>、<a href=https://github.com/excalidraw/excalidraw>Excalidraw</a>、<a href=https://www.diagrams.net/>draw.io/diagrams.net</a> 的统一支持各种引用模式的支持。</p><h2 id=ai自动生成的测试用例>AI自动生成的测试用例</h2><p>This page demonstrates all supported methods for rendering diagrams and charts:</p><ul><li><strong><a href=https://www.diagrams.net/>Draw.io/diagrams.net</a></strong> - <code>.drawio</code> files</li><li><strong><a href=https://mermaid.js.org/>Mermaid</a></strong> - <code>.mermaid</code> files</li><li><strong><a href=https://github.com/excalidraw/excalidraw>Excalidraw</a></strong> - <code>.excalidraw</code> files</li><li><strong><a href=https://www.chartjs.org/>Chart.js</a></strong> - <code>.chart.json</code> files</li></ul><p>Each format supports 4 usage methods:</p><ol><li>Image syntax: <code>![](file.ext)</code></li><li>Code block: <code>```language</code></li><li>Shortcode with src: <code>{{&lt; type src="file" >}}</code></li><li>Shortcode inline: <code>{{&lt; type >}}content{{&lt; /type >}}</code></li></ol><hr><h2 id=1-drawiodiagramsnet-测试>1. <a href=https://www.diagrams.net/>Draw.io/diagrams.net</a> 测试</h2><h3 id=11-图片语法引用-drawio-文件>1.1 图片语法引用 .drawio 文件</h3><p>下面是通过图片语法引用的 <a href=https://www.diagrams.net/>draw.io/diagrams.net</a> 图表：</p><p><div class=drawio-container style="width:100%;height:auto;margin:1rem 0"><div id=drawio-image-0 class="drawio-root mxgraph" style="max-width:100%;border:1px solid transparent" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers lightbox","edit":"_blank","url":"2602-test-diagram.drawio"}'></div></div></p><h3 id=12-代码块方式内嵌xml>1.2 代码块方式（内嵌XML）</h3><pre><code class=language-drawio>&lt;mxfile host=&quot;app.diagrams.net&quot;&gt;
-  &lt;diagram name=&quot;Page-1&quot; id=&quot;codeblock-test&quot;&gt;
-    &lt;mxGraphModel dx=&quot;800&quot; dy=&quot;400&quot; grid=&quot;1&quot; gridSize=&quot;10&quot; guides=&quot;1&quot; tooltips=&quot;1&quot; connect=&quot;1&quot; arrows=&quot;1&quot; fold=&quot;1&quot; page=&quot;1&quot; pageScale=&quot;1&quot; pageWidth=&quot;827&quot; pageHeight=&quot;1169&quot;&gt;
-      &lt;root&gt;
-        &lt;mxCell id=&quot;0&quot; /&gt;
-        &lt;mxCell id=&quot;1&quot; parent=&quot;0&quot; /&gt;
-        &lt;mxCell id=&quot;2&quot; value=&quot;代码块方式&quot; style=&quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1&quot; vertex=&quot;1&quot; parent=&quot;1&quot;&gt;
-          &lt;mxGeometry x=&quot;40&quot; y=&quot;40&quot; width=&quot;120&quot; height=&quot;50&quot; as=&quot;geometry&quot; /&gt;
-        &lt;/mxCell&gt;
-      &lt;/root&gt;
-    &lt;/mxGraphModel&gt;
-  &lt;/diagram&gt;
-&lt;/mxfile&gt;
-</code></pre><h3 id=13-shortcode-引用外部文件>1.3 Shortcode 引用外部文件</h3><div class=drawio-container style="width:100%;height:auto;margin:1rem 0"><div id=drawio-shortcode-0 class="drawio-root mxgraph" style="max-width:100%;border:1px solid transparent" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers lightbox","edit":"_blank","page":0,"url":"2602-test-diagram.drawio"}'></div></div><h3 id=14-shortcode-内联方式>1.4 Shortcode 内联方式</h3><div class=drawio-container style="width:100%;height:auto;margin:1rem 0"><div id=drawio-shortcode-1 class="drawio-root mxgraph drawio-pending" style="max-width:100%;border:1px solid transparent" data-drawio-config-id=drawio-shortcode-1-config data-drawio-page=0></div><script type=text/xml id=drawio-shortcode-1-config><mxfile host="app.diagrams.net">
+最后完成了对 <a href=https://mermaid.js.org/>Mermaid</a>、<a href=https://www.chartjs.org/>Chart.js</a>、<a href=https://github.com/excalidraw/excalidraw>Excalidraw</a>、<a href=https://www.diagrams.net/>draw.io/diagrams.net</a> 的统一支持各种引用模式的支持。</p><h2 id=ai自动生成的测试用例>AI自动生成的测试用例</h2><p>This page demonstrates all supported methods for rendering diagrams and charts:</p><ul><li><strong><a href=https://www.diagrams.net/>Draw.io/diagrams.net</a></strong> - <code>.drawio</code> files</li><li><strong><a href=https://mermaid.js.org/>Mermaid</a></strong> - <code>.mermaid</code> files</li><li><strong><a href=https://github.com/excalidraw/excalidraw>Excalidraw</a></strong> - <code>.excalidraw</code> files</li><li><strong><a href=https://www.chartjs.org/>Chart.js</a></strong> - <code>.chart.json</code> files</li></ul><p>Each format supports 4 usage methods:</p><ol><li>Image syntax: <code>![](file.ext)</code></li><li>Code block: <code>```language</code></li><li>Shortcode with src: <code>{{&lt; type src="file" >}}</code></li><li>Shortcode inline: <code>{{&lt; type >}}content{{&lt; /type >}}</code></li></ol><hr><h2 id=1-drawiodiagramsnet-测试>1. <a href=https://www.diagrams.net/>Draw.io/diagrams.net</a> 测试</h2><h3 id=11-图片语法引用-drawio-文件>1.1 图片语法引用 .drawio 文件</h3><p>下面是通过图片语法引用的 <a href=https://www.diagrams.net/>draw.io/diagrams.net</a> 图表：</p><p><div class=drawio-container style="width:100%;height:auto;margin:1rem 0"><div id=drawio-image-0 class="drawio-root mxgraph" style="max-width:100%;border:1px solid transparent" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers lightbox","edit":"_blank","url":"2602-test-diagram.drawio"}'></div></div></p><h3 id=12-代码块方式内嵌xml>1.2 代码块方式（内嵌XML）</h3><div class=drawio-container style="width:100%;height:auto;margin:1rem 0"><div id=drawio-codeblock-0 class="drawio-root mxgraph" style="max-width:100%;border:1px solid transparent" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers lightbox","edit":"_blank","page":0,"url":"data:text/xml;base64,PG14ZmlsZSBob3N0PSJhcHAuZGlhZ3JhbXMubmV0Ij4NCiAgPGRpYWdyYW0gbmFtZT0iUGFnZS0xIiBpZD0iY29kZWJsb2NrLXRlc3QiPg0KICAgIDxteEdyYXBoTW9kZWwgZHg9IjgwMCIgZHk9IjQwMCIgZ3JpZD0iMSIgZ3JpZFNpemU9IjEwIiBndWlkZXM9IjEiIHRvb2x0aXBzPSIxIiBjb25uZWN0PSIxIiBhcnJvd3M9IjEiIGZvbGQ9IjEiIHBhZ2U9IjEiIHBhZ2VTY2FsZT0iMSIgcGFnZVdpZHRoPSI4MjciIHBhZ2VIZWlnaHQ9IjExNjkiPg0KICAgICAgPHJvb3Q+DQogICAgICAgIDxteENlbGwgaWQ9IjAiIC8+DQogICAgICAgIDxteENlbGwgaWQ9IjEiIHBhcmVudD0iMCIgLz4NCiAgICAgICAgPG14Q2VsbCBpZD0iMiIgdmFsdWU9IuS7o+eggeWdl+aWueW8jyIgc3R5bGU9InJvdW5kZWQ9MTt3aGl0ZVNwYWNlPXdyYXA7aHRtbD0xO2ZpbGxDb2xvcj0jZGFlOGZjO3N0cm9rZUNvbG9yPSM2YzhlYmY7Zm9udFNpemU9MTQ7Zm9udFN0eWxlPTEiIHZlcnRleD0iMSIgcGFyZW50PSIxIj4NCiAgICAgICAgICA8bXhHZW9tZXRyeSB4PSI0MCIgeT0iNDAiIHdpZHRoPSIxMjAiIGhlaWdodD0iNTAiIGFzPSJnZW9tZXRyeSIgLz4NCiAgICAgICAgPC9teENlbGw+DQogICAgICA8L3Jvb3Q+DQogICAgPC9teEdyYXBoTW9kZWw+DQogIDwvZGlhZ3JhbT4NCjwvbXhmaWxlPg=="}'></div></div><h3 id=13-shortcode-引用外部文件>1.3 Shortcode 引用外部文件</h3><div class=drawio-container style="width:100%;height:auto;margin:1rem 0"><div id=drawio-shortcode-0 class="drawio-root mxgraph" style="max-width:100%;border:1px solid transparent" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers lightbox","edit":"_blank","page":0,"url":"2602-test-diagram.drawio"}'></div></div><h3 id=14-shortcode-内联方式>1.4 Shortcode 内联方式</h3><div class=drawio-container style="width:100%;height:auto;margin:1rem 0"><div id=drawio-shortcode-1 class="drawio-root mxgraph drawio-pending" style="max-width:100%;border:1px solid transparent" data-drawio-config-id=drawio-shortcode-1-config data-drawio-page=0></div><script type=text/xml id=drawio-shortcode-1-config><mxfile host="app.diagrams.net">
   <diagram name="Page-1" id="shortcode-inline-test">
     <mxGraphModel dx="800" dy="400" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169">
       <root>
@@ -34,109 +21,18 @@ Google Gemini 3 Pro写代码感觉比GPT 5.2强一点。但是通用总结，比
       </root>
     </mxGraphModel>
   </diagram>
-</mxfile></script></div><hr><h2 id=2-mermaid-图片语法测试>2. <a href=https://mermaid.js.org/>Mermaid</a> 图片语法测试</h2><h3 id=21-图片语法引用-mermaid-文件>2.1 图片语法引用 .mermaid 文件</h3><p>下面是通过图片语法引用的 <a href=https://mermaid.js.org/>Mermaid</a> 图表：</p><p><div class=mermaid-container style="width:100%;height:auto;margin:1rem 0"><pre id=mermaid-image-1 class="mermaid mermaid-pending" data-mermaid-src=2602-test-diagram.mermaid>流程图</pre></div></p><h3 id=22-代码块方式>2.2 代码块方式</h3><pre><code class=language-mermaid>graph LR
-    A[代码块方式] --&gt; B{工作正常?}
-    B --&gt;|是| C[蓝色流程图]
-    B --&gt;|否| D[检查代码]
-</code></pre><h3 id=23-shortcode-引用外部文件>2.3 Shortcode 引用外部文件</h3><div class=mermaid-container style="width:100%;height:auto;margin:1rem 0"><pre id=mermaid-shortcode-2 class="mermaid mermaid-pending" data-mermaid-src=2602-test-diagram.mermaid>Loading mermaid diagram...</pre></div><h3 id=24-shortcode-内联方式>2.4 Shortcode 内联方式</h3><div class=mermaid-container style="width:100%;height:auto;margin:1rem 0"><pre id=mermaid-shortcode-3 class=mermaid>
+</mxfile></script></div><hr><h2 id=2-mermaid-图片语法测试>2. <a href=https://mermaid.js.org/>Mermaid</a> 图片语法测试</h2><h3 id=21-图片语法引用-mermaid-文件>2.1 图片语法引用 .mermaid 文件</h3><p>下面是通过图片语法引用的 <a href=https://mermaid.js.org/>Mermaid</a> 图表：</p><p><div class=mermaid-container style="width:100%;height:auto;margin:1rem 0"><pre id=mermaid-image-1 class="mermaid mermaid-pending" data-mermaid-src=2602-test-diagram.mermaid>流程图</pre></div></p><h3 id=22-代码块方式>2.2 代码块方式</h3><pre class=mermaid>
+graph LR
+    A[代码块方式] --> B{工作正常?}
+    B -->|是| C[蓝色流程图]
+    B -->|否| D[检查代码]
+</pre><h3 id=23-shortcode-引用外部文件>2.3 Shortcode 引用外部文件</h3><div class=mermaid-container style="width:100%;height:auto;margin:1rem 0"><pre id=mermaid-shortcode-2 class="mermaid mermaid-pending" data-mermaid-src=2602-test-diagram.mermaid>Loading mermaid diagram...</pre></div><h3 id=24-shortcode-内联方式>2.4 Shortcode 内联方式</h3><div class=mermaid-container style="width:100%;height:auto;margin:1rem 0"><pre id=mermaid-shortcode-3 class=mermaid>
 graph TD
     A[Shortcode 内联] --> B[Mermaid 图表]
     B --> C{正常显示?}
     C -->|是| D[成功]
     C -->|否| E[检查]
-  </pre></div><hr><h2 id=3-excalidraw-图片语法测试>3. <a href=https://github.com/excalidraw/excalidraw>Excalidraw</a> 图片语法测试</h2><h3 id=31-图片语法引用-excalidraw-文件>3.1 图片语法引用 .excalidraw 文件</h3><p>下面是通过图片语法引用的 <a href=https://github.com/excalidraw/excalidraw>Excalidraw</a> 图表：</p><p><div class=excalidraw-container style="width:100%;height:auto;margin:1rem 0"><div id=excalidraw-image-2 class=excalidraw-root style=width:100%;height:auto data-excalidraw-src=2602-test-diagram.excalidraw data-excalidraw-fetch-id=excalidraw-image-2>测试图表</div></div></p><h3 id=32-shortcode-引用外部文件>3.2 Shortcode 引用外部文件</h3><div class=excalidraw-container style="width:100%;height:auto;margin:1rem 0"><div id=excalidraw-shortcode-4 class=excalidraw-root style=width:100%;height:auto data-excalidraw-src=2602-test-diagram.excalidraw>Loading excalidraw...</div></div><h3 id=33-shortcode-内联方式>3.3 Shortcode 内联方式</h3><div class=excalidraw-container style="width:100%;height:auto;margin:1rem 0"><div id=excalidraw-shortcode-5 class=excalidraw-root style=width:100%;height:auto data-excalidraw-data-id=excalidraw-shortcode-5-data>Loading excalidraw...</div></div><script type=application/json id=excalidraw-shortcode-5-data>{"type":"excalidraw","version":2,"source":"https://excalidraw.com","elements":[{"id":"shortcode-inline-rect","type":"rectangle","x":100,"y":100,"width":180,"height":80,"angle":0,"strokeColor":"#2f9e44","backgroundColor":"#b2f2bb","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100,"seed":11111,"version":1,"versionNonce":1},{"id":"shortcode-inline-text","type":"text","x":115,"y":125,"width":150,"height":30,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"roughness":1,"opacity":100,"seed":22222,"version":1,"versionNonce":1,"text":"Shortcode 内联","fontSize":18,"fontFamily":1,"textAlign":"center","verticalAlign":"middle"}],"appState":{"viewBackgroundColor":"#ffffff"}}</script><h3 id=34-代码块方式>3.4 代码块方式</h3><pre><code class=language-excalidraw>{
-  &quot;type&quot;: &quot;excalidraw&quot;,
-  &quot;version&quot;: 2,
-  &quot;source&quot;: &quot;https://excalidraw.com&quot;,
-  &quot;elements&quot;: [
-    {
-      &quot;id&quot;: &quot;codeblock-rect&quot;,
-      &quot;type&quot;: &quot;rectangle&quot;,
-      &quot;x&quot;: 100,
-      &quot;y&quot;: 100,
-      &quot;width&quot;: 200,
-      &quot;height&quot;: 100,
-      &quot;angle&quot;: 0,
-      &quot;strokeColor&quot;: &quot;#1971c2&quot;,
-      &quot;backgroundColor&quot;: &quot;#a5d8ff&quot;,
-      &quot;fillStyle&quot;: &quot;solid&quot;,
-      &quot;strokeWidth&quot;: 2,
-      &quot;roughness&quot;: 1,
-      &quot;opacity&quot;: 100,
-      &quot;seed&quot;: 54321,
-      &quot;version&quot;: 1,
-      &quot;versionNonce&quot;: 1
-    },
-    {
-      &quot;id&quot;: &quot;codeblock-text&quot;,
-      &quot;type&quot;: &quot;text&quot;,
-      &quot;x&quot;: 130,
-      &quot;y&quot;: 135,
-      &quot;width&quot;: 140,
-      &quot;height&quot;: 30,
-      &quot;angle&quot;: 0,
-      &quot;strokeColor&quot;: &quot;#1e1e1e&quot;,
-      &quot;backgroundColor&quot;: &quot;transparent&quot;,
-      &quot;fillStyle&quot;: &quot;solid&quot;,
-      &quot;strokeWidth&quot;: 1,
-      &quot;roughness&quot;: 1,
-      &quot;opacity&quot;: 100,
-      &quot;seed&quot;: 65432,
-      &quot;version&quot;: 1,
-      &quot;versionNonce&quot;: 1,
-      &quot;text&quot;: &quot;代码块方式&quot;,
-      &quot;fontSize&quot;: 20,
-      &quot;fontFamily&quot;: 1,
-      &quot;textAlign&quot;: &quot;center&quot;,
-      &quot;verticalAlign&quot;: &quot;middle&quot;
-    }
-  ],
-  &quot;appState&quot;: {
-    &quot;viewBackgroundColor&quot;: &quot;#ffffff&quot;
-  }
-}
-</code></pre><hr><h2 id=4-chartjs-测试>4. <a href=https://www.chartjs.org/>Chart.js</a> 测试</h2><h3 id=41-图片语法引用-chartjson-文件>4.1 图片语法引用 .chart.json 文件</h3><p>下面是通过图片语法引用的 <a href=https://www.chartjs.org/>Chart.js</a> 图表：</p><p><div class=chartjs-container style="width:100%;height:auto;margin:1rem 0"><canvas id=chartjs-image-3 class=chartjs-pending data-chartjs-src=2602-test-chart.chart.json>销售图表</canvas></div></p><h3 id=42-shortcode-引用外部文件>4.2 Shortcode 引用外部文件</h3><div class=chartjs-container style="width:100%;height:auto;margin:1rem 0"><canvas id=chartjs-shortcode-6 class=chartjs-pending data-chartjs-src=2602-test-chart.chart.json>Chart 6</canvas></div><h3 id=43-shortcode-内联方式>4.3 Shortcode 内联方式</h3><div class=chartjs-container style="width:100%;height:auto;margin:1rem 0"><canvas id=chartjs-shortcode-7 data-chartjs-config-id=chartjs-shortcode-7-config>Chart 7</canvas></div><script type=application/json id=chartjs-shortcode-7-config>{"type":"doughnut","data":{"labels":["Red","Blue","Yellow"],"datasets":[{"data":[300,50,100],"backgroundColor":["#FF6384","#36A2EB","#FFCE56"]}]},"options":{"responsive":true,"plugins":{"title":{"display":true,"text":"Shortcode 内联图表"}}}}</script><h3 id=44-代码块方式>4.4 代码块方式</h3><pre><code class=language-chart>{
-  &quot;type&quot;: &quot;line&quot;,
-  &quot;data&quot;: {
-    &quot;labels&quot;: [&quot;周一&quot;, &quot;周二&quot;, &quot;周三&quot;, &quot;周四&quot;, &quot;周五&quot;],
-    &quot;datasets&quot;: [{
-      &quot;label&quot;: &quot;访问量&quot;,
-      &quot;data&quot;: [65, 59, 80, 81, 56],
-      &quot;fill&quot;: false,
-      &quot;borderColor&quot;: &quot;rgb(75, 192, 192)&quot;,
-      &quot;tension&quot;: 0.1
-    }]
-  },
-  &quot;options&quot;: {
-    &quot;responsive&quot;: true,
-    &quot;plugins&quot;: {
-      &quot;title&quot;: {
-        &quot;display&quot;: true,
-        &quot;text&quot;: &quot;代码块方式图表 (chart)&quot;
-      }
-    }
-  }
-}
-</code></pre><h3 id=45-代码块方式-chartjs-语法>4.5 代码块方式 (chartjs 语法)</h3><pre><code class=language-chartjs>{
-  &quot;type&quot;: &quot;pie&quot;,
-  &quot;data&quot;: {
-    &quot;labels&quot;: [&quot;Chrome&quot;, &quot;Firefox&quot;, &quot;Safari&quot;, &quot;Edge&quot;],
-    &quot;datasets&quot;: [{
-      &quot;data&quot;: [60, 20, 10, 10],
-      &quot;backgroundColor&quot;: [&quot;#4285F4&quot;, &quot;#FF7139&quot;, &quot;#00D084&quot;, &quot;#0078D7&quot;]
-    }]
-  },
-  &quot;options&quot;: {
-    &quot;responsive&quot;: true,
-    &quot;plugins&quot;: {
-      &quot;title&quot;: {
-        &quot;display&quot;: true,
-        &quot;text&quot;: &quot;代码块方式图表 (chartjs)&quot;
-      }
-    }
-  }
-}
-</code></pre><hr><h2 id=5-测试结果>5. 测试结果</h2><table><thead><tr><th>类型</th><th>图片语法</th><th>代码块方式</th><th>Shortcode (内联)</th><th>Shortcode (src)</th></tr></thead><tbody><tr><td><a href=https://www.diagrams.net/>Draw.io/diagrams.net</a></td><td>✓ <code>.drawio</code></td><td>✓ <code>drawio</code></td><td>✓</td><td>✓</td></tr><tr><td><a href=https://mermaid.js.org/>Mermaid</a></td><td>✓ <code>.mermaid</code></td><td>✓ <code>mermaid</code></td><td>✓</td><td>✓</td></tr><tr><td><a href=https://github.com/excalidraw/excalidraw>Excalidraw</a></td><td>✓ <code>.excalidraw</code></td><td>✓ <code>excalidraw</code></td><td>✓</td><td>✓</td></tr><tr><td><a href=https://www.chartjs.org/>Chart.js</a></td><td>✓ <code>.chart.json</code></td><td>✓ <code>chart</code> / <code>chartjs</code></td><td>✓</td><td>✓</td></tr></tbody></table><p>如果所有图表都能正常显示，说明功能正常工作！</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2026-01-01T18:15:45.000+00:00 itemprop=datePublished>2026-01-01</time></span>
+  </pre></div><hr><h2 id=3-excalidraw-图片语法测试>3. <a href=https://github.com/excalidraw/excalidraw>Excalidraw</a> 图片语法测试</h2><h3 id=31-图片语法引用-excalidraw-文件>3.1 图片语法引用 .excalidraw 文件</h3><p>下面是通过图片语法引用的 <a href=https://github.com/excalidraw/excalidraw>Excalidraw</a> 图表：</p><p><div class=excalidraw-container style="width:100%;height:auto;margin:1rem 0"><div id=excalidraw-image-2 class=excalidraw-root style=width:100%;height:auto data-excalidraw-src=2602-test-diagram.excalidraw data-excalidraw-fetch-id=excalidraw-image-2>测试图表</div></div></p><h3 id=32-shortcode-引用外部文件>3.2 Shortcode 引用外部文件</h3><div class=excalidraw-container style="width:100%;height:auto;margin:1rem 0"><div id=excalidraw-shortcode-4 class=excalidraw-root style=width:100%;height:auto data-excalidraw-src=2602-test-diagram.excalidraw>Loading excalidraw...</div></div><h3 id=33-shortcode-内联方式>3.3 Shortcode 内联方式</h3><div class=excalidraw-container style="width:100%;height:auto;margin:1rem 0"><div id=excalidraw-shortcode-5 class=excalidraw-root style=width:100%;height:auto data-excalidraw-data-id=excalidraw-shortcode-5-data>Loading excalidraw...</div></div><script type=application/json id=excalidraw-shortcode-5-data>{"type":"excalidraw","version":2,"source":"https://excalidraw.com","elements":[{"id":"shortcode-inline-rect","type":"rectangle","x":100,"y":100,"width":180,"height":80,"angle":0,"strokeColor":"#2f9e44","backgroundColor":"#b2f2bb","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100,"seed":11111,"version":1,"versionNonce":1},{"id":"shortcode-inline-text","type":"text","x":115,"y":125,"width":150,"height":30,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"roughness":1,"opacity":100,"seed":22222,"version":1,"versionNonce":1,"text":"Shortcode 内联","fontSize":18,"fontFamily":1,"textAlign":"center","verticalAlign":"middle"}],"appState":{"viewBackgroundColor":"#ffffff"}}</script><h3 id=34-代码块方式>3.4 代码块方式</h3><div class=excalidraw-container style="width:100%;height:auto;margin:1rem 0"><div id=excalidraw-diagram-2 class=excalidraw-root style=width:100%;height:auto data-excalidraw-data-id=excalidraw-diagram-2-data>Loading excalidraw libraries...</div></div><script type=application/json id=excalidraw-diagram-2-data>{"type":"excalidraw","version":2,"source":"https://excalidraw.com","elements":[{"id":"codeblock-rect","type":"rectangle","x":100,"y":100,"width":200,"height":100,"angle":0,"strokeColor":"#1971c2","backgroundColor":"#a5d8ff","fillStyle":"solid","strokeWidth":2,"roughness":1,"opacity":100,"seed":54321,"version":1,"versionNonce":1},{"id":"codeblock-text","type":"text","x":130,"y":135,"width":140,"height":30,"angle":0,"strokeColor":"#1e1e1e","backgroundColor":"transparent","fillStyle":"solid","strokeWidth":1,"roughness":1,"opacity":100,"seed":65432,"version":1,"versionNonce":1,"text":"代码块方式","fontSize":20,"fontFamily":1,"textAlign":"center","verticalAlign":"middle"}],"appState":{"viewBackgroundColor":"#ffffff"}}</script><hr><h2 id=4-chartjs-测试>4. <a href=https://www.chartjs.org/>Chart.js</a> 测试</h2><h3 id=41-图片语法引用-chartjson-文件>4.1 图片语法引用 .chart.json 文件</h3><p>下面是通过图片语法引用的 <a href=https://www.chartjs.org/>Chart.js</a> 图表：</p><p><div class=chartjs-container style="width:100%;height:auto;margin:1rem 0"><canvas id=chartjs-image-3 class=chartjs-pending data-chartjs-src=2602-test-chart.chart.json>销售图表</canvas></div></p><h3 id=42-shortcode-引用外部文件>4.2 Shortcode 引用外部文件</h3><div class=chartjs-container style="width:100%;height:auto;margin:1rem 0"><canvas id=chartjs-shortcode-6 class=chartjs-pending data-chartjs-src=2602-test-chart.chart.json>Chart 6</canvas></div><h3 id=43-shortcode-内联方式>4.3 Shortcode 内联方式</h3><div class=chartjs-container style="width:100%;height:auto;margin:1rem 0"><canvas id=chartjs-shortcode-7 data-chartjs-config-id=chartjs-shortcode-7-config>Chart 7</canvas></div><script type=application/json id=chartjs-shortcode-7-config>{"type":"doughnut","data":{"labels":["Red","Blue","Yellow"],"datasets":[{"data":[300,50,100],"backgroundColor":["#FF6384","#36A2EB","#FFCE56"]}]},"options":{"responsive":true,"plugins":{"title":{"display":true,"text":"Shortcode 内联图表"}}}}</script><h3 id=44-代码块方式>4.4 代码块方式</h3><div class=chartjs-container style="width:100%;height:auto;margin:1rem 0"><canvas id=chartjs-codeblock-3 data-chartjs-config-id=chartjs-codeblock-3-config>Chart</canvas></div><script type=application/json id=chartjs-codeblock-3-config>{"type":"line","data":{"labels":["周一","周二","周三","周四","周五"],"datasets":[{"label":"访问量","data":[65,59,80,81,56],"fill":false,"borderColor":"rgb(75, 192, 192)","tension":0.1}]},"options":{"responsive":true,"plugins":{"title":{"display":true,"text":"代码块方式图表 (chart)"}}}}</script><h3 id=45-代码块方式-chartjs-语法>4.5 代码块方式 (chartjs 语法)</h3><div class=chartjs-container style="width:100%;height:auto;margin:1rem 0"><canvas id=chartjs-codeblock-4 data-chartjs-config-id=chartjs-codeblock-4-config>Chart</canvas></div><script type=application/json id=chartjs-codeblock-4-config>{"type":"pie","data":{"labels":["Chrome","Firefox","Safari","Edge"],"datasets":[{"data":[60,20,10,10],"backgroundColor":["#4285F4","#FF7139","#00D084","#0078D7"]}]},"options":{"responsive":true,"plugins":{"title":{"display":true,"text":"代码块方式图表 (chartjs)"}}}}</script><hr><h2 id=5-测试结果>5. 测试结果</h2><table><thead><tr><th>类型</th><th>图片语法</th><th>代码块方式</th><th>Shortcode (内联)</th><th>Shortcode (src)</th></tr></thead><tbody><tr><td><a href=https://www.diagrams.net/>Draw.io/diagrams.net</a></td><td>✓ <code>.drawio</code></td><td>✓ <code>drawio</code></td><td>✓</td><td>✓</td></tr><tr><td><a href=https://mermaid.js.org/>Mermaid</a></td><td>✓ <code>.mermaid</code></td><td>✓ <code>mermaid</code></td><td>✓</td><td>✓</td></tr><tr><td><a href=https://github.com/excalidraw/excalidraw>Excalidraw</a></td><td>✓ <code>.excalidraw</code></td><td>✓ <code>excalidraw</code></td><td>✓</td><td>✓</td></tr><tr><td><a href=https://www.chartjs.org/>Chart.js</a></td><td>✓ <code>.chart.json</code></td><td>✓ <code>chart</code> / <code>chartjs</code></td><td>✓</td><td>✓</td></tr></tbody></table><p>如果所有图表都能正常显示，说明功能正常工作！</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2026-01-01T18:15:45.000+00:00 itemprop=datePublished>2026-01-01</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/hugo.html>hugo</a></li><li class=article-tag-list-item><a href=//owent.net/tags/gohugo.html>gohugo</a></li><li class=article-tag-list-item><a href=//owent.net/tags/mermaid.html>mermaid</a></li><li class=article-tag-list-item><a href=//owent.net/tags/chart.js.html>chart.js</a></li><li class=article-tag-list-item><a href=//owent.net/tags/excalidraw.html>excalidraw</a></li><li class=article-tag-list-item><a href=//owent.net/tags/draw.io.html>draw.io</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2026/2603.html>上一篇<strong>Protobuf又一坑 - C++标准和ABI兼容性</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2026/2601.html>下一篇<strong>给内网部署Squid-通用HTTP下载缓存</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;owent
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,

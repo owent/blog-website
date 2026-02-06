@@ -6,7 +6,7 @@
 <button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-861"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/861.html target=_blank itemprop=url>POJ 2192 Zipper HDU 2059 龟兔赛跑</a></h1></header><div class=article-summary><p>今天心情好，刷了两到ACM水题，思路很简单都在注释里，所以直接贴代码:</p><pre><code class=language-cpp>/**
  * @file 龟兔赛跑.cpp
  * @brief 龟兔赛跑 AC代码 (DP)
- * DP方程式: [到第i的充电站的最短时间] = [到最后一个冲了电的充电站的最短时间] + [那个充电站到第i个充电站的时间]
+ * DP方程式: [到第i的充电站的最短时间] = [到最后一个冲了电的充电站的最短时间] &#43; [那个充电站到第i个充电站的时间]
  *
  * @link http://acm.hdu.edu.cn/showproblem.php?pid=2059
  * @version 1.0
@@ -18,57 +18,57 @@
  *
  */
 
-#include &lt;cstdio&gt;
-#include &lt;iostream&gt;
-#include &lt;cstring&gt;
-#include &lt;algorithm&gt;
-#include &lt;set&gt;
-#include &lt;numeric&gt;
+#include &amp;lt;cstdio&amp;gt;
+#include &amp;lt;iostream&amp;gt;
+#include &amp;lt;cstring&amp;gt;
+#include &amp;lt;algorithm&amp;gt;
+#include &amp;lt;set&amp;gt;
+#include &amp;lt;numeric&amp;gt;
 
 int pn[128];
-double dp[128]; /** dp[i] 表示 到第i个充电站的最小时间(0为开始位置，n+1为终点) **/
+double dp[128]; /** dp[i] 表示 到第i个充电站的最小时间(0为开始位置，n&#43;1为终点) **/
 
 double calc_charge_time(int dis, int v1, int v2, int c) {
-    if (dis &lt;= c)
+    if (dis &amp;lt;= c)
         return 1.0 * dis / v1;
 
-    return 1.0 * c / v1 + 1.0 * (dis - c) / v2;
+    return 1.0 * c / v1 &#43; 1.0 * (dis - c) / v2;
 }
 
 int main(int argc, char* argv[]) {
     using namespace std;
 
-    double eps = std::numeric_limits&lt;double&gt;::epsilon();
+    double eps = std::numeric_limits&amp;lt;double&amp;gt;::epsilon();
     int l, n, c, t, vr, v1, v2;
 
-    while(cin&gt;&gt; l) {
-        cin &gt;&gt; n&gt;&gt; c&gt;&gt; t&gt;&gt; vr&gt;&gt; v1&gt;&gt; v2;
+    while(cin&amp;gt;&amp;gt; l) {
+        cin &amp;gt;&amp;gt; n&amp;gt;&amp;gt; c&amp;gt;&amp;gt; t&amp;gt;&amp;gt; vr&amp;gt;&amp;gt; v1&amp;gt;&amp;gt; v2;
 
         pn[0] = 0; /** 0为起点 **/
-        for (int i = 1; i &lt;= n; ++ i) {
-            cin&gt;&gt; pn[i];
+        for (int i = 1; i &amp;lt;= n; &#43;&#43; i) {
+            cin&amp;gt;&amp;gt; pn[i];
         }
-        pn[n + 1] = l; /** n+1为终点 **/
+        pn[n &#43; 1] = l; /** n&#43;1为终点 **/
 
         memset(dp, 0, sizeof(dp));
-        for(int i = 0; i &lt;= n + 1; ++ i) {
+        for(int i = 0; i &amp;lt;= n &#43; 1; &#43;&#43; i) {
             dp[i] = calc_charge_time(pn[i] - pn[0], v1, v2, c);
         }
 
-        for(int i = 1; i &lt;= n + 1; ++ i) {
-            for(int j = 0; j &lt; i; ++ j) {
-                double tc = calc_charge_time(pn[i] - pn[j], v1, v2, c) + t + dp[j];
+        for(int i = 1; i &amp;lt;= n &#43; 1; &#43;&#43; i) {
+            for(int j = 0; j &amp;lt; i; &#43;&#43; j) {
+                double tc = calc_charge_time(pn[i] - pn[j], v1, v2, c) &#43; t &#43; dp[j];
                 dp[i] = std::min(tc, dp[i]);
             }
             
         }
 
-        double rt = 1.0 * l / vr, tt = dp[n + 1];
+        double rt = 1.0 * l / vr, tt = dp[n &#43; 1];
 
-        if (tt &lt; rt)
-            puts(&quot;What a pity rabbit!&quot;);
+        if (tt &amp;lt; rt)
+            puts(&amp;#34;What a pity rabbit!&amp;#34;);
         else
-            puts(&quot;Good job,rabbit!&quot;);
+            puts(&amp;#34;Good job,rabbit!&amp;#34;);
     }
 
     return 0;
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
  * @file Zipper.cpp
  * @brief Zipper AC代码 (DP)
  * @link http://poj.org/problem?id=2192
- * DP方程式: [A串消耗个数i][B串消耗个数j] = min{[A串消耗个数i - 1][B串消耗个数j]|[A串消耗个数i][B串消耗个数j + 1]}
+ * DP方程式: [A串消耗个数i][B串消耗个数j] = min{[A串消耗个数i - 1][B串消耗个数j]|[A串消耗个数i][B串消耗个数j &#43; 1]}
  * 以上分支选取条件是 A或B的新选用字符和C串新字符匹配
  *
  * @version 1.0
@@ -90,30 +90,30 @@ int main(int argc, char* argv[]) {
  *
  */
 
-#include &lt;cstdio&gt;
-#include &lt;cstring&gt;
-#include &lt;algorithm&gt;
-#include &lt;set&gt;
-#include &lt;numeric&gt;
+#include &amp;lt;cstdio&amp;gt;
+#include &amp;lt;cstring&amp;gt;
+#include &amp;lt;algorithm&amp;gt;
+#include &amp;lt;set&amp;gt;
+#include &amp;lt;numeric&amp;gt;
 
 
 char strA[256], strB[256], strC[512];
-int dp[256][256]; /** dp[i][j] = k 表示A消耗了i个字符，B消耗了j个字符，拼成的C串消耗了k个字符（其实就是i+j） **/
+int dp[256][256]; /** dp[i][j] = k 表示A消耗了i个字符，B消耗了j个字符，拼成的C串消耗了k个字符（其实就是i&#43;j） **/
 
 int main(int argc, char* argv[]) {
     using namespace std;
     int s, n;
 
-    scanf(&quot;%d&quot;, &amp;n);
-    for( s = 0; s &lt; n; ++ s) {
-        scanf(&quot;%s %s %s&quot;, strA, strB, strC);
+    scanf(&amp;#34;%d&amp;#34;, &amp;amp;n);
+    for( s = 0; s &amp;lt; n; &#43;&#43; s) {
+        scanf(&amp;#34;%s %s %s&amp;#34;, strA, strB, strC);
         int lenA = strlen(strA);
         int lenB = strlen(strB);
         int lenC = strlen(strC);
         bool bFlag = false;
 
-        if ( lenC != lenA + lenB ) {
-            printf(&quot;Data set %d: no\n&quot;, s + 1);
+        if ( lenC != lenA &#43; lenB ) {
+            printf(&amp;#34;Data set %d: no\n&amp;#34;, s &#43; 1);
             continue;
         }
 
@@ -124,43 +124,41 @@ int main(int argc, char* argv[]) {
         if (strB[0] == strC[0])
             dp[0][1] = 1;
 
-        for (int i = 0; i &lt;= lenA; ++ i) {
-            for (int j = 0; j &lt;= lenB; ++ j) {
+        for (int i = 0; i &amp;lt;= lenA; &#43;&#43; i) {
+            for (int j = 0; j &amp;lt;= lenB; &#43;&#43; j) {
                 if (0 == dp[i][j])
                     continue;
 
-                int ri = i + 1, rj = j + 1;
+                int ri = i &#43; 1, rj = j &#43; 1;
 
                 if (strA[i] == strC[dp[i][j]]) {
-                    dp[ri][j] = dp[i][j] + 1;
-                    if (ri + j == lenC)
+                    dp[ri][j] = dp[i][j] &#43; 1;
+                    if (ri &#43; j == lenC)
                         bFlag = true;
                 }
 
                 if (strB[j] == strC[dp[i][j]]) {
-                    dp[i][rj] = dp[i][j] + 1;
-                    if (i + rj == lenC)
+                    dp[i][rj] = dp[i][j] &#43; 1;
+                    if (i &#43; rj == lenC)
                         bFlag = true;
                 }
             }
         }
 
-        printf(&quot;Data set %d: %s\n&quot;, s + 1, bFlag? &quot;yes&quot;: &quot;no&quot;);
+        printf(&amp;#34;Data set %d: %s\n&amp;#34;, s &#43; 1, bFlag? &amp;#34;yes&amp;#34;: &amp;#34;no&amp;#34;);
     }
 
     return 0;
-}
-
-</code></pre></div><div class=article-more><a href=//owent.net/2013/861.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-07-15T18:39:41.000+00:00 itemprop=datePublished>2013-07-15</time></div></div></article><article class="article-panel archive-article archive-type-8"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/8.html target=_blank itemprop=url>线段树相关问题 (引用 PKU POJ题目) 整理</a></h1></header><div class=article-summary><h2 id=1rangeminimummaximum-query问题计算单调区间内出现最多少的次数>1.RangeMinimum、Maximum Query问题（计算单调区间内出现最多（少）的次数）</h2><p>对元素的起点做离散化，再把离散化后的位置作为线段树的[l, r),记录次数为t.</p><p>对输入区间a, b:</p></div><div class=article-more><a href=//owent.net/2010/8.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-10-12T16:45:11.000+00:00 itemprop=datePublished>2010-10-12</time></div></div></article><article class="article-panel archive-article archive-type-10"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/10.html target=_blank itemprop=url>POJ PKU 1474 Video Surveillance 解题报告</a></h1></header><div class=article-summary><p>题目链接：<a href="http://poj.org/problem?id=1474">http://poj.org/problem?id=1474</a></p><p>写这题的目的是看完了zzy的论文，写了半平面交，验证一下正确性，结果发现我写的问题还是很多的。</p><p>题目大意是问能不能放一个摄像机，使得摄像机能看到整个多边形内部。</p></div><div class=article-more><a href=//owent.net/2010/10.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-10-04T11:49:56.000+00:00 itemprop=datePublished>2010-10-04</time></div></div></article><article class="article-panel archive-article archive-type-19"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/19.html target=_blank itemprop=url>POJ PKU 2826 An Easy Problem?! 解题报告</a></h1></header><div class=article-summary><p>题目链接：
+}</code></pre></div><div class=article-more><a href=//owent.net/2013/861.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-07-15T18:39:41.000+00:00 itemprop=datePublished>2013-07-15</time></div></div></article><article class="article-panel archive-article archive-type-8"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/8.html target=_blank itemprop=url>线段树相关问题 (引用 PKU POJ题目) 整理</a></h1></header><div class=article-summary><h2 id=1rangeminimummaximum-query问题计算单调区间内出现最多少的次数>1.RangeMinimum、Maximum Query问题（计算单调区间内出现最多（少）的次数）</h2><p>对元素的起点做离散化，再把离散化后的位置作为线段树的[l, r),记录次数为t.</p><p>对输入区间a, b:</p></div><div class=article-more><a href=//owent.net/2010/8.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-10-12T16:45:11.000+00:00 itemprop=datePublished>2010-10-12</time></div></div></article><article class="article-panel archive-article archive-type-10"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/10.html target=_blank itemprop=url>POJ PKU 1474 Video Surveillance 解题报告</a></h1></header><div class=article-summary><p>题目链接：<a href="http://poj.org/problem?id=1474">http://poj.org/problem?id=1474</a></p><p>写这题的目的是看完了zzy的论文，写了半平面交，验证一下正确性，结果发现我写的问题还是很多的。</p><p>题目大意是问能不能放一个摄像机，使得摄像机能看到整个多边形内部。</p></div><div class=article-more><a href=//owent.net/2010/10.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-10-04T11:49:56.000+00:00 itemprop=datePublished>2010-10-04</time></div></div></article><article class="article-panel archive-article archive-type-19"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/19.html target=_blank itemprop=url>POJ PKU 2826 An Easy Problem?! 解题报告</a></h1></header><div class=article-summary><p>题目链接：
 <a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=2826">http://acm.pku.edu.cn/JudgeOnline/problem?id=2826</a></p><p>大致意思是给你两条线段，问组成的开口向上的V形区域能盛多少雨水。雨水是垂直落下的。</p><p>显然线段不相交，或者平行，重合，或者有一条斜率为0时结果为0.00</p></div><div class=article-more><a href=//owent.net/2010/19.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-08-07T08:54:04.000+00:00 itemprop=datePublished>2010-08-07</time></div></div></article><article class="article-panel archive-article archive-type-22"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/22.html target=_blank itemprop=url>POJ PKU 1986 Distance Queries 解题报告</a></h1></header><div class=article-summary><p>题目链接：<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=1986">http://acm.pku.edu.cn/JudgeOnline/problem?id=1986</a></p><p>这是一道并查集+树的题，采用Tarjan离线算法</p><p>首先BS一下出题的人，也太懒了吧，还要我们看1984题才知道输入</p><p>题目的意思是告诉一个节点数为40000的树，问我们两个节点间的距离。实际上就是找出公共父节点，Tarjan算法写挫了很容易TLE，我开始用Vector就写搓了，结果TLE，后来重写，自己写邻接表然后AC了。</p></div><div class=article-more><a href=//owent.net/2010/22.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-07-16T04:57:10.000+00:00 itemprop=datePublished>2010-07-16</time></div></div></article><article class="article-panel archive-article archive-type-23"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/23.html target=_blank itemprop=url>POJ PKU 2446 Chessboard 解题报告</a></h1></header><div class=article-summary><p>题目链接：<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=2446">http://acm.pku.edu.cn/JudgeOnline/problem?id=2446</a></p><p>这是一道匹配题，把行数（r）和列数（c）按（r+c）%2分成两组，然后连边，做一次二分图匹配，可以直接用匈牙利算法</p><p>匹配数等于两组的元素个数则为YES，否则NO</p></div><div class=article-more><a href=//owent.net/2010/23.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-07-16T04:51:23.000+00:00 itemprop=datePublished>2010-07-16</time></div></div></article><article class="article-panel archive-article archive-type-28"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/28.html target=_blank itemprop=url>POJ PKU 3659 Cell Phone Network 解题报告</a></h1></header><div class=article-summary><p>题目链接：<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3659">http://acm.pku.edu.cn/JudgeOnline/problem?id=3659</a></p><p>这题不算难题了，基本算是中等题</p><p>题目大意是给出一颗树，在一些点建一个信号塔，信号塔覆盖范围是其所在点和邻近点，问最少几个信号塔可以覆盖全区域</p></div><div class=article-more><a href=//owent.net/2010/28.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-06-01T15:51:00.000+00:00 itemprop=datePublished>2010-06-01</time></div></div></article><article class="article-panel archive-article archive-type-35"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/35.html target=_blank itemprop=url>GCD Determinant 解题报告</a></h1></header><div class=article-summary><p><a href="http://www.cn210.com/onlinejudge/problemshow.php?pro_id=98">http://www.cn210.com/onlinejudge/problemshow.php?pro_id=98</a></p><p>我们的OJ</p><h2 id=description>Description</h2><p>We say that a set $$S = {x1, x2, &mldr;, xn}$$ is factor closed if for any xi ∈ S and any divisor d of xi we have d ∈ S. Let&rsquo;s build a GCD matrix (S) = (sij), wheresij = GCD(xi, xj) - the greatest common divisor of xi and xj. Given the factor closed set S, find the value of the determinant:</p></div><div class=article-more><a href=//owent.net/2010/35.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-26T14:33:11.000+00:00 itemprop=datePublished>2010-04-26</time></div></div></article><article class="article-panel archive-article archive-type-41"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/41.html target=_blank itemprop=url>PKU POJ 3757 Simple Distributed storage system 解题报告</a></h1></header><div class=article-summary><p>题目链接：http://acm.pku.edu.cn/JudgeOnline/problem?id=3757</p><p>题目大意</p><p>第一行输入n，k，f表示从n个服务器里选k个，传输大小为f（以Mb为单位）的文件</p></div><div class=article-more><a href=//owent.net/2010/41.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-10T17:10:47.000+00:00 itemprop=datePublished>2010-04-10</time></div></div></article><article class="article-panel archive-article archive-type-43"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/43.html target=_blank itemprop=url>PKU POJ 2976 Dropping tests 解题报告</a></h1></header><div class=article-summary><p>题目链接： <a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=2976">http://acm.pku.edu.cn/JudgeOnline/problem?id=2976</a></p><p>0-1分数规划</p><p>最优比例生成树</p><p>迭代法</p><p>证明：（前几次都是看别人的，这次自己证明）</p><p>对于集合s，令l* = max{ a(x) / b(x) } = a(x*) / b(x*).l<em>为所求的最优解，x</em>为对应的集合</p></div><div class=article-more><a href=//owent.net/2010/43.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-09T17:04:09.000+00:00 itemprop=datePublished>2010-04-09</time></div></div></article><article class="article-panel archive-article archive-type-45"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/45.html target=_blank itemprop=url>PKU POJ 2728 Desert King 解题报告</a></h1></header><div class=article-summary><p>题目链接：<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=2728">http://acm.pku.edu.cn/JudgeOnline/problem?id=2728</a></p><p>和3757一样都是01分数规划的题，不同的是3757是用的二分，这里用的是Prim</p><p>0-1背包部分和3757一样</p><p>令m(l) = min{∑(1.0 * h[i][j] - l * dis[i][j] )}</p></div><div class=article-more><a href=//owent.net/2010/45.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-07T10:51:26.000+00:00 itemprop=datePublished>2010-04-07</time></div></div></article><article class="article-panel archive-article archive-type-46"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/46.html target=_blank itemprop=url>PKU POJ 1141 Brackets Sequence 解题报告</a></h1></header><div class=article-summary><p>链接: <a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=1141">http://acm.pku.edu.cn/JudgeOnline/problem?id=1141</a>
 题目意思是输入一些括号，补充括号使之成为没有错误的括号就是只能有括号组在括号组里面，不能出现([)]或者([)]一类的情况
 方法是DP，有点绕的DP
 DP方程是 <em>bc[i][j] = min(bc[i][k] + bc[k][j])</em> 注：bc[i][j]表示字符i和字符j之间需要插入几个括弧
 然后尽量多地分割字符串
-不解释，贴代码：</p></div><div class=article-more><a href=//owent.net/2010/46.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-05T16:52:28.000+00:00 itemprop=datePublished>2010-04-05</time></div></div></article><article class="article-panel archive-article archive-type-47"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/47.html target=_blank itemprop=url>POJ PKU 2155 Matrix 解题报告</a></h1></header><div class=article-summary><p>这道题是我专门为了了解和学习树状数组而写的</p><p>这题用树状数组记录翻转次数,然后mod一个2,也可以不断地取反</p><p>还要用到二维的树状数组.于是我专门写了个模板用</p></div><div class=article-more><a href=//owent.net/2010/47.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-05T11:01:59.000+00:00 itemprop=datePublished>2010-04-05</time></div></div></article><article class="article-panel archive-article archive-type-48"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/48.html target=_blank itemprop=url>PKU POJ 1720 SQUARES 解题报告</a></h1></header><div class=article-summary><p>题目链接：http://acm.pku.edu.cn/JudgeOnline/problem?id=1720</p><p>这题纯计算几何就搞定了，开始我写了个很长很长的代码，但是Wa掉，也不知道是代码那里有疏漏还是精度问题</p></div><div class=article-more><a href=//owent.net/2010/48.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-03T17:12:41.000+00:00 itemprop=datePublished>2010-04-03</time></div></div></article><article class="article-panel archive-article archive-type-50"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/50.html target=_blank itemprop=url>PKU POJ 1724 ROADS 解题报告</a></h1></header><div class=article-summary><p>看来我的搜索真的很烂，简单的搜索都搞定的这么痛苦</p><p>题目链接：http://acm.pku.edu.cn/JudgeOnline/problem?id=1724</p></div><div class=article-more><a href=//owent.net/2010/50.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-02T17:07:50.000+00:00 itemprop=datePublished>2010-04-02</time></div></div></article><article class="article-panel archive-article archive-type-52"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/52.html target=_blank itemprop=url>POJ PKU Let's Go to the Movies 解题报告</a></h1></header><div class=article-summary><p>题目链接：<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3513">http://acm.pku.edu.cn/JudgeOnline/problem?id=3513</a></p><p>题目大意是输入树状的家庭关系，问怎么买票（买家庭票还是个人票）最省钱并且票的数量最少</p><p>这道题是一道Hash+树状DP问题。编码长度相当可观，需要较好的编码能力</p></div><div class=article-more><a href=//owent.net/2010/52.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-03-31T16:04:21.000+00:00 itemprop=datePublished>2010-03-31</time></div></div></article><article class="article-panel archive-article archive-type-57"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/57.html target=_blank itemprop=url>POJ PKU 1065 Wooden Sticks 3636 Nested Dolls 解题报告</a></h1></header><div class=article-summary><p>3636 Nested Dolls</p><p>题目链接：[http://acm.pku.edu.cn/JudgeOnline/problem?id=3636</p><p>](<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3636">http://acm.pku.edu.cn/JudgeOnline/problem?id=3636</a>)好吧，这题我看了解题报告。而且解题报告有错误的。只考虑w递增，没考虑w值相等的情况。</p><p>我自己这里加进去了判断。主要是看解题报告后才知道数据这么弱，就按他的写了</p></div><div class=article-more><a href=//owent.net/2010/57.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-02-24T15:43:54.000+00:00 itemprop=datePublished>2010-02-24</time></div></div></article><article class="article-panel archive-article archive-type-58"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/58.html target=_blank itemprop=url>POJ PKU 3631 Cuckoo Hashing 解题报告</a></h1></header><div class=article-summary><p>题目链接：<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3631">http://acm.pku.edu.cn/JudgeOnline/problem?id=3631</a></p><p>我讨厌这么长的题目</p><p>这题是模拟那个Hash算法，有点像我之前转载的那篇文章里提到的Hash</p><p><a href=https://www.owent.net/2009/87.html>打造最快的Hash表(转) [以暴雪的游戏的Hash为例]</a> 这里是用两个Hash函数算出两个Hash值h1和h2，如果h1位置已经被占用就检查h2位置，如果都被占用就把原来的替换掉再给原来的字符串重新计算映射。这样下去可能出现死循环。会出现死循环就输出</p></div><div class=article-more><a href=//owent.net/2010/58.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-02-24T10:14:57.000+00:00 itemprop=datePublished>2010-02-24</time></div></div></article><article class="article-panel archive-article archive-type-59"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/59.html target=_blank itemprop=url>POJ PKU 2596 Dice Stacking 解题报告</a></h1></header><div class=article-summary><p>状态压缩+DP</p><p>1972的增强版</p><p>题目链接：<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=2596">http://acm.pku.edu.cn/JudgeOnline/problem?id=2596</a></p><p>题意是给出小于10个的骰子，要求竖着叠成一条，而且每两个相接的骰子相接的面的数字相同</p><p>求侧面数字的最大和。如果叠不出来输出0</p></div><div class=article-more><a href=//owent.net/2010/59.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-02-19T12:31:50.000+00:00 itemprop=datePublished>2010-02-19</time></div></div></article><article class="article-panel archive-article archive-type-63"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/63.html target=_blank itemprop=url>POJ PKU 1990 MooFest 解题报告</a></h1></header><div class=article-summary><p>为什么我用线段数这么不灵活呢？</p><p>大概思路是线段数记录某牛之前的坐标小于这个牛的牛的坐标和和牛的个数</p><p>然后其他部分线性数组记录</p><p>OK，贴代码</p><pre><code class=language-cpp>#include &lt;iostream&gt;
-#include &lt;cstdio&gt;
-#include &lt;cstring&gt;
-#include &lt;algorithm&gt;
+不解释，贴代码：</p></div><div class=article-more><a href=//owent.net/2010/46.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-05T16:52:28.000+00:00 itemprop=datePublished>2010-04-05</time></div></div></article><article class="article-panel archive-article archive-type-47"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/47.html target=_blank itemprop=url>POJ PKU 2155 Matrix 解题报告</a></h1></header><div class=article-summary><p>这道题是我专门为了了解和学习树状数组而写的</p><p>这题用树状数组记录翻转次数,然后mod一个2,也可以不断地取反</p><p>还要用到二维的树状数组.于是我专门写了个模板用</p></div><div class=article-more><a href=//owent.net/2010/47.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-05T11:01:59.000+00:00 itemprop=datePublished>2010-04-05</time></div></div></article><article class="article-panel archive-article archive-type-48"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/48.html target=_blank itemprop=url>PKU POJ 1720 SQUARES 解题报告</a></h1></header><div class=article-summary><p>题目链接：http://acm.pku.edu.cn/JudgeOnline/problem?id=1720</p><p>这题纯计算几何就搞定了，开始我写了个很长很长的代码，但是Wa掉，也不知道是代码那里有疏漏还是精度问题</p></div><div class=article-more><a href=//owent.net/2010/48.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-03T17:12:41.000+00:00 itemprop=datePublished>2010-04-03</time></div></div></article><article class="article-panel archive-article archive-type-50"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/50.html target=_blank itemprop=url>PKU POJ 1724 ROADS 解题报告</a></h1></header><div class=article-summary><p>看来我的搜索真的很烂，简单的搜索都搞定的这么痛苦</p><p>题目链接：http://acm.pku.edu.cn/JudgeOnline/problem?id=1724</p></div><div class=article-more><a href=//owent.net/2010/50.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-04-02T17:07:50.000+00:00 itemprop=datePublished>2010-04-02</time></div></div></article><article class="article-panel archive-article archive-type-52"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/52.html target=_blank itemprop=url>POJ PKU Let's Go to the Movies 解题报告</a></h1></header><div class=article-summary><p>题目链接：<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3513">http://acm.pku.edu.cn/JudgeOnline/problem?id=3513</a></p><p>题目大意是输入树状的家庭关系，问怎么买票（买家庭票还是个人票）最省钱并且票的数量最少</p><p>这道题是一道Hash+树状DP问题。编码长度相当可观，需要较好的编码能力</p></div><div class=article-more><a href=//owent.net/2010/52.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-03-31T16:04:21.000+00:00 itemprop=datePublished>2010-03-31</time></div></div></article><article class="article-panel archive-article archive-type-57"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/57.html target=_blank itemprop=url>POJ PKU 1065 Wooden Sticks 3636 Nested Dolls 解题报告</a></h1></header><div class=article-summary><p>3636 Nested Dolls</p><p>题目链接：[http://acm.pku.edu.cn/JudgeOnline/problem?id=3636</p><p>](<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3636">http://acm.pku.edu.cn/JudgeOnline/problem?id=3636</a>)好吧，这题我看了解题报告。而且解题报告有错误的。只考虑w递增，没考虑w值相等的情况。</p><p>我自己这里加进去了判断。主要是看解题报告后才知道数据这么弱，就按他的写了</p></div><div class=article-more><a href=//owent.net/2010/57.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-02-24T15:43:54.000+00:00 itemprop=datePublished>2010-02-24</time></div></div></article><article class="article-panel archive-article archive-type-58"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/58.html target=_blank itemprop=url>POJ PKU 3631 Cuckoo Hashing 解题报告</a></h1></header><div class=article-summary><p>题目链接：<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=3631">http://acm.pku.edu.cn/JudgeOnline/problem?id=3631</a></p><p>我讨厌这么长的题目</p><p>这题是模拟那个Hash算法，有点像我之前转载的那篇文章里提到的Hash</p><p><a href=https://www.owent.net/2009/87.html>打造最快的Hash表(转) [以暴雪的游戏的Hash为例]</a> 这里是用两个Hash函数算出两个Hash值h1和h2，如果h1位置已经被占用就检查h2位置，如果都被占用就把原来的替换掉再给原来的字符串重新计算映射。这样下去可能出现死循环。会出现死循环就输出</p></div><div class=article-more><a href=//owent.net/2010/58.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-02-24T10:14:57.000+00:00 itemprop=datePublished>2010-02-24</time></div></div></article><article class="article-panel archive-article archive-type-59"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/59.html target=_blank itemprop=url>POJ PKU 2596 Dice Stacking 解题报告</a></h1></header><div class=article-summary><p>状态压缩+DP</p><p>1972的增强版</p><p>题目链接：<a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=2596">http://acm.pku.edu.cn/JudgeOnline/problem?id=2596</a></p><p>题意是给出小于10个的骰子，要求竖着叠成一条，而且每两个相接的骰子相接的面的数字相同</p><p>求侧面数字的最大和。如果叠不出来输出0</p></div><div class=article-more><a href=//owent.net/2010/59.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-02-19T12:31:50.000+00:00 itemprop=datePublished>2010-02-19</time></div></div></article><article class="article-panel archive-article archive-type-63"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2009/63.html target=_blank itemprop=url>POJ PKU 1990 MooFest 解题报告</a></h1></header><div class=article-summary><p>为什么我用线段数这么不灵活呢？</p><p>大概思路是线段数记录某牛之前的坐标小于这个牛的牛的坐标和和牛的个数</p><p>然后其他部分线性数组记录</p><p>OK，贴代码</p><pre><code class=language-cpp>#include &amp;lt;iostream&amp;gt;
+#include &amp;lt;cstdio&amp;gt;
+#include &amp;lt;cstring&amp;gt;
+#include &amp;lt;algorithm&amp;gt;
 using namespace std;
 
 #define MAXN 20005
@@ -175,7 +173,7 @@ public:
 
 bool cmp(cow a,cow b)
 {
-    return a.v &lt; b.v;
+    return a.v &amp;lt; b.v;
 }
 cow cw[MAXN];
 long long belowXNT[MAXN];//树状数组，保存小于等于某坐标的牛的个数,计算时使用
@@ -186,22 +184,22 @@ long long velowXRA[MAXN];//一般数组，保存小于等于某牛的坐标之�
 
 int lowbit(int t)
 {
-    return t&amp;(t^(t-1));
+    return t&amp;amp;(t^(t-1));
 }
 void setVal(int pos, int num, long long treeG[], int maxn)
 {
-    while (pos &lt;= maxn)
+    while (pos &amp;lt;= maxn)
     {
-        treeG[pos] += num;
-        pos += lowbit(pos);
+        treeG[pos] &#43;= num;
+        pos &#43;= lowbit(pos);
     }
 }
 long long getSum(int pos, long long treeG[])
 {
     long long sum = 0;
-    while (pos &gt; 0)
+    while (pos &amp;gt; 0)
     {
-        sum += treeG[pos];
+        sum &#43;= treeG[pos];
         pos -= lowbit(pos);
     }
     return sum;
@@ -218,28 +216,27 @@ int main()
     memset(velowXR, 0, sizeof(velowXR));
     memset(velowXRA, 0, sizeof(velowXRA));
     memset(velowXRT, 0, sizeof(velowXRT));
-    scanf(&quot;%d&quot;,&amp;n);
-    for(i = 0 ; i &lt; n ; i ++)
-        scanf(&quot;%d %d&quot;, &amp;cw[i].v, &amp;cw[i].pos);
+    scanf(&amp;#34;%d&amp;#34;,&amp;amp;n);
+    for(i = 0 ; i &amp;lt; n ; i &#43;&#43;)
+        scanf(&amp;#34;%d %d&amp;#34;, &amp;amp;cw[i].v, &amp;amp;cw[i].pos);
 
-    sort(cw, cw + n, cmp);
-    for(i = 0 ; i &lt; n ; i ++)
+    sort(cw, cw &#43; n, cmp);
+    for(i = 0 ; i &amp;lt; n ; i &#43;&#43;)
     {
-        velowXRA[i] = velowXRA[i - 1] + cw[i].pos;
+        velowXRA[i] = velowXRA[i - 1] &#43; cw[i].pos;
         setVal(cw[i].pos, 1, belowXNT, MAXN);
         setVal(cw[i].pos, cw[i].pos, velowXRT, MAXN);
         velowXR[i] = getSum(cw[i].pos, velowXRT);
         belowXN[i] = getSum(cw[i].pos, belowXNT);
     }
 
-    for(i = 1 ; i &lt; n ; i ++)
-        //output += cw[i].v * ((belowXN[i] - 1) * cw[i].pos - velowXR[i] + cw[i].pos + velowXRA[i] - velowXR[i] - (i - belowXN[i] + 1) * cw[i].pos);
-        output += cw[i].v * ((belowXN[i] - i + belowXN[i] - 1 ) * cw[i].pos - 2 * velowXR[i] + velowXRA[i]);//这里是上面式子的简化版
+    for(i = 1 ; i &amp;lt; n ; i &#43;&#43;)
+        //output &#43;= cw[i].v * ((belowXN[i] - 1) * cw[i].pos - velowXR[i] &#43; cw[i].pos &#43; velowXRA[i] - velowXR[i] - (i - belowXN[i] &#43; 1) * cw[i].pos);
+        output &#43;= cw[i].v * ((belowXN[i] - i &#43; belowXN[i] - 1 ) * cw[i].pos - 2 * velowXR[i] &#43; velowXRA[i]);//这里是上面式子的简化版
 
-    printf(&quot;%lld\n&quot;,output);
+    printf(&amp;#34;%lld\n&amp;#34;,output);
     return 0;
-}
-</code></pre></div><div class=article-more><a href=//owent.net/2009/63.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2009-12-23T14:12:52.000+00:00 itemprop=datePublished>2009-12-23</time></div></div></article></div><hr><nav id=page-nav><ul class=pagination><li class='page-item disabled'><a class=page-link href=/tags/poj.html>1</a><span class=sr-only>(current)</span></li><li class=page-item><a class=page-link href=/tags/poj/page/2.html>2</a></li><li class=page-item><a class=page-link href=/tags/poj/page/2.html>下一页&#187;</a></li></ul></nav></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
+}</code></pre></div><div class=article-more><a href=//owent.net/2009/63.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2009-12-23T14:12:52.000+00:00 itemprop=datePublished>2009-12-23</time></div></div></article></div><hr><nav id=page-nav><ul class=pagination><li class='page-item disabled'><a class=page-link href=/tags/poj.html>1</a><span class=sr-only>(current)</span></li><li class=page-item><a class=page-link href=/tags/poj/page/2.html>2</a></li><li class=page-item><a class=page-link href=/tags/poj/page/2.html>下一页&#187;</a></li></ul></nav></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
 主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>

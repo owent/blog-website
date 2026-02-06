@@ -7,13 +7,12 @@
 这些问题也不仅限于 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> v20/v3.20 和 <a href=https://github.com/grpc/grpc>gRPC</a> v1.54，后续的版本有些修复了，有些没有。在官方完全修复之前，我们自己打了一些patch去修复这些问题。</p><h2 id=protobuf-的链接和符号问题><a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 的链接和符号问题</h2><h3 id=internalmetadatainternalmetadata-未定义><code>InternalMetadata::~InternalMetadata()</code> 未定义</h3><p><a href=https://github.com/protocolbuffers/protobuf>protobuf</a>的问题主要分两组，第一组报的是 <code>InternalMetadata::~InternalMetadata()</code> 未定义。这个问题存在于 v20/v3.20 和 v21/v3.21 。v22/v4.22 版本已修复（v22/v4.22在构建和依赖上有个很大的变化，后面再写分享说明）。这个问题的issue也可以见于 <a href=https://github.com/protocolbuffers/protobuf/issues/9947>https://github.com/protocolbuffers/protobuf/issues/9947</a> 。</p><p>其本质原因可以先看 v20/v3.20 版本的 <a href=https://github.com/protocolbuffers/protobuf/blob/v20.2/src/google/protobuf/metadata_lite.h#L73>metadata_lite.h#L73</a></p><pre><code class=language-cpp>#if defined(NDEBUG) || defined(_MSC_VER)
   ~InternalMetadata() {
     if (HasMessageOwnedArenaTag()) {
-      delete reinterpret_cast&lt;Arena*&gt;(ptr_ - kMessageOwnedArenaTagMask);
+      delete reinterpret_cast&amp;lt;Arena*&amp;gt;(ptr_ - kMessageOwnedArenaTagMask);
     }
   }
 #else
   ~InternalMetadata();
-#endif
-</code></pre><p>还有源文件 <a href=https://github.com/protocolbuffers/protobuf/blob/v20.2/src/google/protobuf/message_lite.cc#L528>message_lite.cc#L528</a></p><pre><code class=language-cpp>// Non-inline implementations of InternalMetadata routines
+#endif</code></pre><p>还有源文件 <a href=https://github.com/protocolbuffers/protobuf/blob/v20.2/src/google/protobuf/message_lite.cc#L528>message_lite.cc#L528</a></p><pre><code class=language-cpp>// Non-inline implementations of InternalMetadata routines
 #if defined(NDEBUG) || defined(_MSC_VER)
 // for opt and MSVC builds, the destructor is defined in the header.
 #else
@@ -21,22 +20,20 @@
 InternalMetadata::~InternalMetadata() {
   if (HasMessageOwnedArenaTag()) {
     GOOGLE_DCHECK(!HasUnknownFieldsTag());
-    delete reinterpret_cast&lt;Arena*&gt;(ptr_ - kMessageOwnedArenaTagMask);
+    delete reinterpret_cast&amp;lt;Arena*&amp;gt;(ptr_ - kMessageOwnedArenaTagMask);
   }
 }
-#endif
-</code></pre><p>这里的本意是在非Debug模式下这个析构写头文件里，这样某些编译器和编译选项可以被自动内连，可以优化掉。而调试模式下有额外的检查走本地的符号。
+#endif</code></pre><p>这里的本意是在非Debug模式下这个析构写头文件里，这样某些编译器和编译选项可以被自动内连，可以优化掉。而调试模式下有额外的检查走本地的符号。
 但是这里的问题是，我们经常会在编译依赖库采用Release模式，而使用者可能处于Debug模式。这就意味着编译 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 的时候是可能被优化掉而没有这个符号的。
 但是使用者认为有这个符号，最终链接失败。</p><p>这个问题在 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> v21.4/v3.21.4 版本里进行了部分修复，但是某些编译环境还是有问题。</p><p>我们先来看 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> v21/v3.21 版本里 <a href=https://github.com/protocolbuffers/protobuf/blob/v21.12/src/google/protobuf/metadata_lite.h#L81>metadata_lite.h#L81</a> 的代码。</p><pre><code class=language-cpp>  ~InternalMetadata() {
 #if defined(NDEBUG) || defined(_MSC_VER)
     if (HasMessageOwnedArenaTag()) {
-      delete reinterpret_cast&lt;Arena*&gt;(ptr_ - kMessageOwnedArenaTagMask);
+      delete reinterpret_cast&amp;lt;Arena*&amp;gt;(ptr_ - kMessageOwnedArenaTagMask);
     }
 #else
     CheckedDestruct();
 #endif
-  }
-</code></pre><p>咋一看好像是没问题了。无论什么情况都有 <code>~InternalMetadata()</code> 了，但是C++编译器在自动内联一说，😂。某些编译器在编译 <code>.pb.cc</code> 时如果走下面的分支自动内联了，那么就不会生成 <code>~InternalMetadata()</code> 这个符号。这个类的析构在 <code>MessageLite</code> 这个类中被调用，在生成的 <code>.pb.cc</code> 里是配有被直接调用的。但是某些编译器会生成对它的析构符号的引用（可能也属于编译器的BUG）。
+  }</code></pre><p>咋一看好像是没问题了。无论什么情况都有 <code>~InternalMetadata()</code> 了，但是C++编译器在自动内联一说，😂。某些编译器在编译 <code>.pb.cc</code> 时如果走下面的分支自动内联了，那么就不会生成 <code>~InternalMetadata()</code> 这个符号。这个类的析构在 <code>MessageLite</code> 这个类中被调用，在生成的 <code>.pb.cc</code> 里是配有被直接调用的。但是某些编译器会生成对它的析构符号的引用（可能也属于编译器的BUG）。
 这时候又会导致符号未定义。</p><blockquote><p>我们发现问题的环境是编译iOS版本时，具体编译器版本号忘记了，好像是AppleClang 12或者AppleClang 13。</p></blockquote><p>解决这个问题也很简单，把声明改成 <code>PROTOBUF_NOINLINE ~InternalMetadata()</code> 就行了。
 以上问题也可以在我们的构建系统项目中找到Patch文件（还包含少量其他问题的适配）:</p><ul><li><a href=https://github.com/atframework/cmake-toolset/blob/main/ports/protobuf/protobuf-v3.21.1.patch>https://github.com/atframework/cmake-toolset/blob/main/ports/protobuf/protobuf-v3.21.1.patch</a></li><li><a href=https://github.com/atframework/cmake-toolset/blob/main/ports/protobuf/protobuf-v3.21.4.patch>https://github.com/atframework/cmake-toolset/blob/main/ports/protobuf/protobuf-v3.21.4.patch</a></li></ul><h3 id=xxx_default_instance_-未定义><code>XXX_default_instance_</code> 未定义</h3><p>第二个问题是默认的instance符号未定义的问题。这个问题存在于 v21/v3.21 到目前最新版本 （v23/4.23）。我没有追查更早版本，大概率也有这个问题。
 报的错误大致是 <code>"struct XXX YYYY_default_instance_"</code> 符号未定义。触发条件比较多：</p><ul><li>需要编译成动态库</li><li>默认符号隐藏（Windows默认隐藏，Linux默认可见）</li><li>使用 <code>dllexport_decl=</code> 来设置导出符号</li></ul><p>在Windows中个，每一个dll和exec都有自己的符号表和堆管理。所以当使用dll时，需要把要导出的符号设置为 <code>__declspec(dllexport)/__attribute__((__dllexport__))</code>, 导入的时候设置为 <code>__declspec((dllimport))/__attribute__((__dllimport__))</code> 。
@@ -50,11 +47,10 @@ class TGF_BATTLE_PROTOCOL_API DBattleAffix final : // ...
 {
   // ...
   static inline const DBattleAffix* internal_default_instance() {
-    return reinterpret_cast&lt;const DBattleAffix*&gt;(
-               &amp;_DBattleAffix_default_instance_);
+    return reinterpret_cast&amp;lt;const DBattleAffix*&amp;gt;(
+               &amp;amp;_DBattleAffix_default_instance_);
   }
-}
-</code></pre><p>可以看到，有接口引用了 <code>_DBattleAffix_default_instance_</code> 这个全局变量的地址。那么在 <code>.pb.cc</code> 里:</p><pre><code class=language-cpp>struct DBattleAffixDefaultTypeInternal {
+}</code></pre><p>可以看到，有接口引用了 <code>_DBattleAffix_default_instance_</code> 这个全局变量的地址。那么在 <code>.pb.cc</code> 里:</p><pre><code class=language-cpp>struct DBattleAffixDefaultTypeInternal {
   PROTOBUF_CONSTEXPR DBattleAffixDefaultTypeInternal()
       : _instance(::_pbi::ConstantInitialized{}) {}
   ~DBattleAffixDefaultTypeInternal() {}
@@ -62,28 +58,24 @@ class TGF_BATTLE_PROTOCOL_API DBattleAffix final : // ...
     DBattleAffix _instance;Bu
   };
 };
-PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 DBattleAffixDefaultTypeInternal _DBattleAffix_default_instance_;
-</code></pre><p>可以看到，<code>.pb.cc</code> 里面并没有设置 <code>TGF_BATTLE_PROTOCOL_API</code> 来导出符号，最终就会导致类似下面这样的链接错误:</p><pre><code class=language-bash>7&gt;TGFBattleUtility.lib(BattleAffixAlgorithm.obj): Error LNK2001: unresolved external symbol &quot;struct tgf::DBattleAffixDefaultTypeInternal tgf::_DBattleAffix_default_instance_&quot; (?_DBattleAffix_default_instance_@tgf@@3UDBattleAffixDefaultTypeInternal@1@A)
-</code></pre><p>那么解决方法也很简单，就是在 <code>protoc</code> 的代码里补上这些，（v21和v23版本变化比较大，具体可以参考下面的patch files）</p><ul><li><a href=https://github.com/atframework/cmake-toolset/blob/main/ports/protobuf/protobuf-v3.21.12.patch>https://github.com/atframework/cmake-toolset/blob/main/ports/protobuf/protobuf-v3.21.12.patch</a></li><li><a href=https://github.com/atframework/cmake-toolset/blob/8c8659f2d64283b02a24b7c34ffcd0d24eb03ca6/ports/protobuf/protobuf-v23.patch>https://github.com/atframework/cmake-toolset/blob/8c8659f2d64283b02a24b7c34ffcd0d24eb03ca6/ports/protobuf/protobuf-v23.patch</a></li></ul><p>这个issue已经提交到 <a href=https://github.com/protocolbuffers/protobuf/issues/13084>https://github.com/protocolbuffers/protobuf/issues/13084</a> 并且BUG修复的PR在 <a href=https://github.com/protocolbuffers/protobuf/pull/13085>https://github.com/protocolbuffers/protobuf/pull/13085</a> 。有兴趣的小伙伴也可以跟进。</p><h2 id=grpc-的链接和编译问题><a href=https://github.com/grpc/grpc>gRPC</a> 的链接和编译问题</h2><h3 id=grpc-的-v1540-的链接符号问题><a href=https://github.com/grpc/grpc>gRPC</a> 的 v1.54.0 的链接符号问题</h3><p>我们在使用高版本编译器时，会尽可能使用高版本的STD标准。在C++17以后 <code>constexpr</code> 关键字隐式会被附加 <code>inline</code> （详情参考: <a href=https://en.cppreference.com/w/cpp/language/constexpr>https://en.cppreference.com/w/cpp/language/constexpr</a>）。
-这意味着这些变量可能不会生成实际的符号。那么问题就来了。我们来看v1.54.0 版本的代码:</p><p>首先 <code>src/core/ext/gcp/metadata_query.h</code> :</p><pre><code class=language-cpp>class MetadataQuery : public InternallyRefCounted&lt;MetadataQuery&gt; {
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 DBattleAffixDefaultTypeInternal _DBattleAffix_default_instance_;</code></pre><p>可以看到，<code>.pb.cc</code> 里面并没有设置 <code>TGF_BATTLE_PROTOCOL_API</code> 来导出符号，最终就会导致类似下面这样的链接错误:</p><pre><code class=language-bash>7&amp;gt;TGFBattleUtility.lib(BattleAffixAlgorithm.obj): Error LNK2001: unresolved external symbol &amp;#34;struct tgf::DBattleAffixDefaultTypeInternal tgf::_DBattleAffix_default_instance_&amp;#34; (?_DBattleAffix_default_instance_@tgf@@3UDBattleAffixDefaultTypeInternal@1@A)</code></pre><p>那么解决方法也很简单，就是在 <code>protoc</code> 的代码里补上这些，（v21和v23版本变化比较大，具体可以参考下面的patch files）</p><ul><li><a href=https://github.com/atframework/cmake-toolset/blob/main/ports/protobuf/protobuf-v3.21.12.patch>https://github.com/atframework/cmake-toolset/blob/main/ports/protobuf/protobuf-v3.21.12.patch</a></li><li><a href=https://github.com/atframework/cmake-toolset/blob/8c8659f2d64283b02a24b7c34ffcd0d24eb03ca6/ports/protobuf/protobuf-v23.patch>https://github.com/atframework/cmake-toolset/blob/8c8659f2d64283b02a24b7c34ffcd0d24eb03ca6/ports/protobuf/protobuf-v23.patch</a></li></ul><p>这个issue已经提交到 <a href=https://github.com/protocolbuffers/protobuf/issues/13084>https://github.com/protocolbuffers/protobuf/issues/13084</a> 并且BUG修复的PR在 <a href=https://github.com/protocolbuffers/protobuf/pull/13085>https://github.com/protocolbuffers/protobuf/pull/13085</a> 。有兴趣的小伙伴也可以跟进。</p><h2 id=grpc-的链接和编译问题><a href=https://github.com/grpc/grpc>gRPC</a> 的链接和编译问题</h2><h3 id=grpc-的-v1540-的链接符号问题><a href=https://github.com/grpc/grpc>gRPC</a> 的 v1.54.0 的链接符号问题</h3><p>我们在使用高版本编译器时，会尽可能使用高版本的STD标准。在C++17以后 <code>constexpr</code> 关键字隐式会被附加 <code>inline</code> （详情参考: <a href=https://en.cppreference.com/w/cpp/language/constexpr>https://en.cppreference.com/w/cpp/language/constexpr</a>）。
+这意味着这些变量可能不会生成实际的符号。那么问题就来了。我们来看v1.54.0 版本的代码:</p><p>首先 <code>src/core/ext/gcp/metadata_query.h</code> :</p><pre><code class=language-cpp>class MetadataQuery : public InternallyRefCounted&amp;lt;MetadataQuery&amp;gt; {
  public:
   static const char kZoneAttribute[];
   static const char kClusterNameAttribute[];
   static const char kRegionAttribute[];
   static const char kInstanceIdAttribute[];
   static const char kIPv6Attribute[];
-// ...
-</code></pre><p>然后 <code>src/core/ext/gcp/metadata_query.cc</code> :</p><pre><code class=language-cpp>constexpr const char MetadataQuery::kZoneAttribute[] =
-    &quot;/computeMetadata/v1/instance/zone&quot;;
+// ...</code></pre><p>然后 <code>src/core/ext/gcp/metadata_query.cc</code> :</p><pre><code class=language-cpp>constexpr const char MetadataQuery::kZoneAttribute[] =
+    &amp;#34;/computeMetadata/v1/instance/zone&amp;#34;;
 constexpr const char MetadataQuery::kClusterNameAttribute[] =
-    &quot;/computeMetadata/v1/instance/attributes/cluster-name&quot;;
+    &amp;#34;/computeMetadata/v1/instance/attributes/cluster-name&amp;#34;;
 constexpr const char MetadataQuery::kRegionAttribute[] =
-    &quot;/computeMetadata/v1/instance/region&quot;;
+    &amp;#34;/computeMetadata/v1/instance/region&amp;#34;;
 constexpr const char MetadataQuery::kInstanceIdAttribute[] =
-    &quot;/computeMetadata/v1/instance/id&quot;;
+    &amp;#34;/computeMetadata/v1/instance/id&amp;#34;;
 constexpr const char MetadataQuery::kIPv6Attribute[] =
-    &quot;/computeMetadata/v1/instance/network-interfaces/0/ipv6s&quot;;
-</code></pre><p>这时候，某些编译环境下这些变量被inline了以后，就会出现未定义符号的问题。
+    &amp;#34;/computeMetadata/v1/instance/network-interfaces/0/ipv6s&amp;#34;;</code></pre><p>这时候，某些编译环境下这些变量被inline了以后，就会出现未定义符号的问题。
 相关修复放在了 <a href=https://github.com/atframework/cmake-toolset/blob/main/ports/grpc/grpc-v1.54.0.patch>https://github.com/atframework/cmake-toolset/blob/main/ports/grpc/grpc-v1.54.0.patch</a> 。
 同时这个BUG在 v1.54.2 里已经被修复。</p><h3 id=grpc-的在部分编译器上的兼容性问题><a href=https://github.com/grpc/grpc>gRPC</a> 的在部分编译器上的兼容性问题</h3><p>按照 <a href=https://en.cppreference.com/w/cpp/memory/unique_ptr>https://en.cppreference.com/w/cpp/memory/unique_ptr</a> 的要求， <code>std::unqieur_ptr&lt;T, std::default_delete&lt;T>></code> 中的 <code>T</code> 应该是允许前置声明的。
 但是某些编译器或者STL实现的问题，导致开启最高支持标准时 <code>src/core/lib/surface/server.h</code> 里前置申明类型用在 <code>std::unqieur_ptr</code> 时会报 <code>incomplete type</code> 的问题。

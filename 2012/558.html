@@ -16,71 +16,67 @@ get方法， 用于获取引用的对象
 std::ref<t> 返回std::reference_wrapper<t>，可以视为转换对象为引用
 std::cref<t> 返回常量引用对象std::reference_wrapper<const t>，可以视为转换对象为引用
 例程：</p><pre><code class=language-cpp>// 和std::function和std::bind函数配合使用
-#include &lt;cstdio&gt;
-#include &lt;functional&gt;
+#include &amp;lt;cstdio&amp;gt;
+#include &amp;lt;functional&amp;gt;
 
- void assign(int&amp; l, int r) {
+ void assign(int&amp;amp; l, int r) {
     l = r;
  }
 int main() {
     int a = 0, b = 10;
-    std::function&lt;void()&gt; func = std::bind(&amp;assign, std::ref(a), b); 
+    std::function&amp;lt;void()&amp;gt; func = std::bind(&amp;amp;assign, std::ref(a), b); 
     func();
 
-    printf(&quot;a =&gt; %d, b =&gt; %d\n&quot;, a, b);
+    printf(&amp;#34;a =&amp;gt; %d, b =&amp;gt; %d\n&amp;#34;, a, b);
     return 0;
-}
-</code></pre><p><strong>注意：如果不用std::ref包装，即便函数申明需传入引用类型，但是由于绑定变量和函数的参数类型推断是分离的，会导致传值而不是引用</strong>
+}</code></pre><p><strong>注意：如果不用std::ref包装，即便函数申明需传入引用类型，但是由于绑定变量和函数的参数类型推断是分离的，会导致传值而不是引用</strong>
 另外有些函数，如
 std::ptr_fun， 通过函数指针构造函数对象
 std::mem_fun， 通过成员函数指针构造函数对象
 std::mem_fun_ref， 通过成员函数指针构造函数对象引用
 不推荐使用，因为完全可以用std::bind代替，详细请参见 <a href=http://www.owent.net/2012/536.html>http://www.owent.net/2012/536.html</a></p><p>然后是 <strong>元编程的类型属性</strong></p><p>元编程的定义是可以修改自身或其他代码的代码，当然，C++不是动态语言，这个修改可以在编译或执行的时期。
-说不清楚，还是上代码吧</p><pre><code class=language-cpp>#include &lt;cstdio&gt;
+说不清楚，还是上代码吧</p><pre><code class=language-cpp>#include &amp;lt;cstdio&amp;gt;
 
-template &lt;int N&gt;
+template &amp;lt;int N&amp;gt;
 struct factorial {
-    const static int value = N * factorial&lt;N - 1&gt;::value;
+    const static int value = N * factorial&amp;lt;N - 1&amp;gt;::value;
 };
 
-template &lt;&gt;
-struct factorial&lt;1&gt; {
+template &amp;lt;&amp;gt;
+struct factorial&amp;lt;1&amp;gt; {
     const static int value = 1;
 };
 
 int main() {
-    printf(&quot;10! = %d\n&quot;, factorial&lt;10&gt;::value);
+    printf(&amp;#34;10! = %d\n&amp;#34;, factorial&amp;lt;10&amp;gt;::value);
     return 0;
-}
-</code></pre><p>比较有意思吧,这个不是新标准，新C++标准增加了类型属性，什么叫类型属性呢？
-就是类型判断,也来一个例子吧，这段代码来自<a href=http://zh.wikipedia.org/wiki/C++0x#.E7.94.A8.E6.96.BC.E5.85.83.E7.B7.A8.E7.A8.8B.E7.9A.84.E5.9E.8B.E5.88.A5.E5.B1.AC.E6.80.A7>维基百科</a></p><pre><code class=language-cpp>#include &lt;type_traits&gt;
+}</code></pre><p>比较有意思吧,这个不是新标准，新C++标准增加了类型属性，什么叫类型属性呢？
+就是类型判断,也来一个例子吧，这段代码来自<a href=http://zh.wikipedia.org/wiki/C++0x#.E7.94.A8.E6.96.BC.E5.85.83.E7.B7.A8.E7.A8.8B.E7.9A.84.E5.9E.8B.E5.88.A5.E5.B1.AC.E6.80.A7>维基百科</a></p><pre><code class=language-cpp>#include &amp;lt;type_traits&amp;gt;
 // 算法一
-template&lt; bool B &gt; struct Algorithm {
-    template&lt;class T1, class T2&gt; int do_it (T1 &amp;, T2 &amp;)  { /*...*/ }
+template&amp;lt; bool B &amp;gt; struct Algorithm {
+    template&amp;lt;class T1, class T2&amp;gt; int do_it (T1 &amp;amp;, T2 &amp;amp;)  { /*...*/ }
 };
 
 // 算法二
-template&lt;&gt; struct Algorithm&lt;true&gt; {
-    template&lt;class T1, class T2&gt; int do_it (T1, T2)  { /*...*/ }
+template&amp;lt;&amp;gt; struct Algorithm&amp;lt;true&amp;gt; {
+    template&amp;lt;class T1, class T2&amp;gt; int do_it (T1, T2)  { /*...*/ }
 };
 
 // 根据给定的类型选择不同的算法
-template&lt;class T1, class T2&gt;
+template&amp;lt;class T1, class T2&amp;gt;
 int elaborate (T1 A, T2 B)
 {
     // 若 T1 为 int 且 T1 为 float，选用算法二
     // 其它情況选用算法一
-    return Algorithm&lt;std::is_integral&lt;T1&gt;::value &amp;&amp; std::is_floating_point&lt;T2&gt;::value&gt;::do_it( A, B ) ;
-}
-</code></pre><p>最后，是今天最后一项，<strong>计算函数对象（仿函数）的返回值类型</strong>
+    return Algorithm&amp;lt;std::is_integral&amp;lt;T1&amp;gt;::value &amp;amp;&amp;amp; std::is_floating_point&amp;lt;T2&amp;gt;::value&amp;gt;::do_it( A, B ) ;
+}</code></pre><p>最后，是今天最后一项，<strong>计算函数对象（仿函数）的返回值类型</strong>
 主要涉及一个模板函数std::result_of，它使用了decltype并支持函数对象（关于decltype请参见 <a href=https://www.owent.net/2011/508.html>https://www.owent.net/2011/508.html</a>）
 std::result_of<t>::type 即是返回类型，比如：</p><pre><code class=language-cpp>struct foo {
     double operator()(char, int);
 };
 // 这两个是一样的
-std::result_of&lt;foo(char, int)&gt;::type d1 = 10.0;
-decltype(foo()('c', 1)) d2 = 10.0;
-</code></pre><p>今天就这样over吧。也许是我还没能把C++用的非常灵活吧，感觉后面的部分不太实用的样子。
+std::result_of&amp;lt;foo(char, int)&amp;gt;::type d1 = 10.0;
+decltype(foo()(&amp;#39;c&amp;#39;, 1)) d2 = 10.0;</code></pre><p>今天就这样over吧。也许是我还没能把C++用的非常灵活吧，感觉后面的部分不太实用的样子。
 还需要继续努力啊</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2012-02-26T14:22:28.000+00:00 itemprop=datePublished>2012-02-26</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/boost.html>BOOST</a></li><li class=article-tag-list-item><a href=//owent.net/tags/c++0x/11.html>c++0x/11</a></li><li class=article-tag-list-item><a href=//owent.net/tags/c++11.html>c++11</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cref.html>cref</a></li><li class=article-tag-list-item><a href=//owent.net/tags/ref.html>ref</a></li><li class=article-tag-list-item><a href=//owent.net/tags/result_of.html>result_of</a></li><li class=article-tag-list-item><a href=//owent.net/tags/stl.html>STL</a></li><li class=article-tag-list-item><a href=//owent.net/tags/tr1.html>tr1</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E5%85%83%E7%BC%96%E7%A8%8B.html>元编程</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E5%BC%95%E7%94%A8%E5%8C%85%E8%A3%85.html>引用包装</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E8%BF%94%E5%9B%9E%E7%B1%BB%E5%9E%8B.html>返回类型</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2012/560.html>上一篇<strong>C++ 新特性学习（六） — 新的字符串编码和伪随机数</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2012/536.html>下一篇<strong>C++ 新特性学习（四） — Bind和Function</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,

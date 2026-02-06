@@ -9,31 +9,31 @@
   // ...
 
   // Now wait for the worker thread to signal back from the Export method
-  std::unique_lock&lt;std::mutex&gt; lk_cv(synchronization_data_-&gt;force_flush_cv_m);
+  std::unique_lock&amp;lt;std::mutex&amp;gt; lk_cv(synchronization_data_-&amp;gt;force_flush_cv_m);
 
-  synchronization_data_-&gt;is_force_flush_pending.store(true, std::memory_order_release);
+  synchronization_data_-&amp;gt;is_force_flush_pending.store(true, std::memory_order_release);
   auto break_condition = [this]() {
-    if (synchronization_data_-&gt;is_shutdown.load() == true)
+    if (synchronization_data_-&amp;gt;is_shutdown.load() == true)
     {
       return true;
     }
 
     // Wake up the worker thread once.
-    if (synchronization_data_-&gt;is_force_flush_pending.load(std::memory_order_acquire))
+    if (synchronization_data_-&amp;gt;is_force_flush_pending.load(std::memory_order_acquire))
     {
-      synchronization_data_-&gt;is_force_wakeup_background_worker.store(true,
+      synchronization_data_-&amp;gt;is_force_wakeup_background_worker.store(true,
                                                                      std::memory_order_release);
-      synchronization_data_-&gt;cv.notify_one();
+      synchronization_data_-&amp;gt;cv.notify_one();
     }
 
-    return synchronization_data_-&gt;is_force_flush_notified.load(std::memory_order_acquire);
+    return synchronization_data_-&amp;gt;is_force_flush_notified.load(std::memory_order_acquire);
   };
 
   // Fix timeout to meet requirement of wait_for
   timeout = opentelemetry::common::DurationUtil::AdjustWaitForTimeout(
       timeout, std::chrono::microseconds::zero());
   bool result;
-  if (timeout &lt;= std::chrono::microseconds::zero())
+  if (timeout &amp;lt;= std::chrono::microseconds::zero())
   {
     bool wait_result = false;
     while (!wait_result)
@@ -41,39 +41,38 @@
       // When is_force_flush_notified.store(true) and force_flush_cv.notify_all() is called
       // between is_force_flush_pending.load() and force_flush_cv.wait(). We must not wait
       // for ever
-      wait_result = synchronization_data_-&gt;force_flush_cv.wait_for(lk_cv, schedule_delay_millis_,
+      wait_result = synchronization_data_-&amp;gt;force_flush_cv.wait_for(lk_cv, schedule_delay_millis_,
                                                                    break_condition);
     }
     result = true;
   }
   else
   {
-    result = synchronization_data_-&gt;force_flush_cv.wait_for(lk_cv, timeout, break_condition);
+    result = synchronization_data_-&amp;gt;force_flush_cv.wait_for(lk_cv, timeout, break_condition);
   }
 
   // ...
   return result;
-}
-</code></pre><p>然后 <code>void BatchSpanProcessor::DoBackgroundWork()</code> 和相关代码:</p><pre><code class=language-cpp>void BatchSpanProcessor::DoBackgroundWork()
+}</code></pre><p>然后 <code>void BatchSpanProcessor::DoBackgroundWork()</code> 和相关代码:</p><pre><code class=language-cpp>void BatchSpanProcessor::DoBackgroundWork()
 {
   auto timeout = schedule_delay_millis_;
 
   while (true)
   {
     // Wait for `timeout` milliseconds
-    std::unique_lock&lt;std::mutex&gt; lk(synchronization_data_-&gt;cv_m);
-    synchronization_data_-&gt;cv.wait_for(lk, timeout, [this] {
-      if (synchronization_data_-&gt;is_force_wakeup_background_worker.load(std::memory_order_acquire))
+    std::unique_lock&amp;lt;std::mutex&amp;gt; lk(synchronization_data_-&amp;gt;cv_m);
+    synchronization_data_-&amp;gt;cv.wait_for(lk, timeout, [this] {
+      if (synchronization_data_-&amp;gt;is_force_wakeup_background_worker.load(std::memory_order_acquire))
       {
         return true;
       }
 
       return !buffer_.empty();
     });
-    synchronization_data_-&gt;is_force_wakeup_background_worker.store(false,
+    synchronization_data_-&amp;gt;is_force_wakeup_background_worker.store(false,
                                                                    std::memory_order_release);
 
-    if (synchronization_data_-&gt;is_shutdown.load() == true)
+    if (synchronization_data_-&amp;gt;is_shutdown.load() == true)
     {
       DrainQueue();
       return;
@@ -82,7 +81,7 @@
     auto start = std::chrono::steady_clock::now();
     Export();
     auto end      = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(end - start);
+    auto duration = std::chrono::duration_cast&amp;lt;std::chrono::milliseconds&amp;gt;(end - start);
 
     // Subtract the duration of this export call from the next `timeout`.
     timeout = schedule_delay_millis_ - duration;
@@ -94,14 +93,14 @@ void BatchSpanProcessor::Export()
   do
   {
     // 省略无关代码 ...
-    exporter_-&gt;Export(nostd::span&lt;std::unique_ptr&lt;Recordable&gt;&gt;(spans_arr.data(), spans_arr.size()));
+    exporter_-&amp;gt;Export(nostd::span&amp;lt;std::unique_ptr&amp;lt;Recordable&amp;gt;&amp;gt;(spans_arr.data(), spans_arr.size()));
     NotifyCompletion(notify_force_flush, synchronization_data_);
   } while (true);
 }
 
 void BatchSpanProcessor::NotifyCompletion(
     bool notify_force_flush,
-    const std::shared_ptr&lt;SynchronizationData&gt; &amp;synchronization_data)
+    const std::shared_ptr&amp;lt;SynchronizationData&amp;gt; &amp;amp;synchronization_data)
 {
   if (!synchronization_data)
   {
@@ -110,43 +109,43 @@ void BatchSpanProcessor::NotifyCompletion(
 
   if (notify_force_flush)
   {
-    synchronization_data-&gt;is_force_flush_notified.store(true, std::memory_order_release);
-    synchronization_data-&gt;force_flush_cv.notify_one();
+    synchronization_data-&amp;gt;is_force_flush_notified.store(true, std::memory_order_release);
+    synchronization_data-&amp;gt;force_flush_cv.notify_one();
   }
-}
-</code></pre><p>简单描述一下就是在退出阶段，首先要设置shutdown flag，然后唤醒后台线程导出数据。之后用一个 <code>std::condition_variable</code> 来等待后台线程通知导出完成。然后自己再退出，时序大概如下:</p><pre><code class=language-mermaid>sequenceDiagram
-    Caller-&gt;&gt;Caller: 采集当前待上报边界
-    Background-&gt;&gt;Background: 启动
-    Caller-&gt;&gt;Background: 通知唤醒后台线程(condition_variable-1)
-    Caller-&gt;&gt;Caller: 进入等待上报完成通知(condition_variable-2)
+}</code></pre><p>简单描述一下就是在退出阶段，首先要设置shutdown flag，然后唤醒后台线程导出数据。之后用一个 <code>std::condition_variable</code> 来等待后台线程通知导出完成。然后自己再退出，时序大概如下:</p><pre class=mermaid>
+sequenceDiagram
+    Caller->>Caller: 采集当前待上报边界
+    Background->>Background: 启动
+    Caller->>Background: 通知唤醒后台线程(condition_variable-1)
+    Caller->>Caller: 进入等待上报完成通知(condition_variable-2)
     loop 循环执行到退出
-    Background-&gt;&gt;Background: 导出一批数据
-    Background-&gt;&gt;Caller: 通知已经导出的数据边界(condition_variable-2)
-    Background-&gt;&gt;Background: 没有数据则进入等待(condition_variable-1)
+    Background->>Background: 导出一批数据
+    Background->>Caller: 通知已经导出的数据边界(condition_variable-2)
+    Background->>Background: 没有数据则进入等待(condition_variable-1)
     end
     loop 直到当前上报边界已经全部上报完成或超时
-      Caller-&gt;&gt;Caller: 等待上报完成唤醒(condition_variable-2)
-      Caller-&gt;&gt;Caller: 检查上报边界或超时
+      Caller->>Caller: 等待上报完成唤醒(condition_variable-2)
+      Caller->>Caller: 检查上报边界或超时
     end
-    Caller-&gt;&gt;Caller: 退出
-    Background-&gt;&gt;Background: 后台线程退出
-</code></pre><h2 id=问题分析>问题分析</h2><p>上面的流程和代码乍一看似乎没有什么问题，但是在实际项目中偶尔会出现在 <code>BatchSpanProcessor::ForceFlush</code> 里的 <code>synchronization_data_->force_flush_cv.wait_for</code> 陷入了长耗时的等待。有的版本甚至会陷入无尽得等待。</p><p>因为在退出流程里，上层要保证最后的数据执行过刷出。并且后台线程不再引用资源之后才能销毁内存对象，所以会<code>ForceFlush</code> 一次，且 <code>schedule_delay_millis_</code> 一般情况下考虑网络抖动会设置得比较长。某些流程里也有可能会在reload的时候切换到另一个新线程上调用 <code>ForceFlush(max())</code> 的，这时候如果发生退出也会发生某些Provider一直退不掉的问题。</p><p>在后台任务刷出数据完成后，设置完 <code>is_force_flush_notified</code> 并且 <code>force_flush_cv.notify_one()</code> 后下一此循环会发现 <code>is_shutdown</code> 已经是 <code>true</code> 了，就会退出后台线程，之后就不再有 <code>force_flush_cv.notify_one()</code> 了。</p><p>那么在调用 <code>ForceFlush()</code> 的线程里 <code>force_flush_cv.wait_for(lk_cv, schedule_delay_millis_, break_condition);</code> 的 <code>break_condition</code> 包含 <code>is_force_flush_notified.load(std::memory_order_acquire);</code> 为什么返回 <code>false</code> 且后面还没收到 <code>force_flush_cv.notify_one()</code> 的通知呢？</p><p>我们先来看一看 <code>std::condition_variable::wait_for</code> 的实现。（几个主流STL库实现大同小异，这里贴Linux下GCC的实现作为案例）</p><pre><code class=language-cpp>template&lt;typename _Rep, typename _Period, typename _Predicate&gt;
+    Caller->>Caller: 退出
+    Background->>Background: 后台线程退出
+</pre><h2 id=问题分析>问题分析</h2><p>上面的流程和代码乍一看似乎没有什么问题，但是在实际项目中偶尔会出现在 <code>BatchSpanProcessor::ForceFlush</code> 里的 <code>synchronization_data_->force_flush_cv.wait_for</code> 陷入了长耗时的等待。有的版本甚至会陷入无尽得等待。</p><p>因为在退出流程里，上层要保证最后的数据执行过刷出。并且后台线程不再引用资源之后才能销毁内存对象，所以会<code>ForceFlush</code> 一次，且 <code>schedule_delay_millis_</code> 一般情况下考虑网络抖动会设置得比较长。某些流程里也有可能会在reload的时候切换到另一个新线程上调用 <code>ForceFlush(max())</code> 的，这时候如果发生退出也会发生某些Provider一直退不掉的问题。</p><p>在后台任务刷出数据完成后，设置完 <code>is_force_flush_notified</code> 并且 <code>force_flush_cv.notify_one()</code> 后下一此循环会发现 <code>is_shutdown</code> 已经是 <code>true</code> 了，就会退出后台线程，之后就不再有 <code>force_flush_cv.notify_one()</code> 了。</p><p>那么在调用 <code>ForceFlush()</code> 的线程里 <code>force_flush_cv.wait_for(lk_cv, schedule_delay_millis_, break_condition);</code> 的 <code>break_condition</code> 包含 <code>is_force_flush_notified.load(std::memory_order_acquire);</code> 为什么返回 <code>false</code> 且后面还没收到 <code>force_flush_cv.notify_one()</code> 的通知呢？</p><p>我们先来看一看 <code>std::condition_variable::wait_for</code> 的实现。（几个主流STL库实现大同小异，这里贴Linux下GCC的实现作为案例）</p><pre><code class=language-cpp>template&amp;lt;typename _Rep, typename _Period, typename _Predicate&amp;gt;
   bool
-  wait_for(unique_lock&lt;mutex&gt;&amp; __lock,
-      const chrono::duration&lt;_Rep, _Period&gt;&amp; __rtime,
+  wait_for(unique_lock&amp;lt;mutex&amp;gt;&amp;amp; __lock,
+      const chrono::duration&amp;lt;_Rep, _Period&amp;gt;&amp;amp; __rtime,
       _Predicate __p)
   {
 using __dur = typename steady_clock::duration;
 return wait_until(__lock,
-    steady_clock::now() +
-    chrono::__detail::ceil&lt;__dur&gt;(__rtime),
+    steady_clock::now() &#43;
+    chrono::__detail::ceil&amp;lt;__dur&amp;gt;(__rtime),
     std::move(__p));
   }
 
-template&lt;typename _Clock, typename _Duration, typename _Predicate&gt;
+template&amp;lt;typename _Clock, typename _Duration, typename _Predicate&amp;gt;
   bool
-  wait_until(unique_lock&lt;mutex&gt;&amp; __lock,
-  const chrono::time_point&lt;_Clock, _Duration&gt;&amp; __atime,
+  wait_until(unique_lock&amp;lt;mutex&amp;gt;&amp;amp; __lock,
+  const chrono::time_point&amp;lt;_Clock, _Duration&amp;gt;&amp;amp; __atime,
   _Predicate __p)
   {
 while (!__p())
@@ -157,16 +156,14 @@ return true;
 
   // 其他的 wait_until 嵌套都是设计模式相关，不在展示，最后是调用下面的代码,pthread的接口
   void
-  wait_until(mutex&amp; __m, clockid_t __clock, timespec&amp; __abs_time)
+  wait_until(mutex&amp;amp; __m, clockid_t __clock, timespec&amp;amp; __abs_time)
   {
-    pthread_cond_clockwait(&amp;_M_cond, __m.native_handle(), __clock,
-          &amp;__abs_time);
-  }
-</code></pre><p>可以看到，这里关键点在这个代码:</p><pre><code class=language-cpp>while (!__p())
+    pthread_cond_clockwait(&amp;amp;_M_cond, __m.native_handle(), __clock,
+          &amp;amp;__abs_time);
+  }</code></pre><p>可以看到，这里关键点在这个代码:</p><pre><code class=language-cpp>while (!__p())
 if (wait_until(__lock, __atime) == cv_status::timeout)
   return __p();
-return true;
-</code></pre><p>可能会存在一个极小的临界区，在调用 <code>__p()</code> 的时候 <code>is_force_flush_notified.store(true, std::memory_order_release)</code> 和 <code>force_flush_cv.notify_one()</code> 还没执行到，然后准备进入 <code>wait_until(__lock, __atime)</code>, 但是在最终调用 <code>pthread_cond_clockwait</code> 前 <code>is_force_flush_notified.store(true, std::memory_order_release)</code> 和 <code>force_flush_cv.notify_one()</code> 执行掉了。然后再进入wait就没收到 notify ，并且由于退出阶段，后台线程已经退出不会再收到新的notify，所以必须等待到超时。如果这时候超时时间很长就会陷入一个非常长时间的等待。</p><h2 id=解决方案>解决方案</h2><p>找到问题之后解决方法就比较简单了。主要有两种，一种是再加一个 mutex 锁，把 <code>is_force_flush_notified</code> ， <code>force_flush_cv</code> 和 <code>std::condition_variable::wait_for</code> 也放进这个锁的临界区里保护，这样会多一个锁，多一些额外开销。另一种方案则是缩短等待时间后重试，缺点是发生这个情况的时候可能要多等个这个等待时间后才能完成。</p><p>因为这个毕竟是在退出阶段才出现且很小概率出现，所以我选了后一种不带来额外开销的方案。PR去年已经合入，小伙伴门可以放心使用。</p><h2 id=后续问题>后续问题</h2><p>后面其实还有线程安全的问题也和这个相关，虽然我们项目里没用到，但是社区收到了issue。因为上面的 <code>is_force_flush_notified</code> 是个atomic的bool值，在多线程调用 <code>ForceFlush()</code> 的时候有概率某个线程的 <code>is_force_flush_notified</code> 会被其他线程吞掉。相关详情见: <a href=https://github.com/open-telemetry/opentelemetry-cpp/issues/2574>[SDK] BatchSpanProcessor::ForceFlush appears to be hanging forever</a> 和 <a href=https://github.com/open-telemetry/opentelemetry-cpp/issues/2583>[SDK] BatchLogRecordProcessor::ForceFlush hangs for 10 seconds</a> 。
+return true;</code></pre><p>可能会存在一个极小的临界区，在调用 <code>__p()</code> 的时候 <code>is_force_flush_notified.store(true, std::memory_order_release)</code> 和 <code>force_flush_cv.notify_one()</code> 还没执行到，然后准备进入 <code>wait_until(__lock, __atime)</code>, 但是在最终调用 <code>pthread_cond_clockwait</code> 前 <code>is_force_flush_notified.store(true, std::memory_order_release)</code> 和 <code>force_flush_cv.notify_one()</code> 执行掉了。然后再进入wait就没收到 notify ，并且由于退出阶段，后台线程已经退出不会再收到新的notify，所以必须等待到超时。如果这时候超时时间很长就会陷入一个非常长时间的等待。</p><h2 id=解决方案>解决方案</h2><p>找到问题之后解决方法就比较简单了。主要有两种，一种是再加一个 mutex 锁，把 <code>is_force_flush_notified</code> ， <code>force_flush_cv</code> 和 <code>std::condition_variable::wait_for</code> 也放进这个锁的临界区里保护，这样会多一个锁，多一些额外开销。另一种方案则是缩短等待时间后重试，缺点是发生这个情况的时候可能要多等个这个等待时间后才能完成。</p><p>因为这个毕竟是在退出阶段才出现且很小概率出现，所以我选了后一种不带来额外开销的方案。PR去年已经合入，小伙伴门可以放心使用。</p><h2 id=后续问题>后续问题</h2><p>后面其实还有线程安全的问题也和这个相关，虽然我们项目里没用到，但是社区收到了issue。因为上面的 <code>is_force_flush_notified</code> 是个atomic的bool值，在多线程调用 <code>ForceFlush()</code> 的时候有概率某个线程的 <code>is_force_flush_notified</code> 会被其他线程吞掉。相关详情见: <a href=https://github.com/open-telemetry/opentelemetry-cpp/issues/2574>[SDK] BatchSpanProcessor::ForceFlush appears to be hanging forever</a> 和 <a href=https://github.com/open-telemetry/opentelemetry-cpp/issues/2583>[SDK] BatchLogRecordProcessor::ForceFlush hangs for 10 seconds</a> 。
 现在的解决法方法是不再使用bool值判定多次调用的先后关系，而是使用exported序号来进行。PR见: <a href=https://github.com/open-telemetry/opentelemetry-cpp/pull/2584>[SDK] Fix forceflush may wait for ever</a>。</p><p>欢迎有兴趣的小伙伴互相交流研究。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2024-08-02T15:30:45.000+00:00 itemprop=datePublished>2024-08-02</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/cpp.html>cpp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cxx.html>cxx</a></li><li class=article-tag-list-item><a href=//owent.net/tags/opentelemetry.html>opentelemetry</a></li><li class=article-tag-list-item><a href=//owent.net/tags/condition_variable.html>condition_variable</a></li><li class=article-tag-list-item><a href=//owent.net/tags/notify.html>notify</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2024/2404.html>上一篇<strong>手夯一个STL allocator和对象内存分析组件</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2024/2402.html>下一篇<strong>踩坑一处（GCC）STL `std::async` 实现BUG导致的crash问题</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;owent
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,

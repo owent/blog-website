@@ -15,13 +15,12 @@ std::regex_replace
 直接报答案吧，第一个是不完全匹配，第二个是完全匹配。</p><p>同时，在正则表达式库里还有两个重要的类
 enum std::regex_constants::match_flag_type 这个看名字就能知道是设置匹配选项的，具体选项看内容就很容易看懂，也不用多解释了。
 另一个是类模版std::match_results，传进去的类型是类的迭代器
-如以下从VC里抄来的</p><pre><code class=language-cpp>typedef basic_regex&lt;char&gt; regex;
-typedef basic_regex&lt;wchar_t&gt; wregex;
-typedef match_results&lt;const char&gt; cmatch;
-typedef match_results&lt;const wchar_t&gt; wcmatch;
-typedef match_results&lt;string::const_iterator&gt; smatch;
-typedef match_results&lt;wstring::const_iterator&gt; wsmatch;
-</code></pre><p>这都是默认定义
+如以下从VC里抄来的</p><pre><code class=language-cpp>typedef basic_regex&amp;lt;char&amp;gt; regex;
+typedef basic_regex&amp;lt;wchar_t&amp;gt; wregex;
+typedef match_results&amp;lt;const char&amp;gt; cmatch;
+typedef match_results&amp;lt;const wchar_t&amp;gt; wcmatch;
+typedef match_results&amp;lt;string::const_iterator&amp;gt; smatch;
+typedef match_results&amp;lt;wstring::const_iterator&amp;gt; wsmatch;</code></pre><p>这都是默认定义
 这个用于记录匹配结果，匹配如果成功，它里面会有多个std::sub_match对象，分别指向匹配的结果
 std::sub_match里有matched成员表示该项是否匹配成功，还有first和second成员分别指向匹配的目标的起始位置和结束位置，str()函数可以获取匹配的值
 而同时std::match_results的prefix()和suffix()函数分别指向整个匹配式的头和尾。返回的类型也是std::sub_match，内容和上面的类似</p><p>**这里有第二个注意：<strong>匹配结果里的数据是共享的，只是指针不同，所以要注意不要随意释放资源。
@@ -56,18 +55,18 @@ std::sub_match里有matched成员表示该项是否匹配成功，还有first和
 \u | Causes the next character to be outputted, to be output in upper case. |
 \L | Causes all subsequent characters to be output in lower case, until a \E is found. |
 \U | Causes all subsequent characters to be output in upper case, until a \E is found. |
-\E | Terminates a \L or \U sequence. |</p><p>这个就懒得翻译和测试了，都是很简单的东西。</p><p>接下来std::regex_replace里的format也是传入这种东西，返回的就是替换后的字符串了。</p><p>另外正则表达式错误，会抛出异常，当然你也可以配合std::regex_constants::match_flag_type做一些变化。</p><p>最后，贴出代码和结</p><pre><code class=language-cpp>#include &lt;string&gt;
-#include &lt;iostream&gt;
-#include &lt;algorithm&gt;
-#include &lt;regex&gt;
-#include &lt;cstdio&gt;
+\E | Terminates a \L or \U sequence. |</p><p>这个就懒得翻译和测试了，都是很简单的东西。</p><p>接下来std::regex_replace里的format也是传入这种东西，返回的就是替换后的字符串了。</p><p>另外正则表达式错误，会抛出异常，当然你也可以配合std::regex_constants::match_flag_type做一些变化。</p><p>最后，贴出代码和结</p><pre><code class=language-cpp>#include &amp;lt;string&amp;gt;
+#include &amp;lt;iostream&amp;gt;
+#include &amp;lt;algorithm&amp;gt;
+#include &amp;lt;regex&amp;gt;
+#include &amp;lt;cstdio&amp;gt;
 
 
 
 int main() {
     using namespace std;
 
-    regex reg(&quot;(http|https)://([\\w\\./]*)&quot;);
+    regex reg(&amp;#34;(http|https)://([\\w\\./]*)&amp;#34;);
     string strIn;
     std::smatch res;
     bool isUrl;
@@ -75,51 +74,50 @@ int main() {
     // 查找
     getline(cin, strIn);
     isUrl = std::regex_search(strIn, res, reg, std::regex_constants::match_not_null);
-    cout&lt;&lt; (isUrl? &quot;It's a url&quot;: &quot;It's not a url&quot;)&lt;&lt; endl;
+    cout&amp;lt;&amp;lt; (isUrl? &amp;#34;It&amp;#39;s a url&amp;#34;: &amp;#34;It&amp;#39;s not a url&amp;#34;)&amp;lt;&amp;lt; endl;
     // 输入 MyBlog is http://www.owent.net/ 匹配成功
     // 匹配结果里有三项，分别是整个匹配表达式和两个子表达式
     // 以下代码输出
-    // 这个时候千万不能执行类似strIn = &quot;&quot; 改变strIn内容的操作，
+    // 这个时候千万不能执行类似strIn = &amp;#34;&amp;#34; 改变strIn内容的操作，
     // 因为其和res指针指向的内存是共享的，如果对其进行就该会出现RE
-    for (std::smatch::size_type i = 0; i &lt; res.size(); i ++) {
-        cout&lt;&lt; &quot;第&quot;&lt;&lt; i + 1&lt;&lt; &quot;条匹配项first地址 =&gt; &quot;&lt;&lt; &amp;(res[i].first)&lt;&lt; endl;
-        cout&lt;&lt; &quot;第&quot;&lt;&lt; i + 1&lt;&lt; &quot;条匹配项second地址 =&gt; &quot;&lt;&lt; &amp;(res[i].second)&lt;&lt; endl;
-        cout&lt;&lt; &quot;第&quot;&lt;&lt; i + 1&lt;&lt; &quot;条匹配值为 =&gt; &quot;&lt;&lt; res[i].str()&lt;&lt; endl&lt;&lt; endl;
+    for (std::smatch::size_type i = 0; i &amp;lt; res.size(); i &#43;&#43;) {
+        cout&amp;lt;&amp;lt; &amp;#34;第&amp;#34;&amp;lt;&amp;lt; i &#43; 1&amp;lt;&amp;lt; &amp;#34;条匹配项first地址 =&amp;gt; &amp;#34;&amp;lt;&amp;lt; &amp;amp;(res[i].first)&amp;lt;&amp;lt; endl;
+        cout&amp;lt;&amp;lt; &amp;#34;第&amp;#34;&amp;lt;&amp;lt; i &#43; 1&amp;lt;&amp;lt; &amp;#34;条匹配项second地址 =&amp;gt; &amp;#34;&amp;lt;&amp;lt; &amp;amp;(res[i].second)&amp;lt;&amp;lt; endl;
+        cout&amp;lt;&amp;lt; &amp;#34;第&amp;#34;&amp;lt;&amp;lt; i &#43; 1&amp;lt;&amp;lt; &amp;#34;条匹配值为 =&amp;gt; &amp;#34;&amp;lt;&amp;lt; res[i].str()&amp;lt;&amp;lt; endl&amp;lt;&amp;lt; endl;
     }
 
   
     // 匹配
     isUrl = std::regex_match(strIn, res, reg);
-    cout&lt;&lt; isUrl&lt;&lt; &quot; &lt;= Matched? ,Size =&gt;&quot;&lt;&lt;res.size()&lt;&lt; endl;
+    cout&amp;lt;&amp;lt; isUrl&amp;lt;&amp;lt; &amp;#34; &amp;lt;= Matched? ,Size =&amp;gt;&amp;#34;&amp;lt;&amp;lt;res.size()&amp;lt;&amp;lt; endl;
     // 输入 MyBlog is http://www.owent.net/ 匹配失败，但是没有修改res的值
     // 所以会输出上一次匹配的结果： 3
    
     // 替换
-    string strRule = &quot;&lt;a href=\&quot;$&amp;\&quot;&gt;$&amp;&lt;/a&gt;&lt;br /&gt;\nScheme is $1\nAddress is $2&quot;;
+    string strRule = &amp;#34;&amp;lt;a href=\&amp;#34;$&amp;amp;\&amp;#34;&amp;gt;$&amp;amp;&amp;lt;/a&amp;gt;&amp;lt;br /&amp;gt;\nScheme is $1\nAddress is $2&amp;#34;;
     string strOut = std::regex_replace(strIn, reg, strRule);
-    cout&lt;&lt; strOut&lt;&lt; endl;
+    cout&amp;lt;&amp;lt; strOut&amp;lt;&amp;lt; endl;
     return 0;
 }
 
 //以下是输入“MyBlog is http://www.owent.net/ ”的输出结果：
-//It's a url
-//第1条匹配项first地址 =&gt; 0032EB70
-//第1条匹配项second地址 =&gt; 0032EB7C
-//第1条匹配值为 =&gt; http://www.owent.net/
+//It&amp;#39;s a url
+//第1条匹配项first地址 =&amp;gt; 0032EB70
+//第1条匹配项second地址 =&amp;gt; 0032EB7C
+//第1条匹配值为 =&amp;gt; http://www.owent.net/
 //
-//第2条匹配项first地址 =&gt; 0032EB8C
-//第2条匹配项second地址 =&gt; 0032EB98
-//第2条匹配值为 =&gt; http
+//第2条匹配项first地址 =&amp;gt; 0032EB8C
+//第2条匹配项second地址 =&amp;gt; 0032EB98
+//第2条匹配值为 =&amp;gt; http
 //
-//第3条匹配项first地址 =&gt; 0032EBA8
-//第3条匹配项second地址 =&gt; 0032EBB4
-//第3条匹配值为 =&gt; www.owent.net/
+//第3条匹配项first地址 =&amp;gt; 0032EBA8
+//第3条匹配项second地址 =&amp;gt; 0032EBB4
+//第3条匹配值为 =&amp;gt; www.owent.net/
 //
-//0 &lt;= Matched? ,Size =&gt;3
-//MyBlog is &lt;a href=&quot;http://www.owent.net/&quot;&gt;http://www.owent.net/&lt;/a&gt;&lt;br /&gt;
+//0 &amp;lt;= Matched? ,Size =&amp;gt;3
+//MyBlog is &amp;lt;a href=&amp;#34;http://www.owent.net/&amp;#34;&amp;gt;http://www.owent.net/&amp;lt;/a&amp;gt;&amp;lt;br /&amp;gt;
 //Scheme is http
-//Address is www.owent.net/
-</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2011-10-22T14:38:01.000+00:00 itemprop=datePublished>2011-10-22</time></span>
+//Address is www.owent.net/</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2011-10-22T14:38:01.000+00:00 itemprop=datePublished>2011-10-22</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/boost.html>BOOST</a></li><li class=article-tag-list-item><a href=//owent.net/tags/c++0x/11.html>c++0x/11</a></li><li class=article-tag-list-item><a href=//owent.net/tags/c++11.html>c++11</a></li><li class=article-tag-list-item><a href=//owent.net/tags/regex.html>regex</a></li><li class=article-tag-list-item><a href=//owent.net/tags/stl.html>STL</a></li><li class=article-tag-list-item><a href=//owent.net/tags/tr1.html>tr1</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F.html>正则表达式</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2012/536.html>上一篇<strong>C++ 新特性学习（四） — Bind和Function</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2011/518.html>下一篇<strong>C++ 新特性学习（二） -- Array、Tuple和Hash库</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,

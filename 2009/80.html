@@ -7,40 +7,39 @@
 
 double disBetweenPointAndLine(double x0,double y0,double x1,double y1,double x2,double y2)
 {
-    //化为ax+by+c=0的形式
+    //化为ax&#43;by&#43;c=0的形式
     double a = y1-y2;
     double b = x2-x1;
     double c = x1*y2-x2*y1;
-    double d = (a*x0+b*y0+c)/sqrt(a*a+b*b);
+    double d = (a*x0&#43;b*y0&#43;c)/sqrt(a*a&#43;b*b);
     /*
     如果是线段判断垂足
 
-    double xp = (b*b*x0-a*b*y0-a*c)/(a*a+b*b);
-    double yp = (-a*b*x0+a*a*y0-b*c)/(a*a+b*b);
-    double xb = (x1&gt;x2)?x1:x2;
-    double yb = (y1&gt;y2)?y1:y2;
-    double xs = x1+x2-xb;
-    double ys = y1+y2-yb;
-    if(xp &gt; xb || xp &lt; xs || yp &gt; yb || yp &lt; ys)
+    double xp = (b*b*x0-a*b*y0-a*c)/(a*a&#43;b*b);
+    double yp = (-a*b*x0&#43;a*a*y0-b*c)/(a*a&#43;b*b);
+    double xb = (x1&amp;gt;x2)?x1:x2;
+    double yb = (y1&amp;gt;y2)?y1:y2;
+    double xs = x1&#43;x2-xb;
+    double ys = y1&#43;y2-yb;
+    if(xp &amp;gt; xb || xp &amp;lt; xs || yp &amp;gt; yb || yp &amp;lt; ys)
     {
-        d = sqrt((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
-        if(d &gt; sqrt((x0 - x2) * (x0 - x2) + (y0 - y2) * (y0 - y2)))
-            d = sqrt((x0 - x2) * (x0 - x2) + (y0 - y2) * (y0 - y2));
+        d = sqrt((x0 - x1) * (x0 - x1) &#43; (y0 - y1) * (y0 - y1));
+        if(d &amp;gt; sqrt((x0 - x2) * (x0 - x2) &#43; (y0 - y2) * (y0 - y2)))
+            d = sqrt((x0 - x2) * (x0 - x2) &#43; (y0 - y2) * (y0 - y2));
     }
     */
     return fabs(d);
-}
-</code></pre><p>线段间最短距离</p><pre><code class=language-cpp>//{(x1,y1),(x2,y2)}{(x3,y3),(x4,y4)}
+}</code></pre><p>线段间最短距离</p><pre><code class=language-cpp>//{(x1,y1),(x2,y2)}{(x3,y3),(x4,y4)}
 //导入点到直线或线段的距离模板
 
 double GetLineDistance(double x1,double y1,double x2,double y2,double x3,double y3,double x4,double y4)
 {
     double tmpDouble = disBetweenPointAndLine(x1,y1,x3,y3,x4,y4);
-    if(tmpDouble &gt; disBetweenPointAndLine(x2,y2,x3,y3,x4,y4))
+    if(tmpDouble &amp;gt; disBetweenPointAndLine(x2,y2,x3,y3,x4,y4))
         tmpDouble = disBetweenPointAndLine(x2,y2,x3,y3,x4,y4)；
-    if(tmpDouble &gt; disBetweenPointAndLine(x3,y3,x1,y1,x2,y2))
+    if(tmpDouble &amp;gt; disBetweenPointAndLine(x3,y3,x1,y1,x2,y2))
         tmpDouble = disBetweenPointAndLine(x3,y3,x1,y1,x2,y2)；
-    if(tmpDouble &gt; disBetweenPointAndLine(x4,y4,x1,y1,x2,y2))
+    if(tmpDouble &amp;gt; disBetweenPointAndLine(x4,y4,x1,y1,x2,y2))
         tmpDouble = disBetweenPointAndLine(x4,y4,x1,y1,x2,y2)；
 
     return tmpDouble;
@@ -48,30 +47,29 @@ double GetLineDistance(double x1,double y1,double x2,double y2,double x3,double 
 
 double disBetweenPointAndLine(double x0,double y0,double x1,double y1,double x2,double y2)
 {
-    //化为ax+by+c=0的形式
+    //化为ax&#43;by&#43;c=0的形式
     double a = y1-y2;
     double b = x2-x1;
     double c = x1*y2-x2*y1;
-    double d = (a*x0+b*y0+c)/sqrt(a*a+b*b);
+    double d = (a*x0&#43;b*y0&#43;c)/sqrt(a*a&#43;b*b);
     /*
     如果是线段判断垂足
     */
-    double xp = (b*b*x0-a*b*y0-a*c)/(a*a+b*b);
-    double yp = (-a*b*x0+a*a*y0-b*c)/(a*a+b*b);
-    double xb = (x1&gt;x2)?x1:x2;
-    double yb = (y1&gt;y2)?y1:y2;
-    double xs = x1+x2-xb;
-    double ys = y1+y2-yb;
-    if(xp &gt; xb || xp &lt; xs || yp &gt; yb || yp &lt; ys)
+    double xp = (b*b*x0-a*b*y0-a*c)/(a*a&#43;b*b);
+    double yp = (-a*b*x0&#43;a*a*y0-b*c)/(a*a&#43;b*b);
+    double xb = (x1&amp;gt;x2)?x1:x2;
+    double yb = (y1&amp;gt;y2)?y1:y2;
+    double xs = x1&#43;x2-xb;
+    double ys = y1&#43;y2-yb;
+    if(xp &amp;gt; xb || xp &amp;lt; xs || yp &amp;gt; yb || yp &amp;lt; ys)
     {
-        d = sqrt((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
-        if(d &gt; sqrt((x0 - x2) * (x0 - x2) + (y0 - y2) * (y0 - y2)))
-            d = sqrt((x0 - x2) * (x0 - x2) + (y0 - y2) * (y0 - y2));
+        d = sqrt((x0 - x1) * (x0 - x1) &#43; (y0 - y1) * (y0 - y1));
+        if(d &amp;gt; sqrt((x0 - x2) * (x0 - x2) &#43; (y0 - y2) * (y0 - y2)))
+            d = sqrt((x0 - x2) * (x0 - x2) &#43; (y0 - y2) * (y0 - y2));
     }
 
     return fabs(d);
-}
-</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2009-08-14T11:33:38.000+00:00 itemprop=datePublished>2009-08-14</time></span>
+}</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2009-08-14T11:33:38.000+00:00 itemprop=datePublished>2009-08-14</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/acm.html>acm</a></li><li class=article-tag-list-item><a href=//owent.net/tags/template.html>template</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2009/79.html>上一篇<strong>ECUST 09年 校赛个人训练赛第五场总结</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2009/81.html>下一篇<strong>连接最多点直线 (OWenT 个人模板)</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,

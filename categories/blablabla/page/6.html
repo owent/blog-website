@@ -3,8 +3,8 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/categories/blablabla/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-890"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/890.html target=_blank itemprop=url>VC和GCC内成员函数指针实现的研究(一)</a></h1></header><div class=article-summary><p>最近在《C++对象模型》一书里说到的virtual的成员函数指针，低于128的被cfront编译器认为是虚表偏移量（支持子类对父类函数的覆盖）。VC只是提了下单继承、多继承和虚继承的实现方案不同，GCC没有提及，所以就专门稍微深入分析研究下他们的实现机制。</p></div><div class=article-more><a href=//owent.net/2013/890.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-06T12:55:58.000+00:00 itemprop=datePublished>2013-09-06</time></div></div></article><article class="article-panel archive-article archive-type-879"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/879.html target=_blank itemprop=url>一个C++关于成员变量偏移地址的小Trick</a></h1></header><div class=article-summary><p>今天看到一个小例子，发现了一个小trick。见代码：</p><pre><code class=language-cpp>#include &lt;cstdio&gt;
-#include &lt;cstdlib&gt;
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-890"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/890.html target=_blank itemprop=url>VC和GCC内成员函数指针实现的研究(一)</a></h1></header><div class=article-summary><p>最近在《C++对象模型》一书里说到的virtual的成员函数指针，低于128的被cfront编译器认为是虚表偏移量（支持子类对父类函数的覆盖）。VC只是提了下单继承、多继承和虚继承的实现方案不同，GCC没有提及，所以就专门稍微深入分析研究下他们的实现机制。</p></div><div class=article-more><a href=//owent.net/2013/890.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-06T12:55:58.000+00:00 itemprop=datePublished>2013-09-06</time></div></div></article><article class="article-panel archive-article archive-type-879"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/879.html target=_blank itemprop=url>一个C++关于成员变量偏移地址的小Trick</a></h1></header><div class=article-summary><p>今天看到一个小例子，发现了一个小trick。见代码：</p><pre><code class=language-cpp>#include &amp;lt;cstdio&amp;gt;
+#include &amp;lt;cstdlib&amp;gt;
 
 class base_1
 {
@@ -26,11 +26,11 @@ public:
 
 int main(int argc, char* argv[]) {
 
-    printf(&quot;&amp;base_1::a = %p\n&quot;, &amp;base_1::a);
-    printf(&quot;&amp;base_2::b = %p\n&quot;, &amp;base_2::b);
-    printf(&quot;&amp;base_3::a = %p\n&quot;, &amp;base_3::a);
-    printf(&quot;&amp;base_3::b = %p\n&quot;, &amp;base_3::b);
-    printf(&quot;&amp;base_3::c = %p\n&quot;, &amp;base_3::c);
+    printf(&amp;#34;&amp;amp;base_1::a = %p\n&amp;#34;, &amp;amp;base_1::a);
+    printf(&amp;#34;&amp;amp;base_2::b = %p\n&amp;#34;, &amp;amp;base_2::b);
+    printf(&amp;#34;&amp;amp;base_3::a = %p\n&amp;#34;, &amp;amp;base_3::a);
+    printf(&amp;#34;&amp;amp;base_3::b = %p\n&amp;#34;, &amp;amp;base_3::b);
+    printf(&amp;#34;&amp;amp;base_3::c = %p\n&amp;#34;, &amp;amp;base_3::c);
 
 
     base_3 t;
@@ -41,20 +41,19 @@ int main(int argc, char* argv[]) {
     typedef int (base_3::*tip);
     tip pm = NULL;
 
-    printf(&quot;base_3::a = %d\n&quot;, t.base_3::a);
-    printf(&quot;base_3::b = %d\n&quot;, t.base_3::b);
-    printf(&quot;base_3::c = %d\n&quot;, t.base_3::c);
+    printf(&amp;#34;base_3::a = %d\n&amp;#34;, t.base_3::a);
+    printf(&amp;#34;base_3::b = %d\n&amp;#34;, t.base_3::b);
+    printf(&amp;#34;base_3::c = %d\n&amp;#34;, t.base_3::c);
 
-    pm = &amp;base_3::a;
-    printf(&quot;base_3::a(%p) = %d(ptr)\n&quot;, pm, t.*pm);
-    pm = &amp;base_3::b;
-    printf(&quot;base_3::b(%p) = %d(ptr)\n&quot;, pm, t.*pm);
-    pm = &amp;base_3::c;
-    printf(&quot;base_3::c(%p) = %d(ptr)\n&quot;, pm, t.*pm);
+    pm = &amp;amp;base_3::a;
+    printf(&amp;#34;base_3::a(%p) = %d(ptr)\n&amp;#34;, pm, t.*pm);
+    pm = &amp;amp;base_3::b;
+    printf(&amp;#34;base_3::b(%p) = %d(ptr)\n&amp;#34;, pm, t.*pm);
+    pm = &amp;amp;base_3::c;
+    printf(&amp;#34;base_3::c(%p) = %d(ptr)\n&amp;#34;, pm, t.*pm);
 
     return 0;
-}
-</code></pre><p>猜猜看这个代码输出什么？
+}</code></pre><p>猜猜看这个代码输出什么？
 答案是：</p></div><div class=article-more><a href=//owent.net/2013/879.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-08-26T14:16:37.000+00:00 itemprop=datePublished>2013-08-26</time></div></div></article><article class="article-panel archive-article archive-type-867"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/867.html target=_blank itemprop=url>ptmalloc,tcmalloc和jemalloc内存分配策略研究</a></h1></header><div class=article-summary><p>最近看了glibc的ptmaoolc，Goolge的tcmalloc和jemalloc，顺便做了一点记录。可能有些地方理解地不太对，如有发现还请大神指出。</p></div><div class=article-more><a href=//owent.net/2013/867.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-07-31T13:02:53.000+00:00 itemprop=datePublished>2013-07-31</time></div></div></article><article class="article-panel archive-article archive-type-851"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/851.html target=_blank itemprop=url>从Javascript到Typescript到Node.js</a></h1></header><div class=article-summary><p>最近看了点typescript的东西，加上以前看过的一点点Node.js，所以就想把他们系统地整理一下。</p><h2 id=javascript>Javascript</h2><p>这玩意搞过Web开发的应该都知道吧，Javascript的语法我就不废话了，挺简单的。这里总结几个Javascript的核心机制部分吧。</p></div><div class=article-more><a href=//owent.net/2013/851.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-07-10T20:19:39.000+00:00 itemprop=datePublished>2013-07-10</time></div></div></article><article class="article-panel archive-article archive-type-818"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/818.html target=_blank itemprop=url>网络编程小结</a></h1></header><div class=article-summary><p>写这个小结主要是因为之前研究Boost.Asio的时候，其内部使用了很多不同的方法来实现异步网络编程
 然后就顺便把一些高级的玩意看了一下，也顺便把以前低级的玩意放到一起，哇哈哈。很多东西只是个人的理解，不一定正确</p></div><div class=article-more><a href=//owent.net/2013/818.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-05-30T14:31:09.000+00:00 itemprop=datePublished>2013-05-30</time></div></div></article><article class="article-panel archive-article archive-type-811"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/811.html target=_blank itemprop=url>试试Boost.Asio</a></h1></header><div class=article-summary><p>慢慢一点一点看看Boost，这段时间就Asio库吧。
 据说这货和libevent的效率差不多，但是Boost的平台兼容性，你懂得。还有它帮忙干掉了很多线程安全和线程分发的事情。</p></div><div class=article-more><a href=//owent.net/2013/811.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-05-23T18:13:58.000+00:00 itemprop=datePublished>2013-05-23</time></div></div></article><article class="article-panel archive-article archive-type-730"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/730.html target=_blank itemprop=url>Linux 编译安装 GCC 4.8</a></h1></header><div class=article-summary><h1 id=linux-编译安装-gcc-48>Linux 编译安装 GCC 4.8</h1><p>详见: <a href=https://www.owent.net/2013/730.html>Linux 编译安装 GCC 4.8</a></p><p>GCC4.8发布啦，这个脚本在之前4.7的基础上做了点改进，移除一些过时的组件,增加了检测不到时自动下载源码包</p></div><div class=article-more><a href=//owent.net/2013/730.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-03-26T10:01:33.000+00:00 itemprop=datePublished>2013-03-26</time></div></div></article><article class="article-panel archive-article archive-type-674"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/674.html target=_blank itemprop=url>Boost.Spirit 初体验</a></h1></header><div class=article-summary><p>使用代码生成代码是一件十分美妙的事情，于是有了各种代码生成器。但是生成代码，意味着要有对生成规则的分析和处理。

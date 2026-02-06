@@ -14,9 +14,7 @@ cd /home/website/letsencrypt/letsencrypt;
 ./letsencrypt-auto certonly --webroot -w /home/website/angel_blog -d gf.owent.net -d angel.owent.net -w /home/website/owent_blog -d owent.net -d www.owent.net;
 
 # renew all certs
-./letsencrypt-auto renew;
-
-</code></pre><p>我的网站都放在/home/website下，签证的域名gf.owent.net和angel.owent.net网站根目录位于/home/website/angel_blog，另一组域名owent.net和www.owent.net的网站根目录位于/home/website/owent_blog。这个步骤里，<a href=https://letsencrypt.org/>letsencrypt</a>会在我们制定的网站根目录里放一些临时文件，然后由<a href=https://letsencrypt.org/>letsencrypt</a>通过我们指定的所有域名尝试访问这些文件，所以执行这个命令的用户必须对网站根目录可写，并且写出的结果webserver要有权限读，并且要立即生效。<a href=https://letsencrypt.org/>letsencrypt</a>会尝试所有的域名，这是用于验证域名确实是你的，并且任何一个域名访问不正常都不会正常发签证给你。</p><h3 id=letsencrypt自动续期>letsencrypt自动续期</h3><p>前面说了letsencrypt证书的有效期是三个月，所以自动续期就很有必要了（不然难道没三个月我还要手动来搞一下？）。续期就是直接crontab就好了，本身<a href=https://letsencrypt.org/>letsencrypt</a>有renew命令。先执行以下脚本：</p><pre><code class=language-bash>echo &quot;#!/bin/sh
+./letsencrypt-auto renew;</code></pre><p>我的网站都放在/home/website下，签证的域名gf.owent.net和angel.owent.net网站根目录位于/home/website/angel_blog，另一组域名owent.net和www.owent.net的网站根目录位于/home/website/owent_blog。这个步骤里，<a href=https://letsencrypt.org/>letsencrypt</a>会在我们制定的网站根目录里放一些临时文件，然后由<a href=https://letsencrypt.org/>letsencrypt</a>通过我们指定的所有域名尝试访问这些文件，所以执行这个命令的用户必须对网站根目录可写，并且写出的结果webserver要有权限读，并且要立即生效。<a href=https://letsencrypt.org/>letsencrypt</a>会尝试所有的域名，这是用于验证域名确实是你的，并且任何一个域名访问不正常都不会正常发签证给你。</p><h3 id=letsencrypt自动续期>letsencrypt自动续期</h3><p>前面说了letsencrypt证书的有效期是三个月，所以自动续期就很有必要了（不然难道没三个月我还要手动来搞一下？）。续期就是直接crontab就好了，本身<a href=https://letsencrypt.org/>letsencrypt</a>有renew命令。先执行以下脚本：</p><pre><code class=language-bash>echo &amp;#34;#!/bin/sh
 
 /home/website/letsencrypt/letsencrypt/letsencrypt-auto renew;
 
@@ -25,11 +23,9 @@ cp /etc/letsencrypt/live/gf.owent.net/* /home/website/ssl/angel;
 chown nginx:users -R /home/website/ssl/angel;
 
 systemctl reload nginx
-&quot; &gt; /home/website/letsencrypt/renew.sh;
+&amp;#34; &amp;gt; /home/website/letsencrypt/renew.sh;
 
-chmod +x /home/website/letsencrypt/renew.sh;
-</code></pre><p>然后执行<em>crontab -e</em>，里面添加:</p><pre><code class=language-text>05 1 1,15 * * /home/website/letsencrypt/renew.sh
-</code></pre><p><a href=https://letsencrypt.org/>letsencrypt</a>会把证书放在**/etc/letsencrypt/live/[域名]<strong>里，我的证书都放在</strong>/home/website/ssl/**中，所以我把它copy过去了，然后我的nginx的执行用户是nginx，所以改了下所有者，然后reload就好了。</p><p>至此<a href=https://letsencrypt.org/>letsencrypt</a>接入完毕。还是比较简单的。</p><h2 id=接入http2>接入HTTP/2</h2><p>HTTP 2.0已经成为了标准，并且现在各大浏览器都已经支持了。再加上nginx的最新release版本已经移除了<a href=http://nginx.org/en/docs/http/ngx_http_spdy_module.html>ngx_http_spdy_module</a>模块，增加了<a href=http://nginx.org/en/docs/http/ngx_http_v2_module.html>ngx_http_v2_module</a>模块。然而我的nginx是直接用nginx的官方源装在了CentOS 7上，直接yum update的时候nginx被直接升到1.10版本了，而我原来配得都是SPDY的，这也是使得我不得不接入一下HTTP/2。</p><p>但是这时候出了一个问题。SPDY似乎是使用了NPN做协议头协商，但是新的标准化的应该使用ALPN。而除了chrome以外貌似都不支持使用NPN协商HTTP/2（IE和Edge都不支持，Firefox我本地写错一个配置所以当时认为是不支持，实际上不太确定是否支持）。但是按nginx的文档，ALPN只在openssl 1.0.2以上才支持。又然而CentOS自带的openssl版本是1.0.1。这就比较麻烦了，得自己重新编译nginx，否则没法开启ALPN。</p><p>不过也是为了简单，我世界使用了yum依赖关系安装了依赖包，然后仅仅重新编译nginx和openssl。编译选项直接照抄 <a href=http://nginx.org/en/linux_packages.html#arguments>http://nginx.org/en/linux_packages.html#arguments</a> ，然后把openssl改掉，整个脚本如下</p><pre><code class=language-bash>#!/bin/sh
+chmod &#43;x /home/website/letsencrypt/renew.sh;</code></pre><p>然后执行<em>crontab -e</em>，里面添加:</p><pre><code class=language-text>05 1 1,15 * * /home/website/letsencrypt/renew.sh</code></pre><p><a href=https://letsencrypt.org/>letsencrypt</a>会把证书放在**/etc/letsencrypt/live/[域名]<strong>里，我的证书都放在</strong>/home/website/ssl/**中，所以我把它copy过去了，然后我的nginx的执行用户是nginx，所以改了下所有者，然后reload就好了。</p><p>至此<a href=https://letsencrypt.org/>letsencrypt</a>接入完毕。还是比较简单的。</p><h2 id=接入http2>接入HTTP/2</h2><p>HTTP 2.0已经成为了标准，并且现在各大浏览器都已经支持了。再加上nginx的最新release版本已经移除了<a href=http://nginx.org/en/docs/http/ngx_http_spdy_module.html>ngx_http_spdy_module</a>模块，增加了<a href=http://nginx.org/en/docs/http/ngx_http_v2_module.html>ngx_http_v2_module</a>模块。然而我的nginx是直接用nginx的官方源装在了CentOS 7上，直接yum update的时候nginx被直接升到1.10版本了，而我原来配得都是SPDY的，这也是使得我不得不接入一下HTTP/2。</p><p>但是这时候出了一个问题。SPDY似乎是使用了NPN做协议头协商，但是新的标准化的应该使用ALPN。而除了chrome以外貌似都不支持使用NPN协商HTTP/2（IE和Edge都不支持，Firefox我本地写错一个配置所以当时认为是不支持，实际上不太确定是否支持）。但是按nginx的文档，ALPN只在openssl 1.0.2以上才支持。又然而CentOS自带的openssl版本是1.0.1。这就比较麻烦了，得自己重新编译nginx，否则没法开启ALPN。</p><p>不过也是为了简单，我世界使用了yum依赖关系安装了依赖包，然后仅仅重新编译nginx和openssl。编译选项直接照抄 <a href=http://nginx.org/en/linux_packages.html#arguments>http://nginx.org/en/linux_packages.html#arguments</a> ，然后把openssl改掉，整个脚本如下</p><pre><code class=language-bash>#!/bin/sh
 
 # 最好在执行完lnmp_for_el7.sh后，在使用本脚本覆盖安装nginx，最好不要直接使用本脚本（直接使用的话我没有测试）
 # CentOS 7默认使用openssl 1.0.1，但是这个版本不支持ALPN, 详见： http://nginx.org/en/docs/http/ngx_http_v2_module.html#issues
@@ -37,15 +33,15 @@ chmod +x /home/website/letsencrypt/renew.sh;
 # 本脚本用于在CentOS 7上编译openssl 1.0.2并且重新编译nginx（除openssl外其他配置和官方版本一样）
 # 编译选项参考： http://nginx.org/en/linux_packages.html#arguments
 
-WORKING_DIR=&quot;$PWD&quot;;
+WORKING_DIR=&amp;#34;$PWD&amp;#34;;
 OPENSSL_PREFIX_DIR=/usr/local/openssl-1.0.2;
 OPENSSL_VERSION=1.0.2h;
 NGINX_VERSION=1.10.0;
 
-OPENSSL_DIR_NAME=&quot;openssl-$OPENSSL_VERSION&quot;;
-OPENSSL_PKG_NAME=&quot;$OPENSSL_DIR_NAME.tar.gz&quot;;
-NGINX_DIR_NAME=&quot;nginx-$NGINX_VERSION&quot;;
-NGINX_PKG_NAME=&quot;$NGINX_DIR_NAME.tar.gz&quot;;
+OPENSSL_DIR_NAME=&amp;#34;openssl-$OPENSSL_VERSION&amp;#34;;
+OPENSSL_PKG_NAME=&amp;#34;$OPENSSL_DIR_NAME.tar.gz&amp;#34;;
+NGINX_DIR_NAME=&amp;#34;nginx-$NGINX_VERSION&amp;#34;;
+NGINX_PKG_NAME=&amp;#34;$NGINX_DIR_NAME.tar.gz&amp;#34;;
 
 
 # 软件源
@@ -57,19 +53,19 @@ yum install -y yum-utils yum-plugin-remove-with-leaves yum-cron yum-plugin-upgra
 yum-builddep -y nginx;
 
 # 下载openssl
-if [ ! -e &quot;$OPENSSL_PKG_NAME&quot; ]; then
-    wget &quot;https://www.openssl.org/source/$OPENSSL_PKG_NAME&quot;;
+if [ ! -e &amp;#34;$OPENSSL_PKG_NAME&amp;#34; ]; then
+    wget &amp;#34;https://www.openssl.org/source/$OPENSSL_PKG_NAME&amp;#34;;
 fi
 
-tar -axvf &quot;$OPENSSL_PKG_NAME&quot;;
+tar -axvf &amp;#34;$OPENSSL_PKG_NAME&amp;#34;;
 
 # build nginx
-if [ ! -e &quot;$NGINX_PKG_NAME&quot; ]; then
-    wget &quot;http://nginx.org/download/$NGINX_PKG_NAME&quot;;
+if [ ! -e &amp;#34;$NGINX_PKG_NAME&amp;#34; ]; then
+    wget &amp;#34;http://nginx.org/download/$NGINX_PKG_NAME&amp;#34;;
 fi
 
-tar -axvf &quot;$NGINX_PKG_NAME&quot;;
-cd &quot;$NGINX_DIR_NAME&quot;;
+tar -axvf &amp;#34;$NGINX_PKG_NAME&amp;#34;;
+cd &amp;#34;$NGINX_DIR_NAME&amp;#34;;
 
 # 编译选项参考： http://nginx.org/en/linux_packages.html#arguments
 
@@ -110,32 +106,29 @@ cd &quot;$NGINX_DIR_NAME&quot;;
 --with-file-aio \
 --with-http_v2_module \
 --with-ipv6 \
---with-openssl=&quot;$WORKING_DIR/$OPENSSL_DIR_NAME&quot; \
---with-openssl-opt=&quot;-fPIC&quot; ;
+--with-openssl=&amp;#34;$WORKING_DIR/$OPENSSL_DIR_NAME&amp;#34; \
+--with-openssl-opt=&amp;#34;-fPIC&amp;#34; ;
 
 make;
-make install;
-</code></pre><p>这个脚本会覆盖掉nginx官方方式安装的nginx二进制，并且这个脚本也提交到了 <a href=https://github.com/owent-utils/bash-shell/blob/master/LNMP/nginx_with_http2_for_el7.sh>https://github.com/owent-utils/bash-shell/blob/master/LNMP/nginx_with_http2_for_el7.sh</a> 。比较麻烦的是以后nginx都得自己更新编译，没法直接yum update了（除非系统的openssl换成1.0.2以上）。</p><p>这样以后，IE，Edge，Chrome和Firefox都能正确启用HTTP/2.0了。</p><p>我这里Firefox测试的时候还出了点小插曲，不知道那个鬼插件把我的安全设置里的security.tls.version.max设成1了，然后ALPN协商HTTP/2必须用TLSv1.2，然后一直Firefox没法启用HTTP/2。开始我以为是nginx配置问题，后来发现尼玛这里不知道被哪个插件改成1了，于是一直只用TLSv1。导致一直没成功用HTTP/2。重置成默认以后就好了。</p><h2 id=https安全性>HTTPS安全性</h2><p>也是网络上看到一些安全配置建议，配了一下nginx里的SSL配置，提高安全性，我就直接贴配置吧。（仅SSL相关部分）</p><pre><code class=language-text># /etc/nginx/nginx.conf
+make install;</code></pre><p>这个脚本会覆盖掉nginx官方方式安装的nginx二进制，并且这个脚本也提交到了 <a href=https://github.com/owent-utils/bash-shell/blob/master/LNMP/nginx_with_http2_for_el7.sh>https://github.com/owent-utils/bash-shell/blob/master/LNMP/nginx_with_http2_for_el7.sh</a> 。比较麻烦的是以后nginx都得自己更新编译，没法直接yum update了（除非系统的openssl换成1.0.2以上）。</p><p>这样以后，IE，Edge，Chrome和Firefox都能正确启用HTTP/2.0了。</p><p>我这里Firefox测试的时候还出了点小插曲，不知道那个鬼插件把我的安全设置里的security.tls.version.max设成1了，然后ALPN协商HTTP/2必须用TLSv1.2，然后一直Firefox没法启用HTTP/2。开始我以为是nginx配置问题，后来发现尼玛这里不知道被哪个插件改成1了，于是一直只用TLSv1。导致一直没成功用HTTP/2。重置成默认以后就好了。</p><h2 id=https安全性>HTTPS安全性</h2><p>也是网络上看到一些安全配置建议，配了一下nginx里的SSL配置，提高安全性，我就直接贴配置吧。（仅SSL相关部分）</p><pre><code class=language-text># /etc/nginx/nginx.conf
 http {
     ssl_protocols TLSv1 TLSv1.1 TLSv1.2; # omit SSLv3 because of POODLE (CVE-2014-3566)
     ssl_session_cache   shared:SSL:10m;
     ssl_session_timeout 10m;
     ssl_session_tickets off;
-    add_header Strict-Transport-Security &quot;max-age=15768000; includeSubdomains; preload&quot;; # HSTS, 180days
+    add_header Strict-Transport-Security &amp;#34;max-age=15768000; includeSubdomains; preload&amp;#34;; # HSTS, 180days
     add_header X-Content-Type-Options nosniff;
 
     # 手动指定允许的加密算法
-    ssl_ciphers 'ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA38
+    ssl_ciphers &amp;#39;ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA38
 4:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES25
 6-SHA384:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES256-SHA:ECDHE-ECDSA-DES-CBC3-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RS
-A-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA:!DSS';
+A-DES-CBC3-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:DES-CBC3-SHA:!DSS&amp;#39;;
     ssl_prefer_server_ciphers on; # 服务器决策加密算法
     ssl_dhparam /home/website/ssl/dhparam.pem; # DH密钥
     ssl_stapling on;
     ssl_stapling_verify on;
-}
-</code></pre><p>这里面配在http节点里是为了省事，因为还几个网站呢，就不需要单个配置了，全部继承http的配置即可。其中，DH密钥交换的密钥由以下命令生成:</p><pre><code class=language-bash>openssl dhparam -out /home/website/ssl/dhparam.pem 2048;
-</code></pre><p>密钥长度为2048位，放在/home/website/ssl/dhparam.pem。
+}</code></pre><p>这里面配在http节点里是为了省事，因为还几个网站呢，就不需要单个配置了，全部继承http的配置即可。其中，DH密钥交换的密钥由以下命令生成:</p><pre><code class=language-bash>openssl dhparam -out /home/website/ssl/dhparam.pem 2048;</code></pre><p>密钥长度为2048位，放在/home/website/ssl/dhparam.pem。
 然后server节点里只要配<em>ssl_certificate</em>和<em>ssl_certificate_key</em>就行了。</p><p>这样的配置，<a href=https://www.ssllabs.com>SSLLabs</a>的评价是<a href="https://www.ssllabs.com/ssltest/analyze.html?d=owent.net">A+</a></p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2016-05-07T15:10:43.000+00:00 itemprop=datePublished>2016-05-07</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/https.html>https</a></li><li class=article-tag-list-item><a href=//owent.net/tags/linux.html>linux</a></li><li class=article-tag-list-item><a href=//owent.net/tags/nginx.html>nginx</a></li><li class=article-tag-list-item><a href=//owent.net/tags/ssl.html>ssl</a></li><li class=article-tag-list-item><a href=//owent.net/tags/web.html>Web</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2016/1270.html>上一篇<strong>boost.context-1.61版本的设计模型变化</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2016/1226.html>下一篇<strong>理解Raft算法</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,

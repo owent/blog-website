@@ -6,7 +6,7 @@
 <button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-6404cf5042708c24b3922178aabf41c2 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2013/861.html target=_blank itemprop=url>POJ 2192 Zipper HDU 2059 龟兔赛跑</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><p>今天心情好，刷了两到ACM水题，思路很简单都在注释里，所以直接贴代码:</p><pre><code class=language-cpp>/**
  * @file 龟兔赛跑.cpp
  * @brief 龟兔赛跑 AC代码 (DP)
- * DP方程式: [到第i的充电站的最短时间] = [到最后一个冲了电的充电站的最短时间] + [那个充电站到第i个充电站的时间]
+ * DP方程式: [到第i的充电站的最短时间] = [到最后一个冲了电的充电站的最短时间] &#43; [那个充电站到第i个充电站的时间]
  *
  * @link http://acm.hdu.edu.cn/showproblem.php?pid=2059
  * @version 1.0
@@ -18,57 +18,57 @@
  *
  */
 
-#include &lt;cstdio&gt;
-#include &lt;iostream&gt;
-#include &lt;cstring&gt;
-#include &lt;algorithm&gt;
-#include &lt;set&gt;
-#include &lt;numeric&gt;
+#include &amp;lt;cstdio&amp;gt;
+#include &amp;lt;iostream&amp;gt;
+#include &amp;lt;cstring&amp;gt;
+#include &amp;lt;algorithm&amp;gt;
+#include &amp;lt;set&amp;gt;
+#include &amp;lt;numeric&amp;gt;
 
 int pn[128];
-double dp[128]; /** dp[i] 表示 到第i个充电站的最小时间(0为开始位置，n+1为终点) **/
+double dp[128]; /** dp[i] 表示 到第i个充电站的最小时间(0为开始位置，n&#43;1为终点) **/
 
 double calc_charge_time(int dis, int v1, int v2, int c) {
-    if (dis &lt;= c)
+    if (dis &amp;lt;= c)
         return 1.0 * dis / v1;
 
-    return 1.0 * c / v1 + 1.0 * (dis - c) / v2;
+    return 1.0 * c / v1 &#43; 1.0 * (dis - c) / v2;
 }
 
 int main(int argc, char* argv[]) {
     using namespace std;
 
-    double eps = std::numeric_limits&lt;double&gt;::epsilon();
+    double eps = std::numeric_limits&amp;lt;double&amp;gt;::epsilon();
     int l, n, c, t, vr, v1, v2;
 
-    while(cin&gt;&gt; l) {
-        cin &gt;&gt; n&gt;&gt; c&gt;&gt; t&gt;&gt; vr&gt;&gt; v1&gt;&gt; v2;
+    while(cin&amp;gt;&amp;gt; l) {
+        cin &amp;gt;&amp;gt; n&amp;gt;&amp;gt; c&amp;gt;&amp;gt; t&amp;gt;&amp;gt; vr&amp;gt;&amp;gt; v1&amp;gt;&amp;gt; v2;
 
         pn[0] = 0; /** 0为起点 **/
-        for (int i = 1; i &lt;= n; ++ i) {
-            cin&gt;&gt; pn[i];
+        for (int i = 1; i &amp;lt;= n; &#43;&#43; i) {
+            cin&amp;gt;&amp;gt; pn[i];
         }
-        pn[n + 1] = l; /** n+1为终点 **/
+        pn[n &#43; 1] = l; /** n&#43;1为终点 **/
 
         memset(dp, 0, sizeof(dp));
-        for(int i = 0; i &lt;= n + 1; ++ i) {
+        for(int i = 0; i &amp;lt;= n &#43; 1; &#43;&#43; i) {
             dp[i] = calc_charge_time(pn[i] - pn[0], v1, v2, c);
         }
 
-        for(int i = 1; i &lt;= n + 1; ++ i) {
-            for(int j = 0; j &lt; i; ++ j) {
-                double tc = calc_charge_time(pn[i] - pn[j], v1, v2, c) + t + dp[j];
+        for(int i = 1; i &amp;lt;= n &#43; 1; &#43;&#43; i) {
+            for(int j = 0; j &amp;lt; i; &#43;&#43; j) {
+                double tc = calc_charge_time(pn[i] - pn[j], v1, v2, c) &#43; t &#43; dp[j];
                 dp[i] = std::min(tc, dp[i]);
             }
             
         }
 
-        double rt = 1.0 * l / vr, tt = dp[n + 1];
+        double rt = 1.0 * l / vr, tt = dp[n &#43; 1];
 
-        if (tt &lt; rt)
-            puts(&quot;What a pity rabbit!&quot;);
+        if (tt &amp;lt; rt)
+            puts(&amp;#34;What a pity rabbit!&amp;#34;);
         else
-            puts(&quot;Good job,rabbit!&quot;);
+            puts(&amp;#34;Good job,rabbit!&amp;#34;);
     }
 
     return 0;
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
  * @file Zipper.cpp
  * @brief Zipper AC代码 (DP)
  * @link http://poj.org/problem?id=2192
- * DP方程式: [A串消耗个数i][B串消耗个数j] = min{[A串消耗个数i - 1][B串消耗个数j]|[A串消耗个数i][B串消耗个数j + 1]}
+ * DP方程式: [A串消耗个数i][B串消耗个数j] = min{[A串消耗个数i - 1][B串消耗个数j]|[A串消耗个数i][B串消耗个数j &#43; 1]}
  * 以上分支选取条件是 A或B的新选用字符和C串新字符匹配
  *
  * @version 1.0
@@ -90,30 +90,30 @@ int main(int argc, char* argv[]) {
  *
  */
 
-#include &lt;cstdio&gt;
-#include &lt;cstring&gt;
-#include &lt;algorithm&gt;
-#include &lt;set&gt;
-#include &lt;numeric&gt;
+#include &amp;lt;cstdio&amp;gt;
+#include &amp;lt;cstring&amp;gt;
+#include &amp;lt;algorithm&amp;gt;
+#include &amp;lt;set&amp;gt;
+#include &amp;lt;numeric&amp;gt;
 
 
 char strA[256], strB[256], strC[512];
-int dp[256][256]; /** dp[i][j] = k 表示A消耗了i个字符，B消耗了j个字符，拼成的C串消耗了k个字符（其实就是i+j） **/
+int dp[256][256]; /** dp[i][j] = k 表示A消耗了i个字符，B消耗了j个字符，拼成的C串消耗了k个字符（其实就是i&#43;j） **/
 
 int main(int argc, char* argv[]) {
     using namespace std;
     int s, n;
 
-    scanf(&quot;%d&quot;, &amp;n);
-    for( s = 0; s &lt; n; ++ s) {
-        scanf(&quot;%s %s %s&quot;, strA, strB, strC);
+    scanf(&amp;#34;%d&amp;#34;, &amp;amp;n);
+    for( s = 0; s &amp;lt; n; &#43;&#43; s) {
+        scanf(&amp;#34;%s %s %s&amp;#34;, strA, strB, strC);
         int lenA = strlen(strA);
         int lenB = strlen(strB);
         int lenC = strlen(strC);
         bool bFlag = false;
 
-        if ( lenC != lenA + lenB ) {
-            printf(&quot;Data set %d: no\n&quot;, s + 1);
+        if ( lenC != lenA &#43; lenB ) {
+            printf(&amp;#34;Data set %d: no\n&amp;#34;, s &#43; 1);
             continue;
         }
 
@@ -124,34 +124,32 @@ int main(int argc, char* argv[]) {
         if (strB[0] == strC[0])
             dp[0][1] = 1;
 
-        for (int i = 0; i &lt;= lenA; ++ i) {
-            for (int j = 0; j &lt;= lenB; ++ j) {
+        for (int i = 0; i &amp;lt;= lenA; &#43;&#43; i) {
+            for (int j = 0; j &amp;lt;= lenB; &#43;&#43; j) {
                 if (0 == dp[i][j])
                     continue;
 
-                int ri = i + 1, rj = j + 1;
+                int ri = i &#43; 1, rj = j &#43; 1;
 
                 if (strA[i] == strC[dp[i][j]]) {
-                    dp[ri][j] = dp[i][j] + 1;
-                    if (ri + j == lenC)
+                    dp[ri][j] = dp[i][j] &#43; 1;
+                    if (ri &#43; j == lenC)
                         bFlag = true;
                 }
 
                 if (strB[j] == strC[dp[i][j]]) {
-                    dp[i][rj] = dp[i][j] + 1;
-                    if (i + rj == lenC)
+                    dp[i][rj] = dp[i][j] &#43; 1;
+                    if (i &#43; rj == lenC)
                         bFlag = true;
                 }
             }
         }
 
-        printf(&quot;Data set %d: %s\n&quot;, s + 1, bFlag? &quot;yes&quot;: &quot;no&quot;);
+        printf(&amp;#34;Data set %d: %s\n&amp;#34;, s &#43; 1, bFlag? &amp;#34;yes&amp;#34;: &amp;#34;no&amp;#34;);
     }
 
     return 0;
-}
-
-</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2013-07-15T18:39:41.000+00:00 itemprop=datePublished>2013-07-15</time></span>
+}</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2013-07-15T18:39:41.000+00:00 itemprop=datePublished>2013-07-15</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/acm.html>acm</a></li><li class=article-tag-list-item><a href=//owent.net/tags/hdu.html>hdu</a></li><li class=article-tag-list-item><a href=//owent.net/tags/poj.html>poj</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2013/867.html>上一篇<strong>ptmalloc,tcmalloc和jemalloc内存分配策略研究</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2013/851.html>下一篇<strong>从Javascript到Typescript到Node.js</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,

@@ -30,59 +30,57 @@ flowchart TD
     G --> |Javascript脚本处理数据| D(内置数据结构)
     D --> C{UE输出模块}
   </pre></div><p>脚本会在初始化阶段执行 <code>initDataSource()</code> 接口，在每个数据行会执行 <code>currentMessageCallback()</code> 接口。并且会注入 <code>gOurInstance</code> 和 <code>gSchemeConf</code> 用来在脚本里获取配置和描述信息。
-具体的示例可以参考 <a href=https://github.com/xresloader/xresloader/blob/main/sample/cb_script.js>https://github.com/xresloader/xresloader/blob/main/sample/cb_script.js</a> 。</p><h3 id=批量转表工具增加-tagclass-限定>批量转表工具增加 <code>tag/class</code> 限定</h3><p>现在允许针对某些装表条目设置为仅仅执行某些输出了，比如:</p><pre><code class=language-xml>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
-&lt;!-- &lt;?xml-stylesheet type=&quot;text/xsl&quot; href=&quot;helper/view.xsl&quot;?&gt; --&gt;
-&lt;root&gt;
-    &lt;global&gt;
-        &lt;proto desc=&quot;协议类型，-p选项&quot;&gt;protobuf&lt;/proto&gt;
-        &lt;output_type desc=&quot;输出类型，-t选项，支持多个同时配置多种输出&quot;&gt;bin&lt;/output_type&gt;
-        &lt;output_type desc=&quot;可以通过指定class来限制输出的规则&quot; rename=&quot;/(?i)\.bin$/\.csv/&quot; class=&quot;client&quot; &gt;ue-csv&lt;/output_type&gt;
-        &lt;!-- 其他无关设置不再列举 --&gt;
-    &lt;/global&gt;
-    &lt;list&gt;
-        &lt;item file=&quot;资源转换示例.xlsx&quot; scheme=&quot;scheme_kind&quot; name=&quot;人物表&quot; cat=&quot;kind&quot; class=&quot;server&quot;&gt;&lt;/item&gt;
-        &lt;item name=&quot;嵌套数组测试&quot; cat=&quot;test&quot; class=&quot;client server&quot;&gt;
-            &lt;scheme name=&quot;DataSource&quot; desc=&quot;数据源(文件名|表名|数据起始行号,数据起始列号)&quot;&gt;资源转换示例.xlsx|arr_in_arr|3,1&lt;/scheme&gt;
-            &lt;scheme name=&quot;ProtoName&quot; desc=&quot;协议名&quot;&gt;arr_in_arr_cfg&lt;/scheme&gt;
-            &lt;scheme name=&quot;OutputFile&quot; desc=&quot;输出文件名&quot;&gt;arr_in_arr_cfg.bin&lt;/scheme&gt;
-        &lt;/item&gt;
-    &lt;/list&gt;
-&lt;/root&gt;
-</code></pre><p>这种情况中，<strong>嵌套数组测试</strong> 既会转出为protobuf二进制，又会转出为 。而 <strong>人物表</strong> 只会转出protobuf二进制。这样可以避免掉客户端或者服务器不需要关心的数据导出。</p><h3 id=批量转表gui工具增加事件的控制和自定义按钮>批量转表GUI工具增加事件的控制和自定义按钮</h3><p>为了方便分程序同学使用，我们还提供了GUI工具。界面如下:</p><p><img src=2304-01.gif alt=2304-01.gif loading=lazy></p><p>然后为了方便工具集成，我们给转变开始前和完成后都加入了事件机制，可以通过nodejs代码去控制后续行为去做一些工具集成。比如转表成功以后制动执行UE-Command的Import去把数据导入到DataTable中。
+具体的示例可以参考 <a href=https://github.com/xresloader/xresloader/blob/main/sample/cb_script.js>https://github.com/xresloader/xresloader/blob/main/sample/cb_script.js</a> 。</p><h3 id=批量转表工具增加-tagclass-限定>批量转表工具增加 <code>tag/class</code> 限定</h3><p>现在允许针对某些装表条目设置为仅仅执行某些输出了，比如:</p><pre><code class=language-xml>&amp;lt;?xml version=&amp;#34;1.0&amp;#34; encoding=&amp;#34;UTF-8&amp;#34;?&amp;gt;
+&amp;lt;!-- &amp;lt;?xml-stylesheet type=&amp;#34;text/xsl&amp;#34; href=&amp;#34;helper/view.xsl&amp;#34;?&amp;gt; --&amp;gt;
+&amp;lt;root&amp;gt;
+    &amp;lt;global&amp;gt;
+        &amp;lt;proto desc=&amp;#34;协议类型，-p选项&amp;#34;&amp;gt;protobuf&amp;lt;/proto&amp;gt;
+        &amp;lt;output_type desc=&amp;#34;输出类型，-t选项，支持多个同时配置多种输出&amp;#34;&amp;gt;bin&amp;lt;/output_type&amp;gt;
+        &amp;lt;output_type desc=&amp;#34;可以通过指定class来限制输出的规则&amp;#34; rename=&amp;#34;/(?i)\.bin$/\.csv/&amp;#34; class=&amp;#34;client&amp;#34; &amp;gt;ue-csv&amp;lt;/output_type&amp;gt;
+        &amp;lt;!-- 其他无关设置不再列举 --&amp;gt;
+    &amp;lt;/global&amp;gt;
+    &amp;lt;list&amp;gt;
+        &amp;lt;item file=&amp;#34;资源转换示例.xlsx&amp;#34; scheme=&amp;#34;scheme_kind&amp;#34; name=&amp;#34;人物表&amp;#34; cat=&amp;#34;kind&amp;#34; class=&amp;#34;server&amp;#34;&amp;gt;&amp;lt;/item&amp;gt;
+        &amp;lt;item name=&amp;#34;嵌套数组测试&amp;#34; cat=&amp;#34;test&amp;#34; class=&amp;#34;client server&amp;#34;&amp;gt;
+            &amp;lt;scheme name=&amp;#34;DataSource&amp;#34; desc=&amp;#34;数据源(文件名|表名|数据起始行号,数据起始列号)&amp;#34;&amp;gt;资源转换示例.xlsx|arr_in_arr|3,1&amp;lt;/scheme&amp;gt;
+            &amp;lt;scheme name=&amp;#34;ProtoName&amp;#34; desc=&amp;#34;协议名&amp;#34;&amp;gt;arr_in_arr_cfg&amp;lt;/scheme&amp;gt;
+            &amp;lt;scheme name=&amp;#34;OutputFile&amp;#34; desc=&amp;#34;输出文件名&amp;#34;&amp;gt;arr_in_arr_cfg.bin&amp;lt;/scheme&amp;gt;
+        &amp;lt;/item&amp;gt;
+    &amp;lt;/list&amp;gt;
+&amp;lt;/root&amp;gt;</code></pre><p>这种情况中，<strong>嵌套数组测试</strong> 既会转出为protobuf二进制，又会转出为 。而 <strong>人物表</strong> 只会转出protobuf二进制。这样可以避免掉客户端或者服务器不需要关心的数据导出。</p><h3 id=批量转表gui工具增加事件的控制和自定义按钮>批量转表GUI工具增加事件的控制和自定义按钮</h3><p>为了方便分程序同学使用，我们还提供了GUI工具。界面如下:</p><p><img src=2304-01.gif alt=2304-01.gif loading=lazy></p><p>然后为了方便工具集成，我们给转变开始前和完成后都加入了事件机制，可以通过nodejs代码去控制后续行为去做一些工具集成。比如转表成功以后制动执行UE-Command的Import去把数据导入到DataTable中。
 但是后来有其他项目组同学提出希望可以控制跳过某些事件。因为有些流程可能本地调试用，全跑完事件流程会比较慢，同时希望可以提供功能来按规则一键选中某些需要转的表的条目。
 所以一方面我给命名事件（有 <code>name</code> 字段）增加了可选的开关。同时为了方便进一步支持扩展行为，增加了一组自定按钮的配置，可以配置为按通配符或者正则表达式选中和反选转表条目。
 甚至允许执行配置在xml里的脚本。比如以下自定义按钮的配置:</p><pre><code class=language-json>[{
-    &quot;name&quot;: &quot;自定义按钮-按Scheme&quot;,
-    &quot;by_schemes&quot;: [{
-        &quot;file&quot;: &quot;资源转换示例.xlsx&quot;,
-        &quot;scheme&quot;: &quot;glob: *&quot;
+    &amp;#34;name&amp;#34;: &amp;#34;自定义按钮-按Scheme&amp;#34;,
+    &amp;#34;by_schemes&amp;#34;: [{
+        &amp;#34;file&amp;#34;: &amp;#34;资源转换示例.xlsx&amp;#34;,
+        &amp;#34;scheme&amp;#34;: &amp;#34;glob: *&amp;#34;
     }],
-    &quot;default_selected&quot;: false
+    &amp;#34;default_selected&amp;#34;: false
 }, {
-    &quot;name&quot;: &quot;自定义按钮-按Sheet&quot;,
-    &quot;by_sheets&quot;: [{
-        &quot;file&quot;: &quot;资源转换示例.xlsx&quot;,
-        &quot;sheet&quot;: &quot;regex: .*&quot;
+    &amp;#34;name&amp;#34;: &amp;#34;自定义按钮-按Sheet&amp;#34;,
+    &amp;#34;by_sheets&amp;#34;: [{
+        &amp;#34;file&amp;#34;: &amp;#34;资源转换示例.xlsx&amp;#34;,
+        &amp;#34;sheet&amp;#34;: &amp;#34;regex: .*&amp;#34;
     }],
-    &quot;default_selected&quot;: true,
-    &quot;style&quot;: &quot;outline-primary&quot;
+    &amp;#34;default_selected&amp;#34;: true,
+    &amp;#34;style&amp;#34;: &amp;#34;outline-primary&amp;#34;
 }, {
-    &quot;name&quot;: &quot;刷新自定义按钮&quot;,
-    &quot;action&quot;: [
-        &quot;unselect_all&quot;,
-        &quot;reload&quot;
+    &amp;#34;name&amp;#34;: &amp;#34;刷新自定义按钮&amp;#34;,
+    &amp;#34;action&amp;#34;: [
+        &amp;#34;unselect_all&amp;#34;,
+        &amp;#34;reload&amp;#34;
     ],
-    &quot;style&quot;: &quot;outline-dark&quot;
+    &amp;#34;style&amp;#34;: &amp;#34;outline-dark&amp;#34;
 }, {
-    &quot;name&quot;: &quot;执行自定义脚本&quot;,
-    &quot;action&quot;: [
-        &quot;unselect_all&quot;,
-        &quot;script: delaycall&quot;,
-        &quot;script: 自定义脚本&quot;
+    &amp;#34;name&amp;#34;: &amp;#34;执行自定义脚本&amp;#34;,
+    &amp;#34;action&amp;#34;: [
+        &amp;#34;unselect_all&amp;#34;,
+        &amp;#34;script: delaycall&amp;#34;,
+        &amp;#34;script: 自定义脚本&amp;#34;
     ],
-    &quot;style&quot;: &quot;outline-dark&quot;
-}]
-</code></pre><p>会插入的自定义按钮如下:</p><p><img src=2304-02.png alt=2304-02.png loading=lazy></p><h3 id=新增小工具-xresloader-dump-bin>新增小工具 <a href=https://github.com/xresloader/xresloader-dump-bin>xresloader-dump-bin</a></h3><p>虽然我们在使用 <a href=https://github.com/xresloader/xresloader>xresloader</a> 转出数据的时候，可以设置多个输出，也导出一份json、lua、javascript等格式的配置以方便集成到Web或者其他周边工具中。也可以用于人工查看转出的数据。
+    &amp;#34;style&amp;#34;: &amp;#34;outline-dark&amp;#34;
+}]</code></pre><p>会插入的自定义按钮如下:</p><p><img src=2304-02.png alt=2304-02.png loading=lazy></p><h3 id=新增小工具-xresloader-dump-bin>新增小工具 <a href=https://github.com/xresloader/xresloader-dump-bin>xresloader-dump-bin</a></h3><p>虽然我们在使用 <a href=https://github.com/xresloader/xresloader>xresloader</a> 转出数据的时候，可以设置多个输出，也导出一份json、lua、javascript等格式的配置以方便集成到Web或者其他周边工具中。也可以用于人工查看转出的数据。
 但是我们项目中主要还是使用二进制格式，毕竟还是有些区别。为了方便查看实际的二进制数据，我新增了一个小工具 <a href=https://github.com/xresloader/xresloader-dump-bin>xresloader-dump-bin</a> ，用于把protobuf格式的二进制直接转出为文本格式。
 方便人工查阅，同时在发布更新资源版本的时候，为了方便使用diff工具查看变化的内容，我对输出的字段做了严格顺序的排序。</p><p>一个输出的示例如下:</p><pre><code class=language-bash># $ ./xresloader-dump-bin -p ./sample-conf/kind.pb -b ./sample-data/role_upgrade_cfg.bin
 
@@ -92,34 +90,32 @@ data version: 2.8.0.20200609192757
 data count: 11
 hash code: sha256:718d22f78006e5d34d6b68eb56e204a00f4174737b6864e247b661d8963c7df3
 description:
-============ Body: .\sample-data\role_upgrade_cfg.bin -&gt; role_upgrade_cfg ============
+============ Body: .\sample-data\role_upgrade_cfg.bin -&amp;gt; role_upgrade_cfg ============
 [
-    {&quot;Id&quot;: 10001, &quot;Level&quot;: 1},
-    {&quot;Id&quot;: 10001, &quot;Level&quot;: 2, &quot;CostType&quot;: 10001, &quot;CostValue&quot;: 50},
-    {&quot;Id&quot;: 10001, &quot;Level&quot;: 3, &quot;CostType&quot;: 10001, &quot;CostValue&quot;: 100},
-    {&quot;Id&quot;: 10001, &quot;Level&quot;: 4, &quot;CostType&quot;: 10001, &quot;CostValue&quot;: 150},
-    {&quot;Id&quot;: 10001, &quot;Level&quot;: 5, &quot;CostType&quot;: 10001, &quot;CostValue&quot;: 200},
-    {&quot;Id&quot;: 10001, &quot;Level&quot;: 6, &quot;CostType&quot;: 10001, &quot;CostValue&quot;: 250},
-    {&quot;Id&quot;: 10001, &quot;Level&quot;: 7, &quot;CostType&quot;: 10001, &quot;CostValue&quot;: 300},
-    {&quot;Id&quot;: 10001, &quot;Level&quot;: 8, &quot;CostType&quot;: 10001, &quot;CostValue&quot;: 350},
-    {&quot;Id&quot;: 10001, &quot;Level&quot;: 9, &quot;CostType&quot;: 10101, &quot;CostValue&quot;: 400},
-    {&quot;Id&quot;: 10001, &quot;Level&quot;: 10, &quot;CostType&quot;: 10101, &quot;CostValue&quot;: 450},
-    {&quot;Id&quot;: 10001, &quot;Level&quot;: 11, &quot;CostType&quot;: 10101, &quot;CostValue&quot;: 500},
-]
-</code></pre><p>如果加 <code>--pretty</code> 选项可以进一步展开。diff的话比如可以如下输出:</p><pre><code class=language-bash>$ git diff -a l.txt r.txt
+    {&amp;#34;Id&amp;#34;: 10001, &amp;#34;Level&amp;#34;: 1},
+    {&amp;#34;Id&amp;#34;: 10001, &amp;#34;Level&amp;#34;: 2, &amp;#34;CostType&amp;#34;: 10001, &amp;#34;CostValue&amp;#34;: 50},
+    {&amp;#34;Id&amp;#34;: 10001, &amp;#34;Level&amp;#34;: 3, &amp;#34;CostType&amp;#34;: 10001, &amp;#34;CostValue&amp;#34;: 100},
+    {&amp;#34;Id&amp;#34;: 10001, &amp;#34;Level&amp;#34;: 4, &amp;#34;CostType&amp;#34;: 10001, &amp;#34;CostValue&amp;#34;: 150},
+    {&amp;#34;Id&amp;#34;: 10001, &amp;#34;Level&amp;#34;: 5, &amp;#34;CostType&amp;#34;: 10001, &amp;#34;CostValue&amp;#34;: 200},
+    {&amp;#34;Id&amp;#34;: 10001, &amp;#34;Level&amp;#34;: 6, &amp;#34;CostType&amp;#34;: 10001, &amp;#34;CostValue&amp;#34;: 250},
+    {&amp;#34;Id&amp;#34;: 10001, &amp;#34;Level&amp;#34;: 7, &amp;#34;CostType&amp;#34;: 10001, &amp;#34;CostValue&amp;#34;: 300},
+    {&amp;#34;Id&amp;#34;: 10001, &amp;#34;Level&amp;#34;: 8, &amp;#34;CostType&amp;#34;: 10001, &amp;#34;CostValue&amp;#34;: 350},
+    {&amp;#34;Id&amp;#34;: 10001, &amp;#34;Level&amp;#34;: 9, &amp;#34;CostType&amp;#34;: 10101, &amp;#34;CostValue&amp;#34;: 400},
+    {&amp;#34;Id&amp;#34;: 10001, &amp;#34;Level&amp;#34;: 10, &amp;#34;CostType&amp;#34;: 10101, &amp;#34;CostValue&amp;#34;: 450},
+    {&amp;#34;Id&amp;#34;: 10001, &amp;#34;Level&amp;#34;: 11, &amp;#34;CostType&amp;#34;: 10101, &amp;#34;CostValue&amp;#34;: 500},
+]</code></pre><p>如果加 <code>--pretty</code> 选项可以进一步展开。diff的话比如可以如下输出:</p><pre><code class=language-bash>$ git diff -a l.txt r.txt
 diff --git a/l.txt b/r.txt
 index 7ed0f3c..6f8d6fb 100644
 --- a/l.txt
-+++ b/r.txt
-@@ -15,5 +15,6 @@ description:
-     {&quot;Id&quot;: 10001, &quot;Level&quot;: 7, &quot;CostType&quot;: 10001, &quot;CostValue&quot;: 300},
-     {&quot;Id&quot;: 10001, &quot;Level&quot;: 8, &quot;CostType&quot;: 10001, &quot;CostValue&quot;: 350},
-     {&quot;Id&quot;: 10001, &quot;Level&quot;: 9, &quot;CostType&quot;: 10101, &quot;CostValue&quot;: 400},
--    {&quot;Id&quot;: 10001, &quot;Level&quot;: 10, &quot;CostType&quot;: 10101, &quot;CostValue&quot;: 500},
-+    {&quot;Id&quot;: 10001, &quot;Level&quot;: 10, &quot;CostType&quot;: 10101, &quot;CostValue&quot;: 450},
-+    {&quot;Id&quot;: 10001, &quot;Level&quot;: 11, &quot;CostType&quot;: 10101, &quot;CostValue&quot;: 500},
- ]
-</code></pre><p>如果使用 <code>vimdiff</code> 或者其他编辑器的diff还能更好看一些。</p><h3 id=读表代码生成工具-xres-code-generator增加-upb-lua-binding支持>读表代码生成工具-<a href=https://github.com/xresloader/xres-code-generator>xres-code-generator</a>增加 upb-lua binding支持</h3><p>Protobuf有个子项目 <a href=https://github.com/protocolbuffers/upb>upb</a> ，这是一个纯C实现的非常小型的protobuf打解包运行时。现在包括Ruby、PHP和Python的binding也是它。
+&#43;&#43;&#43; b/r.txt
+@@ -15,5 &#43;15,6 @@ description:
+     {&amp;#34;Id&amp;#34;: 10001, &amp;#34;Level&amp;#34;: 7, &amp;#34;CostType&amp;#34;: 10001, &amp;#34;CostValue&amp;#34;: 300},
+     {&amp;#34;Id&amp;#34;: 10001, &amp;#34;Level&amp;#34;: 8, &amp;#34;CostType&amp;#34;: 10001, &amp;#34;CostValue&amp;#34;: 350},
+     {&amp;#34;Id&amp;#34;: 10001, &amp;#34;Level&amp;#34;: 9, &amp;#34;CostType&amp;#34;: 10101, &amp;#34;CostValue&amp;#34;: 400},
+-    {&amp;#34;Id&amp;#34;: 10001, &amp;#34;Level&amp;#34;: 10, &amp;#34;CostType&amp;#34;: 10101, &amp;#34;CostValue&amp;#34;: 500},
+&#43;    {&amp;#34;Id&amp;#34;: 10001, &amp;#34;Level&amp;#34;: 10, &amp;#34;CostType&amp;#34;: 10101, &amp;#34;CostValue&amp;#34;: 450},
+&#43;    {&amp;#34;Id&amp;#34;: 10001, &amp;#34;Level&amp;#34;: 11, &amp;#34;CostType&amp;#34;: 10101, &amp;#34;CostValue&amp;#34;: 500},
+ ]</code></pre><p>如果使用 <code>vimdiff</code> 或者其他编辑器的diff还能更好看一些。</p><h3 id=读表代码生成工具-xres-code-generator增加-upb-lua-binding支持>读表代码生成工具-<a href=https://github.com/xresloader/xres-code-generator>xres-code-generator</a>增加 upb-lua binding支持</h3><p>Protobuf有个子项目 <a href=https://github.com/protocolbuffers/upb>upb</a> ，这是一个纯C实现的非常小型的protobuf打解包运行时。现在包括Ruby、PHP和Python的binding也是它。
 它内置有lua binding，我们项目组也是在尝试使用。</p><blockquote><p>集成的过程中也是踩了点小坑，详情可参见: <a href=https://owent.net/2022/2207.html>《集成 upb 和 lua binding 的踩坑小记》</a></p></blockquote><p>那么这里，我也是给upb的lua binding增加了读表的模板支持。得益于模板引擎的便利，实现起来非常简单，详见: <a href=https://github.com/xresloader/xres-code-generator/blob/main/template/DataTableCustomIndexUpb.lua.mako>https://github.com/xresloader/xres-code-generator/blob/main/template/DataTableCustomIndexUpb.lua.mako</a> 和 <a href=https://github.com/xresloader/xres-code-generator/blob/main/template/common/upblua/DataTableServiceUpb.lua>https://github.com/xresloader/xres-code-generator/blob/main/template/common/upblua/DataTableServiceUpb.lua</a> 。并且也支持多版本管理和多重索引。</p><h2 id=最后>最后</h2><p>感谢大家的关注和贡献，欢迎持续交流拍砖。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2023-04-18T20:27:45.000+00:00 itemprop=datePublished>2023-04-18</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/xresloader.html>xresloader</a></li><li class=article-tag-list-item><a href=//owent.net/tags/xresconv.html>xresconv</a></li><li class=article-tag-list-item><a href=//owent.net/tags/excel.html>excel</a></li><li class=article-tag-list-item><a href=//owent.net/tags/protobuf.html>protobuf</a></li><li class=article-tag-list-item><a href=//owent.net/tags/json.html>json</a></li><li class=article-tag-list-item><a href=//owent.net/tags/xml.html>xml</a></li><li class=article-tag-list-item><a href=//owent.net/tags/lua.html>lua</a></li><li class=article-tag-list-item><a href=//owent.net/tags/javascript.html>javascript</a></li><li class=article-tag-list-item><a href=//owent.net/tags/js.html>js</a></li><li class=article-tag-list-item><a href=//owent.net/tags/ue.html>UE</a></li><li class=article-tag-list-item><a href=//owent.net/tags/unrealengine.html>UnrealEngine</a></li><li class=article-tag-list-item><a href=//owent.net/tags/proto.html>proto</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2023/2305.html>上一篇<strong>关于protobuf近期版本（v20/v3.20+）和 gRPC v1.54版本在某些编译环境下的一些链接和编译问题</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2023/2303.html>下一篇<strong>打通游戏服务端框架的C++20协程改造的最后一环</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;owent
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,

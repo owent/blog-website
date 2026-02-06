@@ -21,24 +21,24 @@ type_traits没啥好说的。主要是一些静态检测。主要还是要看动
 和
 <a href=http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf>http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf</a>
 虽然贴出来了。估计是没人看得。所以就直接说重点。</p></div><div class=article-more><a href=//owent.net/2014/971.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2014-01-27T16:27:46.000+00:00 itemprop=datePublished>2014-01-27</time></div></div></article><article class="article-panel archive-article archive-type-962"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2014/962.html target=_blank itemprop=url>C++又一坑:动态链接库中的全局变量</a></h1></header><div class=article-summary><p>前几天我们项目的日志系统出现了一点问题，但是一直没有时间去深究。
-昨天在同事的帮助下，无意中猜了一种可能性，结果还真被我猜中了，于是今天就特别研究了一下，记录下来。</p></div><div class=article-more><a href=//owent.net/2014/962.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2014-01-04T17:30:32.000+00:00 itemprop=datePublished>2014-01-04</time></div></div></article><article class="article-panel archive-article archive-type-902"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/902.html target=_blank itemprop=url>VC和GCC成员函数指针实现的研究(三)</a></h1></header><div class=article-summary><p>接上一篇 <a href=https://www.owent.net/2013/896.html>VC和GCC内成员函数指针实现的研究(二)</a></p><h2 id=虚继承>虚继承</h2><p>终于到最后的虚继承了。</p><p>测试代码如下:</p><pre><code class=language-cpp>#include &lt;ctime&gt;
-#include &lt;vector&gt;
-#include &lt;algorithm&gt;
-#include &lt;cstdio&gt;
-#include &lt;stdint.h&gt;
-#include &lt;cstddef&gt;
-#include &lt;string&gt;
+昨天在同事的帮助下，无意中猜了一种可能性，结果还真被我猜中了，于是今天就特别研究了一下，记录下来。</p></div><div class=article-more><a href=//owent.net/2014/962.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2014-01-04T17:30:32.000+00:00 itemprop=datePublished>2014-01-04</time></div></div></article><article class="article-panel archive-article archive-type-902"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/902.html target=_blank itemprop=url>VC和GCC成员函数指针实现的研究(三)</a></h1></header><div class=article-summary><p>接上一篇 <a href=https://www.owent.net/2013/896.html>VC和GCC内成员函数指针实现的研究(二)</a></p><h2 id=虚继承>虚继承</h2><p>终于到最后的虚继承了。</p><p>测试代码如下:</p><pre><code class=language-cpp>#include &amp;lt;ctime&amp;gt;
+#include &amp;lt;vector&amp;gt;
+#include &amp;lt;algorithm&amp;gt;
+#include &amp;lt;cstdio&amp;gt;
+#include &amp;lt;stdint.h&amp;gt;
+#include &amp;lt;cstddef&amp;gt;
+#include &amp;lt;string&amp;gt;
 
 class foo_a
 {
 public:
     virtual ~foo_a(){}
     virtual void info() {
-        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
     }
 
     void print(){
-        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
     }
 };
 
@@ -49,7 +49,7 @@ public:
     foo_l(): l(1){}
 
     virtual void info() {
-        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
     }
 };
 
@@ -64,24 +64,24 @@ class foo_c: virtual public foo_l, public foo_r
 {
 public:
     virtual void info() {
-        printf(&quot;%d,%d. %s:%d\n&quot;, l, r, __FUNCTION__, __LINE__);
+        printf(&amp;#34;%d,%d. %s:%d\n&amp;#34;, l, r, __FUNCTION__, __LINE__);
     }
 };
 
 
 int main(int argc, char* argv[]) {
-    void (foo_a::*vptr1)() = &amp;foo_a::info;
-    void (foo_l::*vptr2)() = &amp;foo_l::info;
-    void (foo_a::*ptr)() = &amp;foo_a::print;
+    void (foo_a::*vptr1)() = &amp;amp;foo_a::info;
+    void (foo_l::*vptr2)() = &amp;amp;foo_l::info;
+    void (foo_a::*ptr)() = &amp;amp;foo_a::print;
 
     foo_c c;
     foo_r r;
     foo_a a;
 
-    printf(&quot;pword size = %d\n&quot;, (int)(sizeof(size_t)));
-    printf(&quot;address of &amp;foo_a::info = 0x%llxH\n&quot;, &amp;foo_a::info);
-    printf(&quot;pointer to &amp;foo_a::info = 0x%llxH\n&quot;, vptr1);
-    printf(&quot;sizeof vptr = %d\n&quot;, (int)(sizeof(vptr1)));
+    printf(&amp;#34;pword size = %d\n&amp;#34;, (int)(sizeof(size_t)));
+    printf(&amp;#34;address of &amp;amp;foo_a::info = 0x%llxH\n&amp;#34;, &amp;amp;foo_a::info);
+    printf(&amp;#34;pointer to &amp;amp;foo_a::info = 0x%llxH\n&amp;#34;, vptr1);
+    printf(&amp;#34;sizeof vptr = %d\n&amp;#34;, (int)(sizeof(vptr1)));
 
     (a.*vptr1)();
     (r.*vptr1)();
@@ -92,21 +92,20 @@ int main(int argc, char* argv[]) {
     (c.*ptr)();
 
     return 0;
-}
-</code></pre><h2 id=vc虚继承成员函数指针实现>VC虚继承成员函数指针实现</h2><p>因为是兼容虚继承和非虚继承的，所以赋值的部分的汇编是一样的。这里就不贴了。关键在于执行期它是怎么找到虚基类的。请往下看：</p></div><div class=article-more><a href=//owent.net/2013/902.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-11T14:57:15.000+00:00 itemprop=datePublished>2013-09-11</time></div></div></article><article class="article-panel archive-article archive-type-896"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/896.html target=_blank itemprop=url>VC和GCC成员函数指针实现的研究(二)</a></h1></header><div class=article-summary><p>接上一篇 <a href=https://www.owent.net/2013/890.html>VC和GCC内成员函数指针实现的研究(一)</a></p><p>接下来是多重继承，用到的测试代码如下所示:</p><pre><code class=language-cpp>#include &lt;ctime&gt;
-#include &lt;vector&gt;
-#include &lt;algorithm&gt;
-#include &lt;cstdio&gt;
-#include &lt;stdint.h&gt;
-#include &lt;cstddef&gt;
-#include &lt;string&gt;
+}</code></pre><h2 id=vc虚继承成员函数指针实现>VC虚继承成员函数指针实现</h2><p>因为是兼容虚继承和非虚继承的，所以赋值的部分的汇编是一样的。这里就不贴了。关键在于执行期它是怎么找到虚基类的。请往下看：</p></div><div class=article-more><a href=//owent.net/2013/902.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-11T14:57:15.000+00:00 itemprop=datePublished>2013-09-11</time></div></div></article><article class="article-panel archive-article archive-type-896"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/896.html target=_blank itemprop=url>VC和GCC成员函数指针实现的研究(二)</a></h1></header><div class=article-summary><p>接上一篇 <a href=https://www.owent.net/2013/890.html>VC和GCC内成员函数指针实现的研究(一)</a></p><p>接下来是多重继承，用到的测试代码如下所示:</p><pre><code class=language-cpp>#include &amp;lt;ctime&amp;gt;
+#include &amp;lt;vector&amp;gt;
+#include &amp;lt;algorithm&amp;gt;
+#include &amp;lt;cstdio&amp;gt;
+#include &amp;lt;stdint.h&amp;gt;
+#include &amp;lt;cstddef&amp;gt;
+#include &amp;lt;string&amp;gt;
 
 class foo_a
 {
 public:
     virtual ~foo_a(){}
     virtual void info() {
-        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
     }
 };
 
@@ -116,17 +115,17 @@ public:
     virtual ~foo_b(){}
 
     // 这个函数用于试foo_b的结构与foo_a不同
-    // 以防止VC对foo_a和foo_b的`vcall'{8}'的代码合并
+    // 以防止VC对foo_a和foo_b的`vcall&amp;#39;{8}&amp;#39;的代码合并
     virtual void inspect() { 
-        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
     } 
 
     virtual void info() {
-        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
     }
 
     void print() {
-        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
     }
 };
 
@@ -135,27 +134,27 @@ class foo_c: public foo_a, public foo_b
 {
 public:
     virtual void info() {
-        printf(&quot;%s:%d\n&quot;, __FUNCTION__, __LINE__);
+        printf(&amp;#34;%s:%d\n&amp;#34;, __FUNCTION__, __LINE__);
     }
 };
 
 
 int main(int argc, char* argv[]) {
-    void (foo_a::*vptr1)() = &amp;foo_a::info;
-    void (foo_b::*vptr2)() = &amp;foo_b::info;
-    void (foo_b::*ptr)() = &amp;foo_b::print;
+    void (foo_a::*vptr1)() = &amp;amp;foo_a::info;
+    void (foo_b::*vptr2)() = &amp;amp;foo_b::info;
+    void (foo_b::*ptr)() = &amp;amp;foo_b::print;
 
     foo_c c;
     foo_b b;
     foo_a a;
 
     
-    printf(&quot;word size = %d\n&quot;, (int)(sizeof(size_t)));
-    printf(&quot;address of &amp;foo_a::info = 0x%llxH\n&quot;, &amp;foo_a::info);
-    printf(&quot;pointer to &amp;foo_a::info = 0x%llxH\n&quot;, vptr1);
-    printf(&quot;address of &amp;foo_b::info = 0x%llxH\n&quot;, &amp;foo_b::info);
-    printf(&quot;pointer to &amp;foo_b::info = 0x%llxH\n&quot;, vptr2);
-    printf(&quot;sizeof vptr = %d\n&quot;, (int)(sizeof(vptr1)));
+    printf(&amp;#34;word size = %d\n&amp;#34;, (int)(sizeof(size_t)));
+    printf(&amp;#34;address of &amp;amp;foo_a::info = 0x%llxH\n&amp;#34;, &amp;amp;foo_a::info);
+    printf(&amp;#34;pointer to &amp;amp;foo_a::info = 0x%llxH\n&amp;#34;, vptr1);
+    printf(&amp;#34;address of &amp;amp;foo_b::info = 0x%llxH\n&amp;#34;, &amp;amp;foo_b::info);
+    printf(&amp;#34;pointer to &amp;amp;foo_b::info = 0x%llxH\n&amp;#34;, vptr2);
+    printf(&amp;#34;sizeof vptr = %d\n&amp;#34;, (int)(sizeof(vptr1)));
 
     (a.*vptr1)();
     (b.*vptr2)();
@@ -165,8 +164,7 @@ int main(int argc, char* argv[]) {
     (c.*ptr)();
 
     return 0;
-}
-</code></pre><h2 id=vc多重继承成员函数指针实现>VC多重继承成员函数指针实现</h2><p><img src=p896_img8.png loading=lazy></p></div><div class=article-more><a href=//owent.net/2013/896.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-11T14:44:06.000+00:00 itemprop=datePublished>2013-09-11</time></div></div></article><article class="article-panel archive-article archive-type-890"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/890.html target=_blank itemprop=url>VC和GCC内成员函数指针实现的研究(一)</a></h1></header><div class=article-summary><p>最近在《C++对象模型》一书里说到的virtual的成员函数指针，低于128的被cfront编译器认为是虚表偏移量（支持子类对父类函数的覆盖）。VC只是提了下单继承、多继承和虚继承的实现方案不同，GCC没有提及，所以就专门稍微深入分析研究下他们的实现机制。</p></div><div class=article-more><a href=//owent.net/2013/890.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-06T12:55:58.000+00:00 itemprop=datePublished>2013-09-06</time></div></div></article><article class="article-panel archive-article archive-type-482"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2011/482.html target=_blank itemprop=url>Linux 和 Windows PowerShell 常用工具/命令 记录</a></h1></header><div class=article-summary><h2 id=linux-常用工具>Linux 常用工具</h2><ul><li>enca: <a href=http://dl.cihar.com/enca/>http://dl.cihar.com/enca/</a>   文件名编码转换</li><li>iconv: 文件编码转换</li><li>convmv: 文件名编码转换</li><li>ldd: 查看可执行文件或动态链接库的依赖库</li><li>getconf: 查看配置信息（如getconf LONG_BIT可知当前系统是32位还是64位版本）</li><li>tcpdump: 监视网络服务</li><li>sync: 将缓冲区内容写入磁盘</li><li><code>echo 3 > /proc/sys/vm/drop_caches</code>: 手动释放缓存</li><li>nm: 查看符号表</li><li>readelf: 查看ELF信息（Executable and Linkable Format）</li><li>man: 文档</li><li>top/htop: 查看最高占用</li><li>perf: 性能数据采集</li><li>sar: 系统信息采集</li><li>uptime: 系统1分钟、5分钟和15分钟的系统平均负载</li><li>free: 内存使用情况</li><li>iostat: 磁盘IO使用情况</li><li>pidstat: 查看进程状态</li><li>ipcs: 查看共享内存、消息、信号量信息，如：ipcs -m 共享内存</li><li>objdump –CS –l [bin文件]: 不反人类的反编译</li><li>strace: 系统调用跟踪</li><li>pstack: 查看当前调用栈</li><li>lsof： 查看打开的文件</li><li>ip addr: 查看ip地址</li></ul><p>man [章节号] 手册名称:</p></div><div class=article-more><a href=//owent.net/2011/482.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2011-08-19T11:16:55.000+00:00 itemprop=datePublished>2011-08-19</time></div></div></article></div><hr><nav id=page-nav><ul class=pagination><li class=page-item><a class=page-link href=/tags/cpp.html>&#171;上一页</a></li><li class=page-item><a class=page-link href=/tags/cpp.html>1</a></li><li class='page-item disabled'><a class=page-link href=/tags/cpp/page/2.html>2</a><span class=sr-only>(current)</span></li></ul></nav></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
+}</code></pre><h2 id=vc多重继承成员函数指针实现>VC多重继承成员函数指针实现</h2><p><img src=p896_img8.png loading=lazy></p></div><div class=article-more><a href=//owent.net/2013/896.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-11T14:44:06.000+00:00 itemprop=datePublished>2013-09-11</time></div></div></article><article class="article-panel archive-article archive-type-890"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/890.html target=_blank itemprop=url>VC和GCC内成员函数指针实现的研究(一)</a></h1></header><div class=article-summary><p>最近在《C++对象模型》一书里说到的virtual的成员函数指针，低于128的被cfront编译器认为是虚表偏移量（支持子类对父类函数的覆盖）。VC只是提了下单继承、多继承和虚继承的实现方案不同，GCC没有提及，所以就专门稍微深入分析研究下他们的实现机制。</p></div><div class=article-more><a href=//owent.net/2013/890.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-06T12:55:58.000+00:00 itemprop=datePublished>2013-09-06</time></div></div></article><article class="article-panel archive-article archive-type-482"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2011/482.html target=_blank itemprop=url>Linux 和 Windows PowerShell 常用工具/命令 记录</a></h1></header><div class=article-summary><h2 id=linux-常用工具>Linux 常用工具</h2><ul><li>enca: <a href=http://dl.cihar.com/enca/>http://dl.cihar.com/enca/</a>   文件名编码转换</li><li>iconv: 文件编码转换</li><li>convmv: 文件名编码转换</li><li>ldd: 查看可执行文件或动态链接库的依赖库</li><li>getconf: 查看配置信息（如getconf LONG_BIT可知当前系统是32位还是64位版本）</li><li>tcpdump: 监视网络服务</li><li>sync: 将缓冲区内容写入磁盘</li><li><code>echo 3 > /proc/sys/vm/drop_caches</code>: 手动释放缓存</li><li>nm: 查看符号表</li><li>readelf: 查看ELF信息（Executable and Linkable Format）</li><li>man: 文档</li><li>top/htop: 查看最高占用</li><li>perf: 性能数据采集</li><li>sar: 系统信息采集</li><li>uptime: 系统1分钟、5分钟和15分钟的系统平均负载</li><li>free: 内存使用情况</li><li>iostat: 磁盘IO使用情况</li><li>pidstat: 查看进程状态</li><li>ipcs: 查看共享内存、消息、信号量信息，如：ipcs -m 共享内存</li><li>objdump –CS –l [bin文件]: 不反人类的反编译</li><li>strace: 系统调用跟踪</li><li>pstack: 查看当前调用栈</li><li>lsof： 查看打开的文件</li><li>ip addr: 查看ip地址</li></ul><p>man [章节号] 手册名称:</p></div><div class=article-more><a href=//owent.net/2011/482.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2011-08-19T11:16:55.000+00:00 itemprop=datePublished>2011-08-19</time></div></div></article></div><hr><nav id=page-nav><ul class=pagination><li class=page-item><a class=page-link href=/tags/cpp.html>&#171;上一页</a></li><li class=page-item><a class=page-link href=/tags/cpp.html>1</a></li><li class='page-item disabled'><a class=page-link href=/tags/cpp/page/2.html>2</a><span class=sr-only>(current)</span></li></ul></nav></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
 主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>

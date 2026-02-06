@@ -8,12 +8,12 @@
 直到后来，我们在自己的构建系统 <a href=https://github.com/atframework/cmake-toolset>cmake-toolset</a> 对 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 和 <a href=https://github.com/grpc/grpc>gRPC</a> 也进行了升级。所以顺带给社区的项目也提交了一些相关的Patch，在这里分享一下可能其他同学也会碰到。</p><h2 id=protobuf-引入了新依赖><a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 引入了新依赖</h2><p><a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 从v22开始引入了对 <a href=https://github.com/abseil/abseil-cpp.git>abseil-cpp</a> 的依赖。和 <a href=https://github.com/grpc/grpc>gRPC</a> 类似，它也可以通过 <code>"-Dprotobuf_ABSL_PROVIDER=package"</code> 告知构建系统从已安装位置查找，而不是自己重新构建一套。
 另外对构建流程的影响就是，我在 <a href=https://github.com/atframework/cmake-toolset>cmake-toolset</a> 中把 <a href=https://github.com/abseil/abseil-cpp.git>abseil-cpp</a> 单独抽离出来并放在了 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 之前了。
 同时在我们的UE工程里依赖protobuf的位置也要链接 <a href=https://github.com/abseil/abseil-cpp.git>abseil-cpp</a> 的相关依赖库，比如 <code>absl_strings</code>, <code>absl_bad_variant_access</code> 等等。</p><p>同时，它还移除了一些和 <a href=https://github.com/abseil/abseil-cpp.git>abseil-cpp</a> 内重复的接口，比如说原来做Base64转换的接口被移除了，现在适配 <code>Base64Escape</code> 的代码更长了, 比如下面对 <a href=https://github.com/open-telemetry/opentelemetry-cpp>opentelemetry-cpp</a> 的PR <a href=https://github.com/open-telemetry/opentelemetry-cpp/pull/2163/files#diff-eb7f99ebc152d9cc0f4781cc0a0388907e4d4b58271dba85eba99fd16b880674>#2163</a>。</p><pre><code class=language-cpp>#if defined(HAVE_ABSEIL)
-#  include &quot;absl/strings/escaping.h&quot;
-#elif defined(GOOGLE_PROTOBUF_VERSION) &amp;&amp; GOOGLE_PROTOBUF_VERSION &gt;= 3007000
-#  include &quot;google/protobuf/stubs/strutil.h&quot;
+#  include &amp;#34;absl/strings/escaping.h&amp;#34;
+#elif defined(GOOGLE_PROTOBUF_VERSION) &amp;amp;&amp;amp; GOOGLE_PROTOBUF_VERSION &amp;gt;= 3007000
+#  include &amp;#34;google/protobuf/stubs/strutil.h&amp;#34;
 #else
-#  include &quot;google/protobuf/stubs/port.h&quot;
-#  include &quot;google/protobuf/stubs/stringpiece.h&quot;
+#  include &amp;#34;google/protobuf/stubs/port.h&amp;#34;
+#  include &amp;#34;google/protobuf/stubs/stringpiece.h&amp;#34;
 namespace google
 {
 namespace protobuf
@@ -26,11 +26,10 @@ LIBPROTOBUF_EXPORT void Base64Escape(StringPiece src, std::string *dest);
 // ...
       std::string base64_value;
 #if defined(HAVE_ABSEIL)
-      absl::Base64Escape(bytes, &amp;base64_value);
+      absl::Base64Escape(bytes, &amp;amp;base64_value);
 #else
-      google::protobuf::Base64Escape(bytes, &amp;base64_value);
-#endif
-</code></pre><h2 id=grpc-v155-和-upb><a href=https://github.com/grpc/grpc>gRPC</a> v1.55 和 <a href=https://github.com/protocolbuffers/upb>upb</a></h2><p>去年我们项目组尝试使用 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 官方的 <a href=https://github.com/protocolbuffers/upb>upb</a> 来实现lua集成，并写了一篇相关的分享： <a href=https://owent.net/2022/2207.html>《集成 upb 和 lua binding 的踩坑小记》</a> 。
+      google::protobuf::Base64Escape(bytes, &amp;amp;base64_value);
+#endif</code></pre><h2 id=grpc-v155-和-upb><a href=https://github.com/grpc/grpc>gRPC</a> v1.55 和 <a href=https://github.com/protocolbuffers/upb>upb</a></h2><p>去年我们项目组尝试使用 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 官方的 <a href=https://github.com/protocolbuffers/upb>upb</a> 来实现lua集成，并写了一篇相关的分享： <a href=https://owent.net/2022/2207.html>《集成 upb 和 lua binding 的踩坑小记》</a> 。
 当时的主要问题是 <a href=https://github.com/grpc/grpc>gRPC</a> 中集成了一个精简版的 <a href=https://github.com/protocolbuffers/upb>upb</a>，只包含运行时，不包含protoc-upb，protoc-upbdefs和protoc-upblua插件。
 当我们要使用完整版本时，就需要自己编译出这几个组件，并且和 <a href=https://github.com/grpc/grpc>gRPC</a> 混用的时候还需要版本保持一致，以防出现ABI兼容性问题。</p><p><a href=https://github.com/protocolbuffers/upb>upb</a> 主要使用的是 <a href=https://bazel.build/>bazel</a> 构建系统，而我们使用 <a href=https://cmake.org/>cmake</a>， <a href=https://github.com/grpc/grpc>gRPC</a> 也支持 <a href=https://cmake.org/>cmake</a>。由于 <a href=https://github.com/protocolbuffers/upb>upb</a> 的外部依赖只有一项，且使用的功能比较简单。所以在 <a href=https://github.com/protocolbuffers/upb>upb</a> 的仓库里有一个简单的工具，去hook了 <a href=https://bazel.build/>bazel</a> 的基础接口，输出 <a href=https://cmake.org/>cmake</a> 的工程文件。
 由于这个输出的 <a href=https://cmake.org/>cmake</a> 的工程文件只包含了运行时，不包含上面提到的几个插件的编译，所以我们就需要是修改这个工具，让它也能输出插件和常见的 <a href=https://github.com/protocolbuffers/protobuf>protobuf</a> 的well known type的upb支持文件。</p><p>在之前版本中，几乎是手夯了这几个工具及依赖构建流程。然后由于依赖中有直接源码引入第三方库 <a href=https://github.com/protocolbuffers/utf8_range>utf8_range</a>，并且文件的位置相当随意。所以当时也是重新调整了一些依赖文件的位置，以减少未来冲突的可能性。另外由于原有导出的 <a href=https://cmake.org/>cmake</a> 工程文件不支持导出现代化 <a href=https://cmake.org/>cmake</a> 的CONFIG的package文件，所以也需要我们自己做支持来实现更好的依赖关系管理。

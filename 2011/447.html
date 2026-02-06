@@ -14,7 +14,7 @@ namespace LinqTest {
     class Program {
         static void Main(string[] args) {
             // MySql的初始化
-            string connStr = @&quot;server=localhost;database=myblog;user=root;pwd=******（这个同样要匿）;port=3306&quot;;
+            string connStr = @&amp;#34;server=localhost;database=myblog;user=root;pwd=******（这个同样要匿）;port=3306&amp;#34;;
             MySqlConnection conn = new MySqlConnection(connStr);
             var tm = new MyBLog(conn);
             // Sql Server Express 的初始化
@@ -24,21 +24,21 @@ namespace LinqTest {
             var rs1 = from sample in t.sample
                      select sample;
             foreach (var i in rs1) {
-                Console.WriteLine(&quot;id: &quot; + i.ID + &quot; val: &quot; + i.值);
+                Console.WriteLine(&amp;#34;id: &amp;#34; &#43; i.ID &#43; &amp;#34; val: &amp;#34; &#43; i.值);
             }
 
             // 第二个表
             var rs2 = from Sample2 in t.Sample2
-                 where Sample2.相关ID &gt; 1
+                 where Sample2.相关ID &amp;gt; 1
                  select Sample2;
             var rl2 = rs2.ToList();
             foreach (var i in rl2) {
-                Console.WriteLine(&quot;id: &quot; + i.PID + &quot; sid: &quot; + i.相关ID + &quot; date: &quot; + i.日期);
+                Console.WriteLine(&amp;#34;id: &amp;#34; &#43; i.PID &#43; &amp;#34; sid: &amp;#34; &#43; i.相关ID &#43; &amp;#34; date: &amp;#34; &#43; i.日期);
             }
 
             // 插入操作
             Sample2 s2 = new Sample2() {
-                PID = rl2.Last().PID + 1,
+                PID = rl2.Last().PID &#43; 1,
                 相关ID = rl2.Last().相关ID,
                 日期 = DateTime.Now
             };
@@ -47,22 +47,20 @@ namespace LinqTest {
 
             // MySql和Dblinq
             var rs3 = (from WpCommentMeta in tm.WpCommentMeta
-                        where WpCommentMeta.MetaID &gt; 10
+                        where WpCommentMeta.MetaID &amp;gt; 10
                         orderby WpCommentMeta.CommentID
                         select WpCommentMeta).Skip(3).Take(3);
             foreach (var i in rs3.ToList()) {
-                Console.WriteLine(&quot;MetaID: &quot; + i.MetaID + &quot; CommentID: &quot; + i.CommentID);
-                Console.WriteLine(&quot;Key:\r\n&quot; + i.MetaKey + &quot;\r\nValue:\r\n&quot; + i.MetaValue);
-                Console.WriteLine(&quot;&quot;);
+                Console.WriteLine(&amp;#34;MetaID: &amp;#34; &#43; i.MetaID &#43; &amp;#34; CommentID: &amp;#34; &#43; i.CommentID);
+                Console.WriteLine(&amp;#34;Key:\r\n&amp;#34; &#43; i.MetaKey &#43; &amp;#34;\r\nValue:\r\n&amp;#34; &#43; i.MetaValue);
+                Console.WriteLine(&amp;#34;&amp;#34;);
             }
         }
     }
-}
-</code></pre><p>另外，有个东西忘了提了。<strong>关于效率</strong>的问题。</p><p>第一次尝试Linq to Sql的时候我就有个疑问，他的效率怎么样？因为他可以有很多的筛选比如上文代码中的where和order，这个不是问题，问题是Skip和Take函数，我想如果每次都是把数据全select出来然后筛选效率必然很慢，我试了一下MySQL的这一段的调试（因为我的Sql Server是Express版的没有分析工具），我很惊喜地发现Linq最为神奇的地方在于在写完select的那一句的时候并没有连接数据库，Linq会在需要访问数据的时候从已知条件生成SQL语句从提交给数据库，然后处理就如上文，在 var rs3那一句并没有访问数据库，而是在rs3.ToList()执行时访问的数据库，并且在日志记录里生成的SQL语句为</p><pre><code class=language-sql>SELECT `comment_id`, `meta_id`, `meta_key`, `meta_value`
+}</code></pre><p>另外，有个东西忘了提了。<strong>关于效率</strong>的问题。</p><p>第一次尝试Linq to Sql的时候我就有个疑问，他的效率怎么样？因为他可以有很多的筛选比如上文代码中的where和order，这个不是问题，问题是Skip和Take函数，我想如果每次都是把数据全select出来然后筛选效率必然很慢，我试了一下MySQL的这一段的调试（因为我的Sql Server是Express版的没有分析工具），我很惊喜地发现Linq最为神奇的地方在于在写完select的那一句的时候并没有连接数据库，Linq会在需要访问数据的时候从已知条件生成SQL语句从提交给数据库，然后处理就如上文，在 var rs3那一句并没有访问数据库，而是在rs3.ToList()执行时访问的数据库，并且在日志记录里生成的SQL语句为</p><pre><code class=language-sql>SELECT `comment_id`, `meta_id`, `meta_key`, `meta_value`
 FROM `myblog`.`wp_commentmeta`
-WHERE (`meta_id` &gt; 10)
-ORDER BY `comment_id` LIMIT 3 OFFSET 3
-</code></pre><p>可以看出，生成的SQL非常给力的。另外也是这个延迟执行的原因，SQL语句会在查询的时候提交，在t.Sample2.InsertOnSubmit(s2); 的后面要加上  t.SubmitChanges(); 因为之后没有查询，没有访问数据库，所以这里要Submit一下，否则内存里的对象不会提交，也就不会进数据库，这条记录就没有了。</p><p>Linq的体验暂时就到这里吧，非常神奇。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2011-06-02T10:57:03.000+00:00 itemprop=datePublished>2011-06-02</time></span>
+WHERE (`meta_id` &amp;gt; 10)
+ORDER BY `comment_id` LIMIT 3 OFFSET 3</code></pre><p>可以看出，生成的SQL非常给力的。另外也是这个延迟执行的原因，SQL语句会在查询的时候提交，在t.Sample2.InsertOnSubmit(s2); 的后面要加上  t.SubmitChanges(); 因为之后没有查询，没有访问数据库，所以这里要Submit一下，否则内存里的对象不会提交，也就不会进数据库，这条记录就没有了。</p><p>Linq的体验暂时就到这里吧，非常神奇。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2011-06-02T10:57:03.000+00:00 itemprop=datePublished>2011-06-02</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/database.html>database</a></li><li class=article-tag-list-item><a href=//owent.net/tags/linq.html>linq</a></li><li class=article-tag-list-item><a href=//owent.net/tags/mysql.html>mysql</a></li><li class=article-tag-list-item><a href=//owent.net/tags/sqlserver.html>sqlserver</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2011/482.html>上一篇<strong>Linux 和 Windows PowerShell 常用工具/命令 记录</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2011/416.html>下一篇<strong>2011 Google Code Jam 小记</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
