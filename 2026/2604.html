@@ -1,0 +1,487 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>新版本libatbus的设计变更——从树形路由到拓扑驱动|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2026/2604.html><link rel=icon href=/favicon.ico><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net//css/style.css><link rel=stylesheet href=//owent.net/css/syntax.css><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8180054975285991" crossorigin=anonymous></script><meta content="codeva-4M5iohb9TW" name=baidu-site-verification></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net/ id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-bs-toggle=collapse data-bs-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-cb3554789995a11992e7350778ca3841 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2026/2604.html target=_blank itemprop=url>新版本libatbus的设计变更——从树形路由到拓扑驱动</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#前言>前言</a></li><li><a href=#之前的路由方案>之前的路由方案</a><ul><li><a href=#核心设计思想>核心设计思想</a></li><li><a href=#子网配置-endpoint_subnet_conf>子网配置 (endpoint_subnet_conf)</a></li><li><a href=#路由规则>路由规则</a></li><li><a href=#通道选择优先级>通道选择优先级</a></li><li><a href=#连接类型>连接类型</a></li><li><a href=#关键特性>关键特性</a></li><li><a href=#设计局限>设计局限</a></li></ul></li><li><a href=#新路由算法的几个问题>新路由算法的几个问题</a><ul><li><a href=#问题一-如何高性能地判定关系>问题一: 如何高性能地判定关系？</a></li><li><a href=#问题二-兄弟节点不再总是直连>问题二: 兄弟节点不再总是直连？</a></li><li><a href=#问题三-是否需要libatbus层直连判定直连>问题三: 是否需要libatbus层直连判定直连？</a></li><li><a href=#问题四-单独的路由关系表还是注入到服务发现策略路由表>问题四: 单独的路由关系表还是注入到服务发现策略路由表？</a></li></ul></li><li><a href=#新的拓扑注册表设计>新的拓扑注册表设计</a><ul><li><a href=#topology_registry-进程内拓扑图>topology_registry: 进程内拓扑图</a></li><li><a href=#关系判定算法>关系判定算法</a></li><li><a href=#策略路由-topology_policy_rule>策略路由: topology_policy_rule</a></li><li><a href=#拓扑变更的安全性保证>拓扑变更的安全性保证</a></li></ul></li><li><a href=#新的协议层设计>新的协议层设计</a><ul><li><a href=#报文结构>报文结构</a></li><li><a href=#ecdh-密钥协商>ECDH 密钥协商</a></li><li><a href=#压缩支持>压缩支持</a></li></ul></li><li><a href=#新的多通道与连接模型>新的多通道与连接模型</a><ul><li><a href=#连接生命周期>连接生命周期</a></li><li><a href=#endpoint-的双通道模型>Endpoint 的双通道模型</a></li><li><a href=#通道选择优先级保持不变>通道选择优先级（保持不变）</a></li><li><a href=#节点注册与访问控制>节点注册与访问控制</a></li></ul></li><li><a href=#新路由算法的完整流程>新路由算法的完整流程</a></li><li><a href=#总结>总结</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><h2 id=前言>前言</h2><p>很久很久以前，我为了解决以前项目中bus通信膨胀的问题设计了 <a href=https://github.com/atframework/libatbus>libatbus</a>, 当时主要解决的核心问题是解决大量服务器节点互通时服务器间两两建立通道时的大量内存浪费问题。也同时使用跨进程的无锁队列避免了多写单读场景下的加锁以提高性能。</p><p>当时也顺带实现了高性能的跨平台支持。</p><p>但是当时云原生还不流行，出海业务也较少。所以没有考虑出海跨大区网络抖动和质量很不稳定的问题。也没有过多地考虑动态代理层支持。
+当时的想法是受网络路由的启发，实现了一个按固定网关和子网去管理的流程。这个流程好处是简单、快，算法层面就能算出路由去向，不需要外部服务发现的依赖。
+虽然当时就支持多级代理，但是整体是一个树形结构。又因为是只实现了异步接口（为了保证高性能，不要因为谁偷懒写出卡住服务器的代码）。
+所以整个框架冠以AT前缀（即Tree like - Async）。</p><p>但是现在云原生流行起来以后，如果想支持完全动态可以自动扩缩容的网关和代理层，且网关和代理层也可以无损HPA和迁移，那么就需要我们的代理支持网状结构。
+也不得不引入外部的路由规则。</p><p>同时，出海场景的另一个问题是跨大区网络很不稳定。有些场景可以用专线缓解，但是专线死贵死贵。所以我们有些场景会走公网流量。
+这就需要一方面隔离部分流量，防止部分网络不稳定影响整体服务健康，可以降级服务但不能不可用。另一方面走公网流量得部分也需要加强安全性，要走更严格的密钥协商和加密算法。</p><p>有一些其他解决方案，为了兼容老接口和流程，强行把云下的流程搬到云上（比如腾讯的tbuspp，给每个pod sidecar注入一个agent进程），其实一方面有额外不必要的负担，另一方面也反而丢失了原来设计上解决的一些通道管理上的问题。
+我这次打算彻底整体重构 <a href=https://github.com/atframework/libatbus>libatbus</a>, 不考虑协议层向前兼容（大部分API还是得兼容）。可以在协议设计层面来解决掉这些问题。</p><p>本文主要关注于路由算法层面的改进。</p><h2 id=之前的路由方案>之前的路由方案</h2><h3 id=核心设计思想>核心设计思想</h3><p><a href=https://github.com/atframework/libatbus>libatbus</a> 采用类似 IP 路由的树形结构设计，通过 <strong>Bus ID</strong> 和 <strong>子网掩码</strong> 来管理节点间的路由关系。</p><p><div class=excalidraw-container style="width:100%;height:auto;margin:1rem 0"><div id=excalidraw-image-0 class=excalidraw-root style=width:100%;height:auto data-excalidraw-src=./2604-origin-route-arch.excalidraw data-excalidraw-fetch-id=excalidraw-image-0>Loading excalidraw...</div></div></p><h3 id=子网配置-endpoint_subnet_conf>子网配置 (endpoint_subnet_conf)</h3><p>每个节点可以配置一个或多个子网范围，通过 <code>id_prefix</code> 和 <code>mask_bits</code> 定义：</p><pre><code class=language-cpp>struct endpoint_subnet_conf {
+  ATBUS_MACRO_BUSID_TYPE id_prefix;  // 子网前缀
+  uint32_t mask_bits;                // 后缀位数
+};</code></pre><p>例如，配置 <code>conf.subnets.push_back(atbus::endpoint_subnet_conf(0, 16))</code> 表示该节点可以管理后16位变化的所有子节点 ID。</p><h3 id=路由规则>路由规则</h3><ol><li><strong>父子关系判定</strong>: 通过子网掩码计算，如果目标 ID 落在父节点的子网范围内，则为其子节点</li><li><strong>消息转发路径</strong>:<ul><li>发送给子节点: 直接转发</li><li>发送给兄弟节点: 通过父节点转发，父节点会通知兄弟节点建立直连</li><li>发送给跨层级节点: 向上转发至公共祖先，再向下转发</li></ul></li></ol><h4 id=场景1-父子节点直接通信>场景1: 父子节点直接通信</h4><pre class=mermaid>
+sequenceDiagram
+    participant P as Parent
+    participant C as Child
+    
+    Note over P,C: 父节点 → 子节点 (直接发送)
+    P->>C: send_data(child_id, data)
+    
+    Note over P,C: 子节点 → 父节点 (直接发送)
+    C->>P: send_data(parent_id, data)
+</pre><h4 id=场景2-直接兄弟节点通信-同父会建立直连>场景2: 直接兄弟节点通信 (同父，会建立直连)</h4><pre class=mermaid>
+sequenceDiagram
+    participant C1 as Child1
+    participant P as Parent
+    participant C2 as Child2
+    
+    Note over C1,C2: 首次通信: 通过父节点转发
+    C1->>P: 1. send_data(child2_id)
+    P->>C2: 2. forward(data)
+    P-->>C1: 3. 通知直连Child2地址
+    
+    Note over C1,C2: 建立直连后: 直接通信
+    C1->>C2: 4. 直连发送
+    C2->>C1: 5. 直连发送
+</pre><h4 id=场景3-二级子节点转发>场景3: 二级子节点转发</h4><pre class=mermaid>
+sequenceDiagram
+    participant GC1 as GrandChild1
+    participant C1 as Child1
+    participant P as Parent
+    participant C2 as Child2
+    
+    Note over GC1,C2: GrandChild1 → Child2 (跨层级转发)
+    GC1->>C1: 1. send_data(child2_id)
+    C1->>P: 2. forward to parent
+    P->>C2: 3. forward to child2
+</pre><h4 id=场景4-非直接兄弟节点-不同父不会自动直连>场景4: 非直接兄弟节点 (不同父，不会自动直连)</h4><pre class=mermaid>
+sequenceDiagram
+    participant C1 as Child1
+    participant P1 as Parent1
+    participant P2 as Parent2
+    participant C3 as Child3
+    
+    Note over C1,C3: 跨父节点通信 (需Root互连)
+    C1->>P1: 1. send_data(child3_id)
+    P1->>P2: 2. forward (Root节点需主动直连)
+    P2->>C3: 3. forward to child3
+    
+    Note over C1,C3: ❌ 不会建立直连<br>始终通过父节点转发
+</pre><h4 id=场景5-root节点主动直连>场景5: Root节点主动直连</h4><pre class=mermaid>
+graph LR
+    subgraph "Root节点互连"
+        R1["Root1"]
+        R2["Root2"]
+        R3["Root3"]
+        
+        R1 <--> |"主动connect()"| R2
+        R2 <--> |"主动connect()"| R3
+        R1 <--> |"主动connect()"| R3
+    end
+</pre><p>Root节点之间没有父子关系，需要通过 <code>node->connect(address)</code> 主动建立连接。</p><h3 id=通道选择优先级>通道选择优先级</h3><p>根据通信双方的位置关系，自动选择最优通道：</p><pre class=mermaid>
+flowchart TD
+    Start[选择数据通道] --> SameProc{同进程?}
+    
+    SameProc -->|是| MemChan[内存通道 mem://]
+    SameProc -->|否| SameHost{同物理机?}
+    
+    SameHost -->|是| CheckShm{支持共享内存?}
+    CheckShm -->|是| ShmChan[共享内存 shm://]
+    CheckShm -->|否| UnixChan[Unix Socket unix://]
+    
+    SameHost -->|否| TcpChan[TCP通道 ipv4/ipv6://]
+    
+    MemChan --> Priority1["优先级: 1 (最高)<br>零拷贝, 无锁队列"]
+    ShmChan --> Priority2["优先级: 2<br>跨进程共享内存"]
+    UnixChan --> Priority3["优先级: 3<br>本地Socket, 无需网络栈"]
+    TcpChan --> Priority4["优先级: 4 (最低)<br>网络IO"]
+    
+    style MemChan fill:#90EE90
+    style ShmChan fill:#87CEEB
+    style UnixChan fill:#DDA0DD
+    style TcpChan fill:#FFB6C1
+</pre><h4 id=通道类型对比>通道类型对比</h4><table><thead><tr><th>通道类型</th><th>协议前缀</th><th>适用场景</th><th>特点</th></tr></thead><tbody><tr><td><strong>内存通道</strong></td><td><code>mem://</code></td><td>同进程内</td><td>零拷贝、无锁队列、最高性能</td></tr><tr><td><strong>共享内存</strong></td><td><code>shm://</code></td><td>同物理机跨进程</td><td>多写单读、无需网络IO</td></tr><tr><td><strong>Unix Socket</strong></td><td><code>unix://</code> <code>pipe://</code></td><td>同物理机跨进程</td><td>无需网络栈、比TCP快、Windows上用Named Pipe</td></tr><tr><td><strong>TCP通道</strong></td><td><code>ipv4://</code> <code>ipv6://</code></td><td>跨物理机</td><td>支持双工、跨网络</td></tr></tbody></table><h4 id=通道选择逻辑>通道选择逻辑</h4><pre><code class=language-cpp>// 按性能优先级排序: mem > shm > unix > tcp
+connection *endpoint::get_data_connection(const endpoint *ep) {
+    // 检查是否同进程 (share_pid)
+    if (ep->get_hostname() == get_hostname() && 
+        ep->get_pid() == get_pid()) {
+        // 优先使用 mem:// 通道 (ACCESS_SHARE_ADDR)
+    }
+    
+    // 检查是否同物理机 (share_host)
+    if (ep->get_hostname() == get_hostname()) {
+        // 优先使用 shm:// 或 unix:// 通道 (ACCESS_SHARE_HOST)
+    }
+    
+    // 使用 tcp:// 通道
+    return tcp_connection;
+}</code></pre><h3 id=连接类型>连接类型</h3><pre><code class=language-cpp>// 控制通道: 用于节点注册、心跳等控制消息
+connection::ptr_t ctrl_conn_;
+
+// 数据通道: 用于业务数据传输，按性能优先级排序
+std::list<connection::ptr_t> data_conn_;  // mem > shm > tcp</code></pre><h3 id=关键特性>关键特性</h3><table><thead><tr><th>特性</th><th>说明</th></tr></thead><tbody><tr><td><strong>树形拓扑</strong></td><td>节点间呈严格的父子层级关系</td></tr><tr><td><strong>静态路由</strong></td><td>路由路径在算法层面可直接计算，无需外部服务发现</td></tr><tr><td><strong>自动直连</strong></td><td>同父的兄弟节点首次通信后会自动建立直连</td></tr><tr><td><strong>非直接兄弟不直连</strong></td><td>不同父的节点始终通过父节点链转发</td></tr><tr><td><strong>多通道支持</strong></td><td>同时支持 TCP、共享内存、内存通道，自动选择最优通道</td></tr><tr><td><strong>子网冲突检测</strong></td><td>注册时检测子网范围冲突，防止路由歧义</td></tr></tbody></table><h3 id=设计局限>设计局限</h3><ol><li><strong>静态树形结构</strong>: 不支持网状拓扑，难以实现动态代理层</li><li><strong>无法动态扩缩容</strong>: 网关层 HPA 和迁移会破坏路由结构</li><li><strong>单点依赖</strong>: 父节点故障会导致其所有子节点路由中断</li><li><strong>跨区适配不足</strong>: 未考虑跨大区网络质量差异和流量隔离需求</li></ol><h2 id=新路由算法的几个问题>新路由算法的几个问题</h2><p>我们现在要用额外的路由注册表去托管节点间关系的管理，并且支持上述的各类关系。就需要考虑下注册表中应该包含什么内容。</p><h3 id=问题一-如何高性能地判定关系>问题一: 如何高性能地判定关系？</h3><p>先列举一下节点间关系（尽量避免 Parent/Child 这类“族谱词”，更贴近转发/路由语境；其中 <em>Immediate</em> 表示一跳，<em>Transitive</em> 表示多跳闭包关系）。</p><blockquote><p>约定：以下关系均以“判定 X 与 Y 的关系”为视角。</p></blockquote><p>补充说明：这里的 <em>Upstream/Downstream</em> 用于描述在“转发拓扑/汇聚层级”上的相对位置：Upstream 表示承担转发/汇聚职责的节点，Downstream 表示挂载在某个 Upstream 之下的节点。实际连接与消息收发是双向的，只是我们在判定关系时会选定参考点（X）来描述相对位置。</p><table><thead><tr><th>关系(中文)</th><th>新算法英文名</th><th>老英文名</th><th>定义</th></tr></thead><tbody><tr><td>自己</td><td><strong>Self</strong></td><td><strong>self</strong></td><td>$X = Y$</td></tr><tr><td>代理父节点</td><td><strong>ImmediateUpstream</strong></td><td><strong>parent</strong></td><td>若 $X \to * $ 的消息需要经由 $Y$ 转发（$Y$ 是 $X$ 的一跳 <em>Upstream</em>）</td></tr><tr><td>间接父节点</td><td><strong>TransitiveUpstream</strong></td><td><strong>parent</strong></td><td>若存在路径 $X \to \cdots \to Y$ 且路径上的节点均承担转发/汇聚（$Y$ 是 $X$ 的多跳 <em>Upstream</em>）</td></tr><tr><td>直接子节点</td><td><strong>ImmediateDownstream</strong></td><td><strong>child</strong></td><td>若 $X$ 挂载在 $Y$ 之下且 $Y$ 是 $X$ 的一跳 <em>Upstream</em>（从 $Y$ 的视角，$X$ 是其直接 <em>Downstream</em>）</td></tr><tr><td>间接子节点</td><td><strong>TransitiveDownstream</strong></td><td><strong>child</strong></td><td>若 $X$ 可视作挂载在 $Y$ 之下的多跳 <em>Downstream</em>（跨越若干层 Upstream）</td></tr><tr><td>邻居节点</td><td><strong>SameUpstreamPeer</strong></td><td>通过 <strong>contains</strong> 接口判定</td><td>若 $X$ 与 $Y$ 共享同一个 <em>ImmediateUpstream</em>（即它们的直属 Upstream 相同）</td></tr><tr><td>远方节点</td><td><strong>OtherUpstreamPeer</strong></td><td>通过 <strong>contains</strong> 接口判定</td><td>设 $H_X$ 为 $X$ 的 <em>ImmediateUpstream</em>，$H_Y$ 为 $Y$ 的 <em>ImmediateUpstream</em>；若 $H_X$ 与 $H_Y$ 互为 <em>SameUpstreamPeer</em>（Upstream 层相邻），则 $X$ 与 $Y$ 互为远端对等体</td></tr></tbody></table><p>原来的树形路由逻辑里是通过 subnet 判定，属于纯算法可计算的关系。目标ID落在自己的子网范围内，则目标是自己的下游节点；目标的ID是自己的父节点地址，（其子网范围包含自己），则目标是自己的上游节点；目标的ID也在自己的父节点子网范围内，则目标是自己的邻居节点或远方节点；否则是自己的远方节点。
+两个节点间的关系是 <strong>邻居节点</strong> 还是 <strong>远方节点</strong> 是由 <strong>代理父节点</strong> 根据是否双方都是 <strong>直接子节点</strong> 决定的。</p><p>而在新的路由关系中，我们理论上只需要上报： <strong>A节点 -> |代理父节点| -> B节点</strong> 。其他的都能根据算法得出。</p><ul><li>由 <strong>A节点 -> |代理父节点| -> B节点</strong> , 我们可以获得直接的关系有 <strong>Self</strong> , <strong>ImmediateUpstream</strong> , <strong>ImmediateDownstream</strong> 。算法复杂度为O(1)。</li><li>如果 <strong>A节点 -> |代理父节点| -> C节点</strong> , <strong>B节点 -> |代理父节点| -> C节点</strong> 。则他们是 <strong>SameUpstreamPeer</strong> 关系，算法复杂度为O(1)。</li><li>如果 <strong>A节点</strong> 的 <em><strong>代理父节点</strong></em> 链路包含 <strong>B节点</strong> ，或 <strong>B节点</strong> 的 <em><strong>代理父节点</strong></em> 链路包含 <strong>A节点</strong> ，它们是 <strong>TransitiveUpstream</strong> 或 <strong>TransitiveDownstream</strong> 子节点关系。这里涉及多级查找，但通常不会很深。可以考虑优化为如果深度很大，使用全局Atomic版本号比较+缓存父节点链路，如果深度小，直接链式查找。</li><li>其他的就全部是 <strong>OtherUpstreamPeer</strong> 节点了。</li></ul><h3 id=问题二-兄弟节点不再总是直连>问题二: 兄弟节点不再总是直连？</h3><p>之前的路由流程中，最上层的proxy层总是互相直连的。然后由父节点判定两个直接子节点是否可以直连。但是在跨大区通信时，比如下面的结构:</p><p><div class=excalidraw-container style="width:100%;height:auto;margin:1rem 0"><div id=excalidraw-image-1 class=excalidraw-root style=width:100%;height:auto data-excalidraw-src=./2604-new-route-cross-region-proxy.excalidraw data-excalidraw-fetch-id=excalidraw-image-1>Loading excalidraw...</div></div></p><p><strong>区域1-Proxy1</strong> 和 <strong>区域2-Proxy1</strong> 永不互通。即便他们是 <strong>SameUpstreamPeer</strong> 关系。而 <strong>区域1-Proxy1</strong> 和 <strong>区域1-Proxy2</strong> 是互通的，并且他们不需要经过 <strong>跨大区Proxy节点</strong> 下发直连消息就应该直接互通。</p><p>也就是说，是否能够直连应该是带策略的。我们可以用类似策略路由的方式来，在 <a href=https://github.com/atframework/libatapp>libatapp</a> 层会有创建连接的流程。可以在这个流程里判定是走代理还是走直连，这个操作不会频繁，所以通过对比属性集的开销还可以接受。
+但是在上游代理节点中，原本有判定两个节点是否通知直连的操作，如果每次转发消息包都去走策略判定属性集开销会过高了，所以我们可以直接提供个全局关闭的参数直接不再通过父节点通知直连了。
+实际上后面都可以通过 <a href=https://github.com/atframework/libatapp>libatapp</a> 来主动判定直连策略，后期也可以考虑干脆把这个协议删了算了。</p><p>这里涉及到 <a href=https://github.com/atframework/libatapp>libatapp</a> 层需要能获知到是直连还是需要代理，而这个又是属于 libatbus 的算法层面的东西。所以还要设计一个接口去获知到链路下一跳的目标endpoint和connection地址。</p><h3 id=问题三-是否需要libatbus层直连判定直连>问题三: 是否需要libatbus层直连判定直连？</h3><p>这个问题是上一个问题延伸出来的。为了 <a href=https://github.com/atframework/libatapp>libatapp</a> 能够接入不同的网络协议层，而不只支持 <a href=https://github.com/atframework/libatbus>libatbus</a> 作为协议通信层，我之前在某个版本里给 <a href=https://github.com/atframework/libatapp>libatapp</a> 也加了一层endpoint管理。它会处理连接过程中的pending message排队和支持接入其他协议层，比如loopback。然后把 <a href=https://github.com/atframework/libatbus>libatbus</a> 作为其中一种协议。</p><p>在 <a href=https://github.com/atframework/libatapp>libatapp</a> 层实现pending message排队的好处是不需要网络层协议支持在连接过程中的缓冲区，这样接入其他协议更简单也更灵活一些。
+而在 <a href=https://github.com/atframework/libatbus>libatbus</a> 里只有connection层的排队，是没有 message 层面的排队逻辑的。</p><p>我们也不希望重复实现message层面的排队重试逻辑，尽可能复用。这就导致在 <a href=https://github.com/atframework/libatapp>libatapp</a> 中，针对 <a href=https://github.com/atframework/libatbus>libatbus</a> 的接入层需要一定程度关心 <a href=https://github.com/atframework/libatbus>libatbus</a> 的流程。
+比如发起连接的时候 <a href=https://github.com/atframework/libatapp>libatapp</a> 要根据 <a href=https://github.com/atframework/libatbus>libatbus</a> 的算法知道实际发送的链路走直连，还是发给下游某个子节点，还是发给父节点。
+如果是发给父节点则可以直接发送数据，如果是发给直连节点或者下游子节点，则要判定是否已经创建连接，如果没有创建连接要等连接创建完再尝试发送。</p><h3 id=问题四-单独的路由关系表还是注入到服务发现策略路由表>问题四: 单独的路由关系表还是注入到服务发现策略路由表？</h3><p><a href=https://github.com/atframework/libatapp>libatapp</a> 里已经接入了etcd做服务发现和策略路由。一个选择是把 <a href=https://github.com/atframework/libatbus>libatbus</a> 的路由关系也写到这个服务发现的数据里。
+但是如果在父节点扩缩容或者抖动的时候就会导致整个业务策略路由抖动。另一个选择是单独放一份，这样 <a href=https://github.com/atframework/libatbus>libatbus</a> 层的路由关系抖动不影响业务层负载分布。
+但是隔离开有个问题是如何保证一致性？启动的时候我们可以先写入 <a href=https://github.com/atframework/libatbus>libatbus</a> 层的路由关系，再写服务发现。
+并且它们绑到同一个lease上，这样唯一的不一致点就在于上下线的时候，如果接收etcd的两个key的事件被分割到两次收包处理，可能有短暂的不一致。
+虽然这种情况可以通过pending message的retry去解决，但是会增加整体实现的复杂性。为了以后两个数据分离不互相影响，这应该是值得的。</p><p>最终的方案是 <strong>路由拓扑和服务发现分离，但共享同一个 etcd lease</strong>。写入顺序是先拓扑再服务发现，这样其他节点看到某节点的服务发现数据时，该节点的拓扑信息已经就绪。唯一的短暂不一致窗口（收到两个 key 的 watcher 事件之间的间隔）通过 libatapp 层的 pending message 和 retry 机制自然消化。</p><h2 id=新的拓扑注册表设计>新的拓扑注册表设计</h2><p>确定了上面四个问题的方向后，下面具体看拓扑注册表的实现。</p><h3 id=topology_registry-进程内拓扑图>topology_registry: 进程内拓扑图</h3><p>新的拓扑管理由 <code>topology_registry</code> 实现，它是一个进程内的轻量级图结构：</p><ul><li>每个节点是一个 <code>topology_peer</code>，通过 <code>bus_id_t</code>（64 位）唯一标识</li><li>每个 peer 可选地持有一个 upstream（形成树/森林）</li><li>每个 peer 可以挂载任意数量的 downstream（通过 weak pointer 引用，避免循环依赖）</li><li>每个 peer 附带 <code>topology_data</code>（PID、hostname、labels），用于支持策略路由判定</li></ul><pre class=mermaid>
+graph TD
+    R1["Root-1 (no upstream)"] --> A["Node-A"]
+    R1 --> B["Node-B"]
+    A --> A1["Node-A1"]
+    A --> A2["Node-A2"]
+    R2["Root-2 (no upstream)"] --> C["Node-C"]
+    C --> C1["Node-C1"]
+    
+    style R1 fill:#f9e79f
+    style R2 fill:#f9e79f
+</pre><h3 id=关系判定算法>关系判定算法</h3><p><code>topology_registry::get_relation(from, to)</code> 的判定逻辑：</p><ol><li><code>from == to</code> → <strong>Self</strong>，$O(1)$</li><li><code>to</code> 是 <code>from</code> 的直属 upstream → <strong>ImmediateUpstream</strong>，$O(1)$</li><li><code>from</code> 是 <code>to</code> 的直属 upstream → <strong>ImmediateDownstream</strong>，$O(1)$</li><li><code>from.upstream == to.upstream</code> → <strong>SameUpstreamPeer</strong>，$O(1)$</li><li>沿 <code>from</code> 的 upstream 链向上遍历找 <code>to</code> → <strong>TransitiveUpstream</strong>，$O(d)$ 其中 $d$ 为深度</li><li>沿 <code>to</code> 的 upstream 链向上遍历找 <code>from</code> → <strong>TransitiveDownstream</strong>，$O(d)$</li><li>以上均不满足 → <strong>OtherUpstreamPeer</strong></li></ol><p>实际场景中代理层级很少超过 3-4 层，所以 $O(d)$ 的遍历开销可以忽略。</p><h3 id=策略路由-topology_policy_rule>策略路由: topology_policy_rule</h3><p>为了解决"邻居节点不一定能直连"的问题，引入了 <code>topology_policy_rule</code>：</p><pre><code class=language-cpp>struct topology_policy_rule {
+  bool require_same_process;    // 要求同进程
+  bool require_same_hostname;   // 要求同主机
+  // Key: label 名, Value: 允许的 label 值集合
+  std::unordered_map<std::string, std::unordered_set<std::string>> require_label_values;
+};</code></pre><p>每个 peer 注册时携带 labels（如 <code>region=us-west</code>、<code>tier=proxy</code>），连接决策时通过 <code>check_policy(from, to, rule)</code> 判定两个节点是否满足直连条件。这样就可以灵活表达"同区域内的 proxy 可以直连，跨区域的必须走代理"这类规则。</p><h3 id=拓扑变更的安全性保证>拓扑变更的安全性保证</h3><p><code>topology_registry::update_peer()</code> 自带环检测。更新某个 peer 的 upstream 前，会沿新 upstream 的链路向上遍历，如果在链路中发现了当前 peer 的 ID，则拒绝更新并返回错误码。这避免了拓扑形成环导致消息死循环转发的风险。</p><h2 id=新的协议层设计>新的协议层设计</h2><p>老版本 <a href=https://github.com/atframework/libatbus>libatbus</a> 的协议基于自定义的二进制编码，迭代和扩展不方便。新版本全部切换到 <strong>Protobuf v3</strong>，带来几个直接的收益：</p><ol><li><strong>跨语言互通</strong>：proto 文件自带 <code>go_package</code> 指令，已在计划中提供 Go SDK</li><li><strong>演进友好</strong>：利用 protobuf 的 field number 和 optional 语义，协议字段的增减不会破坏前/向兼容性</li><li><strong>可读性</strong>：排查线上问题时可以直接用 protobuf decode 工具解析报文</li></ol><h3 id=报文结构>报文结构</h3><pre class=mermaid>
+graph LR
+    subgraph "Wire Format"
+        VL["Varint Length"] --> MH["message_head"]
+        MH --> MB["message_body (oneof)"]
+    end
+    
+    subgraph "message_body 类型"
+        MB --> DT["data_transform_req/rsp<br>业务数据转发"]
+        MB --> NR["node_register_req/rsp<br>节点注册握手"]
+        MB --> PP["node_ping_req / node_pong_rsp<br>心跳 + ECDH"]
+        MB --> HC["handshake_confirm<br>切换加密上下文"]
+        MB --> CC["custom_command_req/rsp<br>自定义命令"]
+    end
+</pre><p><code>message_head</code> 包含：版本号、消息类型、序列号、源节点 bus_id，以及可选的加密元数据（算法类型 + IV + AAD）和压缩元数据（算法 + 原始大小）。</p><h3 id=ecdh-密钥协商>ECDH 密钥协商</h3><p>老版本 <a href=https://github.com/atframework/libatbus>libatbus</a> 的加密协商采用类似 TLS 握手的方式——客户端和服务端发送给对方的数据是不同的（非对称角色）。这个设计有两个现实问题：</p><ol><li><strong>3 RTT 才能完成握手</strong>：对跨大区高延迟链路来说代价太高</li><li><strong>Go 语言难以支持</strong>：计划中的 Go SDK 需要完整实现非对称握手的状态机，复杂度远超核心诉求</li></ol><p>新版本改成了<strong>对称式握手</strong>：双方在 ping/pong 中各自发送公钥，各自独立推导出相同的 shared secret。这种方式天然是对称的——谁先发 ping 谁就是"Client"，但双方执行的操作完全一致。</p><p>代价是密钥交换算法必须两端配置成一样的（不像 TLS 可以在握手中协商非对称算法）。考虑到内部服务集群的部署通常可以统一配置，这个限制可以接受。</p><p>新版本在心跳报文中嵌入 ECDH 密钥协商流程，同一条连接不需要额外的握手阶段：</p><pre class=mermaid>
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    
+    C->>S: ping_req { crypto_handshake: {<br>  type: X25519,<br>  algorithms: [AES-256-GCM, ChaCha20-Poly1305, ...],<br>  public_key: <client_pubkey><br>} }
+    S->>S: ECDH(server_privkey, client_pubkey) → shared_secret<br>HKDF-SHA256(shared_secret) → [KEY ‖ IV]<br>选择双方最优算法
+    S->>C: pong_rsp { crypto_handshake: {<br>  selected: AES-256-GCM,<br>  public_key: <server_pubkey><br>} }
+    C->>C: ECDH(client_privkey, server_pubkey) → shared_secret<br>HKDF-SHA256(shared_secret) → [KEY ‖ IV]
+    C->>S: handshake_confirm { sequence }
+    Note over C,S: 双方切换到对称加密通道<br>仅 data_transform 加密，控制消息明文
+</pre><p><strong>关键设计决策</strong>：</p><ul><li>支持的密钥交换算法：X25519（TLS 1.3 推荐）、P-256、P-384、P-521</li><li>支持的对称算法：AES-128/192/256-CBC、AES-128/192/256-GCM（AEAD）、ChaCha20、ChaCha20-Poly1305-IETF、XChaCha20-Poly1305-IETF、XXTEA</li><li>控制消息（register、ping/pong、handshake_confirm）<strong>始终明文</strong>，不加密也不压缩</li><li>支持运行时换密钥（默认 3 小时），无需断连</li></ul><h3 id=压缩支持>压缩支持</h3><p>新版本增加了传输层压缩支持。一个关键的设计决策是 <strong>先压缩再加密</strong>：加密前的数据通常更有规律（protobuf 序列化的结构化数据、重复的字段前缀等），压缩率显著高于加密后再压缩。处理顺序是：</p><pre><code class=language-text>发送: 原始 body → 压缩 → 加密 → [head | encrypted(compressed(body))]
+接收: [head | encrypted(compressed(body))] → 解密 → 解压 → 原始 body</code></pre><p>这个设计带来一个实现上的约束：<strong>除了控制消息（register、ping/pong、handshake_confirm）使用验证算法验证 key 以外，其他流量（<code>data_transform</code>）的 body 都是加密的</strong>。这意味着不能像以前那样把业务 payload 直接放在 protobuf message 的 <code>oneof</code> body 字段里让 protobuf 自动解析——因为 body 在到达 protobuf 反序列化之前需要先经过解密和解压。所以新版本的报文打解包必须手动处理：先序列化 <code>message_head</code>，再独立处理 body 的压缩/加密，最后拼接成完整的 wire format。接收端也是先拆出 head 和 body，对 body 做解密/解压后再交给上层。</p><p>协议同时引入了语义化的压缩等级定义，将不同算法的参数抽象为统一的等级：</p><table><thead><tr><th>语义等级</th><th>典型映射 (zstd / lz4 / zlib)</th><th>适用场景</th></tr></thead><tbody><tr><td>STORAGE</td><td>level 1 / fast(1) / level 1</td><td>落库前轻量压缩</td></tr><tr><td>FAST</td><td>level -1 / fast(1) / level 1</td><td>延迟敏感的实时通信</td></tr><tr><td>BALANCED</td><td>level 3 / fast(默认) / level 6</td><td>日常通信默认值</td></tr><tr><td>HIGH_RATIO</td><td>level 9 / HC / level 7</td><td>带宽受限的跨区传输</td></tr></tbody></table><p>支持的压缩算法包括 Zstd、LZ4、Snappy、Zlib，上层可以按消息类型或链路特征选择不同等级。</p><h2 id=新的多通道与连接模型>新的多通道与连接模型</h2><h3 id=连接生命周期>连接生命周期</h3><p>新版本的连接状态机更精细，加入了独立的握手阶段和密钥刷新阶段：</p><pre class=mermaid>
+stateDiagram-v2
+    [*] --> Disconnected
+    Disconnected --> Connecting: connect() / listen()
+    Connecting --> Handshaking: TCP 建连完成
+    Handshaking --> Connected: register + ping/pong握手完成
+    Connected --> Connected: 周期性换密钥 (3h)
+    Connected --> Disconnecting: close()
+    Disconnecting --> Disconnected: IO 清理完成
+    Handshaking --> Disconnected: 握手超时/失败
+</pre><h3 id=endpoint-的双通道模型>Endpoint 的双通道模型</h3><p>每个远端节点（<code>endpoint</code>）包含两类连接：</p><ul><li><strong>控制通道</strong> (<code>ctrl_conn_</code>)：承载注册、心跳、ECDH 握手等控制消息</li><li><strong>数据通道</strong> (<code>data_conn_</code>)：承载业务数据，可以有多条，按优先级排序</li></ul><h3 id=通道选择优先级保持不变>通道选择优先级（保持不变）</h3><p>多通道选择机制基本延续了老设计，按实际部署拓扑自动选择最优通道：</p><table><thead><tr><th>优先级</th><th>通道类型</th><th>协议前缀</th><th>条件</th></tr></thead><tbody><tr><td>最高</td><td>内存通道</td><td><code>mem://</code></td><td>同进程（同 PID + 同 hostname）</td></tr><tr><td>高</td><td>共享内存</td><td><code>shm://</code></td><td>同物理机（同 hostname）</td></tr><tr><td>中</td><td>Unix Socket / Named Pipe</td><td><code>unix://</code> <code>pipe://</code></td><td>同物理机</td></tr><tr><td>低</td><td>TCP</td><td><code>ipv4://</code> <code>ipv6://</code> <code>atcp://</code></td><td>跨物理机</td></tr></tbody></table><p>新增的 <code>atcp://</code> 协议名不预设 IPv4/IPv6，而是根据地址实际内容判定协议族，在双栈环境下更友好。</p><h3 id=节点注册与访问控制>节点注册与访问控制</h3><p>新版本的 <code>node_register_req</code> 会携带节点的 <strong>公开信息</strong>（listen 地址列表、支持的通道类型、支持的加密/压缩算法集），服务端验证通过后返还 <code>node_register_rsp</code>。验证机制使用 HMAC-SHA256 签名 <code>access_key</code>，防止未授权节点接入。</p><h2 id=新路由算法的完整流程>新路由算法的完整流程</h2><p>综合上面的拓扑注册表和连接模型，新的路由流程如下：</p><pre class=mermaid>
+flowchart TD
+    Start["send_data(target_id, data)"] --> CheckLocal{"本地路由表<br>有 target 的 endpoint?"}
+    
+    CheckLocal -->|"有，直连"| DirectSend["通过 endpoint 的<br>data_conn 直接发送"]
+    
+    CheckLocal -->|"无"| CheckUpstream{"target 是<br>自己的 upstream?"}
+    CheckUpstream -->|"是"| SendUpstream["通过 upstream<br>ctrl/data_conn 发送"]
+    
+    CheckUpstream -->|"否"| QueryTopo["查询 topology_registry<br>get_relation(self, target)"]
+    
+    QueryTopo --> RelDown{"ImmediateDownstream<br>或 TransitiveDownstream?"}
+    RelDown -->|"是"| FindNextHop["沿拓扑树向下找<br>下一跳 child endpoint"]
+    FindNextHop --> HopExists{"下一跳<br>endpoint 存在?"}
+    HopExists -->|"是"| ForwardChild["经下一跳子节点转发"]
+    HopExists -->|"否"| FallbackUp["回退: 经 upstream 转发"]
+    
+    RelDown -->|"否"| RelOther{"OtherUpstreamPeer?"}
+    RelOther -->|"是"| PolicyCheck{"check_policy:<br>可以直连?"}
+    PolicyCheck -->|"允许直连"| TryDirect["尝试建立直连"]
+    PolicyCheck -->|"不允许"| FallbackUp
+    
+    RelOther -->|"否 (SameUpstreamPeer)"| PolicyCheck2{"check_policy:<br>可以直连?"}
+    PolicyCheck2 -->|"允许直连"| TryDirect
+    PolicyCheck2 -->|"不允许"| FallbackUp
+    
+    style DirectSend fill:#90EE90
+    style FallbackUp fill:#FFB6C1
+    style TryDirect fill:#87CEEB
+</pre><p>与老路由的关键差异：</p><table><thead><tr><th>维度</th><th>老路由（subnet + 静态树）</th><th>新路由（topology_registry + 策略）</th></tr></thead><tbody><tr><td>关系判定</td><td>子网掩码位计算</td><td>拓扑注册表链式查询</td></tr><tr><td>直连决策</td><td>父节点自动通知直连</td><td>策略规则判定，上层应用可控</td></tr><tr><td>拓扑变更</td><td>不支持动态变更</td><td>update_peer / remove_peer，实时响应</td></tr><tr><td>代理层扩缩容</td><td>需要预分配 ID 段</td><td>动态注册和注销，支持 HPA</td></tr><tr><td>跨区隔离</td><td>不支持</td><td>labels 策略精确控制</td></tr></tbody></table><h2 id=总结>总结</h2><p>这次 <a href=https://github.com/atframework/libatbus>libatbus</a> 的重构不是简单的代码翻新，核心是把路由模型从"静态子网树"切换到"动态拓扑注册表 + 策略驱动"。四个关键设计决策及其 trade-off：</p><ol><li><strong>关系判定从 subnet 计算改为拓扑链查询</strong>：失去了 $O(1)$ 的纯算法判定，换来了代理层可以动态增减的灵活性。实际可接受，因为查询深度通常不超过 4 层。</li><li><strong>直连决策从父节点下推改为上层策略判定</strong>：libatbus 层不再主动通知直连，改由 libatapp 通过 labels + policy 自行判断。代价是多了一次策略匹配开销；收益是跨区隔离、差异化安全策略都可以优雅实现。</li><li><strong>协议从自定义二进制改为 Protobuf</strong>：性能上略有额外开销（序列化/反序列化），但获得了跨语言支持、协议演进能力和运维可观测性。密钥协商从类 TLS 的非对称握手改为对称式 ECDH，降低了 RTT 和跨语言实现复杂度，代价是两端必须配置相同的密钥交换算法。先压缩再加密的流程获得了更好的压缩率，但需要手动处理 body 的打解包而非依赖 protobuf oneof。</li><li><strong>拓扑关系和服务发现两张表分离但共享 lease</strong>：隔离了代理层抖动对业务层的影响，代价是需要处理短暂的事件时序不一致。通过 pending message retry 机制自然消化。</li></ol><p>这些变更为后续 libatapp 中的连接管理、重连机制、代理级联等上层特性提供了基座。关于 libatapp 如何在这个基座上实现 pending message 排队、拓扑变更响应、指数退避重连和代理级联传播，将在<a href=../2605>下一篇文章</a>中展开。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2026-03-27T16:08:45.000+00:00 itemprop=datePublished>2026-03-27</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/libatbus.html>libatbus</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E6%9C%8D%E5%8A%A1%E7%BD%91%E6%A0%BC.html>服务网格</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E8%B7%AF%E7%94%B1.html>路由</a></li><li class=article-tag-list-item><a href=//owent.net/tags/ecdh.html>ECDH</a></li><li class=article-tag-list-item><a href=//owent.net/tags/protobuf.html>protobuf</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2026/2605.html>上一篇<strong>新版本libatapp的连接管理——从etcd服务发现到拓扑驱动的自动重连</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2026/2603.html>下一篇<strong>Protobuf又一坑 - C++标准和ABI兼容性</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;owent
+</strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong><span class=clearfix></span></div></div></footer></div><script type=importmap>
+{"imports":{"@excalidraw/excalidraw":"https://esm.sh/@excalidraw/excalidraw","@popperjs/core":"https://esm.run/popper.js","bootstrap":"https://esm.run/bootstrap","excalidraw":"https://esm.sh/@excalidraw/excalidraw","mermaid":"https://esm.sh/mermaid","react":"https://esm.run/react","react-bootstrap":"https://esm.run/react-bootstrap"}}
+</script><script type=module>// import * as Popper from "@popperjs/core";// import * as bootstrap from "bootstrap";
+// import React from "react";
+
+        
+</script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/accesslog.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/armasm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/awk.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/basic.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/bnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/capnproto.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/cmake.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/d.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dockerfile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dos.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/erlang.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/ebnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/latex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/llvm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/lua.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/powershell.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/protobuf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/profile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/vim.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/x86asm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/yaml.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/vs2015.min.css",document.querySelector("head").appendChild(t),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const n={};for(const e of hljs.listLanguages())n[e.toLowerCase()]=!0;for(const e of document.querySelectorAll("pre>code"))try{if(e.className.match(/\bmermaid\b/i)){e.classList.add("mermaid");continue}if(e.className.match(/\bexcalidraw\b/i)){e.classList.add("excalidraw-root");continue}if(e.className.match(/\bdrawio\b/i)){e.classList.add("drawio-root"),e.classList.add("mxgraph");continue}if(e.className.match(/\bchart(js)?\b/i)){e.classList.add("chartjs-container");continue}if(e.className.match(/\bnohighlight\b/i))continue;const t=e.className.match(/language-([^\s]+)/i);if(t&&t.length>=2&&hljs.getLanguage(t[1]))hljs.highlightElement(e);else{const t=hljs.highlightAuto(e.innerText,hljs.listLanguages());t&&t.value&&(e.innerHTML=t.value,e.classList.add("hljs"))}}catch(e){window.console&&console.log(e.toString()+`\r
+Maybe can not detect the language`)}})</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-PQEY77BYG1"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-PQEY77BYG1")}</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css",document.querySelector("head").appendChild(t),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=module>
+import mermaid from "mermaid";
+const config = {
+    theme: 'neutral',
+    logLevel: 'fatal',
+    securityLevel: 'loose', 
+    startOnLoad: false, 
+    arrowMarkerAbsolute: false,
+    
+
+};
+mermaid.initialize(config);
+
+
+(async () => {
+    const pendingElements = document.querySelectorAll('.mermaid-pending[data-mermaid-src]');
+    for (const el of pendingElements) {
+        const src = el.getAttribute('data-mermaid-src');
+        if (!src) continue;
+        try {
+            const response = await fetch(src);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch ${src}: ${response.status}`);
+            }
+            const content = await response.text();
+            el.textContent = content;
+            el.classList.remove('mermaid-pending');
+        } catch (e) {
+            if (window.console) {
+                console.error("Failed to fetch mermaid file:", src, e);
+            }
+            el.textContent = `Failed to load: ${src}`;
+            el.classList.remove('mermaid');
+            el.classList.remove('mermaid-pending');
+        }
+    }
+    
+    await mermaid.run();
+})();
+</script><script type=module>
+(async () => {
+    const ensureCss = () => {
+        const id = "excalidraw-css";
+        if (document.getElementById(id)) {
+            return;
+        }
+        const link = document.createElement("link");
+        link.id = id;
+        link.rel = "stylesheet";
+        link.href = "https:\/\/cdn.jsdelivr.net\/npm\/excalidraw\/dist\/excalidraw.min.css";
+        document.head.appendChild(link);
+    };
+
+    const isExcalidrawCodeBlock = (codeEl) => {
+        if (!codeEl || !codeEl.className) {
+            return false;
+        }
+        return /(^|\s)language-(\{)?excalidraw(\})?(\s|$)/i.test(codeEl.className) || /\bexcalidraw\b/i.test(codeEl.className);
+    };
+
+    const roots = [];
+    for (const el of document.querySelectorAll('.excalidraw-root')) {
+        const dataId = el.getAttribute && el.getAttribute("data-excalidraw-data-id");
+        const dataSrc = el.getAttribute && el.getAttribute("data-excalidraw-src");
+        if (!dataId && !dataSrc) {
+            continue;
+        }
+        if (dataId) {
+            roots.push({
+                rootEl: el,
+                codeEl: null,
+                getInitialData: () => {
+                    const jsonEl = document.getElementById(dataId);
+                    return jsonEl ? (jsonEl.textContent || "{}") : null;
+                },
+            });
+        } else if (dataSrc) {
+            
+            roots.push({
+                rootEl: el,
+                codeEl: null,
+                dataSrc: dataSrc,
+                getInitialData: null, 
+                needsFetch: true,
+            });
+        }
+    }
+    for (const codeEl of document.querySelectorAll('pre>code')) {
+        if (!isExcalidrawCodeBlock(codeEl)) {
+            continue;
+        }
+        const preEl = codeEl.parentElement;
+        if (!preEl) {
+            continue;
+        }
+        const raw = codeEl.textContent || "";
+        if (!raw.trim()) {
+            continue;
+        }
+        const rootEl = document.createElement("div");
+        rootEl.className = "excalidraw-root";
+        rootEl.style.width = "100%";
+        rootEl.style.height = "auto";
+        const container = document.createElement("div");
+        container.className = "excalidraw-container";
+        container.style.height = codeEl.style.height || "auto";
+        container.style.width = codeEl.style.width || "100%";
+        container.style.margin = codeEl.style.margin || "1rem 0";
+        container.appendChild(rootEl);
+        preEl.parentNode.insertBefore(container, preEl);
+        codeEl.textContent = "Loading excalidraw libraries...";
+        roots.push({ rootEl, codeEl, getInitialData: () => raw, sourceEl: preEl, containerEl: container });
+    }
+
+    if (roots.length <= 0) {
+        return;
+    }
+
+    
+    for (const item of roots) {
+        if (item.needsFetch && item.dataSrc) {
+            try {
+                const response = await fetch(item.dataSrc);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch ${item.dataSrc}: ${response.status}`);
+                }
+                const content = await response.text();
+                item.getInitialData = () => content;
+                item.needsFetch = false;
+            } catch (e) {
+                if (window.console) {
+                    console.error("Failed to fetch excalidraw file:", item.dataSrc, e);
+                }
+                item.rootEl.textContent = `Failed to load: ${item.dataSrc}`;
+                item.failed = true;
+            }
+        }
+    }
+
+    
+    const validRoots = roots.filter(item => !item.failed);
+    if (validRoots.length <= 0) {
+        return;
+    }
+
+    const restoreFn = (reason, item) => {
+        if (item) {
+            if (item.codeEl) {
+                item.codeEl.textContent = item.getInitialData ? item.getInitialData() : "";
+            } else if (item.getInitialData) {
+                const reasonEl = document.createElement("div");
+                reasonEl.textContent = reason;
+                const preEl = document.createElement("pre");
+                const codeEl = document.createElement("code");
+                codeEl.textContent = item.getInitialData();
+                preEl.appendChild(codeEl);
+                item.rootEl.replaceChildren(reasonEl, preEl);
+            } else {
+                item.rootEl.textContent = reason;
+            }
+            return;
+        }
+        for (const item of validRoots) {
+            if (item.codeEl) {
+                item.codeEl.textContent = item.getInitialData ? item.getInitialData() : "";
+            } else if (item.getInitialData) {
+                const reasonEl = document.createElement("div");
+                reasonEl.textContent = reason;
+                const preEl = document.createElement("pre");
+                const codeEl = document.createElement("code");
+                codeEl.textContent = item.getInitialData();
+                preEl.appendChild(codeEl);
+                item.rootEl.replaceChildren(reasonEl, preEl);
+            } else {
+                item.rootEl.textContent = reason;
+            }
+        }
+    };
+
+    let exportToSvg;
+    try {
+        ensureCss();
+        let ExcalidrawPkg = await import("@excalidraw/excalidraw");
+        exportToSvg =
+            ExcalidrawPkg.exportToSvg ||
+            (ExcalidrawPkg.default && ExcalidrawPkg.default.exportToSvg) ||
+            null;
+        if (typeof exportToSvg !== "function") {
+            ExcalidrawPkg = await import("https://esm.sh/@excalidraw/excalidraw");
+            exportToSvg =
+                ExcalidrawPkg.exportToSvg ||
+                (ExcalidrawPkg.default && ExcalidrawPkg.default.exportToSvg) ||
+                null;
+        }
+    } catch (e) {
+        if (window.console) {
+            console.error("Failed to load excalidraw dependencies", e);
+        }
+        restoreFn("Failed to load excalidraw libraries");
+        return;
+    }
+
+    if (typeof exportToSvg !== "function") {
+        if (window.console) {
+            console.error("Invalid excalidraw module exports: missing exportToSvg");
+        }
+        restoreFn("Invalid excalidraw module exports: missing exportToSvg");
+        return;
+    }
+
+    for (const item of validRoots) {
+        const rootEl = item.rootEl;
+        const raw = item.getInitialData ? item.getInitialData() : null;
+        if (!raw) {
+            continue;
+        }
+        let sceneData = null;
+        try {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === "object" && parsed.type === "excalidraw" && Array.isArray(parsed.elements)) {
+                sceneData = {
+                    elements: parsed.elements,
+                    appState: parsed.appState || {},
+                    files: parsed.files || {},
+                };
+            } else {
+                sceneData = parsed;
+            }
+        } catch (e) {
+            if (window.console) {
+                console.error("Invalid excalidraw json", e);
+            }
+            restoreFn("Invalid excalidraw json", item);
+            continue;
+        }
+
+        try {
+            const elements = sceneData && sceneData.elements ? sceneData.elements : (Array.isArray(sceneData) ? sceneData : []);
+            const appState = sceneData && sceneData.appState ? sceneData.appState : {};
+            const files = sceneData && sceneData.files ? sceneData.files : {};
+
+            const svg = await exportToSvg({
+                elements,
+                appState,
+                files,
+                exportPadding: 10,
+            });
+            if (!svg) {
+                restoreFn("Invalid excalidraw json", item);
+                continue;
+            }
+            svg.style.width = "100%";
+            svg.style.height = "auto";
+            svg.style.display = "block";
+            rootEl.replaceChildren(svg);
+            if (item.sourceEl) {
+                item.sourceEl.style.display = "none";
+            }
+            if (item.containerEl) {
+                item.containerEl.style.height = "auto";
+            }
+        } catch (e) {
+            if (window.console) {
+                console.error("Failed to render excalidraw", e);
+            }
+            restoreFn("Failed to render excalidraw", item);
+        }
+    }
+})();
+</script><script type=text/javascript>var _hmt=_hmt||[];(function(){var t,n,e=document.createElement("script");e.src="https://hm.baidu.com/hm.js?6a0daf8d58889f1cf55a353867bfdbb0",t=document.getElementsByTagName("script"),n=document.getElementsByTagName("script")[t.length-1],n.parentNode.appendChild(e)})()</script></div></body></html>

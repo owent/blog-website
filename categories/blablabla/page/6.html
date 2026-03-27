@@ -3,7 +3,150 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/categories/blablabla/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-890"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/890.html target=_blank itemprop=url>VC和GCC内成员函数指针实现的研究(一)</a></h1></header><div class=article-summary><p>最近在《C++对象模型》一书里说到的virtual的成员函数指针，低于128的被cfront编译器认为是虚表偏移量（支持子类对父类函数的覆盖）。VC只是提了下单继承、多继承和虚继承的实现方案不同，GCC没有提及，所以就专门稍微深入分析研究下他们的实现机制。</p></div><div class=article-more><a href=//owent.net/2013/890.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-06T12:55:58.000+00:00 itemprop=datePublished>2013-09-06</time></div></div></article><article class="article-panel archive-article archive-type-879"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/879.html target=_blank itemprop=url>一个C++关于成员变量偏移地址的小Trick</a></h1></header><div class=article-summary><p>今天看到一个小例子，发现了一个小trick。见代码：</p><pre><code class=language-cpp>#include <cstdio>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-902"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/902.html target=_blank itemprop=url>VC和GCC成员函数指针实现的研究(三)</a></h1></header><div class=article-summary><p>接上一篇 <a href=https://www.owent.net/2013/896.html>VC和GCC内成员函数指针实现的研究(二)</a></p><h2 id=虚继承>虚继承</h2><p>终于到最后的虚继承了。</p><p>测试代码如下:</p><pre><code class=language-cpp>#include <ctime>
+#include <vector>
+#include <algorithm>
+#include <cstdio>
+#include <stdint.h>
+#include <cstddef>
+#include <string>
+
+class foo_a
+{
+public:
+    virtual ~foo_a(){}
+    virtual void info() {
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+    }
+
+    void print(){
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+    }
+};
+
+class foo_l
+{
+public:
+    int l;
+    foo_l(): l(1){}
+
+    virtual void info() {
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+    }
+};
+
+class foo_r: virtual public foo_a
+{
+public:
+    int r;
+    foo_r(): r(2){}
+};
+
+class foo_c: virtual public foo_l, public foo_r
+{
+public:
+    virtual void info() {
+        printf("%d,%d. %s:%d\n", l, r, __FUNCTION__, __LINE__);
+    }
+};
+
+
+int main(int argc, char* argv[]) {
+    void (foo_a::*vptr1)() = &foo_a::info;
+    void (foo_l::*vptr2)() = &foo_l::info;
+    void (foo_a::*ptr)() = &foo_a::print;
+
+    foo_c c;
+    foo_r r;
+    foo_a a;
+
+    printf("pword size = %d\n", (int)(sizeof(size_t)));
+    printf("address of &foo_a::info = 0x%llxH\n", &foo_a::info);
+    printf("pointer to &foo_a::info = 0x%llxH\n", vptr1);
+    printf("sizeof vptr = %d\n", (int)(sizeof(vptr1)));
+
+    (a.*vptr1)();
+    (r.*vptr1)();
+    (c.*vptr1)();
+    (c.*vptr2)();
+    c.info();
+
+    (c.*ptr)();
+
+    return 0;
+}</code></pre><h2 id=vc虚继承成员函数指针实现>VC虚继承成员函数指针实现</h2><p>因为是兼容虚继承和非虚继承的，所以赋值的部分的汇编是一样的。这里就不贴了。关键在于执行期它是怎么找到虚基类的。请往下看：</p></div><div class=article-more><a href=//owent.net/2013/902.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-11T14:57:15.000+00:00 itemprop=datePublished>2013-09-11</time></div></div></article><article class="article-panel archive-article archive-type-896"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/896.html target=_blank itemprop=url>VC和GCC成员函数指针实现的研究(二)</a></h1></header><div class=article-summary><p>接上一篇 <a href=https://www.owent.net/2013/890.html>VC和GCC内成员函数指针实现的研究(一)</a></p><p>接下来是多重继承，用到的测试代码如下所示:</p><pre><code class=language-cpp>#include <ctime>
+#include <vector>
+#include <algorithm>
+#include <cstdio>
+#include <stdint.h>
+#include <cstddef>
+#include <string>
+
+class foo_a
+{
+public:
+    virtual ~foo_a(){}
+    virtual void info() {
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+    }
+};
+
+class foo_b
+{
+public:
+    virtual ~foo_b(){}
+
+    // 这个函数用于试foo_b的结构与foo_a不同
+    // 以防止VC对foo_a和foo_b的`vcall'{8}'的代码合并
+    virtual void inspect() { 
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+    } 
+
+    virtual void info() {
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+    }
+
+    void print() {
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+    }
+};
+
+
+class foo_c: public foo_a, public foo_b
+{
+public:
+    virtual void info() {
+        printf("%s:%d\n", __FUNCTION__, __LINE__);
+    }
+};
+
+
+int main(int argc, char* argv[]) {
+    void (foo_a::*vptr1)() = &foo_a::info;
+    void (foo_b::*vptr2)() = &foo_b::info;
+    void (foo_b::*ptr)() = &foo_b::print;
+
+    foo_c c;
+    foo_b b;
+    foo_a a;
+
+    
+    printf("word size = %d\n", (int)(sizeof(size_t)));
+    printf("address of &foo_a::info = 0x%llxH\n", &foo_a::info);
+    printf("pointer to &foo_a::info = 0x%llxH\n", vptr1);
+    printf("address of &foo_b::info = 0x%llxH\n", &foo_b::info);
+    printf("pointer to &foo_b::info = 0x%llxH\n", vptr2);
+    printf("sizeof vptr = %d\n", (int)(sizeof(vptr1)));
+
+    (a.*vptr1)();
+    (b.*vptr2)();
+    (c.*vptr1)();
+    (c.*vptr2)();
+
+    (c.*ptr)();
+
+    return 0;
+}</code></pre><h2 id=vc多重继承成员函数指针实现>VC多重继承成员函数指针实现</h2><p><img src=p896_img8.png loading=lazy></p></div><div class=article-more><a href=//owent.net/2013/896.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-11T14:44:06.000+00:00 itemprop=datePublished>2013-09-11</time></div></div></article><article class="article-panel archive-article archive-type-890"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/890.html target=_blank itemprop=url>VC和GCC内成员函数指针实现的研究(一)</a></h1></header><div class=article-summary><p>最近在《C++对象模型》一书里说到的virtual的成员函数指针，低于128的被cfront编译器认为是虚表偏移量（支持子类对父类函数的覆盖）。VC只是提了下单继承、多继承和虚继承的实现方案不同，GCC没有提及，所以就专门稍微深入分析研究下他们的实现机制。</p></div><div class=article-more><a href=//owent.net/2013/890.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-09-06T12:55:58.000+00:00 itemprop=datePublished>2013-09-06</time></div></div></article><article class="article-panel archive-article archive-type-879"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/879.html target=_blank itemprop=url>一个C++关于成员变量偏移地址的小Trick</a></h1></header><div class=article-summary><p>今天看到一个小例子，发现了一个小trick。见代码：</p><pre><code class=language-cpp>#include <cstdio>
 #include <cstdlib>
 
 class base_1
@@ -87,7 +230,7 @@ get方法， 用于获取引用的对象
 ()操作符， 用于执行引用的函数</p></div><div class=article-more><a href=//owent.net/2012/558.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-02-26T14:22:28.000+00:00 itemprop=datePublished>2012-02-26</time></div></div></article><article class="article-panel archive-article archive-type-536"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/536.html target=_blank itemprop=url>C++ 新特性学习（四） — Bind和Function</a></h1></header><div class=article-summary><p>绑定函数是我认为C++新标准里第二有用的库了
 绑定库的使用环境是：</p><ul><li>GCC-C++ 4.3 及以上</li><li>Visual Studio 2008 SP1 及以上</li><li>BOOST 1.25及以上（其中function是1.16及以上）</li></ul><p>先来看一段代码</p></div><div class=article-more><a href=//owent.net/2012/536.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-02-10T09:52:37.000+00:00 itemprop=datePublished>2012-02-10</time></div></div></article><article class="article-panel archive-article archive-type-534"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2011/534.html target=_blank itemprop=url>C++ 新特性学习（三） — Regex库</a></h1></header><div class=article-summary><p>C++ STL终于会放点实用的东西了。可喜可贺。</p><p>这个，显然是正则表达式库，作为一个强大而又NB的库，我表示对其理解甚少，只能先研究下基本用法，更具体的用法要等实际应用中用到的时候在细看了。
 PS：正则表达式的资料见 <a href=http://www.regexlab.com/>http://www.regexlab.com/</a>
-更多资料见 <a href=https://www.owent.net/2011/264.html>https://www.owent.net/2011/264.html</a></p></div><div class=article-more><a href=//owent.net/2011/534.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2011-10-22T14:38:01.000+00:00 itemprop=datePublished>2011-10-22</time></div></div></article><article class="article-panel archive-article archive-type-518"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2011/518.html target=_blank itemprop=url>C++ 新特性学习（二） -- Array、Tuple和Hash库</a></h1></header><div class=article-summary><p>这回的两个库没怎么用过，这里的记录就用VC++写了，使用G++和BOOST的时候和智能指针类似。</p><p>首先是<strong>Tuple</strong>库</p><p>要注意的是这里G++，VC++和BOOST库的函数不太一样，所以使用的时候要注意没有使用到编译器和编译器相关的函数（特别是IDE的弹窗的方法要注意）。</p></div><div class=article-more><a href=//owent.net/2011/518.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2011-10-14T12:17:17.000+00:00 itemprop=datePublished>2011-10-14</time></div></div></article><article class="article-panel archive-article archive-type-508"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2011/508.html target=_blank itemprop=url>C++ 新特性学习（一） -- 概述+智能指针（smart_ptr）</a></h1></header><div class=article-summary><p><strong>C++ 0x/11 终于通过了,真是个很爽的消息。于是乎我决定对新的东西系统学习一下。</strong></p><p>首先当然要从tr1开始，智能指针实际上我已经用过很多次了，但是为了完整起见，还是写出来记录一下。</p></div><div class=article-more><a href=//owent.net/2011/508.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2011-10-14T04:12:48.000+00:00 itemprop=datePublished>2011-10-14</time></div></div></article></div><hr><nav id=page-nav><ul class=pagination><li class=page-item><a class=page-link href=/categories/blablabla/page/5.html>&#171;上一页</a></li><li class=page-item><a class=page-link href=/categories/blablabla.html>1</a></li><li class=page-item><a class=page-link href=/categories/blablabla/page/2.html>2</a></li><li class=page-item><a class=page-link href=/categories/blablabla/page/3.html>3</a></li><li class=page-item><a class=page-link href=/categories/blablabla/page/4.html>4</a></li><li class=page-item><a class=page-link href=/categories/blablabla/page/5.html>5</a></li><li class='page-item disabled'><a class=page-link href=/categories/blablabla/page/6.html>6</a><span class=sr-only>(current)</span></li><li class=page-item><a class=page-link href=/categories/blablabla/page/7.html>7</a></li><li class=page-item><a class=page-link href=/categories/blablabla/page/7.html>下一页&#187;</a></li></ul></nav></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
+更多资料见 <a href=https://www.owent.net/2011/264.html>https://www.owent.net/2011/264.html</a></p></div><div class=article-more><a href=//owent.net/2011/534.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2011-10-22T14:38:01.000+00:00 itemprop=datePublished>2011-10-22</time></div></div></article></div><hr><nav id=page-nav><ul class=pagination><li class=page-item><a class=page-link href=/categories/blablabla/page/5.html>&#171;上一页</a></li><li class=page-item><a class=page-link href=/categories/blablabla.html>1</a></li><li class=page-item><a class=page-link href=/categories/blablabla/page/2.html>2</a></li><li class=page-item><a class=page-link href=/categories/blablabla/page/3.html>3</a></li><li class=page-item><a class=page-link href=/categories/blablabla/page/4.html>4</a></li><li class=page-item><a class=page-link href=/categories/blablabla/page/5.html>5</a></li><li class='page-item disabled'><a class=page-link href=/categories/blablabla/page/6.html>6</a><span class=sr-only>(current)</span></li><li class=page-item><a class=page-link href=/categories/blablabla/page/7.html>7</a></li><li class=page-item><a class=page-link href=/categories/blablabla/page/7.html>下一页&#187;</a></li></ul></nav></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
 主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
