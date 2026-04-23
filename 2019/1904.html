@@ -32,7 +32,7 @@
         return COROUTINE_OBJECT::promise_type::get_return_object_on_allocation_failure(); // noexcept
     }
 }</code></pre><p>关键字 <code>co_await</code> 先简单理解为判定是否需要切出，后面会有更加详细一点的解释。
-而协程函数一切的核心都在于上面的 <code>COROUTINE_OBJECT</code> 类型。里面有一些规范， <code>co_yield</code> 和 <code>co_return</code> 涉及 <code>COROUTINE_OBJECT</code> 里的 <code>COROUTINE_OBJECT::promise_type</code> 类型。必须实现某些公共接口和函数功能接口。而返回到外层的 <code>COROUTINE_OBJECT</code> 对象里也需要保存协程的handle(目前是 <code>std::experimental::coroutine_handle&lt;PROMISE_TYPE></code> )，以用于后续控制协程的上下文切换使用。 同样， 下面的例子因为必须写一个协程入口对象，所以有一部分比较烦杂的必须接入的代码。</p><p>结构如下:</p><p><img src=1904-01.png alt=1904-01.png loading=lazy></p><h1 id=协程闭包类型promise>协程闭包类型(promise)</h1><p>要支持协程函数，首先要准备一个包装的类型，里面包含 <code>promise_type</code> ，然后提供基本的创建、维护handle的函数。比如:</p><pre><code class=language-cpp>struct coroutine_task {
+而协程函数一切的核心都在于上面的 <code>COROUTINE_OBJECT</code> 类型。里面有一些规范， <code>co_yield</code> 和 <code>co_return</code> 涉及 <code>COROUTINE_OBJECT</code> 里的 <code>COROUTINE_OBJECT::promise_type</code> 类型。必须实现某些公共接口和函数功能接口。而返回到外层的 <code>COROUTINE_OBJECT</code> 对象里也需要保存协程的handle(目前是 <code>std::experimental::coroutine_handle&lt;PROMISE_TYPE></code> )，以用于后续控制协程的上下文切换使用。 同样， 下面的例子因为必须写一个协程入口对象，所以有一部分比较烦杂的必须接入的代码。</p><p>结构如下:</p><p><img src=/2019/1904-01.png alt=1904-01.png loading=lazy></p><h1 id=协程闭包类型promise>协程闭包类型(promise)</h1><p>要支持协程函数，首先要准备一个包装的类型，里面包含 <code>promise_type</code> ，然后提供基本的创建、维护handle的函数。比如:</p><pre><code class=language-cpp>struct coroutine_task {
     struct promise_type {
         coroutine_task get_return_object() {
             return coroutine_task{};

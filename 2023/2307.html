@@ -28,7 +28,7 @@
   - name: "ExcelAffixCountRandomPool_affix_count_pool_id"
     description: "Affix.xlsx|词条数量随机池表|affix_count_pool_id 值校验"
     rules:
-      - InTableColumn("Affix.xlsx", "词条数量随机池表", 3, 2, "affix_count_pool_id")</code></pre><p>验证器检查不通过的一个示例如下(还包含一个唯一性检查报错):</p><p><img src=2307-validator01.png alt=2307-validator01.png loading=lazy></p><h3 id=数值范围验证器的增强>数值范围验证器的增强</h3><p>范围验证器的增强主要有两处，一处是支持 <code>>数字</code> , <code>>=数字</code> , <code>&lt;数字</code> , <code>&lt;=数字</code> 这种格式的配置。第二处是现在支持浮点数了。</p><h2 id=其他优化>其他优化</h2><h3 id=验证器细项优化>验证器细项优化</h3><ul><li><code>org.xresloader.field_alias</code> 和 <code>org.xresloader.enum_alias</code> 允许多个别名。<blockquote><p>这样可以方便版本升级的时候做一定时间的向前兼容。
+      - InTableColumn("Affix.xlsx", "词条数量随机池表", 3, 2, "affix_count_pool_id")</code></pre><p>验证器检查不通过的一个示例如下(还包含一个唯一性检查报错):</p><p><img src=/2023/2307-validator01.png alt=2307-validator01.png loading=lazy></p><h3 id=数值范围验证器的增强>数值范围验证器的增强</h3><p>范围验证器的增强主要有两处，一处是支持 <code>>数字</code> , <code>>=数字</code> , <code>&lt;数字</code> , <code>&lt;=数字</code> 这种格式的配置。第二处是现在支持浮点数了。</p><h2 id=其他优化>其他优化</h2><h3 id=验证器细项优化>验证器细项优化</h3><ul><li><code>org.xresloader.field_alias</code> 和 <code>org.xresloader.enum_alias</code> 允许多个别名。<blockquote><p>这样可以方便版本升级的时候做一定时间的向前兼容。
 我们在某些协议功能性更新期间，可以先同时保留新老版本的别名，等到代码层改造完以后在移除老的别名。</p></blockquote></li><li>验证器插件重命名 <code>verifier</code> -> <code>validator</code>。兼容老版本二进制配置和文本配置。</li><li>增加 <code>org.xresloader.field_not_null</code> 插件和 <code>org.xresloader.oneof_not_null</code> 插件用以忽略Excel中指定数据为空的数据行。<blockquote><p>这可以有效的减少一些Excel误操作带来的空数据项。（比如漏删除空单元格，不小心设置了某个空数据行的单元格格式）。比如:</p><pre><code class=language-protobuf>message level_up_cfg {
     uint32         id    = 1 [ (org.xresloader.field_not_null) = true ];
     uint32         level = 2;

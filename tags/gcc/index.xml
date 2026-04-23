@@ -208,7 +208,7 @@ int main(int argc, char* argv[]) {
  return 0;
 }&lt;/code&gt;&lt;/pre&gt;
 &lt;h2 id="vc多重继承成员函数指针实现"&gt;VC多重继承成员函数指针实现&lt;/h2&gt;
-&lt;p&gt;&lt;img src="p896_img8.png" loading="lazy" /&gt;&lt;/p&gt;</description></item><item><title>VC和GCC内成员函数指针实现的研究(一)</title><link>//owent.net/2013/890.html</link><pubDate>Fri, 06 Sep 2013 12:55:58 +0000</pubDate><guid>//owent.net/2013/890.html</guid><description>&lt;p&gt;最近在《C++对象模型》一书里说到的virtual的成员函数指针，低于128的被cfront编译器认为是虚表偏移量（支持子类对父类函数的覆盖）。VC只是提了下单继承、多继承和虚继承的实现方案不同，GCC没有提及，所以就专门稍微深入分析研究下他们的实现机制。&lt;/p&gt;</description></item><item><title>ARM 交叉编译环境搭建</title><link>//owent.net/2013/738.html</link><pubDate>Thu, 11 Apr 2013 17:55:04 +0000</pubDate><guid>//owent.net/2013/738.html</guid><description>&lt;p&gt;最近研究了一下ARM的交叉编译环境搭建，太麻烦了必须作一下记录啊。
+&lt;p&gt;&lt;img src="//owent.net/2013/p896_img8.png" loading="lazy" /&gt;&lt;/p&gt;</description></item><item><title>VC和GCC内成员函数指针实现的研究(一)</title><link>//owent.net/2013/890.html</link><pubDate>Fri, 06 Sep 2013 12:55:58 +0000</pubDate><guid>//owent.net/2013/890.html</guid><description>&lt;p&gt;最近在《C++对象模型》一书里说到的virtual的成员函数指针，低于128的被cfront编译器认为是虚表偏移量（支持子类对父类函数的覆盖）。VC只是提了下单继承、多继承和虚继承的实现方案不同，GCC没有提及，所以就专门稍微深入分析研究下他们的实现机制。&lt;/p&gt;</description></item><item><title>ARM 交叉编译环境搭建</title><link>//owent.net/2013/738.html</link><pubDate>Thu, 11 Apr 2013 17:55:04 +0000</pubDate><guid>//owent.net/2013/738.html</guid><description>&lt;p&gt;最近研究了一下ARM的交叉编译环境搭建，太麻烦了必须作一下记录啊。
 前两个方法比较简单一点，关键是淫家Google帮你弄好了大部分功能&lt;/p&gt;
 &lt;h2 id="方案一利用android-ndk--jni"&gt;方案一：（利用Android ndk + jni）&lt;/h2&gt;
 &lt;p&gt;使用Android NDK的第一步当然是下载Android NDK啦。

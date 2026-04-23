@@ -222,7 +222,7 @@ int main(int argc, char* argv[]) {
  return 0;
 }&lt;/code&gt;&lt;/pre&gt;
 &lt;h2 id="vc多重继承成员函数指针实现"&gt;VC多重继承成员函数指针实现&lt;/h2&gt;
-&lt;p&gt;&lt;img src="p896_img8.png" loading="lazy" /&gt;&lt;/p&gt;</description></item><item><title>VC和GCC内成员函数指针实现的研究(一)</title><link>//owent.net/2013/890.html</link><pubDate>Fri, 06 Sep 2013 12:55:58 +0000</pubDate><guid>//owent.net/2013/890.html</guid><description>&lt;p&gt;最近在《C++对象模型》一书里说到的virtual的成员函数指针，低于128的被cfront编译器认为是虚表偏移量（支持子类对父类函数的覆盖）。VC只是提了下单继承、多继承和虚继承的实现方案不同，GCC没有提及，所以就专门稍微深入分析研究下他们的实现机制。&lt;/p&gt;</description></item><item><title>Linux 和 Windows PowerShell 常用工具/命令 记录</title><link>//owent.net/2011/482.html</link><pubDate>Fri, 19 Aug 2011 11:16:55 +0000</pubDate><guid>//owent.net/2011/482.html</guid><description>&lt;h2 id="linux-常用工具"&gt;Linux 常用工具&lt;/h2&gt;
+&lt;p&gt;&lt;img src="//owent.net/2013/p896_img8.png" loading="lazy" /&gt;&lt;/p&gt;</description></item><item><title>VC和GCC内成员函数指针实现的研究(一)</title><link>//owent.net/2013/890.html</link><pubDate>Fri, 06 Sep 2013 12:55:58 +0000</pubDate><guid>//owent.net/2013/890.html</guid><description>&lt;p&gt;最近在《C++对象模型》一书里说到的virtual的成员函数指针，低于128的被cfront编译器认为是虚表偏移量（支持子类对父类函数的覆盖）。VC只是提了下单继承、多继承和虚继承的实现方案不同，GCC没有提及，所以就专门稍微深入分析研究下他们的实现机制。&lt;/p&gt;</description></item><item><title>Linux 和 Windows PowerShell 常用工具/命令 记录</title><link>//owent.net/2011/482.html</link><pubDate>Fri, 19 Aug 2011 11:16:55 +0000</pubDate><guid>//owent.net/2011/482.html</guid><description>&lt;h2 id="linux-常用工具"&gt;Linux 常用工具&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;enca: &lt;a href="http://dl.cihar.com/enca/"&gt;http://dl.cihar.com/enca/&lt;/a&gt;   文件名编码转换&lt;/li&gt;
 &lt;li&gt;iconv: 文件编码转换&lt;/li&gt;

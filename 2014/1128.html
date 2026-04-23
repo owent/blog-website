@@ -65,8 +65,8 @@ profile.disableNativeProfile() -- 关闭本地调用统计
 profile.dump_to(<文件路径>) -- 转储分析结果到文件（csv格式）
 profile.dump() -- 返回分析结果（csv格式）
 profile.hook(<lua函数>) -- 函数级性能分析钩子</code></pre><h2 id=输出>输出</h2><p>上面的总调用统计我这里直接输出csv文件或csv格式的文本了。有需要可以改成其他输出格式。
-<img src=lua-profile-1.png alt=示例-1 loading=lazy></p><p>精确的函数调用关系统计直接输出的lua table，可以通过lua转成其他格式。比如下图是我转成json之后的结果：
-<img src=lua-profile-2.png alt=示例-2 loading=lazy></p><p>所有代码托管在：
+<img src=/2014/lua-profile-1.png alt=示例-1 loading=lazy></p><p>精确的函数调用关系统计直接输出的lua table，可以通过lua转成其他格式。比如下图是我转成json之后的结果：
+<img src=/2014/lua-profile-2.png alt=示例-2 loading=lazy></p><p>所有代码托管在：
 <a href=https://github.com/owent-utils/lua/tree/master/src_native/Script/Lua/LuaModule/LuaProfile.cpp>https://github.com/owent-utils/lua/tree/master/src_native/Script/Lua/LuaModule/LuaProfile.cpp</a>
 和
 <a href=https://github.com/owent-utils/lua/tree/master/src_native/Script/Lua/LuaModule/LuaProfile.h>https://github.com/owent-utils/lua/tree/master/src_native/Script/Lua/LuaModule/LuaProfile.h</a></p><p>除这两个文件已外依赖项目：</p><ol><li><a href=https://github.com/owent-utils/c-cpp/tree/master/include/DesignPattern>https://github.com/owent-utils/c-cpp/tree/master/include/DesignPattern</a></li><li><a href=https://github.com/owent-utils/c-cpp/tree/master/include/String/StringCommon.h>https://github.com/owent-utils/c-cpp/tree/master/include/String/StringCommon.h</a></li></ol><p>共3个文件，如果不需要单件模式基类和字符串跨平台CMP函数的话可以移除掉，有兴趣的童鞋可自取。</p><blockquote><p>Written with <a href=https://stackedit.io/>StackEdit</a>.</p></blockquote></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/work.html>Work</a></li></ol></span><span class=article-meta-right><time datetime=2014-12-12T16:14:11.000+00:00 itemprop=datePublished>2014-12-12</time></span>

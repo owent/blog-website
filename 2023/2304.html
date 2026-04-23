@@ -47,7 +47,7 @@ flowchart TD
             <scheme name=OutputFile desc=输出文件名>arr_in_arr_cfg.bin</scheme>
         </item>
     </list>
-</root></code></pre><p>这种情况中，<strong>嵌套数组测试</strong> 既会转出为protobuf二进制，又会转出为 。而 <strong>人物表</strong> 只会转出protobuf二进制。这样可以避免掉客户端或者服务器不需要关心的数据导出。</p><h3 id=批量转表gui工具增加事件的控制和自定义按钮>批量转表GUI工具增加事件的控制和自定义按钮</h3><p>为了方便分程序同学使用，我们还提供了GUI工具。界面如下:</p><p><img src=2304-01.gif alt=2304-01.gif loading=lazy></p><p>然后为了方便工具集成，我们给转变开始前和完成后都加入了事件机制，可以通过nodejs代码去控制后续行为去做一些工具集成。比如转表成功以后制动执行UE-Command的Import去把数据导入到DataTable中。
+</root></code></pre><p>这种情况中，<strong>嵌套数组测试</strong> 既会转出为protobuf二进制，又会转出为 。而 <strong>人物表</strong> 只会转出protobuf二进制。这样可以避免掉客户端或者服务器不需要关心的数据导出。</p><h3 id=批量转表gui工具增加事件的控制和自定义按钮>批量转表GUI工具增加事件的控制和自定义按钮</h3><p>为了方便分程序同学使用，我们还提供了GUI工具。界面如下:</p><p><img src=/2023/2304-01.gif alt=2304-01.gif loading=lazy></p><p>然后为了方便工具集成，我们给转变开始前和完成后都加入了事件机制，可以通过nodejs代码去控制后续行为去做一些工具集成。比如转表成功以后制动执行UE-Command的Import去把数据导入到DataTable中。
 但是后来有其他项目组同学提出希望可以控制跳过某些事件。因为有些流程可能本地调试用，全跑完事件流程会比较慢，同时希望可以提供功能来按规则一键选中某些需要转的表的条目。
 所以一方面我给命名事件（有 <code>name</code> 字段）增加了可选的开关。同时为了方便进一步支持扩展行为，增加了一组自定按钮的配置，可以配置为按通配符或者正则表达式选中和反选转表条目。
 甚至允许执行配置在xml里的脚本。比如以下自定义按钮的配置:</p><pre><code class=language-json>[{
@@ -80,7 +80,7 @@ flowchart TD
         "script: 自定义脚本"
     ],
     "style": "outline-dark"
-}]</code></pre><p>会插入的自定义按钮如下:</p><p><img src=2304-02.png alt=2304-02.png loading=lazy></p><h3 id=新增小工具-xresloader-dump-bin>新增小工具 <a href=https://github.com/xresloader/xresloader-dump-bin>xresloader-dump-bin</a></h3><p>虽然我们在使用 <a href=https://github.com/xresloader/xresloader>xresloader</a> 转出数据的时候，可以设置多个输出，也导出一份json、lua、javascript等格式的配置以方便集成到Web或者其他周边工具中。也可以用于人工查看转出的数据。
+}]</code></pre><p>会插入的自定义按钮如下:</p><p><img src=/2023/2304-02.png alt=2304-02.png loading=lazy></p><h3 id=新增小工具-xresloader-dump-bin>新增小工具 <a href=https://github.com/xresloader/xresloader-dump-bin>xresloader-dump-bin</a></h3><p>虽然我们在使用 <a href=https://github.com/xresloader/xresloader>xresloader</a> 转出数据的时候，可以设置多个输出，也导出一份json、lua、javascript等格式的配置以方便集成到Web或者其他周边工具中。也可以用于人工查看转出的数据。
 但是我们项目中主要还是使用二进制格式，毕竟还是有些区别。为了方便查看实际的二进制数据，我新增了一个小工具 <a href=https://github.com/xresloader/xresloader-dump-bin>xresloader-dump-bin</a> ，用于把protobuf格式的二进制直接转出为文本格式。
 方便人工查阅，同时在发布更新资源版本的时候，为了方便使用diff工具查看变化的内容，我对输出的字段做了严格顺序的排序。</p><p>一个输出的示例如下:</p><pre><code class=language-bash># $ ./xresloader-dump-bin -p ./sample-conf/kind.pb -b ./sample-data/role_upgrade_cfg.bin
 
