@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Spirit on I'm OWenT</title><link>//owent.net/tags/spirit.html</link><description>Recent content in Spirit on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md"&gt;&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /&gt;&lt;/a&gt;</copyright><lastBuildDate>Thu, 08 Nov 2012 18:57:34 +0000</lastBuildDate><atom:link href="//owent.net/tags/spirit/index.xml" rel="self" type="application/rss+xml"/><item><title>Boost.Spirit 初体验</title><link>//owent.net/2012/674.html</link><pubDate>Thu, 08 Nov 2012 18:57:34 +0000</pubDate><guid>//owent.net/2012/674.html</guid><description>&lt;p&gt;使用代码生成代码是一件十分美妙的事情，于是有了各种代码生成器。但是生成代码，意味着要有对生成规则的分析和处理。
-Boost.Spirit 就是这么一个语法分析工具，它实现了对&lt;strong&gt;上下文无关文法的LL分析&lt;/strong&gt;。支持&lt;strong&gt;EBNF(扩展巴科斯范式)&lt;/strong&gt;。
-Boost.Spirit 的使用真的是把模板嵌套用到了极致。确实这么做造成了非常强的扩展性，生成的代码也非常高效，但是嵌套的太复杂了，对于初学者而言真心难看懂。
-你能想象在学习阶段一个不是太明白的错误导致编译器报出的几十层模板嵌套错误信息的感受吗？而且，这么复杂的模板嵌套还直接导致了编译速度的巨慢无比。
-其实在之前，我已经使用过Spirit的Classic版本，即1.X版本，但是过多的复制操作让我觉得当时用得很低效，还好分析的内容并不复杂所以没。体现出来
-这回就来研究下功能更强劲的2.X 版本。&lt;/p&gt;</description></item></channel></rss>

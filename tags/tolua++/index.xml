@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Tolua++ on I'm OWenT</title><link>//owent.net/tags/tolua++.html</link><description>Recent content in Tolua++ on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md"&gt;&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /&gt;&lt;/a&gt;</copyright><lastBuildDate>Thu, 08 Jan 2015 22:03:42 +0000</lastBuildDate><atom:link href="//owent.net/tags/tolua++/index.xml" rel="self" type="application/rss+xml"/><item><title>tolua++内存释放坑</title><link>//owent.net/2015/1133.html</link><pubDate>Thu, 08 Jan 2015 22:03:42 +0000</pubDate><guid>//owent.net/2015/1133.html</guid><description>&lt;!-- toc --&gt;
-&lt;h2 id="前言"&gt;前言&lt;/h2&gt;
-&lt;p&gt;本来想参考下tolua++的对象生命周期维护方式。一不小心发现了一个坑。&lt;/p&gt;
-&lt;h2 id="代码追踪"&gt;代码追踪&lt;/h2&gt;
-&lt;p&gt;我这里用得是tolua++ 1.0.93版本。&lt;/p&gt;
-&lt;p&gt;tolua++在new一个类的时候，会把类指针作为userdata传入lua，建立metatable并通过&lt;strong&gt;tolua_classevents&lt;/strong&gt;函数给metatable注册魔术方法。&lt;/p&gt;</description></item></channel></rss>
