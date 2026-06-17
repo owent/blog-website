@@ -1,0 +1,1965 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>UE使用CodeChecker和clang-tidy生成静态分析报告|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1"><link rel=canonical href=//owent.net/2025/2507.html><link rel=icon href=/favicon.ico><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net//css/style.css><link rel=stylesheet href=//owent.net/css/syntax.css><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8180054975285991" crossorigin=anonymous></script><meta content="codeva-4M5iohb9TW" name=baidu-site-verification></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net/ id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-bs-toggle=collapse data-bs-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-0bd1d41476d4f82605bb32e1ef4c309a class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2025/2507.html target=_blank itemprop=url>UE使用CodeChecker和clang-tidy生成静态分析报告</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#前言>前言</a></li><li><a href=#整体架构>整体架构</a></li><li><a href=#ubt-改造>UBT 改造</a><ul><li><a href=#环境变量配置>环境变量配置</a></li><li><a href=#linuxcommoncs-修改>LinuxCommon.cs 修改</a></li><li><a href=#linuxtoolchaincs-修改>LinuxToolChain.cs 修改</a></li><li><a href=#clangwarningscs-修改>ClangWarnings.cs 修改</a></li></ul></li><li><a href=#构建与分析流程>构建与分析流程</a><ul><li><a href=#第一步生成编译数据库>第一步：生成编译数据库</a></li><li><a href=#第二步查找-pch-文件>第二步：查找 PCH 文件</a></li><li><a href=#第三步修复编译数据库>第三步：修复编译数据库</a></li><li><a href=#第四步执行静态分析>第四步：执行静态分析</a></li><li><a href=#第五步生成报告>第五步：生成报告</a></li></ul></li><li><a href=#工具脚本详解>工具脚本详解</a><ul><li><a href=#clangsa-模块规则配置>ClangSA 模块规则配置</a></li><li><a href=#fixclangdatabasepy编译数据库后处理>FixClangDatabase.py：编译数据库后处理</a></li><li><a href=#extractnotificationpy问题报告生成>ExtractNotification.py：问题报告生成</a></li></ul></li><li><a href=#最佳实践>最佳实践</a><ul><li><a href=#cicd-集成>CI/CD 集成</a></li><li><a href=#渐进式推进策略>渐进式推进策略</a></li><li><a href=#配置建议>配置建议</a></li></ul></li><li><a href=#总结>总结</a></li><li><a href=#参考资料>参考资料</a></li></ul></nav><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_toc" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=1249494377 data-ad-format="rectangle, vertical" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><br><div class=article-entry itemprop=articleBody><h2 id=前言>前言</h2><p>现代化的C++项目可以借助多种静态分析工具来检查和发现潜在问题，包括空指针访问风险、未定义行为（UB）、内存错误等。</p><p>在我们的项目中，服务器工程基于 CMake 构建系统，可以方便地利用社区支持来集成这些静态分析工具，如 <a href=https://clang.llvm.org/extra/clang-tidy/>clang-tidy</a>、<a href=https://clang-analyzer.llvm.org/>clang-analyzer</a>、<a href=https://codechecker.readthedocs.io/>CodeChecker</a> 等。然而，另一部分 C++ 代码运行在 UE（Unreal Engine）引擎中。由于 UE 在编译流程上做了一些特殊扩展，再加上 UBT（UnrealBuildTool）工具在某些能力上的限制，直接开启静态分析会遇到一些问题：</p><ul><li>UE 自带的 Clang 版本较低，部分新版 checker 无法使用</li><li>UBT 生成的编译数据库（compile_commands.json）需要后处理才能被 CodeChecker/clang-tidy 正确解析</li><li>静态分析的检查规则需要按模块粒度灵活配置</li></ul><p>本文主要分享我们对 UBT 的改造方案，以及提供的工具链来提取和处理构建参数，以便让 CodeChecker/clang-tidy 执行分析。同时，我们还实现了通过 Perforce（p4）或 Git 提取问题代码对应行的最后提交人信息（类似 <code>git blame</code>），以便生成问题报告供后续审查。</p><p>希望本文可以给有类似需求的同学提供参考。</p><h2 id=整体架构>整体架构</h2><p>整个静态分析流程可以分为以下几个阶段：</p><pre class=mermaid>
+flowchart LR
+    subgraph 准备阶段
+        direction TB
+        A[UBT 改造] --> B[环境变量配置]
+        B --> C[指定高版本Clang]
+    end
+
+    subgraph 构建分析阶段
+        direction TB
+        D[CodeChecker log] --> E[生成 compile_commands.json]
+        E --> F[FixClangDatabase.py 后处理]
+        F --> G[修复后的编译数据库]
+    end
+
+    subgraph 分析执行阶段
+        direction TB
+        H[CodeChecker analyze] --> I[生成 plist 报告]
+        I --> J[CodeChecker parse]
+        J --> K[HTML 报告]
+    end
+
+    subgraph 报告处理阶段
+        direction TB
+        L[ExtractNotification.py] --> M[p4 annotate / git blame]
+        M --> N[Markdown 问题报告]
+    end
+
+    准备阶段 --> 构建分析阶段
+    构建分析阶段 --> 分析执行阶段
+    I --> 报告处理阶段
+</pre><table><thead><tr><th>阶段</th><th>主要工具</th><th>输出</th></tr></thead><tbody><tr><td>准备阶段</td><td>修改后的 UBT</td><td>支持系统编译器的构建环境</td></tr><tr><td>构建分析阶段</td><td>CodeChecker log + FixClangDatabase.py</td><td>修复后的 compile_commands.json</td></tr><tr><td>分析执行阶段</td><td>CodeChecker analyze/parse</td><td>plist 诊断文件 + HTML 报告</td></tr><tr><td>报告处理阶段</td><td>ExtractNotification.py</td><td>Markdown 格式的问题清单</td></tr></tbody></table><h2 id=ubt-改造>UBT 改造</h2><p>为了让 UE 项目能够使用系统安装的高版本 Clang 进行静态分析，我们需要对 UBT 进行一些改造。主要修改集中在 Linux 平台相关的工具链配置。</p><h3 id=环境变量配置>环境变量配置</h3><p>我们通过环境变量来控制 UBT 的行为，这样可以在不修改项目配置的情况下灵活切换：</p><table><thead><tr><th>环境变量</th><th>作用</th><th>默认值</th></tr></thead><tbody><tr><td><code>UE_FORCE_USE_SYSTEM_COMPILER</code></td><td>强制使用系统编译器而非 UE 自带的 Clang</td><td><code>false</code></td></tr><tr><td><code>UE_LINUX_USE_FIX_DEPS</code></td><td>启用依赖修复（解决循环依赖问题）</td><td><code>false</code></td></tr><tr><td><code>UE_LINUX_USE_SYSTEM_LIBCXX</code></td><td>使用系统的 libc++ 而非 UE 自带版本</td><td><code>false</code></td></tr></tbody></table><h3 id=linuxcommoncs-修改>LinuxCommon.cs 修改</h3><p>文件路径: <strong>Engine/Source/Programs/UnrealBuildTool/Platform/Linux/LinuxCommon.cs</strong></p><p>增加环境变量读取支持，<code>UE_FORCE_USE_SYSTEM_COMPILER</code> 用于总控使用系统的编译器（提升 Clang 版本）：</p><pre><code class=language-csharp>static public bool bForceUseSystemCompiler = GetDefaultForceUseSystemCompiler();
+
+public static bool GetDefaultBoolValueFromEnvVar(string VarName)
+{
+    string? env = Environment.GetEnvironmentVariable(VarName);
+    if (!string.IsNullOrWhiteSpace(env))
+    {
+        return !string.Equals(env.Trim(), "0", StringComparison.OrdinalIgnoreCase);
+    }
+    return false;
+}
+
+public static bool GetDefaultForceUseSystemCompiler()
+{
+    return GetDefaultBoolValueFromEnvVar("UE_FORCE_USE_SYSTEM_COMPILER");
+}</code></pre><h3 id=linuxtoolchaincs-修改>LinuxToolChain.cs 修改</h3><p>文件路径: <strong>Engine/Source/Programs/UnrealBuildTool/Platform/Linux/LinuxToolChain.cs</strong></p><blockquote><p><strong>注意</strong>：以下修改仅适用于 UE 5.6 以下版本。引擎组某些定制化的组件存在循环依赖，在实际解决之前可以先用这种方式适配。</p></blockquote><p>主要改动有几处：</p><h4 id=1-启用依赖修复>1. 启用依赖修复</h4><p>修改 <code>bUseFixdeps</code> 的赋值，增加环境变量控制：</p><pre><code class=language-csharp>// 方式一：仅通过环境变量控制
+bUseFixdeps = LinuxCommon.GetDefaultBoolValueFromEnvVar("UE_LINUX_USE_FIX_DEPS");
+
+// 方式二：Windows 交叉编译时默认启用，其他情况通过环境变量控制
+bUseFixdeps = BuildHostPlatform.Current.Platform == UnrealTargetPlatform.Win64 
+    || LinuxCommon.GetDefaultBoolValueFromEnvVar("UE_LINUX_USE_FIX_DEPS");</code></pre><h4 id=2-系统-libc-支持>2. 系统 libc++ 支持</h4><p>在 <code>ShouldUseLibcxx()</code> 函数处按需加上环境变量判断。</p><blockquote><p>⚠️ <strong>ABI 兼容性警告</strong></p><p>这部分要注意 ABI 兼容性问题。UE 自带的第三方库都是用自带的 STL 版本编译的，所以最好使用 UE 的 libc++ 版本。</p><p>如果你自编译了 LLVM 套件，且 STL 的 ABI 版本不同（如改成了 v2），会导致符号对不上。推荐方案是：<strong>高版本编译器 + 低版本 libc++</strong>。</p></blockquote><p>如果需要修改，参考以下改动：</p><p><strong>GetCompileArguments_Global 函数</strong>：</p><pre><code class=language-csharp>if (ShouldUseLibcxx() && !LinuxCommon.GetDefaultBoolValueFromEnvVar("UE_LINUX_USE_SYSTEM_LIBCXX"))
+{
+    // 使用 UE 自带的 libc++ 头文件
+    // ...原有逻辑...
+}</code></pre><p><strong>链接库位置修改</strong>：</p><pre><code class=language-csharp>if (ShouldUseLibcxx())
+{
+    // libc++ and its abi lib
+    LinkCommandString += " -nodefaultlibs";
+    if (LinuxCommon.GetDefaultBoolValueFromEnvVar("UE_LINUX_USE_SYSTEM_LIBCXX"))
+    {
+        LinkCommandString += " -lc++";
+        LinkCommandString += " -lc++abi";
+    }
+    else
+    {
+        LinkCommandString += " -L" + "ThirdParty/Unix/LibCxx/lib/Unix/" + LinkEnvironment.Architecture.LinuxName + "/";
+        LinkCommandString += " " + "ThirdParty/Unix/LibCxx/lib/Unix/" + LinkEnvironment.Architecture.LinuxName + "/libc++.a";
+        LinkCommandString += " " + "ThirdParty/Unix/LibCxx/lib/Unix/" + LinkEnvironment.Architecture.LinuxName + "/libc++abi.a";
+    }
+    // ...其他链接库...
+}</code></pre><h3 id=clangwarningscs-修改>ClangWarnings.cs 修改</h3><p>文件路径: <strong>Engine/Source/Programs/UnrealBuildTool/ToolChain/ClangWarnings.cs</strong></p><p>高版本 Clang 会引入新的 warning 或将某些 warning 提升为 error。为了让 UE 项目能够正常编译，需要在 <code>GetDisabledWarnings</code> 函数中关闭这些诊断：</p><pre><code class=language-csharp>// 通用 warning 关闭
+Arguments.Add("-Wno-misleading-indentation");
+Arguments.Add("-Wno-vexing-parse");
+Arguments.Add("-Wno-error=macro-redefined");
+Arguments.Add("-Wno-error=shorten-64-to-32");
+Arguments.Add("-Wno-error=shadow");
+Arguments.Add("-Wno-error=logical-op-parentheses");
+Arguments.Add("-Wno-error=unused-value");
+Arguments.Add("-Wno-error=extra-qualification");
+Arguments.Add("-Wno-error=range-loop-construct");
+Arguments.Add("-Wno-error=comment");
+Arguments.Add("-Wno-error=reorder-ctor");
+Arguments.Add("-Wno-error=deprecated-comma-subscript");
+Arguments.Add("-Wno-error=c++20-extensions");
+Arguments.Add("-Wno-error=single-bit-bitfield-constant-conversion");
+Arguments.Add("-Wno-error=null-conversion");
+Arguments.Add("-Wno-error=dangling");
+
+// Clang 18+ 特有的 warning
+if (ClangVersion >= new VersionNumber(18))
+{
+    Arguments.Add("-Wno-deprecated-this-capture");          // https://clang.llvm.org/docs/DiagnosticsReference.html#wdeprecated-this-capture
+    if (ClangVersion <= new VersionNumber(19))
+    {
+        Arguments.Add("-Wno-enum-constexpr-conversion");    // https://clang.llvm.org/docs/DiagnosticsReference.html#wenum-constexpr-conversion
+    }
+    Arguments.Add("-Wno-deprecated-literal-operator");
+    Arguments.Add("-Wno-vla-cxx-extension");
+    Arguments.Add("-Wno-invalid-unevaluated-string");
+    Arguments.Add("-Wno-error=nontrivial-memcall");
+}
+
+// Clang 19+ 特有的 warning
+if (ClangVersion >= new VersionNumber(19))
+{
+    Arguments.Add("-Wno-error=missing-template-arg-list-after-template-kw");
+}
+
+// 如果有遗漏，按实际编译错误添加即可</code></pre><h2 id=构建与分析流程>构建与分析流程</h2><p>完成 UBT 改造后，就可以开始执行静态分析了。整个流程分为以下几个步骤：</p><h3 id=第一步生成编译数据库>第一步：生成编译数据库</h3><p>使用 CodeChecker 的 <code>log</code> 命令包装构建过程，生成 <code>compile_commands.json</code>：</p><pre><code class=language-bash>env UE_FORCE_USE_SYSTEM_COMPILER=1 UE_LINUX_USE_FIX_DEPS=1 \
+    CodeChecker log -o compile_commands.json \
+    -b 'make LyraServer ARGS="-ForceUseSystemCompiler -StaticAnalyzer=Clang -StaticAnalyzerMode=deep -StaticAnalyzerOutputType=html"' \
+    2>&1 | tee build.game.log</code></pre><blockquote><p><strong>参数说明</strong>：</p><ul><li><code>-ForceUseSystemCompiler</code>：强制使用系统编译器</li><li><code>-StaticAnalyzer=Clang</code>：启用 Clang 静态分析器</li><li><code>-StaticAnalyzerMode=deep</code>：深度分析模式</li><li><code>-StaticAnalyzerOutputType=html</code>：输出 HTML 格式报告</li></ul></blockquote><h3 id=第二步查找-pch-文件>第二步：查找 PCH 文件</h3><p>UE 使用共享 PCH（Precompiled Header）来加速编译。静态分析时需要正确包含 PCH 文件：</p><pre><code class=language-bash># 按优先级查找 SharedPCH 文件
+FIND_PCH_FILE=$(find $PWD/Projects/Intermediate/Build/Linux/x64/LyraServer/Development/Engine -name "SharedPCH.*Exceptions.*.h" | head -n 1)
+if [[ -z "$FIND_PCH_FILE" ]]; then
+    FIND_PCH_FILE=$(find $PWD/Projects/Intermediate/Build/Linux/x64/LyraServer/Development/Core -name "SharedPCH.*Exceptions.*.h" | head -n 1)
+fi
+if [[ -z "$FIND_PCH_FILE" ]]; then
+    FIND_PCH_FILE=$(find $PWD/Projects/Intermediate/Build/Linux/x64/LyraServer/Development -name "SharedPCH.*Exceptions.*.h" | head -n 1)
+fi
+# 降级查找不带 Exceptions 的版本
+if [[ -z "$FIND_PCH_FILE" ]]; then
+    FIND_PCH_FILE=$(find $PWD/Projects/Intermediate/Build/Linux/x64/LyraServer/Development/Engine -name "SharedPCH.*.h" | head -n 1)
+fi
+if [[ -z "$FIND_PCH_FILE" ]]; then
+    FIND_PCH_FILE=$(find $PWD/Projects/Intermediate/Build/Linux/x64/LyraServer/Development/Core -name "SharedPCH.*.h" | head -n 1)
+fi
+if [[ -z "$FIND_PCH_FILE" ]]; then
+    FIND_PCH_FILE=$(find $PWD/Projects/Intermediate/Build/Linux/x64/LyraServer/Development -name "SharedPCH.*.h" | head -n 1)
+fi
+
+echo "Found PCH file: $FIND_PCH_FILE"</code></pre><h3 id=第三步修复编译数据库>第三步：修复编译数据库</h3><p>UBT 生成的 <code>compile_commands.json</code> 存在一些问题，需要通过 <code>FixClangDatabase.py</code> 进行后处理：</p><pre><code class=language-bash>python3 Projects/Script/FixClangDatabase.py \
+    -i compile_commands.json \
+    --pch "$FIND_PCH_FILE" \
+    --include-path "Projects/Source/LyraGame" \
+    --include-path "LyraGame/Module.LyraGame"
+
+# 备份原文件并使用修复后的版本
+mv -f compile_commands.json compile_commands.json.bak
+mv -f compile_commands.fixed.json compile_commands.json</code></pre><h3 id=第四步执行静态分析>第四步：执行静态分析</h3><p>使用 CodeChecker 的 <code>analyze</code> 命令执行分析：</p><pre><code class=language-bash>CodeChecker analyze \
+    --config Projects/Plugins/ClangSA/Source/ClangSA/.codechecker.yaml \
+    -i Projects/Plugins/ClangSA/Source/ClangSA/.codechecker.skipfile \
+    -j 30 \
+    -o codechecker-result \
+    compile_commands.json 2>&1 | tee build.game.log</code></pre><blockquote><p><strong>参数说明</strong>：</p><ul><li><code>--config</code>：分析配置文件，定义启用的 checker 和选项</li><li><code>-i</code>：跳过文件列表，排除不需要分析的文件</li><li><code>-j 30</code>：并行度，根据机器配置调整</li><li><code>-o</code>：输出目录</li></ul></blockquote><h3 id=第五步生成报告>第五步：生成报告</h3><p>将分析结果转换为 HTML 格式的可视化报告：</p><pre><code class=language-bash>CodeChecker parse -e html ./codechecker-result -o ./codechecker-html || true</code></pre><h2 id=工具脚本详解>工具脚本详解</h2><p>本节详细介绍各个辅助工具的实现原理和使用方法。</p><h3 id=clangsa-模块规则配置>ClangSA 模块规则配置</h3><p>为了让静态分析的检查规则能够按模块粒度灵活配置，我们创建了一个 UE 模块 <code>ClangSA</code>。它通过读取目录下的配置文件来决定每个模块启用哪些 checker。</p><h4 id=配置文件>配置文件</h4><table><thead><tr><th>文件名</th><th>作用</th></tr></thead><tbody><tr><td><code>.clang-sa.enable</code></td><td>启用的 checker 列表，每行一个</td></tr><tr><td><code>.clang-sa.disable</code></td><td>禁用的 checker 列表，每行一个</td></tr><tr><td><code>.clang-tidy</code></td><td>clang-tidy 配置文件</td></tr><tr><td><code>.codechecker.yaml</code></td><td>CodeChecker 配置文件</td></tr><tr><td><code>.codechecker.skipfile</code></td><td>跳过分析的文件列表</td></tr></tbody></table><h4 id=配置继承机制>配置继承机制</h4><p>配置文件支持目录层级继承：</p><pre class=mermaid>
+flowchart TB
+    A["ClangSA Plugin<br>(默认配置)"] --> B["Projects/<br>(项目级配置)"]
+    B --> C["Projects/Plugins/XXX/<br>(插件级配置)"]
+    B --> D["Projects/Source/XXX/<br>(模块级配置)"]
+    
+    style A fill:#f9f,stroke:#333
+    style B fill:#bbf,stroke:#333
+    style C fill:#bfb,stroke:#333
+    style D fill:#bfb,stroke:#333
+</pre><p>子目录的配置会继承父目录的配置，并可以追加启用或禁用特定的 checker。</p><h4 id=clangsabuildcs>ClangSA.Build.cs</h4><p>以下是 <code>ClangSA.Build.cs</code> 的核心实现。该模块提供了三个主要功能：</p><ol><li><strong>规则配置管理</strong>：读取并合并目录层级的 checker 配置</li><li><strong>UE 静态分析集成</strong>：通过 <code>SetupClangUESA</code> 配置 UE 内置的静态分析</li><li><strong>clang-tidy 配置分发</strong>：通过 <code>SetupClangTidy</code> 将配置文件复制到中间目录</li></ol><details><summary>点击展开 ClangSA.Build.cs 完整代码</summary><pre><code class=language-csharp>// Copyright Epic Games, Inc. All Rights Reserved.
+
+using EpicGames.Core;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using UnrealBuildTool;
+
+public class ClangSA : ModuleRules
+{
+  public class CheckerRules
+  {
+    public bool Configured;
+    public ArrayList EnableCheckers;
+    public ArrayList DisableCheckers;
+
+    public HashSet<string> FinalCheckers;
+
+    public CheckerRules() {
+      Configured = false;
+      EnableCheckers = new ArrayList();
+      DisableCheckers = new ArrayList();
+      FinalCheckers = null;
+    }
+  }
+
+  static private Dictionary<string, checkerrules> RulesInDirectory = new Dictionary<string, checkerrules>();
+
+  public ClangSA(ReadOnlyTargetRules Target) : base(Target)
+    {
+        Type = ModuleType.External;
+    }
+
+  static public string GetClangSAEnableFilePath(String DirectoryPath)
+  {
+    return Path.Combine(DirectoryPath, ".clang-sa.enable");
+  }
+
+  static public string GetClangSADisableFilePath(String DirectoryPath)
+  {
+    return Path.Combine(DirectoryPath, ".clang-sa.disable");
+  }
+
+  static public string GetClangSAEnableFilePath(ReadOnlyTargetRules Target) {
+    return GetClangSAEnableFilePath(Path.Combine(Target.ProjectFile.Directory.FullName, "Plugins", "ClangSA", "Source", "ClangSA"));
+  }
+
+  static public CheckerRules GetCheckRules(String DirectoryPath) {
+    DirectoryPath = Path.GetFullPath(DirectoryPath);
+    CheckerRules rules;
+    lock (RulesInDirectory) {
+      if (RulesInDirectory.TryGetValue(DirectoryPath, out rules)) {
+        return rules;
+      }
+    }
+
+    rules = new CheckerRules();
+    string enableFilePath = GetClangSAEnableFilePath(DirectoryPath);
+    if (File.Exists(enableFilePath))
+    {
+      rules.Configured = true;
+      string[] checkers = File.ReadAllLines(enableFilePath);
+      foreach (string checker in checkers)
+      {
+        int comment = checker.IndexOf('#');
+        string trimmedChecker;
+        if (comment >= 0)
+        {
+          trimmedChecker = checker.Substring(0, comment).Trim();
+        }
+        else
+        {
+          trimmedChecker = checker.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(trimmedChecker))
+        {
+          rules.EnableCheckers.Add(trimmedChecker);
+        }
+      }
+    }
+
+    string disableFilePath = GetClangSADisableFilePath(DirectoryPath);
+    if (File.Exists(disableFilePath))
+    {
+      rules.Configured = true;
+      string[] checkers = File.ReadAllLines(disableFilePath);
+      foreach (string checker in checkers)
+      {
+        int comment = checker.IndexOf('#');
+        string trimmedChecker;
+        if (comment >= 0)
+        {
+          trimmedChecker = checker.Substring(0, comment).Trim();
+        }
+        else
+        {
+          trimmedChecker = checker.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(trimmedChecker))
+        {
+          rules.DisableCheckers.Add(trimmedChecker);
+        }
+      }
+    }
+
+    lock (RulesInDirectory)
+    {
+      RulesInDirectory.Add(DirectoryPath, rules);
+    }
+
+    return rules;
+  }
+
+  static public CheckerRules GetClangSACheckers(ReadOnlyTargetRules Target, String DirectoryFullName)
+  {
+    String ProjectFullName = Target.ProjectFile.Directory.FullName;
+    String PluginFullName = Path.Combine(Target.ProjectFile.Directory.FullName, "Plugins", "ClangSA", "Source", "ClangSA");
+    String ParentFullName = Path.GetDirectoryName(DirectoryFullName);
+
+    CheckerRules CurrentRules = GetCheckRules(DirectoryFullName);
+    if (CurrentRules.FinalCheckers != null) {
+      return CurrentRules;
+    }
+
+    CurrentRules.FinalCheckers = new HashSet<string> { };
+    if (!DirectoryFullName.Equals(PluginFullName) && !string.IsNullOrEmpty(ParentFullName) && !ParentFullName.Equals(DirectoryFullName))
+    {
+      CheckerRules ParentRules;
+      if (DirectoryFullName.Equals(ProjectFullName))
+      {
+        ParentRules = GetClangSACheckers(Target, PluginFullName);
+      }
+      else
+      {
+        ParentRules = GetClangSACheckers(Target, ParentFullName);
+        if (ParentRules.Configured)
+        {
+          CurrentRules.Configured = true;
+        }
+      }
+
+      foreach (var item in ParentRules.FinalCheckers)
+      {
+        CurrentRules.FinalCheckers.Add(item);
+      }
+    }
+
+    foreach (var item in CurrentRules.DisableCheckers)
+    {
+      CurrentRules.FinalCheckers.Remove(item.ToString());
+    }
+
+    foreach (var item in CurrentRules.EnableCheckers)
+    {
+      CurrentRules.FinalCheckers.Add(item.ToString());
+    }
+
+    return CurrentRules;
+  }
+
+  static public CheckerRules GetClangSACheckers(ReadOnlyTargetRules Target, ModuleRules Module)
+  {
+    return GetClangSACheckers(Target, Module.ModuleDirectory);
+  }
+
+  static public void SetupClangUESA(ReadOnlyTargetRules Target, ModuleRules Module)
+  {
+    if (Target.StaticAnalyzer != StaticAnalyzer.Clang && Target.StaticAnalyzer != StaticAnalyzer.Default)
+    {
+      System.Console.WriteLine($"-------------- Disable UE Static Analysis For {Module.Name} because whole disabled --------------");
+      return;
+    }
+
+    CheckerRules Rules = GetClangSACheckers(Target, Module);
+    if (!Rules.Configured)
+    {
+      System.Console.WriteLine($"-------------- Disable UE Static Analysis For {Module.Name} because no rules --------------");
+      return;
+    }
+
+    if (Rules.FinalCheckers == null)
+    {
+      System.Console.WriteLine($"-------------- Disable UE Static Analysis For {Module.Name} because no rules --------------");
+      return;
+    }
+
+    if (Rules.FinalCheckers.Count == 0)
+    {
+      System.Console.WriteLine($"-------------- Disable UE Static Analysis For {Module.Name} because no rules --------------");
+      return;
+    }
+
+    Module.bDisableStaticAnalysis = false;
+    Module.StaticAnalyzerCheckers = Rules.FinalCheckers;
+
+    System.Console.WriteLine($"-------------- Enable UE Static Analysis For {Module.Name} --------------");
+    System.Console.WriteLine($"-- Checkers: {string.Join(",", Rules.FinalCheckers)}");
+  }
+
+  static private string GetClangTidyConfigureFile(ReadOnlyTargetRules Target, string DirectoryFullName, string FileName)
+  {
+    string CheckModuleFullName = Path.Combine(DirectoryFullName, FileName);
+    if (File.Exists(CheckModuleFullName))
+    {
+      return CheckModuleFullName;
+    }
+
+    string ProjectFullName = Target.ProjectFile.Directory.FullName;
+    string PluginFullName = Path.Combine(Target.ProjectFile.Directory.FullName, "Plugins", "ClangSA", "Source", "ClangSA");
+    string FallbackFullName = Path.Combine(PluginFullName, FileName);
+    string ParentFullName = Path.GetDirectoryName(DirectoryFullName);
+
+    if (!DirectoryFullName.Equals(PluginFullName) && !DirectoryFullName.Equals(ProjectFullName)
+        && !string.IsNullOrEmpty(ParentFullName) && !ParentFullName.Equals(DirectoryFullName))
+    {
+      return GetClangTidyConfigureFile(Target, ParentFullName, FileName);
+    }
+
+    return FallbackFullName;
+  }
+
+  static public void SetupClangTidy(ReadOnlyTargetRules Target, ModuleRules Module)
+  {
+    if (Module.Type == ModuleType.External)
+    {
+      System.Console.WriteLine($"-------------- Disable ClangTidy For {Module.Name} because it's external module --------------");
+      return;
+    }
+
+    // Target.IntermediateEnvironment
+    string PlatformIntermediateFolder = GetPlatformIntermediateFolder(Target.Platform, Target.Architectures, false);
+    string PlatformIntermediateFolderNoArch = GetPlatformIntermediateFolder(Target.Platform, null, false);
+
+    string GeneratedCodeDirectory = GetGeneratedCodeDirectory(Target, Module, PlatformIntermediateFolderNoArch).FullName;
+    string ModuleCodeDirectory = DirectoryReference.Combine(Target.ProjectFile.Directory, PlatformIntermediateFolder,
+      GetTargetIntermediateFolderName(Target.Name, Target.IntermediateEnvironment),
+      Target.Configuration.ToString(), Module.ShortName ?? Module.Name).FullName;
+    // string ModuleDirectory = Module.ModuleDirectory;
+    string[] CopyFiles = new string[] {
+      ".codechecker.clang-tidy.args",
+      ".codechecker.skipfile",
+      ".codechecker.yaml",
+      ".clang-tidy",
+    };
+    string[] CopyToDirs = new string[] {
+      GeneratedCodeDirectory,
+      ModuleCodeDirectory,
+    };
+
+    System.Console.WriteLine($"-------------- Setup ClangTidy For {Module.Name} --------------");
+    foreach (string CopyFile in CopyFiles)
+    {
+      string ConfigureFilePath = GetClangTidyConfigureFile(Target, Module.ModuleDirectory, CopyFile);
+      foreach (string CopyToDir in CopyToDirs)
+      {
+        string TargetFilePath = Path.Combine(CopyToDir, CopyFile);
+        System.Console.WriteLine($"Setup ClangTidy: Copy {ConfigureFilePath} to {TargetFilePath}");
+        if (!Directory.Exists(CopyToDir))
+        {
+          Directory.CreateDirectory(CopyToDir);
+        }
+        File.Copy(ConfigureFilePath, TargetFilePath, true);
+      }
+    }
+  }
+
+  static public void SetupClangSA(ReadOnlyTargetRules Target, ModuleRules Module)
+  {
+    SetupClangUESA(Target, Module);
+    SetupClangTidy(Target, Module);
+  }
+
+  // UnrealBuildTool.UEBuildTarget.GetTargetIntermediateFolderName 是引擎内部接口，类不是Public的
+  // 这里复制了一份出来，保持代码逻辑一致
+  public static string GetTargetIntermediateFolderName(string TargetName, UnrealIntermediateEnvironment IntermediateEnvironment)
+  {
+    string TargetFolderName = TargetName;
+    switch (IntermediateEnvironment)
+    {
+      case UnrealIntermediateEnvironment.IWYU:
+        TargetFolderName += "IWYU";
+        break;
+      case UnrealIntermediateEnvironment.NonUnity:
+        TargetFolderName += "NU";
+        break;
+      case UnrealIntermediateEnvironment.Analyze:
+        TargetFolderName += "SA";
+        break;
+    }
+    return TargetFolderName;
+  }
+
+  // UnrealBuildTool.UEBuildTarget.GetPlatformIntermediateFolder 是引擎内部接口，类不是Public的
+  // 这里复制了一份出来，保持代码逻辑一致
+  public static string GetPlatformIntermediateFolder(UnrealTargetPlatform Platform, UnrealArchitectures Architectures, bool External)
+  {
+    // now that we have the platform, we can set the intermediate path to include the platform/architecture name
+    string FolderPath = Path.Combine("Intermediate", External ? "External" : String.Empty, "Build", Platform.ToString());
+    if (Architectures != null)
+    {
+      FolderPath = Path.Combine(FolderPath, UnrealArchitectureConfig.ForPlatform(Platform).GetFolderNameForArchitectures(Architectures));
+    }
+    return FolderPath;
+  }
+
+  static public DirectoryReference GetGeneratedCodeDirectory(ReadOnlyTargetRules Target, ModuleRules Module, string PlatformIntermediateFolderNoArch)
+  {
+    DirectoryReference GeneratedCodeDirectory = null;
+    // Get the base directory
+    // if (Module.Context)
+    // {
+    //   GeneratedCodeDirectory = Module.Context.DefaultOutputBaseDir;
+    // }
+    // else
+    // {
+      GeneratedCodeDirectory = Target.ProjectFile.Directory;
+    // }
+
+    // Get the subfolder containing generated code - we don't need architeceture information since these are shared between all arches for a platform
+    GeneratedCodeDirectory = DirectoryReference.Combine(GeneratedCodeDirectory, PlatformIntermediateFolderNoArch, GetTargetIntermediateFolderName(Target.Name, Target.IntermediateEnvironment), "Inc");
+
+    // Append the binaries subfolder, if present. We rely on this to ensure that build products can be filtered correctly.
+    if (Module.BinariesSubFolder != null)
+    {
+      GeneratedCodeDirectory = DirectoryReference.Combine(GeneratedCodeDirectory, Module.BinariesSubFolder);
+    }
+
+    // Finally, append the module name (using the ShortName if it has been set)
+    GeneratedCodeDirectory = DirectoryReference.Combine(GeneratedCodeDirectory, Module.ShortName ?? Module.Name);
+
+    return GeneratedCodeDirectory;
+  }
+}</code></pre></details><h4 id=在模块中集成静态分析>在模块中集成静态分析</h4><p>在你的模块的 <code>.Build.cs</code> 文件中，调用 <code>ClangSA.SetupClangSA</code> 即可启用静态分析：</p><pre><code class=language-csharp>public class LyraGame : ModuleRules
+{
+    public LyraGame(ReadOnlyTargetRules Target) : base(Target)
+    {
+        // ... 其他配置 ...
+        
+        // 启用静态分析
+        ClangSA.SetupClangSA(Target, this);
+    }
+}</code></pre><h3 id=fixclangdatabasepy编译数据库后处理>FixClangDatabase.py：编译数据库后处理</h3><p>UBT 生成的 <code>compile_commands.json</code> 存在以下问题，需要后处理：</p><ol><li><strong>响应文件（@file）未展开</strong>：UBT 使用 <code>.rsp</code> 文件存储编译参数，需要展开为完整参数</li><li><strong>相对路径问题</strong>：部分路径是相对路径，需要转换为绝对路径</li><li><strong>缺少 PCH 包含</strong>：需要手动添加共享 PCH 的 include</li><li><strong>文件过滤</strong>：只保留需要分析的源文件</li></ol><details><summary>点击展开 FixClangDatabase.py 完整代码</summary><pre><code class=language-python>#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import codecs
+import re
+import argparse
+import os
+import sys
+import json
+from typing import List, Tuple, Set, Optional, Dict
+
+__VERSION__ = "1.0.0"
+
+CLANG_DATABASE_IGNORE_OPTIONS = set(["-c"])
+
+
+def try_read_file(file_path):
+    _err = None
+    for try_encoding in ["utf-8", "utf-8-sig", "GB18030"]:
+        try:
+            ret = codecs.open(file_path, "r", encoding=try_encoding)
+            return ret
+        except Exception as e:
+            if _err is None:
+                _err = e
+            if not os.path.exists(file_path):
+                break
+    raise _err
+
+
+class ClangDatabaseProcessor:
+    def __init__(
+        self,
+        engine_source: str,
+        input_file: str,
+        output_file: str,
+        include_path: List[str],
+        exclude_path: List[str],
+        pch: Optional[str],
+        verbose: bool,
+    ):
+        self.engine_source = engine_source
+        self.input_file = input_file
+        self.output_file = output_file
+        self.include_path: List[re.Pattern] = [
+            re.compile(p, re.IGNORECASE) for p in include_path
+        ]
+        self.exclude_path: List[re.Pattern] = [
+            re.compile(p, re.IGNORECASE) for p in exclude_path
+        ]
+        self.expanded_cache: Dict[str, List[str]] = dict()
+        self.pch = pch
+        self.verbose = verbose
+
+    def process(self):
+        # Implement the processing logic here
+        result = []
+        json_data = self._parse_json()
+        for item in json_data:
+            if not self._should_include(item):
+                continue
+            if self.verbose:
+                print(f"Processing command for file: {item['file']}")
+            result.append(self._resolve_item(item))
+        json.dump(result, self.output_file, indent=2)
+
+    def _parse_flag_with_file(self, token, previous_token, flag):
+        if previous_token == flag:
+            file_path = token
+            prefix = ""
+            suffix = ""
+            if (file_path.startswith('"') and file_path.endswith('"')) or (
+                file_path.startswith("'") and file_path.endswith("'")
+            ):
+                file_path = file_path[1:-1]
+                prefix = token[:1]
+                suffix = token[:1]
+            return (file_path, prefix, suffix)
+
+        if not token.startswith(flag):
+            return (None, None, None)
+
+        flag_len = len(flag)
+        prefix = token[:flag_len]
+        suffix = ""
+        file_path = token[flag_len:]
+        if (file_path.startswith('"') and file_path.endswith('"')) or (
+            file_path.startswith("'") and file_path.endswith("'")
+        ):
+            file_path = file_path[1:-1]
+            prefix = token[: (flag_len + 1)]
+            suffix = token[flag_len : (flag_len + 1)]
+        return (file_path, prefix, suffix)
+
+    def _resolve_token(self, token, previous_token):
+        (file_path, prefix, suffix) = self._parse_flag_with_file(
+            token, previous_token, "@"
+        )
+        if file_path:
+            return self._resolve_response(file_path)
+
+        (file_path, prefix, suffix) = self._parse_flag_with_file(
+            token, previous_token, "-I"
+        )
+        if file_path:
+            return self._resolve_flag_with_file_path(file_path, prefix, suffix)
+
+        (file_path, prefix, suffix) = self._parse_flag_with_file(
+            token, previous_token, "-isystem"
+        )
+        if file_path:
+            return self._resolve_flag_with_file_path(file_path, prefix, suffix)
+
+        (file_path, prefix, suffix) = self._parse_flag_with_file(
+            token, previous_token, "-MF"
+        )
+        if file_path:
+            return self._resolve_flag_with_file_path(file_path, prefix, suffix)
+
+        (file_path, prefix, suffix) = self._parse_flag_with_file(
+            token, previous_token, "-o"
+        )
+        if file_path:
+            return self._resolve_flag_with_file_path(file_path, prefix, suffix)
+
+        return [token]
+
+    def _resolve_response(self, file_path):
+        if not os.path.isabs(file_path):
+            file_path = os.path.join(self.engine_source, file_path)
+        if file_path in self.expanded_cache:
+            return self.expanded_cache[file_path]
+        expanded_paths = []
+        try:
+            with try_read_file(file_path) as rsp_file:
+                previous_token = ""
+                for line in rsp_file:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    for token in self._split_tokens(line):
+                        if token in CLANG_DATABASE_IGNORE_OPTIONS:
+                            continue
+                        expanded_paths.extend(
+                            self._resolve_token(token, previous_token)
+                        )
+                        previous_token = token
+            self.expanded_cache[file_path] = expanded_paths
+            if self.verbose:
+                print(
+                    f"  - Expand response file '{file_path}' to {len(expanded_paths)} args"
+                )
+        except Exception as e:
+            print(
+                f"  - Error reading response file '{file_path}': {e}", file=sys.stderr
+            )
+            return [f'@"{file_path}"']
+        return expanded_paths
+
+    def _resolve_flag_with_file_path(self, file_path, prefix, suffix):
+        if not os.path.isabs(file_path):
+            file_path = os.path.realpath(os.path.join(self.engine_source, file_path))
+        return [f"{prefix}{file_path}{suffix}"]
+
+    def _next_token(self, input, start_idx):
+        sz = len(input)
+        while start_idx < sz and input[start_idx].isspace():
+            start_idx += 1
+
+        if start_idx >= sz:
+            return (None, sz)
+
+        string_quote = None
+        end_idx = start_idx
+        while end_idx < sz and not input[end_idx].isspace():
+            if input[end_idx] == '"' or input[end_idx] == "'":
+                string_quote = input[end_idx]
+                end_idx += 1
+                ignore_next = False
+                while end_idx < sz and (ignore_next or input[end_idx] != string_quote):
+                    ignore_next = input[end_idx] == "\\"
+                    end_idx += 1
+                if end_idx < sz:
+                    end_idx += 1
+            else:
+                end_idx += 1
+        return (input[start_idx:end_idx], end_idx)
+
+    def _split_tokens(self, input):
+        # Split the input into tokens based on whitespace
+        idx = 0
+        sz = len(input)
+        ret = []
+        while idx < sz:
+            token, end_idx = self._next_token(input, idx)
+            if token is not None:
+                ret.append(token)
+            idx = end_idx
+        return ret
+
+    def _resolve_item(self, item):
+        command_args = []
+
+        checked_pch = False
+        # Resolve response files
+        tokens = self._split_tokens(item["command"])
+        previous_token = ""
+        for token in tokens:
+            if token in CLANG_DATABASE_IGNORE_OPTIONS:
+                continue
+
+            command_args.extend(self._resolve_token(token, previous_token))
+            previous_token = token
+            if not checked_pch:
+                checked_pch = True
+                if self.pch and self.pch.strip():
+                    command_args.extend(["-include", f'"{self.pch}"'])
+
+        if "-Wno-unused-command-line-argument" not in command_args:
+            command_args.append("-Wno-unused-command-line-argument")
+
+        if self.verbose:
+            print(
+                f"  * Resolve command for file: {item['file']} from {len(tokens)} args to {len(command_args)} args"
+            )
+
+        item["command"] = " ".join(command_args)
+        # Patch file
+        file_path = item["file"]
+        if file_path.startswith("@"):
+            file_path = file_path[1:]
+            if file_path.endswith(".d.rsp"):
+                file_path = file_path[: -len(".d.rsp")]
+            item["file"] = file_path
+        return item
+
+    def _should_include(self, item):
+        if "file" not in item or "command" not in item:
+            return False
+        file_param = item["file"]
+        if self.include_path:
+            if not any(p.search(file_param) for p in self.include_path):
+                return False
+        if self.exclude_path and any(p.search(file_param) for p in self.exclude_path):
+            return False
+        return True
+
+    def _parse_json(self):
+        json_data = json.load(self.input_file)
+        # Process the JSON data as needed
+        return json_data
+
+
+def main():
+    global __VERSION__
+
+    parser = argparse.ArgumentParser(usage="%(prog)s [options...]")
+    parser.add_argument("REMAINDER", nargs=argparse.REMAINDER, help="task names")
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="store_true",
+        help="show version and exit",
+        dest="version",
+        default=False,
+    )
+
+    parser.add_argument(
+        "-V",
+        "--verbose",
+        action="store_true",
+        help="show verbose",
+        dest="verbose",
+        default=False,
+    )
+
+    parser.add_argument(
+        "-i",
+        "--input",
+        action="store",
+        help="set input clang database build file (default: compile_commands.json)",
+        dest="input",
+        default="compile_commands.json",
+    )
+
+    parser.add_argument(
+        "-o",
+        "--output",
+        action="store",
+        help="set output clang database build file (default: compile_commands.json)",
+        dest="output",
+        default=None,
+    )
+
+    parser.add_argument(
+        "--include-path",
+        action="append",
+        help="only keep files match include path(regex)",
+        dest="include_path",
+        default=[],
+    )
+
+    parser.add_argument(
+        "--exclude-path",
+        action="append",
+        help="only keep files match exclude path(regex)",
+        dest="exclude_path",
+        default=[],
+    )
+
+    parser.add_argument(
+        "--pch",
+        action="store",
+        help="set the pch file to include",
+        dest="pch",
+        default=None,
+    )
+
+    if os.path.exists(
+        os.path.join(os.getcwd(), "Engine", "Source", "UnrealGame.Target.cs")
+    ):
+        find_default_engine_source = os.path.join(os.getcwd(), "Engine", "Source")
+    elif os.path.exists(
+        os.path.join(os.getcwd(), "..", "Engine", "Source", "UnrealGame.Target.cs")
+    ):
+        find_default_engine_source = os.path.realpath(
+            os.path.join(os.getcwd(), "..", "Engine", "Source")
+        )
+    elif os.path.exists(
+        os.path.join(
+            os.getcwd(), "..", "..", "Engine", "Source", "UnrealGame.Target.cs"
+        )
+    ):
+        find_default_engine_source = os.path.realpath(
+            os.path.join(os.getcwd(), "..", "..", "Engine", "Source")
+        )
+    else:
+        find_default_engine_source = os.getcwd()
+    parser.add_argument(
+        "-e",
+        "--engine-source",
+        action="store",
+        help="set path of Engine/Source, it will be used to convert relative paths",
+        dest="engine_source",
+        default=find_default_engine_source,
+    )
+
+    options = parser.parse_args()
+    if options.version:
+        print(__VERSION__)
+        return 0
+
+    if options.input.strip() == "-":
+        input_file = sys.stdin
+    else:
+        input_file = try_read_file(options.input)
+
+    output_file_path = options.output
+    if output_file_path is None:
+        (input_base, input_ext) = os.path.splitext(options.input)
+        if input_ext:
+            output_file_path = input_base + ".fixed" + input_ext
+        else:
+            output_file_path = input_base + ".fixed"
+
+    processor = ClangDatabaseProcessor(
+        engine_source=options.engine_source,
+        input_file=input_file,
+        output_file=codecs.open(output_file_path, "w", encoding="utf-8"),
+        include_path=options.include_path,
+        exclude_path=options.exclude_path,
+        pch=options.pch,
+        verbose=options.verbose,
+    )
+    print(f"[FixClangDatabase]: Using engine source at {options.engine_source}")
+    print(f"[FixClangDatabase]: Process {options.input} -> {output_file_path}")
+    processor.process()
+
+    return 0
+
+
+if __name__ == "__main__":
+    exit(main())</code></pre></details><h4 id=命令行参数说明>命令行参数说明</h4><table><thead><tr><th>参数</th><th>说明</th><th>默认值</th></tr></thead><tbody><tr><td><code>-i, --input</code></td><td>输入的编译数据库文件</td><td><code>compile_commands.json</code></td></tr><tr><td><code>-o, --output</code></td><td>输出的编译数据库文件</td><td><code>&lt;input>.fixed.json</code></td></tr><tr><td><code>--include-path</code></td><td>只保留匹配的文件路径（正则）</td><td>无</td></tr><tr><td><code>--exclude-path</code></td><td>排除匹配的文件路径（正则）</td><td>无</td></tr><tr><td><code>--pch</code></td><td>要包含的 PCH 文件路径</td><td>无</td></tr><tr><td><code>-e, --engine-source</code></td><td>引擎源码路径，用于转换相对路径</td><td>自动检测</td></tr></tbody></table><h3 id=extractnotificationpy问题报告生成>ExtractNotification.py：问题报告生成</h3><p>静态分析会生成大量诊断信息，但并非所有问题都需要立即处理。<code>ExtractNotification.py</code> 用于提取需要重点关注的严重问题，并通过 VCS（p4/git）查找每行代码的最后提交人。</p><h4 id=工作流程>工作流程</h4><pre class=mermaid>
+flowchart LR
+    A[plist 诊断文件] --> B[解析 XML/plist]
+    B --> C[过滤重要 checker]
+    C --> D[定位问题文件和行号]
+    D --> E[查询 VCS blame]
+    E --> F[生成 Markdown 报告]
+</pre><h4 id=支持的重要-checker>支持的重要 Checker</h4><p>以下 checker 的问题会被提取到通知报告中：</p><table><thead><tr><th>Checker</th><th>说明</th></tr></thead><tbody><tr><td><code>clang-analyzer-core.CallAndMessage</code></td><td>空指针调用（过滤 <code>object pointer is null</code>）</td></tr><tr><td><code>clang-analyzer-core.NonNullParamChecker</code></td><td>非空参数传入空值</td></tr><tr><td><code>clang-analyzer-core.NullDereference</code></td><td>空指针解引用</td></tr><tr><td><code>clang-diagnostic-shorten-64-to-32</code></td><td>64 位到 32 位截断</td></tr><tr><td><code>bugprone-use-after-move</code></td><td>move 后使用</td></tr><tr><td><code>bugprone-swapped-arguments</code></td><td>参数顺序错误</td></tr><tr><td><code>bugprone-suspicious-enum-usage</code></td><td>可疑的枚举使用</td></tr><tr><td><code>clang-diagnostic-error</code></td><td>编译错误</td></tr></tbody></table><details><summary>点击展开 ExtractNotification.py 完整代码</summary><pre><code class=language-python>#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import codecs
+import re
+import argparse
+import os
+import sys
+import glob
+import xml.dom.minidom
+import subprocess
+
+from typing import List, Any, Optional
+
+__VERSION__ = "1.0.0"
+
+
+class ClangSANotificationFilter:
+    def __init__(self, checker_name: str, message_filter: List[Any] = []):
+        self.checker_name = checker_name
+        self.checker_name_lowercase = checker_name.lower()
+        self.message_filter = message_filter
+
+
+CLANG_SA_NOTIFICATION_CHECKERS = dict()
+CLANG_SA_NOTIFICATION_CHECKERS_LOWERCASE = dict()
+for checker in [
+    ClangSANotificationFilter(
+        "clang-analyzer-core.CallAndMessage",
+        [re.compile(r"object\s+pointer\s+is\s+null", re.IGNORECASE)],
+    ),
+    ClangSANotificationFilter("clang-analyzer-core.NonNullParamChecker"),
+    ClangSANotificationFilter("clang-analyzer-core.NullDereference"),
+    ClangSANotificationFilter("clang-diagnostic-shorten-64-to-32"),
+    ClangSANotificationFilter("bugprone-use-after-move"),
+    ClangSANotificationFilter("bugprone-swapped-arguments"),
+    ClangSANotificationFilter("bugprone-suspicious-enum-usage"),
+    ClangSANotificationFilter("clang-diagnostic-error"),
+]:
+    CLANG_SA_NOTIFICATION_CHECKERS[checker.checker_name] = checker
+    CLANG_SA_NOTIFICATION_CHECKERS_LOWERCASE[checker.checker_name_lowercase] = checker
+
+CLANG_SA_DEFAULT_IGNORE_RULES = [
+    # 忽略引擎核心模块的问题（这些通常不是项目代码）
+    re.compile(
+        r"Engine/Source/Runtime/(Core|CoreUObject|Engine|SlateCore)", re.IGNORECASE
+    ),
+    # 忽略第三方库
+    re.compile(r"Projects/Plugins/UnLua/Source/ThirdParty", re.IGNORECASE),
+    re.compile(r"deps/third_party/install", re.IGNORECASE),
+]
+
+# 匹配 C/C++ 源文件的正则表达式
+CLANG_SA_SOURCE_FILE_PATTERN = re.compile(r"^.*\.(cc|cxx|cpp|c)$", re.IGNORECASE)
+
+
+class ClangSANotificationFile:
+    """表示一个需要通知的问题文件位置"""
+    def __init__(self, file_path: str, column: int, line: int):
+        self.file_path = file_path.replace("\\", "/")  # 统一使用 Unix 风格路径
+        self.column = column
+        self.line = line
+        self.notifications = []
+
+
+def try_read_file(file_path):
+    """尝试以多种编码读取文件，自动检测编码"""
+    _err = None
+    if not os.path.isabs(file_path):
+        file_path = os.path.join(file_path)
+    for try_encoding in ["utf-8", "utf-8-sig", "GB18030"]:
+        try:
+            ret = codecs.open(file_path, "r", encoding=try_encoding)
+            return ret
+        except Exception as e:
+            if _err is None:
+                _err = e
+            if not os.path.exists(file_path):
+                break
+    raise _err
+
+
+def try_decode_buffer(buffer):
+    """尝试以多种编码解码字节buffer"""
+    for try_encoding in ["utf-8", "utf-8-sig", "GB18030"]:
+        try:
+            return buffer.decode(try_encoding)
+        except Exception:
+            continue
+    return buffer.decode(sys.getfilesystemencoding(), errors="ignore")
+
+
+def _check_notification_file(file_path: str, ignore_path: List[Any]):
+    """检查文件路径是否应该被忽略"""
+    for rule in ignore_path:
+        if re.search(rule, file_path):
+            return False
+    return True
+
+
+def _find_notification_file(
+    data: dict, ignore_path: List[Any]
+) -> Optional[ClangSANotificationFile]:
+    """
+    从诊断数据中查找问题所在的源文件位置
+    优先返回 .cpp/.c 源文件，如果没有则返回头文件
+    """
+    fallback_header_file = None
+    # 首先检查直接的 location 字段
+    if "location" in data:
+        location = data["location"]
+        if (
+            isinstance(location, dict)
+            and "file" in location
+            and "line" in location
+            and "col" in location
+        ):
+            file_path = location["file"]
+            line = location["line"]
+            column = location["col"]
+            if _check_notification_file(file_path, ignore_path):
+                if CLANG_SA_SOURCE_FILE_PATTERN.match(file_path):
+                    return ClangSANotificationFile(file_path, column, line)
+                else:
+                    fallback_header_file = ClangSANotificationFile(
+                        file_path, column, line
+                    )
+
+    if "path" in data:
+        path_nodes = data["path"]
+        # 倒序找文件，优先使用源文件
+        for path_node in reversed(path_nodes):
+            if "location" in path_node:
+                location = path_node["location"]
+                if (
+                    isinstance(location, dict)
+                    and "file" in location
+                    and "line" in location
+                    and "col" in location
+                ):
+                    file_path = location["file"]
+                    line = location["line"]
+                    column = location["col"]
+                    if _check_notification_file(file_path, ignore_path):
+                        if CLANG_SA_SOURCE_FILE_PATTERN.match(file_path):
+                            return ClangSANotificationFile(file_path, column, line)
+                        elif fallback_header_file is None:
+                            fallback_header_file = ClangSANotificationFile(
+                                file_path, column, line
+                            )
+
+    return fallback_header_file
+
+
+class ClangSANotificationInfo:
+    """封装单个诊断通知的完整信息"""
+    def __init__(self, data: dict, ignore_path: List[Any]):
+        self.data = data
+        self.check_name = data.get("check_name", "")
+        self.description = data.get("description", "")
+        # 对编译错误添加额外说明
+        if self.check_name == "clang-diagnostic-error":
+            self.description += "（编译失败，通常是由于头文件依赖不严谨）"
+        self.category = data.get("category", "")
+        # issue_hash 用于去重和生成报告链接
+        self.issue_hash = data.get("issue_hash_content_of_line_in_context", "")
+        self.plist_file_path = data.get("plist_file_path", "")
+        # 查找问题所在的源文件
+        self.issue_file = _find_notification_file(data, ignore_path)
+        self.last_committer = None  # 稍后通过 VCS 查询填充
+        self.location = None
+        if "location" in data:
+            location = data["location"]
+            if (
+                isinstance(location, dict)
+                and "file" in location
+                and "line" in location
+                and "col" in location
+            ):
+                self.location = ClangSANotificationFile(
+                    location["file"], location["col"], location["line"]
+                )
+
+    def is_valid(self):
+        """检查通知信息是否有效（必须有文件位置信息）"""
+        return self.issue_file is not None and self.location is not None
+
+
+class VCS_MODE:
+    """版本控制系统模式枚举"""
+    NONE = None
+    GIT = "git"
+    P4 = "p4"
+
+
+def build_array_element(node: xml.dom.minidom.Element):
+    """解析 plist 的 array 元素，返回 Python 列表"""
+    ret = []
+    for child in node.childNodes:
+        if child.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
+            continue
+        child_data = build_object_element(child)
+        if child_data is not None:
+            ret.append(child_data)
+    return ret
+
+
+def build_dict_element(node: xml.dom.minidom.Element):
+    """解析 plist 的 dict 元素，返回 Python 字典"""
+    ret = {}
+    current_key = None
+
+    for child in node.childNodes:
+        if child.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
+            continue
+
+        if child.nodeName == "key":
+            # 提取 key 的文本内容
+            current_key = ""
+            for text_node in child.childNodes:
+                if text_node.nodeType == xml.dom.minidom.Node.TEXT_NODE:
+                    current_key += text_node.nodeValue
+        else:
+            # 当前节点是 key 对应的值
+            if current_key is not None:
+                value = build_object_element(child)
+                if value is not None:
+                    ret[current_key] = value
+                current_key = None
+
+    return ret
+
+
+def get_text_content(node: xml.dom.minidom.Element):
+    """提取 XML 元素的文本内容"""
+    text = ""
+    for child in node.childNodes:
+        if child.nodeType == xml.dom.minidom.Node.TEXT_NODE:
+            text += child.nodeValue
+    return text
+
+
+def build_object_element(node: xml.dom.minidom.Element):
+    """
+    根据 plist DTD 规范解析各种类型的元素
+    @see http://www.apple.com/DTDs/PropertyList-1.0.dtd
+    """
+    tag_name = node.nodeName
+
+    if tag_name == "array":
+        return build_array_element(node)
+    elif tag_name == "dict":
+        return build_dict_element(node)
+    elif tag_name == "string":
+        return get_text_content(node)
+    elif tag_name == "integer":
+        text = get_text_content(node).strip()
+        try:
+            return int(text)
+        except ValueError:
+            return text
+    elif tag_name == "real":
+        text = get_text_content(node).strip()
+        try:
+            return float(text)
+        except ValueError:
+            return text
+    elif tag_name == "true":
+        return True
+    elif tag_name == "false":
+        return False
+    elif tag_name == "data":
+        # Base64 encoded data
+        return get_text_content(node).strip()
+    elif tag_name == "date":
+        # ISO 8601 date string
+        return get_text_content(node).strip()
+
+    return None
+
+
+def rebuild_diagnostic(diagnostic: dict | list, file_indexes: List[str]) -> dict | list:
+    """
+    重建诊断数据结构，将文件索引替换为实际的文件路径
+    plist 中的 file 字段存储的是索引号，需要通过 file_indexes 映射为路径
+    """
+    if isinstance(diagnostic, list):
+        return [rebuild_diagnostic(item, file_indexes) for item in diagnostic]
+    ret = {}
+    for k in diagnostic:
+        v = diagnostic[k]
+        if k == "file" and isinstance(v, int):
+            # 将文件索引映射为实际的文件路径
+            ret[k] = file_indexes[v]
+        elif isinstance(v, dict):
+            # 递归处理嵌套的字典
+            ret[k] = rebuild_diagnostic(v, file_indexes)
+        elif isinstance(v, list):
+            # 递归处理嵌套的列表
+            ret[k] = [rebuild_diagnostic(item, file_indexes) for item in v]
+        else:
+            ret[k] = v
+    return ret
+
+
+def build_plist_element(
+    node: xml.dom.minidom.Element, shared_index: dict
+) -> List[dict]:
+    """
+    解析 plist 根元素，提取所有诊断信息
+    shared_index 用于跨文件去重（相同 checker + issue_hash 的问题只保留一个）
+    """
+    ret = []
+    for child in node.childNodes:
+        if child.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
+            continue
+        plist_data = build_object_element(child)
+        # plist 必须包含 files（文件路径列表）和 diagnostics（诊断列表）
+        if (
+            not plist_data
+            or "files" not in plist_data
+            or "diagnostics" not in plist_data
+        ):
+            continue
+        file_indexes = plist_data["files"]  # 文件路径索引表
+        diagnostics = plist_data["diagnostics"]
+        for diagnostic in diagnostics:
+            # 必须有 checker 名称和 issue hash 才能处理
+            if (
+                "check_name" not in diagnostic
+                or "issue_hash_content_of_line_in_context" not in diagnostic
+            ):
+                continue
+            check_name = diagnostic["check_name"]
+            issue_hash = diagnostic["issue_hash_content_of_line_in_context"]
+            # 使用 checker 名称 + issue hash 作为去重 key
+            if check_name not in shared_index:
+                shared_index[check_name] = dict()
+            check_name_map = shared_index[check_name]
+            if issue_hash in check_name_map:
+                continue  # 跳过重复的问题
+            # 重建诊断数据，将文件索引替换为路径
+            rebuild_dict = rebuild_diagnostic(diagnostic, file_indexes)
+            if rebuild_dict:
+                check_name_map[issue_hash] = rebuild_dict
+                ret.append(rebuild_dict)
+    return ret
+
+
+def build_plist_data(file_path: str, shared_index: dict) -> List[dict]:
+    """解析单个 plist 文件，返回诊断信息列表"""
+    doc = xml.dom.minidom.parseString(try_read_file(file_path).read())
+    ret = []
+    for node in doc.childNodes:
+        if node.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
+            continue
+        if node.nodeName == "plist":
+            res = build_plist_element(node, shared_index)
+            for item in res:
+                item["plist_file_path"] = file_path
+            ret.extend(res)
+        else:
+            child = build_object_element(node)
+            if child:
+                child["plist_file_path"] = file_path
+                ret.append(child)
+    return ret
+
+
+def filter_notification_diagnostics(diagnostics: List[dict]) -> List[dict]:
+    """
+    过滤诊断信息，只保留需要通知的重要问题
+    根据 CLANG_SA_NOTIFICATION_CHECKERS 定义的 checker 列表过滤
+    """
+    ret = []
+    for diagnostic in diagnostics:
+        if "check_name" not in diagnostic:
+            continue
+        check_name = diagnostic["check_name"].lower()
+        # 检查是否是需要通知的 checker
+        if check_name not in CLANG_SA_NOTIFICATION_CHECKERS_LOWERCASE:
+            continue
+        selected = False
+        filter = CLANG_SA_NOTIFICATION_CHECKERS_LOWERCASE[check_name]
+        # 如果 checker 有消息过滤规则，还需要匹配消息内容
+        if filter.message_filter:
+            selected = False
+            description = diagnostic.get("description", "")
+            for pattern in filter.message_filter:
+                if re.search(pattern, description):
+                    selected = True
+                    break
+        else:
+            selected = True
+        if selected:
+            ret.append(diagnostic)
+    return ret
+
+
+def build_notification_list(
+    notification_diagnostics: List[dict], ignore_path: List[Any]
+) -> List[ClangSANotificationInfo]:
+    """将过滤后的诊断信息转换为通知对象列表"""
+    ret = []
+    for diagnostic in notification_diagnostics:
+        notification_info = ClangSANotificationInfo(diagnostic, ignore_path)
+        if notification_info.is_valid():
+            ret.append(notification_info)
+    return ret
+
+
+def patch_statistics_body_dom(
+    node: xml.dom.minidom.Node, url_prefix: str
+) -> xml.dom.minidom.Node:
+    """修补统计 HTML 中的链接，添加 URL 前缀"""
+    if node.nodeName == "a":
+        href = node.getAttribute("href")
+        # 跳过绝对 URL
+        if href.startswith("http://") or href.startswith("https://"):
+            return node
+        if not href.startswith("/"):
+            href = "/" + href
+        # 添加 URL 前缀
+        if url_prefix:
+            if not url_prefix.endswith("/"):
+                node.setAttribute("href", url_prefix + href)
+            else:
+                node.setAttribute("href", url_prefix + href[1:])
+    # 递归处理子节点
+    for child_node in node.childNodes:
+        if child_node.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
+            continue
+        patch_statistics_body_dom(child_node, url_prefix)
+    return node
+
+
+def scan_statistics_body_dom(
+    node: xml.dom.minidom.Node, url_prefix: str
+) -> Optional[str]:
+    """扫描并修补统计页面的 body 内容"""
+    res = []
+    for child_node in node.childNodes:
+        if child_node.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
+            res.append(child_node.toxml())
+            continue
+        res.append(patch_statistics_body_dom(child_node, url_prefix).toxml())
+    return "".join(res) if res else None
+
+
+def pick_statistics_html_file(
+    statistics: Optional[str], url_prefix: str
+) -> Optional[str]:
+    """
+    从 CodeChecker 生成的统计 HTML 文件中提取 body 内容
+    用于嵌入到 Markdown 报告中
+    """
+    if not statistics or not os.path.exists(statistics):
+        return None
+    with try_read_file(statistics) as f:
+        html_content = f.read()
+        # 提取 <body>...</body> 之间的内容
+        body_begin = html_content.find("<body>")
+        body_end = html_content.find("</body>")
+        body_content = (
+            html_content[body_begin + 6 : body_end]
+            if body_begin != -1 and body_end != -1
+            else ""
+        )
+        if not body_content:
+            return None
+        # 去除换行，便于解析
+        body_content = "".join([x.strip() for x in body_content.splitlines()])
+        doc = xml.dom.minidom.parseString(f"<body>{body_content}</body>")
+        for node in doc.childNodes:
+            if node.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
+                continue
+            res = scan_statistics_body_dom(node, url_prefix)
+            if res:
+                return res
+    return None
+
+
+# ============ VCS 相关的缓存和正则表达式 ============
+CLANG_SA_LAST_COMMITTER_CACHE = dict()           # 最终结果缓存: file:line -> committer
+CLANG_SA_LAST_COMMITTER_P4_FILE_CACHE = dict()   # P4 文件级缓存
+CLANG_SA_LAST_COMMITTER_GIT_FILE_CACHE = dict()  # Git 行级缓存
+CLANG_SA_LAST_COMMITTER_GIT_FILE_NOT_FOUND = set()  # 找不到的文件集合
+CLANG_SA_GIT_IGNORE_COMMITTERS = set(["europa_server"])  # 忽略的提交者（如自动化账号）
+
+# Git blame 输出解析用的正则表达式
+CLANG_SA_GIT_SHA_RULE = re.compile("^[0-9a-fA-F]+")
+CLANG_SA_GIT_AUTHOR_RULE = re.compile("^author\s+(?P<author>.+)$")
+CLANG_SA_GIT_COMMITTER_RULE = re.compile("^committer\s+(?P<committer>.+)$")
+CLANG_SA_GIT_SUMMARY_RULE = re.compile("^summary\s+(?P<summary>.+)$")
+
+
+def parse_p4_annotate_line(line: str) -> Optional[str]:
+    """
+    解析 p4 annotate 输出的单行
+    格式: changelist: username content
+    """
+    pattern = r"^(\d+):\s+(\S+)\s+(.*)$"
+    match = re.match(pattern, line)
+    if match:
+        return {
+            "changelist": int(match.group(1)),
+            "username": match.group(2),
+            "content": match.group(3),
+        }
+    return None
+
+
+def parse_git_blame_lines(lines: List[str]) -> Optional[dict]:
+    """
+    解析 git blame --line-porcelain 的输出
+    提取 commit hash、author 和 summary 信息
+    """
+    if not lines:
+        return None
+    first_line = lines[0]
+    sha_hash = CLANG_SA_GIT_SHA_RULE.match(first_line)
+    if not sha_hash:
+        return None
+    author = None
+    content = None
+    committer = None
+    # 遍历各行，提取需要的字段
+    for line in lines:
+        if author is not None and content is not None and committer is not None:
+            break
+        if author is None:
+            author_match = CLANG_SA_GIT_AUTHOR_RULE.match(line)
+            if author_match:
+                author = author_match.group("AUTHOR")
+                continue
+        if content is None:
+            content_match = CLANG_SA_GIT_SUMMARY_RULE.match(line)
+            if content_match:
+                content = content_match.group("SUMMARY")
+                continue
+        if committer is None:
+            committer_match = CLANG_SA_GIT_COMMITTER_RULE.match(line)
+            if committer_match:
+                committer = committer_match.group("COMMITTER")
+                continue
+
+    # 如果没有 author，使用 committer
+    if author is None:
+        author = committer
+    if sha_hash and author and content:
+        return {
+            "commit": sha_hash,
+            "username": author,
+            "content": content,
+        }
+    return None
+
+
+def find_last_committer_p4_file_cache(
+    file: ClangSANotificationFile, rel_file_path: str, rewrite_vcs_root: Optional[str]
+) -> List[str]:
+    """
+    通过 p4 annotate 获取文件每行的最后提交信息
+    结果会缓存以避免重复查询
+    """
+    global CLANG_SA_LAST_COMMITTER_P4_FILE_CACHE
+    if file.file_path in CLANG_SA_LAST_COMMITTER_P4_FILE_CACHE:
+        return CLANG_SA_LAST_COMMITTER_P4_FILE_CACHE[file.file_path]
+
+    try:
+        # 执行 p4 annotate 命令，使用 -c 和 -u 参数
+        if rel_file_path and rewrite_vcs_root:
+            cmd = ["p4", "annotate", "-c", "-u", f"{rewrite_vcs_root}/{rel_file_path}"]
+        else:
+            cmd = ["p4", "annotate", "-c", "-u", file.file_path]
+        cmd_str = '"' + '" "'.join(cmd) + '"'
+        print(f"Running command: {cmd_str}")
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=30, encoding="utf-8"
+        )
+
+        if result.returncode != 0:
+            print(f"P4 annotate failed: {result.stderr}", file=sys.stderr)
+        else:
+            # 解析每行的 annotate 信息
+            ret = [parse_p4_annotate_line(x) for x in result.stdout.splitlines()]
+            CLANG_SA_LAST_COMMITTER_P4_FILE_CACHE[file.file_path] = ret
+            return ret
+
+    except subprocess.TimeoutExpired:
+        print("P4 annotate command timeout", file=sys.stderr)
+    except Exception as e:
+        print(f"Error executing p4 annotate: {e}", file=sys.stderr)
+    # 失败时缓存空列表，避免重复查询
+    CLANG_SA_LAST_COMMITTER_P4_FILE_CACHE[file.file_path] = []
+    return []
+
+
+def find_last_committer_git_file_cache(
+    file: ClangSANotificationFile, rel_file_path: str, rewrite_vcs_root: Optional[str]
+) -> List[str]:
+    """
+    通过 git blame 获取指定行的最后提交信息
+    支持重试机制：如果当前提交者在忽略列表中，会尝试查询更早的提交
+    """
+    global CLANG_SA_LAST_COMMITTER_GIT_FILE_CACHE
+    global CLANG_SA_LAST_COMMITTER_GIT_FILE_NOT_FOUND
+
+    key = f"{file.file_path}:{file.line}"
+    # 检查缓存
+    if key in CLANG_SA_LAST_COMMITTER_GIT_FILE_CACHE:
+        return CLANG_SA_LAST_COMMITTER_GIT_FILE_CACHE[key]
+    if file.file_path in CLANG_SA_LAST_COMMITTER_GIT_FILE_NOT_FOUND:
+        return None
+
+    try:
+        # 最多回溯 10 个版本，跳过自动化账号的提交
+        for retry_revision_depth in range(10):
+            if retry_revision_depth == 0:
+                REVISION = "HEAD"
+            else:
+                REVISION = f"HEAD~{retry_revision_depth}"
+            # 构建 git blame 命令
+            if rel_file_path and rewrite_vcs_root:
+                cmd = [
+                    "git",
+                    "blame",
+                    "-L",
+                    f"{file.line},{file.line}",  # 只查询指定行
+                    "--line-porcelain",           # 详细输出格式
+                    REVISION,
+                    "--",
+                    f"{rewrite_vcs_root}/{rel_file_path}",
+                ]
+            else:
+                cmd = [
+                    "git",
+                    "blame",
+                    "-L",
+                    f"{file.line},{file.line}",
+                    "-u",
+                    "--line-porcelain",
+                    REVISION,
+                    "--",
+                    file.file_path,
+                ]
+            cmd_str = '"' + '" "'.join(cmd) + '"'
+            print(f"Running command: {cmd_str}")
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=30, encoding="utf-8"
+            )
+
+            if result.returncode != 0:
+                # 文件不存在，记录下来避免重复查询
+                if result.stderr.find("no such path") >= 0:
+                    CLANG_SA_LAST_COMMITTER_GIT_FILE_NOT_FOUND.add(file.file_path)
+                    return None
+                print(f"git blame failed: {result.stderr}", file=sys.stderr)
+            else:
+                ret = parse_git_blame_lines(result.stdout.splitlines())
+                # 如果提交者在忽略列表中，继续查找更早的提交
+                if ret and ret["username"] in CLANG_SA_GIT_IGNORE_COMMITTERS:
+                    continue
+                CLANG_SA_LAST_COMMITTER_GIT_FILE_CACHE[key] = ret
+                return ret
+
+    except subprocess.TimeoutExpired:
+        print("git blame command timeout", file=sys.stderr)
+    except Exception as e:
+        print(f"Error executing git blame: {e}", file=sys.stderr)
+    CLANG_SA_LAST_COMMITTER_GIT_FILE_CACHE[key] = None
+    return None
+
+
+def find_last_committer(
+    file: ClangSANotificationFile,
+    rel_file_path: str,
+    vcs_mode: VCS_MODE,
+    rewrite_vcs_root: Optional[str],
+) -> Optional[str]:
+    """
+    查找指定文件行的最后提交人
+    根据 vcs_mode 选择使用 p4 或 git
+    """
+    global CLANG_SA_LAST_COMMITTER_CACHE
+    key = f"{file.file_path}:{file.line}"
+    # 检查结果缓存
+    if key in CLANG_SA_LAST_COMMITTER_CACHE:
+        return CLANG_SA_LAST_COMMITTER_CACHE[key]
+    if vcs_mode == VCS_MODE.P4:
+        p4_cache = find_last_committer_p4_file_cache(
+            file, rel_file_path, rewrite_vcs_root
+        )
+        if file.line > len(p4_cache):
+            CLANG_SA_LAST_COMMITTER_CACHE[key] = ""
+            value = ""
+        else:
+            p4_annotate = p4_cache[file.line - 1]
+            if p4_annotate:
+                value = p4_annotate["username"]
+            else:
+                value = ""
+    elif vcs_mode == VCS_MODE.GIT:
+        # 使用 git blame 查询
+        git_cache = find_last_committer_git_file_cache(
+            file, rel_file_path, rewrite_vcs_root
+        )
+        if git_cache:
+            value = git_cache["username"]
+        else:
+            value = ""
+    CLANG_SA_LAST_COMMITTER_CACHE[key] = value
+    return value
+
+
+def build_notification_markdown(
+    notification_list: List[ClangSANotificationInfo],
+    url_prefix: Optional[str],
+    depot_root: Optional[str],
+    statistics: Optional[str],
+    vcs_mode: VCS_MODE,
+    rewrite_vcs_root: Optional[str],
+) -> str:
+    """
+    生成 Markdown 格式的问题报告
+    包含问题列表表格、详情链接和统计信息
+    """
+    md_lines = ["# 静态分析报告", ""]
+
+    if notification_list:
+        # 生成问题表格
+        md_lines.extend(["## 严重问题列表", ""])
+        md_lines.append("|  文件  | Checker分类 |  Checker Name  | 详情 | 最后提交人 |")
+        md_lines.append("|--------|-------------|----------------|------|------------|")
+    else:
+        md_lines.extend(["## 🎉🎉无严重问题🎉🎉", ""])
+
+    # 处理 URL 前缀
+    if url_prefix:
+        if url_prefix.endswith("/"):
+            _url_prefix = url_prefix
+        else:
+            _url_prefix = url_prefix + "/"
+    else:
+        _url_prefix = None
+
+    # 遍历问题列表，生成表格行
+    for notification in notification_list:
+        file_path = notification.issue_file.file_path
+        # 从完整路径中提取相对路径
+        if depot_root:
+            dpidx = file_path.find(depot_root)
+            if dpidx >= 0:
+                file_path = file_path[dpidx + len(depot_root) + 1 :]
+        # 生成带链接的文件路径（指向 HTML 报告）
+        if _url_prefix and notification.plist_file_path:
+            file_url = f"[{file_path}:{notification.issue_file.line}]({_url_prefix}{os.path.basename(notification.plist_file_path)}.html#reportHash={notification.issue_hash})"
+        else:
+            file_url = f"{file_path}:{notification.issue_file.line}"
+        # 查询最后提交人
+        if notification.last_committer is None:
+            notification.last_committer = find_last_committer(
+                notification.issue_file, file_path, vcs_mode, rewrite_vcs_root
+            )
+        md_lines.append(
+            f"| {file_url} | {notification.category} | {notification.check_name} | {notification.description} | {notification.last_committer} |"
+        )
+
+    # 添加详情链接
+    if _url_prefix:
+        md_lines.extend(
+            [
+                "",
+                "## 详情链接",
+                "",
+                f"- 问题列表: <{_url_prefix}index.html>",
+                f"- 问题统计: <{_url_prefix}statistics.html>",
+            ]
+        )
+
+    # 添加统计信息（从 HTML 中提取）
+    statistics_html = pick_statistics_html_file(statistics, url_prefix)
+    if statistics_html:
+        md_lines.extend(["", "## 统计信息", ""])
+        md_lines.append(statistics_html)
+
+    md_lines.append("")
+    return "\n".join(md_lines)
+
+
+def main():
+    global __VERSION__
+
+    parser = argparse.ArgumentParser(usage="%(prog)s [options...]")
+    parser.add_argument("REMAINDER", nargs=argparse.REMAINDER, help="task names")
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="store_true",
+        help="show version and exit",
+        dest="version",
+        default=False,
+    )
+
+    parser.add_argument(
+        "-V",
+        "--verbose",
+        action="store_true",
+        help="show verbose",
+        dest="verbose",
+        default=False,
+    )
+
+    parser.add_argument(
+        "-p",
+        "--plist",
+        action="store",
+        help="set directory of plist files",
+        dest="plist",
+        default=None,
+    )
+
+    parser.add_argument(
+        "-u",
+        "--url-prefix",
+        action="store",
+        help="set URL prefix for html files",
+        dest="url_prefix",
+        default=None,
+    )
+
+    parser.add_argument(
+        "-d",
+        "--depot-root",
+        action="store",
+        help="search string to find depot root for files",
+        dest="depot_root",
+        default="ProjectDepot/Stream_Depot",
+    )
+
+    parser.add_argument(
+        "-i",
+        "--ignore-path",
+        action="append",
+        help="file path rules to ignore",
+        dest="ignore_path",
+        default=[],
+    )
+
+    parser.add_argument(
+        "--statistics",
+        action="store",
+        help="set statistics file",
+        dest="statistics",
+        default=None,
+    )
+
+    parser.add_argument(
+        "-o",
+        "--output",
+        action="store",
+        help="set output file path",
+        dest="output",
+        default="diagnostic_notification.md",
+    )
+
+    parser.add_argument(
+        "--with-p4",
+        action="store_true",
+        help="enable P4 support",
+        dest="with_p4",
+        default=False,
+    )
+
+    parser.add_argument(
+        "--with-git",
+        action="store_true",
+        help="enable git support",
+        dest="with_git",
+        default=False,
+    )
+
+    parser.add_argument(
+        "--rewrite-vcs-root",
+        action="store",
+        help="rewrite VCS root path",
+        dest="rewrite_vcs_root",
+        default=None,
+    )
+
+    options = parser.parse_args()
+    if options.version:
+        print(__VERSION__)
+        return 0
+
+    if not options.plist:
+        parser.print_help()
+        return 1
+
+    # metadata_file = os.path.join(options.plist, "metadata.json")
+    # if not os.path.exists(metadata_file):
+    #     print(f"Can not find {metadata_file}")
+    #     return 1
+
+    plist_files = glob.glob(os.path.join(options.plist, "*.plist"))
+    if not plist_files:
+        print(f"Can not find any plist files in {options.plist}")
+        return 0
+
+    # Process each plist file
+    plist_data = []
+    notification_diagnostics = []
+    plist_file_idx = 0
+    shared_index = dict()
+    for plist_file in plist_files:
+        plist_file_idx += 1
+        if options.verbose:
+            print(f"[{plist_file_idx}/{len(plist_files)}] Processing {plist_file}")
+
+        try:
+            current_plist_data = build_plist_data(plist_file, shared_index)
+            current_notification_diagnostics = filter_notification_diagnostics(
+                current_plist_data
+            )
+            print(
+                f"[{plist_file_idx}/{len(plist_files)}] Processed {plist_file}: {len(current_plist_data)} diagnostics, {len(current_notification_diagnostics)} need notifications"
+            )
+            plist_data.extend(current_plist_data)
+            notification_diagnostics.extend(current_notification_diagnostics)
+        except Exception as e:
+            print(f"Error processing {plist_file}: {e}")
+            continue
+
+    print(
+        f"Parsed {len(plist_data)} diagnostics from {len(plist_files)} files, {len(notification_diagnostics)} need notifications"
+    )
+    if options.verbose:
+        if notification_diagnostics:
+            print(f"Filtered notifications:")
+        for diagnostic in notification_diagnostics:
+            print(f"  - {diagnostic}")
+
+    if options.ignore_path:
+        ignore_path = [re.compile(p, re.IGNORECASE) for p in options.ignore_path]
+    else:
+        ignore_path = CLANG_SA_DEFAULT_IGNORE_RULES
+
+    notification_list = build_notification_list(notification_diagnostics, ignore_path)
+    vcs_mode = VCS_MODE.NONE
+    if options.with_p4:
+        vcs_mode = VCS_MODE.P4
+    elif options.with_git:
+        vcs_mode = VCS_MODE.GIT
+    depot_root = options.depot_root.replace("\\", "/") if options.depot_root else None
+    if options.output:
+        with codecs.open(options.output, "w", encoding="utf-8") as f:
+            f.write(
+                build_notification_markdown(
+                    notification_list,
+                    options.url_prefix,
+                    depot_root,
+                    options.statistics,
+                    vcs_mode,
+                    options.rewrite_vcs_root,
+                )
+            )
+            print(f"Notification markdown written to {options.output}")
+
+    return 0
+
+
+if __name__ == "__main__":
+    exit(main())</code></pre></details><h4 id=命令行参数说明-1>命令行参数说明</h4><table><thead><tr><th>参数</th><th>说明</th><th>默认值</th></tr></thead><tbody><tr><td><code>-p, --plist</code></td><td>plist 诊断文件目录</td><td>必填</td></tr><tr><td><code>-u, --url-prefix</code></td><td>HTML 报告的 URL 前缀</td><td>无</td></tr><tr><td><code>-d, --depot-root</code></td><td>仓库根目录标识字符串</td><td><code>ProjectDepot/Stream_Depot</code></td></tr><tr><td><code>-i, --ignore-path</code></td><td>忽略的文件路径规则（正则）</td><td>默认忽略引擎核心模块</td></tr><tr><td><code>--statistics</code></td><td>统计信息文件路径</td><td>无</td></tr><tr><td><code>-o, --output</code></td><td>输出 Markdown 文件路径</td><td><code>diagnostic_notification.md</code></td></tr><tr><td><code>--with-p4</code></td><td>启用 Perforce 支持</td><td><code>false</code></td></tr><tr><td><code>--with-git</code></td><td>启用 Git 支持</td><td><code>false</code></td></tr><tr><td><code>--rewrite-vcs-root</code></td><td>重写 VCS 根路径</td><td>无</td></tr></tbody></table><h4 id=使用示例>使用示例</h4><pre><code class=language-bash># 使用 Git blame 查找提交人
+python3 ExtractNotification.py \
+    -p ./codechecker-result \
+    -u "https://ci.example.com/static-analysis/" \
+    --with-git \
+    -o notification.md
+
+# 使用 P4 annotate 查找提交人
+python3 ExtractNotification.py \
+    -p ./codechecker-result \
+    -u "https://ci.example.com/static-analysis/" \
+    --with-p4 \
+    --rewrite-vcs-root "//depot/main" \
+    -o notification.md</code></pre><h4 id=输出报告示例>输出报告示例</h4><p>生成的 Markdown 报告格式如下：</p><pre><code class=language-markdown># 静态分析报告
+
+## 严重问题列表
+
+|  文件  | Checker分类 |  Checker Name  | 详情 | 最后提交人 |
+|--------|-------------|----------------|------|------------|
+| [GameMode.cpp:123](url#hash) | Logic error | clang-analyzer-core.NullDereference | Dereference of null pointer | zhangsan |
+| [PlayerController.cpp:456](url#hash) | Logic error | bugprone-use-after-move | 'ptr' used after it was moved | lisi |
+
+## 详情链接
+
+- 问题列表: <https://ci.example.com/static-analysis/index.html>
+- 问题统计: <https://ci.example.com/static-analysis/statistics.html></code></pre><h2 id=最佳实践>最佳实践</h2><h3 id=cicd-集成>CI/CD 集成</h3><p>建议将静态分析集成到 CI/CD 流程中，实现自动化检测：</p><pre class=mermaid>
+flowchart LR
+    subgraph CI Pipeline
+        A[代码提交] --> B[构建触发]
+        B --> C[静态分析]
+        C --> D{是否有严重问题?}
+        D -->|是| E[发送通知]
+        D -->|否| F[归档报告]
+        E --> G[阻止合入]
+        F --> H[允许合入]
+    end
+</pre><h3 id=渐进式推进策略>渐进式推进策略</h3><p>对于大型存量项目，建议采用渐进式推进策略：</p><ol><li><strong>第一阶段</strong>：仅启用编译错误检测（<code>clang-diagnostic-error</code>），确保头文件依赖完整</li><li><strong>第二阶段</strong>：启用空指针类 checker，修复高危问题</li><li><strong>第三阶段</strong>：启用更多 bugprone 类 checker，提升代码质量</li><li><strong>第四阶段</strong>：启用代码风格类 checker，统一编码规范</li></ol><h3 id=配置建议>配置建议</h3><h4 id=codecheckeryaml-示例>.codechecker.yaml 示例</h4><pre><code class=language-yaml>analyzer:
+  - --ctu                           # 启用跨翻译单元分析
+  - --analyzers clangsa clang-tidy  # 使用 clang-sa 和 clang-tidy
+
+checker_config:
+  - clang-tidy:WarningsAsErrors=
+  - clang-analyzer-core.NullDereference:Enabled=true
+  - clang-analyzer-core.CallAndMessage:Enabled=true</code></pre><h4 id=codecheckerskipfile-示例>.codechecker.skipfile 示例</h4><pre><code class=language-text># 跳过第三方库
++*/ThirdParty/*
++*/Intermediate/*
++*/Generated/*
+
+# 跳过测试代码（可选）
++*/Tests/*</code></pre><h2 id=总结>总结</h2><p>本文介绍了在 UE 项目中集成 CodeChecker 和 clang-tidy 进行静态分析的完整方案：</p><ol><li><strong>UBT 改造</strong>：通过环境变量控制编译器版本和工具链配置，支持使用系统高版本 Clang</li><li><strong>编译数据库处理</strong>：使用 <code>FixClangDatabase.py</code> 修复 UBT 生成的编译数据库</li><li><strong>模块化配置</strong>：通过 <code>ClangSA</code> 模块实现按目录层级的 checker 配置继承</li><li><strong>问题报告生成</strong>：使用 <code>ExtractNotification.py</code> 提取重要问题并查找代码提交人</li></ol><p>这套方案已在我们的项目中稳定运行，帮助团队在 CI 阶段发现了大量潜在问题，显著提升了代码质量。</p><h2 id=参考资料>参考资料</h2><ul><li><a href=https://codechecker.readthedocs.io/>CodeChecker 官方文档</a></li><li><a href=https://clang.llvm.org/extra/clang-tidy/checks/list.html>clang-tidy Checks 列表</a></li><li><a href=https://clang-analyzer.llvm.org/>Clang Static Analyzer</a></li><li><a href=https://docs.unrealengine.com/5.0/en-US/static-code-analysis-in-unreal-engine/>UE 官方文档 - Static Analysis</a></li></ul><p>欢迎有相关需求的同学一起交流讨论。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2025-12-22T00:15:45.000+00:00 itemprop=datePublished>2025-12-22</time></span>
+<span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/ue.html>UE</a></li><li class=article-tag-list-item><a href=//owent.net/tags/unreal-engine.html>Unreal Engine</a></li><li class=article-tag-list-item><a href=//owent.net/tags/codechecker.html>CodeChecker</a></li><li class=article-tag-list-item><a href=//owent.net/tags/clang-tidy.html>clang-tidy</a></li><li class=article-tag-list-item><a href=//owent.net/tags/clang-analyzer.html>clang-analyzer</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E9%9D%99%E6%80%81%E5%88%86%E6%9E%90.html>静态分析</a></li><li class=article-tag-list-item><a href=//owent.net/tags/static-analysis.html>Static Analysis</a></li></ul></div></footer><div class="ads-placeholder ads-container"><ins class="adsbygoogle ads_infeed" style=display:block data-ad-client=ca-pub-8180054975285991 data-ad-slot=5599802929 data-ad-format="rectangle, horizontal" data-full-width-responsive=true></ins><script>(adsbygoogle=window.adsbygoogle||[]).push({})</script></div></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2026/2601.html>上一篇<strong>给内网部署Squid-通用HTTP下载缓存</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2025/2506.html>下一篇<strong>找出UE的循环依赖</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;owent
+</strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
+发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
+主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
+</strong><span class=clearfix></span></div></div></footer></div><script type=importmap>
+{"imports":{"@popperjs/core":"https://esm.run/popper.js","bootstrap":"https://esm.run/bootstrap","mermaid":"https://esm.sh/mermaid","react":"https://esm.run/react","react-bootstrap":"https://esm.run/react-bootstrap"}}
+</script><script type=module>// import * as Popper from "@popperjs/core";// import * as bootstrap from "bootstrap";
+// import React from "react";
+
+        
+</script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/accesslog.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/armasm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/awk.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/basic.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/bnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/capnproto.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/cmake.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/d.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dockerfile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dos.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/erlang.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/ebnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/latex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/llvm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/lua.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/powershell.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/protobuf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/profile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/vim.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/x86asm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/yaml.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/vs2015.min.css",document.querySelector("head").appendChild(t),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const n={};for(const e of hljs.listLanguages())n[e.toLowerCase()]=!0;for(const e of document.querySelectorAll("pre>code"))try{if(e.className.match(/\bmermaid\b/i)){e.classList.add("mermaid");continue}if(e.className.match(/\bexcalidraw\b/i)){e.classList.add("excalidraw-root");continue}if(e.className.match(/\bdrawio\b/i)){e.classList.add("drawio-root"),e.classList.add("mxgraph");continue}if(e.className.match(/\bchart(js)?\b/i)){e.classList.add("chartjs-container");continue}if(e.className.match(/\bnohighlight\b/i))continue;const t=e.className.match(/language-([^\s]+)/i);if(t&&t.length>=2&&hljs.getLanguage(t[1]))hljs.highlightElement(e);else{const t=hljs.highlightAuto(e.innerText,hljs.listLanguages());t&&t.value&&(e.innerHTML=t.value,e.classList.add("hljs"))}}catch(e){window.console&&console.log(e.toString()+`\r
+Maybe can not detect the language`)}})</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-PQEY77BYG1"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-PQEY77BYG1")}</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css",document.querySelector("head").appendChild(t),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=module>
+import mermaid from "mermaid";
+const config = {
+    theme: 'neutral',
+    logLevel: 'fatal',
+    securityLevel: 'loose', 
+    startOnLoad: false, 
+    arrowMarkerAbsolute: false,
+    
+
+};
+mermaid.initialize(config);
+
+
+(async () => {
+    const pendingElements = document.querySelectorAll('.mermaid-pending[data-mermaid-src]');
+    for (const el of pendingElements) {
+        const src = el.getAttribute('data-mermaid-src');
+        if (!src) continue;
+        try {
+            const response = await fetch(src);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch ${src}: ${response.status}`);
+            }
+            const content = await response.text();
+            el.textContent = content;
+            el.classList.remove('mermaid-pending');
+        } catch (e) {
+            if (window.console) {
+                console.error("Failed to fetch mermaid file:", src, e);
+            }
+            el.textContent = `Failed to load: ${src}`;
+            el.classList.remove('mermaid');
+            el.classList.remove('mermaid-pending');
+        }
+    }
+    
+    await mermaid.run();
+})();
+</script><script type=text/javascript>var _hmt=_hmt||[];(function(){var t,n,e=document.createElement("script");e.src="https://hm.baidu.com/hm.js?6a0daf8d58889f1cf55a353867bfdbb0",t=document.getElementsByTagName("script"),n=document.getElementsByTagName("script")[t.length-1],n.parentNode.appendChild(e)})()</script></div></body></html>

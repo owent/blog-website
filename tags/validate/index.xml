@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Validate on I'm OWenT</title><link>//owent.net/tags/validate.html</link><description>Recent content in Validate on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md"&gt;&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /&gt;&lt;/a&gt;</copyright><lastBuildDate>Sun, 20 Aug 2023 00:19:45 +0000</lastBuildDate><atom:link href="//owent.net/tags/validate/index.xml" rel="self" type="application/rss+xml"/><item><title>Excel转表工具(xresloader)的新验证器（验证外部Excel和文本数据，唯一性和自定义规则）</title><link>//owent.net/2023/2307.html</link><pubDate>Sun, 20 Aug 2023 00:19:45 +0000</pubDate><guid>//owent.net/2023/2307.html</guid><description>&lt;h2 id="前言"&gt;前言&lt;/h2&gt;
+&lt;p&gt;&lt;a href="https://xresloader.atframe.work/"&gt;xresloader&lt;/a&gt; 是一组用于把Excel数据结构化并导出为程序可读的数据文件的导表工具集。它包含了一系列跨平台的工具、协议描述和数据读取代码。&lt;/p&gt;
+&lt;p&gt;主要功能特点：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;跨平台（java 11 or upper）&lt;/li&gt;
+&lt;li&gt;Excel =&amp;gt; protobuf/msgpack/lua/javascript/json/xml&lt;/li&gt;
+&lt;li&gt;完整支持协议结构，包括嵌套结构和数组嵌套&lt;/li&gt;
+&lt;li&gt;同时支持protobuf proto v2 和 proto v3&lt;/li&gt;
+&lt;li&gt;支持导出proto枚举值到lua/javascript代码和json/xml数据&lt;/li&gt;
+&lt;li&gt;支持导出proto描述信息值到lua/javascript代码和json/xml数据（支持自定义插件，方便用户根据proto描述自定义反射功能）&lt;/li&gt;
+&lt;li&gt;支持导出 UnrealEngine 支持的json或csv格式，支持自动生成和导出 UnrealEngine 的 &lt;code&gt;DataTable&lt;/code&gt; 加载代码&lt;/li&gt;
+&lt;li&gt;支持别名表，用于给数据内容使用一个易读的名字&lt;/li&gt;
+&lt;li&gt;支持验证器，可以在数据里直接填写proto字段名或枚举名，或者验证填入数据的是否有效&lt;/li&gt;
+&lt;li&gt;支持通过protobuf协议插件控制部分输出&lt;/li&gt;
+&lt;li&gt;支持自动合表，把多个Excel数据表合并成一个输出文件&lt;/li&gt;
+&lt;li&gt;支持公式&lt;/li&gt;
+&lt;li&gt;支持oneof,支持plain模式输入字符串转为数组或复杂结构,支持map&lt;/li&gt;
+&lt;li&gt;支持空数据压缩（裁剪）或保留定长数组&lt;/li&gt;
+&lt;li&gt;支持基于正则表达式分词的字段名映射转换规则&lt;/li&gt;
+&lt;li&gt;支持设置数据版本号&lt;/li&gt;
+&lt;li&gt;Lua输出支持全局导出或导出为 &lt;code&gt;require&lt;/code&gt; 模块或导出为 &lt;code&gt;module&lt;/code&gt; 模块。&lt;/li&gt;
+&lt;li&gt;Javascript输出支持全局导出或导出为 &lt;code&gt;nodejs&lt;/code&gt; 模块或导出为 &lt;code&gt;AMD&lt;/code&gt; 模块。&lt;/li&gt;
+&lt;li&gt;提供CLI批量转换工具（支持python 2.7/python 3 @ Windows、macOS、Linux）&lt;/li&gt;
+&lt;li&gt;提供GUI批量转换工具（支持Windows、macOS、Linux）&lt;/li&gt;
+&lt;li&gt;CLI/GUI批量转换工具支持include来实现配置复用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;a href="https://xresloader.atframe.work/"&gt;xresloader&lt;/a&gt; 包含了多个组件，其中最主要的部分分别是。&lt;/p&gt;</description></item></channel></rss>

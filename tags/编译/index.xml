@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>编译 on I'm OWenT</title><link>//owent.net/tags/%E7%BC%96%E8%AF%91.html</link><description>Recent content in 编译 on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md"&gt;&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /&gt;&lt;/a&gt;</copyright><lastBuildDate>Fri, 12 Sep 2014 19:07:03 +0000</lastBuildDate><atom:link href="//owent.net/tags/%E7%BC%96%E8%AF%91/index.xml" rel="self" type="application/rss+xml"/><item><title>LLVM + Clang + Libcxx + Libcxxabi 工具链编译</title><link>//owent.net/2014/1101.html</link><pubDate>Fri, 12 Sep 2014 19:07:03 +0000</pubDate><guid>//owent.net/2014/1101.html</guid><description>&lt;p&gt;LLVM和Clang工具链的生成配置文件写得比较搓，所以略微麻烦，另外这个脚本没有经过多环境测试，不保证在其他Linux发行版里正常使用。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;如果第一次执行出现安装失败，可以再执行一次。llvm的安装脚本问题多多&lt;/strong&gt;&lt;/p&gt;</description></item><item><title>C++11动态模板参数和type_traits</title><link>//owent.net/2014/971.html</link><pubDate>Mon, 27 Jan 2014 16:27:46 +0000</pubDate><guid>//owent.net/2014/971.html</guid><description>&lt;p&gt;C++11标准里有动态模板参数已经是众所周知的事儿了。但是当时还有个主流编译器还不支持。
+但是现在，主要的编译器。VC(Windows),GCC(Windows,Linux),Clang(Mac,IOS)都已经支持了。所以就可以准备用于生产环境了。
+type_traits没啥好说的。主要是一些静态检测。主要还是要看动态模板参数和他们两的结合使用上。
+动态模版参数标准文档见:
+&lt;a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2242.pdf"&gt;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2242.pdf&lt;/a&gt;
+和
+&lt;a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf"&gt;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf&lt;/a&gt;
+虽然贴出来了。估计是没人看得。所以就直接说重点。&lt;/p&gt;</description></item><item><title>C++又一坑:动态链接库中的全局变量</title><link>//owent.net/2014/962.html</link><pubDate>Sat, 04 Jan 2014 17:30:32 +0000</pubDate><guid>//owent.net/2014/962.html</guid><description>&lt;p&gt;前几天我们项目的日志系统出现了一点问题，但是一直没有时间去深究。
+昨天在同事的帮助下，无意中猜了一种可能性，结果还真被我猜中了，于是今天就特别研究了一下，记录下来。&lt;/p&gt;</description></item><item><title>Linux 编译安装 GCC 4.8</title><link>//owent.net/2013/730.html</link><pubDate>Tue, 26 Mar 2013 10:01:33 +0000</pubDate><guid>//owent.net/2013/730.html</guid><description>&lt;h1 id="linux-编译安装-gcc-48"&gt;Linux 编译安装 GCC 4.8&lt;/h1&gt;
+&lt;p&gt;详见: &lt;a href="https://www.owent.net/2013/730.html"&gt;Linux 编译安装 GCC 4.8&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;GCC4.8发布啦，这个脚本在之前4.7的基础上做了点改进，移除一些过时的组件,增加了检测不到时自动下载源码包&lt;/p&gt;</description></item><item><title>Linux编译安装GCC 4.7</title><link>//owent.net/2012/584.html</link><pubDate>Sat, 07 Apr 2012 10:25:18 +0000</pubDate><guid>//owent.net/2012/584.html</guid><description>&lt;h1 id="linux编译安装gcc-47"&gt;Linux编译安装GCC 4.7&lt;/h1&gt;
+&lt;p&gt;详见: &lt;a href="https://www.owent.net/2012/584.html"&gt;Linux编译安装GCC 4.7&lt;/a&gt;&lt;/p&gt;
+&lt;h4 id="准备环境及依赖项"&gt;准备环境及依赖项&lt;/h4&gt;
+&lt;ol&gt;
+&lt;li&gt;支持 ISO C90 的编译器&lt;/li&gt;
+&lt;li&gt;用于创建Ada编译器的GNAT&lt;/li&gt;
+&lt;li&gt;支持POSIX的shell或GNU bash&lt;/li&gt;
+&lt;li&gt;POSIX或SVR4的 awk工具&lt;/li&gt;
+&lt;li&gt;GNU binutils&lt;/li&gt;
+&lt;li&gt;gzip 版本1.2.4及以上 （可由GNU镜像列表 &lt;a href="http://www.gnu.org/prep/ftp.html"&gt;http://www.gnu.org/prep/ftp.html&lt;/a&gt; 或自动选择最佳镜像 &lt;a href="http://ftpmirror.gnu.org"&gt;http://ftpmirror.gnu.org&lt;/a&gt; 下载 ）&lt;/li&gt;
+&lt;li&gt;bzip2 版本 1.0.2及以上 （此处可下载 &lt;a href="http://www.bzip.org/"&gt;http://www.bzip.org/&lt;/a&gt;）&lt;/li&gt;
+&lt;li&gt;GNU make 工具 版本3.80及以上 （可由GNU镜像列表 &lt;a href="http://www.gnu.org/prep/ftp.html"&gt;http://www.gnu.org/prep/ftp.html&lt;/a&gt; 或自动选择最佳镜像 &lt;a href="http://ftpmirror.gnu.org"&gt;http://ftpmirror.gnu.org&lt;/a&gt; 下载 ）&lt;/li&gt;
+&lt;li&gt;GNU tar工具 版本1.14及以上 （可由GNU镜像列表 &lt;a href="http://www.gnu.org/prep/ftp.html"&gt;http://www.gnu.org/prep/ftp.html&lt;/a&gt; 或自动选择最佳镜像 &lt;a href="http://ftpmirror.gnu.org"&gt;http://ftpmirror.gnu.org&lt;/a&gt; 下载 ）&lt;/li&gt;
+&lt;li&gt;perl 版本5.6.1及以上 （此处可下载 &lt;a href="http://www.perl.org/"&gt;http://www.perl.org/&lt;/a&gt;）&lt;/li&gt;
+&lt;li&gt;jar或zip和unzip工具 （此处可下载 &lt;a href="http://www.info-zip.org"&gt;http://www.info-zip.org&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;gmp库 版本4.3.2及以上 （可由GNU镜像列表 &lt;a href="http://www.gnu.org/prep/ftp.html"&gt;http://www.gnu.org/prep/ftp.html&lt;/a&gt; 或自动选择最佳镜像 &lt;a href="http://ftpmirror.gnu.org"&gt;http://ftpmirror.gnu.org&lt;/a&gt; 下载 ）&lt;/li&gt;
+&lt;li&gt;mpfr库 版本2.4.2及以上 （可由GNU镜像列表 &lt;a href="http://www.gnu.org/prep/ftp.html"&gt;http://www.gnu.org/prep/ftp.html&lt;/a&gt; 或自动选择最佳镜像 &lt;a href="http://ftpmirror.gnu.org"&gt;http://ftpmirror.gnu.org&lt;/a&gt; 下载 ）&lt;/li&gt;
+&lt;li&gt;mpc库 版本0.8.1及以上 （可由GNU镜像列表 &lt;a href="http://www.gnu.org/prep/ftp.html"&gt;http://www.gnu.org/prep/ftp.html&lt;/a&gt; 或自动选择最佳镜像 &lt;a href="http://ftpmirror.gnu.org"&gt;http://ftpmirror.gnu.org&lt;/a&gt; 下载 ）&lt;/li&gt;
+&lt;li&gt;ppl库 版本0.11及以上 （此处可下载 &lt;a href="http://www.cs.unipr.it/ppl/Download/"&gt;http://www.cs.unipr.it/ppl/Download/&lt;/a&gt;）&lt;/li&gt;
+&lt;li&gt;isl 版本 0.10 （可由GNU镜像列表 &lt;a href="http://www.gnu.org/prep/ftp.html"&gt;http://www.gnu.org/prep/ftp.html&lt;/a&gt; 或自动选择最佳镜像 &lt;a href="http://ftpmirror.gnu.org"&gt;http://ftpmirror.gnu.org&lt;/a&gt; 中gcc目录中的infrastructure目录下载 ）&lt;/li&gt;
+&lt;li&gt;cloog-ppl 版本0.15 或cloog 版本0.16(注意不能使用更高版本) （此处可下载 &lt;a href="http://cloog.org/"&gt;http://cloog.org/&lt;/a&gt; ）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h6 id="我编译的环境"&gt;我编译的环境&lt;/h6&gt;
+&lt;p&gt;&lt;strong&gt;系统&lt;/strong&gt;：&lt;/p&gt;</description></item></channel></rss>

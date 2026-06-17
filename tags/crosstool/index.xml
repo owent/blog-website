@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Crosstool on I'm OWenT</title><link>//owent.net/tags/crosstool.html</link><description>Recent content in Crosstool on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md"&gt;&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /&gt;&lt;/a&gt;</copyright><lastBuildDate>Thu, 11 Apr 2013 17:55:04 +0000</lastBuildDate><atom:link href="//owent.net/tags/crosstool/index.xml" rel="self" type="application/rss+xml"/><item><title>ARM 交叉编译环境搭建</title><link>//owent.net/2013/738.html</link><pubDate>Thu, 11 Apr 2013 17:55:04 +0000</pubDate><guid>//owent.net/2013/738.html</guid><description>&lt;p&gt;最近研究了一下ARM的交叉编译环境搭建，太麻烦了必须作一下记录啊。
+前两个方法比较简单一点，关键是淫家Google帮你弄好了大部分功能&lt;/p&gt;
+&lt;h2 id="方案一利用android-ndk--jni"&gt;方案一：（利用Android ndk + jni）&lt;/h2&gt;
+&lt;p&gt;使用Android NDK的第一步当然是下载Android NDK啦。
+&lt;a href="http://developer.android.com/tools/sdk/ndk/index.html"&gt;http://developer.android.com/tools/sdk/ndk/index.html&lt;/a&gt;
+使用jni的话，还必须下载相应的Android SDK
+&lt;a href="http://developer.android.com/sdk/index.html"&gt;http://developer.android.com/sdk/index.html&lt;/a&gt;
+下载完后可以使用 $ANDROID_SDK_ROOT/sdk/tools/android update sdk –no-ui 来更新SDK包
+附注：ANDROID_SDK_ROOT指代Android SDK根目录，NDK_ROOT指代Android NDK根目录。下同。
+为了方便可以把$ANDROID_SDK_ROOT/sdk/tools:$ANDROID_SDK_ROOT/sdk/platform-tools:$NDK_ROOT 加到环境变量PATH里去
+另外,Android 如果要命令行编译，需要ant和ant扩展，需要安装 Android 依赖的32位库
+大致上是 glibc.i686 libzip.i686 libzip-devel.i686 libstdc++.i686 ant ant-* jdk
+其中 libc.i686 libzip.i686 libzip-devel.i686 libstdc++.i686 ant ant-* 可以用 yum install或apt-get install 安装
+jdk最好是官网下一个rpm包安装 rpm -ivh *.rpm&lt;/p&gt;</description></item></channel></rss>
