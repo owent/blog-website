@@ -837,9 +837,7 @@ public:
 &lt;p&gt;题目链接：&lt;a href="http://acm.hdu.edu.cn/showproblem.php?pid=3629"&gt;http://acm.hdu.edu.cn/showproblem.php?pid=3629&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;题目大意是给你700个点，问从中选4个点组成凸四边形的方法数&lt;/p&gt;
 &lt;p&gt;比赛的时候其实最终得到了正确的方法，结果因为写搓了导致TLE，HDU的64位整形必须用I64d，导致WA&lt;/p&gt;</description></item><item><title>Catalan 数</title><link>//owent.net/2010/15.html</link><pubDate>Wed, 08 Sep 2010 16:47:57 +0000</pubDate><guid>//owent.net/2010/15.html</guid><description>&lt;p&gt;Catalan数:&lt;/p&gt;
-&lt;p&gt;$$ h(1)=1,h(0)=1 $$&lt;/p&gt;
-&lt;p&gt;$$ h(n)=\begin{cases} \sum_{i=0}^{n-1} h(i) \times h(n-i-1) &amp;amp; \text{if }(n&amp;gt;=2) \\ \frac{C(2n,n)}{n+1} &amp;amp; \text{if }(n=1,2,3,\mathellipsis) \end{cases} $$&lt;/p&gt;
-&lt;p&gt;相关结论：
+$$ h(1)=1,h(0)=1 $$$$ h(n)=\begin{cases} \sum_{i=0}^{n-1} h(i) \times h(n-i-1) &amp; \text{if }(n&gt;=2) \\\\ \frac{C(2n,n)}{n+1} &amp; \text{if }(n=1,2,3,\mathellipsis) \end{cases} $$&lt;p&gt;相关结论：
 n边形能分解成三角形的分法数为 h(n – 2)
 n个节点能组成的二叉树个数为 h(n)
 一个栈(无穷大)的进栈序列为1，2，3，…，n，出栈序列种数为 h(n)&lt;/p&gt;</description></item><item><title>简易四则运算(ACM个人模板)</title><link>//owent.net/2010/17.html</link><pubDate>Tue, 10 Aug 2010 18:40:31 +0000</pubDate><guid>//owent.net/2010/17.html</guid><description>&lt;pre&gt;&lt;code class="language-cpp"&gt;/**
@@ -1227,7 +1225,8 @@ void GetPrime_Init()//初始化调用
 &lt;p&gt;tancu likes space travels but he is a poor software developer and will never be able to buy his own spacecraft. That is why he is preparing to steal the spacecraft of Petru. There is only one problem - Petru has locked the spacecraft with a sophisticated cryptosystem based on the ID numbers of the stars from the Milky Way Galaxy. For breaking the system Stancu has to check each subset of four stars such that the only common divisor of their numbers is 1. Nasty, isn't it? Fortunately, Stancu has succeeded to limit the number of the interesting stars to N but, any way, the possible subsets of four stars can be too many. Help him to find their number and to decide if there is a chance to break the system.&lt;/div&gt;&lt;/p&gt;</description></item><item><title>GCD Determinant 解题报告</title><link>//owent.net/2010/35.html</link><pubDate>Mon, 26 Apr 2010 14:33:11 +0000</pubDate><guid>//owent.net/2010/35.html</guid><description>&lt;p&gt;&lt;a href="http://www.cn210.com/onlinejudge/problemshow.php?pro_id=98"&gt;http://www.cn210.com/onlinejudge/problemshow.php?pro_id=98&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;我们的OJ&lt;/p&gt;
 &lt;h2 id="description"&gt;Description&lt;/h2&gt;
-&lt;p&gt;We say that a set $$S = {x1, x2, &amp;hellip;, xn}$$ is factor closed if for any xi ∈ S and any divisor d of xi we have d ∈ S. Let&amp;rsquo;s build a GCD matrix (S) = (sij), wheresij = GCD(xi, xj) - the greatest common divisor of xi and xj. Given the factor closed set S, find the value of the determinant:&lt;/p&gt;</description></item><item><title>PKU POJ 3757 Simple Distributed storage system 解题报告</title><link>//owent.net/2010/41.html</link><pubDate>Sat, 10 Apr 2010 17:10:47 +0000</pubDate><guid>//owent.net/2010/41.html</guid><description>&lt;p&gt;题目链接：http://acm.pku.edu.cn/JudgeOnline/problem?id=3757&lt;/p&gt;
+&lt;p&gt;We say that a set &lt;/p&gt;
+$$S = {x1, x2, ..., xn}$$&lt;p&gt; is factor closed if for any xi ∈ S and any divisor d of xi we have d ∈ S. Let&amp;rsquo;s build a GCD matrix (S) = (sij), wheresij = GCD(xi, xj) - the greatest common divisor of xi and xj. Given the factor closed set S, find the value of the determinant:&lt;/p&gt;</description></item><item><title>PKU POJ 3757 Simple Distributed storage system 解题报告</title><link>//owent.net/2010/41.html</link><pubDate>Sat, 10 Apr 2010 17:10:47 +0000</pubDate><guid>//owent.net/2010/41.html</guid><description>&lt;p&gt;题目链接：http://acm.pku.edu.cn/JudgeOnline/problem?id=3757&lt;/p&gt;
 &lt;p&gt;题目大意&lt;/p&gt;
 &lt;p&gt;第一行输入n，k，f表示从n个服务器里选k个，传输大小为f（以Mb为单位）的文件&lt;/p&gt;</description></item><item><title>PKU POJ 2976 Dropping tests 解题报告</title><link>//owent.net/2010/43.html</link><pubDate>Fri, 09 Apr 2010 17:04:09 +0000</pubDate><guid>//owent.net/2010/43.html</guid><description>&lt;p&gt;题目链接： &lt;a href="http://acm.pku.edu.cn/JudgeOnline/problem?id=2976"&gt;http://acm.pku.edu.cn/JudgeOnline/problem?id=2976&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;0-1分数规划&lt;/p&gt;
@@ -2038,12 +2037,8 @@ B题的DP方法比较诡异(起码我理解了很久)
 对于每一种fn[i][j]的排列中我们总能找到一种序列使得{(.)(.)(&lt;em&gt;)(.)(.)…(i+1)},[&amp;quot;()表示一个元素&amp;quot;]
 中(i+1)和(&lt;/em&gt;)交换位置后前i个元素的排列和其相同
 又因为(*)的位置可以有i种放法,以此我们发现,fn[i+1][j]=fn[i][j]+fn[i][j-1]×i
-继续贴代码:&lt;/p&gt;</description></item><item><title>牛顿迭代解方程 ax^3+bX^2+cx+d=0</title><link>//owent.net/2009/83.html</link><pubDate>Wed, 05 Aug 2009 16:27:32 +0000</pubDate><guid>//owent.net/2009/83.html</guid><description>&lt;p&gt;$$ ax^3+bX^2+cx+d=0 $$&lt;/p&gt;
-&lt;p&gt;根的关系:&lt;/p&gt;
-&lt;p&gt;$$ x1 + x2 + x3 = (-\frac{b}{a}) $$&lt;/p&gt;
-&lt;p&gt;$$ x1 \times x2 + x1 \times x3 + x2 \times x3 = \frac{c}{a} $$&lt;/p&gt;
-&lt;p&gt;$$ x1 \times x2 \times x3 = (-\frac{d}{a}) $$&lt;/p&gt;
-&lt;p&gt;牛顿迭代解方程(x0附近的根)&lt;/p&gt;
+继续贴代码:&lt;/p&gt;</description></item><item><title>牛顿迭代解方程 ax^3+bX^2+cx+d=0</title><link>//owent.net/2009/83.html</link><pubDate>Wed, 05 Aug 2009 16:27:32 +0000</pubDate><guid>//owent.net/2009/83.html</guid><description>$$ ax^3+bX^2+cx+d=0 $$&lt;p&gt;根的关系:&lt;/p&gt;
+$$ x1 + x2 + x3 = (-\frac{b}{a}) $$$$ x1 \times x2 + x1 \times x3 + x2 \times x3 = \frac{c}{a} $$$$ x1 \times x2 \times x3 = (-\frac{d}{a}) $$&lt;p&gt;牛顿迭代解方程(x0附近的根)&lt;/p&gt;
 &lt;pre&gt;&lt;code class="language-cpp"&gt;double Newton_Iterative(double a,double b,double c,double d,double x0)
 {
  double f0,f0d,x;

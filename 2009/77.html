@@ -9,7 +9,7 @@
 这题我犯了几个错误,其一是层数为奇数时对于最里面一层我推出来的计算公式没用
 第二就是层数为奇数时对于最里面一层的特殊情况我忘记判断是否与标准矩阵相同.这点是Ultramanhu找出来的,很重要的BUG
 公式如下:
-n</em>n的矩阵,从外向里第k层,第l个的坐标用x,y表示则</p><p>$$ l = l \mod 4 \times (n - 1 - 2k ) $$</p><pre><code class=language-text>x=k,y=k//设初值,就是l为0时的值
+n</em>n的矩阵,从外向里第k层,第l个的坐标用x,y表示则</p>$$ l = l \mod 4 \times (n - 1 - 2k ) $$<pre><code class=language-text>x=k,y=k//设初值,就是l为0时的值
 if(l<n-2k) x+=l else if(l<2n-4k-1) x+="n-2k-1,y+=l-n+2k+1" else if(l<3n-6k-2) y+="n-2k-1,x+=3n-6k-l-3" else y +=4n-8k – 4 – l</code></pre><p>具体代码如下:</p><pre><code class=language-cpp>#include<iostream>
 using namespace std;
 
