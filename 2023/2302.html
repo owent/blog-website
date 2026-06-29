@@ -11,7 +11,7 @@
 新的规范中在SDK里也加入了 <code>ReadableLogRecord</code> 和 <code>ReadWriteLogRecord</code> 两个接口，要求 <code>ReadableLogRecord</code> 必须实现 getter 接口，而 <code>ReadWriteLogRecord</code> setter 和 getter 都有。
 其实这里的 <code>ReadWriteLogRecord</code> 就很像之前 SDK 里的 <code>LogRecord</code> 。
 另外由于SDK里所有模块的数据传递都是通过各自内部的一个叫 <code>Recordable</code> 的对象，并且这个对象还会包含一些SDK内的独有的内容，比如Resource和InstrumentationScope。
-所以我们最终的继承关系改成了如下所示:</p><div class=mermaid-container style="width:100%;height:auto;margin:1rem 0"><pre id=otel_cpp_log_record class=mermaid>
+所以我们最终的继承关系改成了如下所示:</p><div class=mermaid-container style="width:100%;height:auto;margin:1rem auto"><pre id=otel_cpp_log_record class=mermaid>
 classDiagram
     LogRecord <|-- Recordable
     Recordable <|-- ReadableLogRecord

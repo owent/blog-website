@@ -11,7 +11,7 @@
 特别是对UE-Csv格式的输出，我们采用流式的输出方式。在原先只裁剪尾部的时候，我们的实现可以是碰到数据以后填充前面缺失项目来补空数据。
 而现在我们对单元格碰到空数据，是不能确定我们能不能补空项目的，因为要根据配置和后面是否有数据来判断。
 当然我们也可以单独写数据裁剪的规则，根据配置和当前数组元素的位置来决定是走延后的填补，还是直接跳过空数据。
-但是这就有4中输出的模式需要实现为一样的功能，再加上一些插件的行为处理，导致整体逻辑非常复杂。所以我就干脆彻底重构了这一块，让UE的数据先预处理到和之前Lua、Javascipt等文本输出一样的中间结构，再导出到UE DataTable所要求的数据格式中。</p><div class=mermaid-container style="width:100%;height:auto;margin:1rem 0"><pre id=otel_cpp_log_record class=mermaid>
+但是这就有4中输出的模式需要实现为一样的功能，再加上一些插件的行为处理，导致整体逻辑非常复杂。所以我就干脆彻底重构了这一块，让UE的数据先预处理到和之前Lua、Javascipt等文本输出一样的中间结构，再导出到UE DataTable所要求的数据格式中。</p><div class=mermaid-container style="width:100%;height:auto;margin:1rem auto"><pre id=otel_cpp_log_record class=mermaid>
 flowchart TD
     A[fa:fa-file-excel-o Excel文件] --> |数据源描述信息| H(数据源和索引器)
     H --> |protobuf描述/插件| B(数据验证器和插件预处理)
@@ -22,7 +22,7 @@ flowchart TD
     C --> F[fa:fa-code UE加载代码]
     C --> I[fa:fa-code UnreaImportSettings.json]
   </pre></div><p>这样也能方便后续的新功能维护。</p><h3 id=ue输出加载代码的定制化>UE输出加载代码的定制化</h3><p>我们之前集成测试的时候，UE还没有限制DataTable的Loader初始化（ <code>FObjectFinder</code> ）必须在构造函数中。后来有小伙伴提了个BUG，说（至少某些版本）UE如果Loader的初始化不在构造函数中会报错。
-正好之前一直也在想加一些自定义Loader的功能，就顺便一起加上了。除了把默认Loader挪到构造函数之外，还增加了一些选项和插件，用于控制关闭默认行为。</p><ul><li>增加了 <code>UeCfg-EnableDefaultLoader</code> 这个选项，用于控制输出的代码默认情况下是否生成的Loader代码。</li><li>增加了 <code>org.xresloader.ue.default_loader=EN_LOADER_MODE_DEFAULT|EN_LOADER_MODE_ENABLE|EN_LOADER_MODE_DISABLE</code> 插件，用来针对特定的数据特殊处理这个选项。</li><li>增加了 <code>UeCfg-IncludeHeader</code> 选项，对所有输出的UE代码额外包含头文件，允许输出的代码增加包含头文件。</li><li>增加了 <code>org.xresloader.ue.include_header</code> 插件用于对于特定的Message额外附加包含文件。</li></ul><h3 id=增加了javascript的数据patch机制>增加了Javascript的数据Patch机制</h3><p>这里特别要感谢 <a href=https://github.com/superwenda>@superwenda</a> ，提供了通过Javascript二次处理数据的插件机制。并且增加了压力测试。</p><p>现在可以通过 <code>CallbackScript=javascript脚本路径</code> 的方式对中间数据做二次处理，在整个执行流程中内置数据和输出的中间插入了脚本支持。</p><div class=mermaid-container style="width:100%;height:auto;margin:1rem 0"><pre id=otel_cpp_log_record class=mermaid>
+正好之前一直也在想加一些自定义Loader的功能，就顺便一起加上了。除了把默认Loader挪到构造函数之外，还增加了一些选项和插件，用于控制关闭默认行为。</p><ul><li>增加了 <code>UeCfg-EnableDefaultLoader</code> 这个选项，用于控制输出的代码默认情况下是否生成的Loader代码。</li><li>增加了 <code>org.xresloader.ue.default_loader=EN_LOADER_MODE_DEFAULT|EN_LOADER_MODE_ENABLE|EN_LOADER_MODE_DISABLE</code> 插件，用来针对特定的数据特殊处理这个选项。</li><li>增加了 <code>UeCfg-IncludeHeader</code> 选项，对所有输出的UE代码额外包含头文件，允许输出的代码增加包含头文件。</li><li>增加了 <code>org.xresloader.ue.include_header</code> 插件用于对于特定的Message额外附加包含文件。</li></ul><h3 id=增加了javascript的数据patch机制>增加了Javascript的数据Patch机制</h3><p>这里特别要感谢 <a href=https://github.com/superwenda>@superwenda</a> ，提供了通过Javascript二次处理数据的插件机制。并且增加了压力测试。</p><p>现在可以通过 <code>CallbackScript=javascript脚本路径</code> 的方式对中间数据做二次处理，在整个执行流程中内置数据和输出的中间插入了脚本支持。</p><div class=mermaid-container style="width:100%;height:auto;margin:1rem auto"><pre id=otel_cpp_log_record class=mermaid>
 flowchart TD
     A[fa:fa-file-excel-o Excel文件] --> |数据源描述信息| H(数据源和索引器)
     H --> |protobuf描述/插件| B(数据验证器和插件预处理)
