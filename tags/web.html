@@ -3,7 +3,133 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/tags/web/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-1901"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2019/1901.html target=_blank itemprop=url>Rust玩具-企业微信机器人通用服务</a></h1></header><div class=article-summary><h2 id=新玩具-企业微信机器人>新玩具-企业微信机器人</h2><p>这个机器人其实蛮久前就做好了，现在才写了点分享出来。 最近企业微信不断地开放了机器人的接口，所以我想想拿来做一些开发工具集成也是挺不错的，顺便也是为了继续熟悉一下 <a href=https://rust-lang.org/>Rust</a> 的编程习惯。 那么这次就大量使用 <a href=https://crates.io/crates/futures>futures</a> 来实现这个机器人的接口服务，这也是即将到来的无栈协程语法糖 <a href=https://crates.io/crates/futures-await>await</a> 的基石。</p></div><div class=article-more><a href=//owent.net/2019/1901.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2019-01-03T17:08:50.000+00:00 itemprop=datePublished>2019-01-03</time></div></div></article><article class="article-panel archive-article archive-type-1809"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2018/1809.html target=_blank itemprop=url>Rust的第二次接触-写个小服务器程序</a></h1></header><div class=article-summary><h2 id=just-practice>JUST PRACTICE</h2><p>蛮久前入门了一下 <a href=https://rust-lang.org/>Rust</a> 语言。它的设计模型非常地吸引C/C++的开发者。但是学习语言嘛还是要练习一下，之前也用它给我们项目写了个命令行小工具。这回拿来写个小型的服务器程序吧。</p></div><div class=article-more><a href=//owent.net/2018/1809.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2018-09-12T12:29:50.000+00:00 itemprop=datePublished>2018-09-12</time></div></div></article><article class="article-panel archive-article archive-type-1253"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2016/1253.html target=_blank itemprop=url>接入letsencrypt+全面启用HTTP/2</a></h1></header><div class=article-summary><p>之前我的域名只有owent.net和www.owent.net买了SSL证书，现在有<a href=https://letsencrypt.org/>letsencrypt</a>可以拿到免费的SSL签证，就稍微花了点时间把我的域名的其他部分接入了<a href=https://letsencrypt.org/>letsencrypt</a>签证系统。另外根据其他人的一些配置建议，提高了HTTPS的安全性配置和性能配置（主要是缓存）。另外原本我的blog就已经启用了spdy，然而现在新版本的<a href=http://nginx.org/>nginx</a>（<a href=http://nginx.org/en/CHANGES-1.10>1.10</a>）已经release，原先的spdy模块被取消，新增了http/2模块。但是直接换nginx掉包是不行滴（后面有说原因），所以顺带自己处理了一下HTTP/2和nginx新版本的问题。</p><p>并且也对公司里的域名和webserver也这么搞了一下。全面启用HTTPS。</p></div><div class=article-more><a href=//owent.net/2016/1253.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2016-05-07T15:10:43.000+00:00 itemprop=datePublished>2016-05-07</time></div></div></article><article class="article-panel archive-article archive-type-851"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/851.html target=_blank itemprop=url>从Javascript到Typescript到Node.js</a></h1></header><div class=article-summary><p>最近看了点typescript的东西，加上以前看过的一点点Node.js，所以就想把他们系统地整理一下。</p><h2 id=javascript>Javascript</h2><p>这玩意搞过Web开发的应该都知道吧，Javascript的语法我就不废话了，挺简单的。这里总结几个Javascript的核心机制部分吧。</p></div><div class=article-more><a href=//owent.net/2013/851.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-07-10T20:19:39.000+00:00 itemprop=datePublished>2013-07-10</time></div></div></article><article class="article-panel archive-article archive-type-573"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/573.html target=_blank itemprop=url>JSON显示库 -- showJson （Javascript）</a></h1></header><div class=article-summary><p>现在的web的js开发很方便啊，但是碰到iframe里的东西还是不方便看到变量的内容，所以就写了这么个看json内容的玩意，还可以当控制台输出用。</p></div><div class=article-more><a href=//owent.net/2012/573.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-04-01T06:17:48.000+00:00 itemprop=datePublished>2012-04-01</time></div></div></article><article class="article-panel archive-article archive-type-104"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/104.html target=_blank itemprop=url>解析网站字符串型参数 Javascript QueryString 操作 TQueryString类</a></h1></header><div class=article-summary><p>这是学校USRP项目需要而写的一个类，但是既然写出来了，以后也可能用到，就共享出来吧。</p><p>这个类用于解析网页URL的QueryString参数，或者也可以当做操作一些其他设置的类库。</p></div><div class=article-more><a href=//owent.net/2010/104.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-11-01T02:15:09.000+00:00 itemprop=datePublished>2010-11-01</time></div></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-1901"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2019/1901.html target=_blank itemprop=url>Rust玩具-企业微信机器人通用服务</a></h1></header><div class=article-summary><h2 id=新玩具-企业微信机器人>新玩具-企业微信机器人</h2><p>这个机器人其实蛮久前就做好了，现在才写了点分享出来。 最近企业微信不断地开放了机器人的接口，所以我想想拿来做一些开发工具集成也是挺不错的，顺便也是为了继续熟悉一下 <a href=https://rust-lang.org/>Rust</a> 的编程习惯。 那么这次就大量使用 <a href=https://crates.io/crates/futures>futures</a> 来实现这个机器人的接口服务，这也是即将到来的无栈协程语法糖 <a href=https://crates.io/crates/futures-await>await</a> 的基石。</p></div><div class=article-more><a href=//owent.net/2019/1901.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2019-01-03T17:08:50.000+00:00 itemprop=datePublished>2019-01-03</time></div></div></article><article class="article-panel archive-article archive-type-1809"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2018/1809.html target=_blank itemprop=url>Rust的第二次接触-写个小服务器程序</a></h1></header><div class=article-summary><h2 id=just-practice>JUST PRACTICE</h2><p>蛮久前入门了一下 <a href=https://rust-lang.org/>Rust</a> 语言。它的设计模型非常地吸引C/C++的开发者。但是学习语言嘛还是要练习一下，之前也用它给我们项目写了个命令行小工具。这回拿来写个小型的服务器程序吧。</p><p><a href=https://rust-lang.org/>Rust</a> 的生态还处于非常初级的阶段。很多组件和库都处于开发中和设计变更的阶段，比起golang来，很多功能库都没有。
+服务器编程本身特别注重高并发能力和，高性能。和原来很多客户端程序的思路是不太一样的。所以本来想等新的Futures和await和2.0版本的宏机制完成再搞。而老的<a href=https://crates.io/crates/futures>Futures</a>库由于即将移入核心库，在<a href=https://crates.io/>crates.io</a>上下架了。现在似乎很多<a href=https://rust-lang.org/>Rust</a>的库都按<a href=https://tokio.rs/>Tokio</a>的的模式来，于是我看了一下基于<a href=https://crates.io/crates/futures>Futures</a>的多路复用IO库<a href=https://tokio.rs/>Tokio</a>的文档来练习一下这个小服务器程序。</p></div><div class=article-more><a href=//owent.net/2018/1809.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2018-09-12T12:29:50.000+00:00 itemprop=datePublished>2018-09-12</time></div></div></article><article class="article-panel archive-article archive-type-1253"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2016/1253.html target=_blank itemprop=url>接入letsencrypt+全面启用HTTP/2</a></h1></header><div class=article-summary><p>之前我的域名只有owent.net和www.owent.net买了SSL证书，现在有<a href=https://letsencrypt.org/>letsencrypt</a>可以拿到免费的SSL签证，就稍微花了点时间把我的域名的其他部分接入了<a href=https://letsencrypt.org/>letsencrypt</a>签证系统。另外根据其他人的一些配置建议，提高了HTTPS的安全性配置和性能配置（主要是缓存）。另外原本我的blog就已经启用了spdy，然而现在新版本的<a href=http://nginx.org/>nginx</a>（<a href=http://nginx.org/en/CHANGES-1.10>1.10</a>）已经release，原先的spdy模块被取消，新增了http/2模块。但是直接换nginx掉包是不行滴（后面有说原因），所以顺带自己处理了一下HTTP/2和nginx新版本的问题。</p><p>并且也对公司里的域名和webserver也这么搞了一下。全面启用HTTPS。</p><h2 id=接入letsencrypt>接入letsencrypt</h2><p><a href=https://letsencrypt.org/>letsencrypt</a>是Mozilla发起的一个提倡大家用加密的HTTP连接的项目，它允许大家申请到免费的SSL证书，用于HTTPS的证书认证。并且现在它的CA已经被大部分浏览器所接受。我这里本地Win10里使用的IE11，Edge，Firefox 46，Chrome 50全部都能认证通过了。当然手机上也可以。</p></div><div class=article-more><a href=//owent.net/2016/1253.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2016-05-07T15:10:43.000+00:00 itemprop=datePublished>2016-05-07</time></div></div></article><article class="article-panel archive-article archive-type-851"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2013/851.html target=_blank itemprop=url>从Javascript到Typescript到Node.js</a></h1></header><div class=article-summary><p>最近看了点typescript的东西，加上以前看过的一点点Node.js，所以就想把他们系统地整理一下。</p><h2 id=javascript>Javascript</h2><p>这玩意搞过Web开发的应该都知道吧，Javascript的语法我就不废话了，挺简单的。这里总结几个Javascript的核心机制部分吧。</p></div><div class=article-more><a href=//owent.net/2013/851.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2013-07-10T20:19:39.000+00:00 itemprop=datePublished>2013-07-10</time></div></div></article><article class="article-panel archive-article archive-type-573"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2012/573.html target=_blank itemprop=url>JSON显示库 -- showJson （Javascript）</a></h1></header><div class=article-summary><p>现在的web的js开发很方便啊，但是碰到iframe里的东西还是不方便看到变量的内容，所以就写了这么个看json内容的玩意，还可以当控制台输出用。</p><p>很简单,有需要以后开发新功能</p><pre><code class=language-js>/** 
+ * Show json in a new page.(For debug)
+ *
+ * Licensed under the MIT or GPL Version 3 licenses.
+ * @version 1.3
+ * @author OWenT
+ * @link http://www.owent.net
+ * @history 
+ * 		2012.12.27 
+ * 			1. 改进JSON内对象循环引用时的导致的栈溢出问题
+ * 			2. 引入层级路径
+ * 			3. 引入锚点
+ */
+ 
+ /**
+  * Object转为字符串
+  * @param {Object} json Object对象 
+  * @param {Number} tab 缩进数量
+  * @param {Object} rules 应用规则
+  * @param {String} path 当前路径
+  * @return 生成的HTML
+  */
+function json2String(json, tab, rules, path) {
+    var tabStr = "", singleTab = "&nbsp;&nbsp;&nbsp;&nbsp;", isClear = false;
+    var txt = "";
+    
+    if (!rules) {
+        rules = {
+            id: "__json2string_process" + (new Date).getTime().toString() + (json2String.baseIndex ++),
+            objs: []
+        };
+        isClear = true;
+    }
+    
+    tab = tab || 1;
+    if (!path) {
+        path = "{ROOT}";
+        txt += "<a name='\""' + rules.id + "." + path + "\"> </a>";
+    }
+    
+    for (var i = 0; i < tab; i ++) {
+        tabStr += singleTab;
+    }
+    
+    if (!json && json !== 0) {
+        txt += '<span style=color:Red>null</span>';
+    } else if (typeof(json) == "object") {
+        var prefix = '<span style=color:#a9a9a9;font-weight:bolder>{</span>', suffix = '<span style=color:#a9a9a9;font-weight:bolder>}</span>';
+        try {		
+            if (toString.call(json).match(/array/i)) {
+                prefix = '<span style=color:Orange>[</span>';
+                suffix = '<span style=color:Orange>]</span>';
+            }
+        } catch(e) {
+            // hoho ...
+        }
+        
+        if (json[rules.id]) {
+            txt += prefix + "此处引用 <a style='\"text-decoration:' underline; color: blue;\" href='\"#"' + rules.id + "." + json[rules.id] + "\" target='\"_self\"' title='\"跳转到引用' " + json[rules.id] + "\">" + 
+                json[rules.id] + "</a>" + suffix;
+            return txt;
+        }
+        json[rules.id] = path;
+        rules.objs.push(json);
+        
+        txt += prefix + "<br>\r\n";
+        var first = true;
+        for (var key in json) {
+            if (key == rules.id)
+                continue;
+                
+            if (first)
+                first = false;
+            else
+                txt += ",<br>\r\n";
+            txt += tabStr + "<a name='\""' + rules.id + "." + path + "." + key + "\"> </a>" + "<strong>" + 
+                key + "</strong> : " +	json2String(json[key], tab + 1, rules, path + "." + key);
+        }
+        txt += "<br>\r\n" + tabStr.substr(0, tabStr.length - singleTab.length) + suffix;
+    } else if (typeof(json) == "string") {
+        txt += '<span style=color:Green>"' + json + '"</span>';
+    } else if (typeof(json) == "number") {
+        txt += '<span style=color:Blue>' + json + '</span>';
+    } else if (typeof(json) == "function") {
+        txt += '<span style=color:Purple>' + json + '</span>';
+    } else {
+        txt += json.toString();
+    }
+    
+    if (isClear) {
+        for (var i = 0; i < rules.objs.length; ++ i) {
+            delete rules.objs[i][rules.id];
+        }
+        rules.objs = [];
+    }
+    
+    return txt;
+}
+ 
+function showJson(json, title, windowName, dlg_opt) {
+    json2String.baseIndex = json2String.baseIndex || 0;
+    
+    title = title || "Json viewer";
+    windowName = windowName || "result" + (new Date()).toGMTString();
+    if (window.jQuery && jQuery.fn && jQuery.fn.dialog) {
+        $("<div></div>").append(json2String(json)).css({
+            "text-align": "left"
+        }).dialog($.extend({
+            "modal": false,
+            "title": title,
+            "width": 640,
+            "height": 480,
+            "buttons": {
+                "关闭": function() {
+                    $( this ).dialog( "close" );
+                }
+            }
+        }, dlg_opt));
+    } else {
+        var wnd = window.open("about:blank", "_blank", "height=600, width=800, toolbar=no, menubar=no, resizable=yes, location=no, status=no", true);
+        if (!wnd)
+            alert("窗口被拦截！");
+        wnd.document.write("<!doctype html><html><head><title>" + title + "</title></head><body>" + json2String(json) + "</body></html>");
+    }
+    return wnd;
+}</code></pre><ol><li>更新对不同类型着色</li><li>如果载入了jQuery UI 则使用jQuery UI的Dialog打开，用于解决嵌套iframe时浏览器拦截问题</li><li>解决Object循环引用时栈溢出问题，同时增加引用的指向锚点</li></ol><p>Licensed under the MIT or GPL Version 3 licenses.</p></div><div class=article-more><a href=//owent.net/2012/573.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-04-01T06:17:48.000+00:00 itemprop=datePublished>2012-04-01</time></div></div></article><article class="article-panel archive-article archive-type-104"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title"><h1 itemprop=name><a class=article-title href=//owent.net/2010/104.html target=_blank itemprop=url>解析网站字符串型参数 Javascript QueryString 操作 TQueryString类</a></h1></header><div class=article-summary><p>这是学校USRP项目需要而写的一个类，但是既然写出来了，以后也可能用到，就共享出来吧。</p><p>这个类用于解析网页URL的QueryString参数，或者也可以当做操作一些其他设置的类库。</p><p>本类库支持任意类型的值的记录，支持JSON语法，支持类似“a=b&amp;c=d”作为设置参数，支持对数组和JSON的转换。</p></div><div class=article-more><a href=//owent.net/2010/104.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2010-11-01T02:15:09.000+00:00 itemprop=datePublished>2010-11-01</time></div></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
 主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>

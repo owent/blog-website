@@ -1,1 +1,15 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Vhdx on I'm OWenT</title><link>//owent.net/tags/vhdx.html</link><description>Recent content in Vhdx on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md"&gt;&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /&gt;&lt;/a&gt;</copyright><lastBuildDate>Tue, 26 Feb 2013 15:19:20 +0000</lastBuildDate><atom:link href="//owent.net/tags/vhdx/index.xml" rel="self" type="application/rss+xml"/><item><title>[记录]虚拟硬盘的压缩|磁盘写零</title><link>//owent.net/2013/722.html</link><pubDate>Tue, 26 Feb 2013 15:19:20 +0000</pubDate><guid>//owent.net/2013/722.html</guid><description>&lt;p&gt;用虚拟机软件虚拟出来的硬盘文件会随着使用而变大，因为磁盘碎片的产生，这个文件里也有很多的没用的空闲空间，为了节省空间，可以对虚拟硬盘文件进行压缩。&lt;/p&gt;</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Vhdx on I'm OWenT</title><link>//owent.net/tags/vhdx.html</link><description>Recent content in Vhdx on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md"&gt;&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /&gt;&lt;/a&gt;</copyright><lastBuildDate>Tue, 26 Feb 2013 15:19:20 +0000</lastBuildDate><atom:link href="//owent.net/tags/vhdx/index.xml" rel="self" type="application/rss+xml"/><item><title>[记录]虚拟硬盘的压缩|磁盘写零</title><link>//owent.net/2013/722.html</link><pubDate>Tue, 26 Feb 2013 15:19:20 +0000</pubDate><guid>//owent.net/2013/722.html</guid><description>&lt;p&gt;用虚拟机软件虚拟出来的硬盘文件会随着使用而变大，因为磁盘碎片的产生，这个文件里也有很多的没用的空闲空间，为了节省空间，可以对虚拟硬盘文件进行压缩。&lt;/p&gt;
+&lt;p&gt;以下以Virtual Box的vdi格式为例&lt;/p&gt;
+&lt;h2 id="指导思想"&gt;指导思想&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;虚拟机: 清理系统，卸载、删除系统垃圾文件&lt;/li&gt;
+&lt;li&gt;虚拟机: 将磁盘数据靠“前”移动，使用 Free Utility 将剩余磁盘空间写“零”&lt;/li&gt;
+&lt;li&gt;物理主机: 清除“零”字节空间，使用 VBoxManage modifyhd 工具压缩 VDI 磁盘镜像文件&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="windows-虚拟机"&gt;Windows 虚拟机&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;虚拟机: 删除系统垃圾文件，运行磁盘整理程序…&lt;/li&gt;
+&lt;li&gt;虚拟机: 用 SDelete 工具写”零”，下载地址 &lt;a href="http://technet.microsoft.com/en-us/sysinternals/bb897443.aspx"&gt;http://technet.microsoft.com/en-us/sysinternals/bb897443.aspx&lt;/a&gt;，下载后存到 Windows\System32\目录中，在命令行下执行 &amp;ldquo;sdelete -c&amp;rdquo;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;sdelete -c c:&lt;/p&gt;</description></item></channel></rss>

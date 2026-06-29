@@ -3,8 +3,32 @@
 &lt;h2 id="c-的lambda表达式"&gt;C++ 的Lambda表达式&lt;/h2&gt;
 &lt;p&gt;C++ 11 标准发布，各大编译器都开始支持里面的各种新特性，其中一项比较有意思的就是lambda表达式。&lt;/p&gt;
 &lt;h2 id="语法规则"&gt;语法规则&lt;/h2&gt;
-&lt;p&gt;C++ 11 Lambda表达式的四种声明方式&lt;/p&gt;</description></item><item><title>std和boost的function与bind实现剖析</title><link>//owent.net/2013/938.html</link><pubDate>Thu, 28 Nov 2013 22:01:30 +0000</pubDate><guid>//owent.net/2013/938.html</guid><description>&lt;!-- toc --&gt;
-&lt;p&gt;用过std和boost的function对象和bind函数的童鞋们都知道这玩意用起来腰不酸了，腿不疼了，心情也舒畅了。先上一个简单得示例：&lt;/p&gt;</description></item><item><title>C++ 新特性学习（四） — Bind和Function</title><link>//owent.net/2012/536.html</link><pubDate>Fri, 10 Feb 2012 09:52:37 +0000</pubDate><guid>//owent.net/2012/536.html</guid><description>&lt;!-- toc --&gt;
+&lt;p&gt;C++ 11 Lambda表达式的四种声明方式&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+\[ capture \]( params ) mutable(optional) exception attribute -&amp;gt; ret { body }&lt;/li&gt;
+&lt;li&gt;
+\[ capture \]( params ) -&amp;gt; ret { body }&lt;/li&gt;
+&lt;li&gt;
+\[ capture \]( params ) { body }&lt;/li&gt;
+&lt;li&gt;
+\[ capture \]{ body }&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;capture&lt;/strong&gt;是外部引用的参数&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;params&lt;/strong&gt;是函数参数&lt;/li&gt;
+&lt;li&gt;后面可以跟一些函数修饰符&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;ret&lt;/strong&gt;是返回值类型，如果不指定，会推断一个类型&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;body&lt;/strong&gt;部分是函数内容
+具体用法可以参照&lt;a href="http://en.cppreference.com/w/cpp/language/lambda"&gt;C++文档&lt;/a&gt;，这里就不复述了&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这四个声明式都会返回一个匿名的&lt;strong&gt;仿函数&lt;/strong&gt;实例）。
+这里有一个比较重要的一点，就是他是一个&lt;strong&gt;仿函数&lt;/strong&gt;实例，而不是直接一个&lt;strong&gt;函数&lt;/strong&gt;。&lt;/p&gt;</description></item><item><title>std和boost的function与bind实现剖析</title><link>//owent.net/2013/938.html</link><pubDate>Thu, 28 Nov 2013 22:01:30 +0000</pubDate><guid>//owent.net/2013/938.html</guid><description>&lt;!-- toc --&gt;
+&lt;p&gt;用过std和boost的function对象和bind函数的童鞋们都知道这玩意用起来腰不酸了，腿不疼了，心情也舒畅了。先上一个简单得示例：&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-cpp"&gt;std::string str;
+std::function&lt;bool()&gt; func = std::bind(&amp;std::string::at, &amp;str);
+bool is_empty = func();&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;但是这是怎么做到的呢？看完源码以后，你会发现这里面有着一些很巧妙的设计。&lt;/p&gt;</description></item><item><title>C++ 新特性学习（四） — Bind和Function</title><link>//owent.net/2012/536.html</link><pubDate>Fri, 10 Feb 2012 09:52:37 +0000</pubDate><guid>//owent.net/2012/536.html</guid><description>&lt;!-- toc --&gt;
 &lt;p&gt;绑定函数是我认为C++新标准里第二有用的库了
 绑定库的使用环境是：&lt;/p&gt;
 &lt;ul&gt;
@@ -12,4 +36,46 @@
 &lt;li&gt;Visual Studio 2008 SP1 及以上&lt;/li&gt;
 &lt;li&gt;BOOST 1.25及以上（其中function是1.16及以上）&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;先来看一段代码&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;先来看一段代码&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-cpp"&gt;#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+#include &lt;memory&gt;
+#include &lt;functional&gt;
+
+class button
+{
+public:
+
+ std::function&lt;void(int)&gt; onClick;
+};
+
+class player
+{
+public:
+
+ void play(void* sender, int param) {
+ printf("Play: %d =&gt; %d\n", (int)sender, param);
+ };
+ void stop(void* sender, int param) {
+ printf("Play: %d =&gt; %d\n", (int)sender, param);
+ };
+};
+
+button playButton, stopButton;
+player thePlayer;
+
+void connect()
+{
+ playButton.onClick = std::bind(&amp;player::play, &amp;thePlayer, &amp;playButton, std::placeholders::_1);
+ stopButton.onClick = std::bind(&amp;player::stop, &amp;thePlayer, &amp;stopButton, std::placeholders::_1);
+}
+
+int main () {
+ connect();
+ playButton.onClick(0);
+ return 0;
+}
+// 以上代码参考boost中bind库示例代码，在G++ 4.6.1中测试通过&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;木有错，这是C++，并且很方便地实现了委托
+这就是传说中的绑定库和增强型的函数对象
+接下来一个一个来&lt;/p&gt;</description></item></channel></rss>

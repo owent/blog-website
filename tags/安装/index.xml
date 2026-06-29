@@ -2,4 +2,5 @@
 ​​这个过程挺麻烦啊，所以果断要记下来，以防以后要用到
 如果是其他系统的话，几个配置路径和软件源地址还有yum指令替换掉，应该就可以了&lt;/p&gt;</description></item><item><title>Linux 编译安装 GCC 4.8</title><link>//owent.net/2013/730.html</link><pubDate>Tue, 26 Mar 2013 10:01:33 +0000</pubDate><guid>//owent.net/2013/730.html</guid><description>&lt;h1 id="linux-编译安装-gcc-48"&gt;Linux 编译安装 GCC 4.8&lt;/h1&gt;
 &lt;p&gt;详见: &lt;a href="https://www.owent.net/2013/730.html"&gt;Linux 编译安装 GCC 4.8&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;GCC4.8发布啦，这个脚本在之前4.7的基础上做了点改进，移除一些过时的组件,增加了检测不到时自动下载源码包&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;GCC4.8发布啦，这个脚本在之前4.7的基础上做了点改进，移除一些过时的组件,增加了检测不到时自动下载源码包&lt;/p&gt;
+&lt;p&gt;PS：4.8.1开始全面支持C++11特性，并且脱离了ppl库，gdb也开始脱离ppl库了&lt;/p&gt;</description></item></channel></rss>

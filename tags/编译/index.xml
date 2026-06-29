@@ -7,9 +7,18 @@ type_traits没啥好说的。主要是一些静态检测。主要还是要看动
 和
 &lt;a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf"&gt;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf&lt;/a&gt;
 虽然贴出来了。估计是没人看得。所以就直接说重点。&lt;/p&gt;</description></item><item><title>C++又一坑:动态链接库中的全局变量</title><link>//owent.net/2014/962.html</link><pubDate>Sat, 04 Jan 2014 17:30:32 +0000</pubDate><guid>//owent.net/2014/962.html</guid><description>&lt;p&gt;前几天我们项目的日志系统出现了一点问题，但是一直没有时间去深究。
-昨天在同事的帮助下，无意中猜了一种可能性，结果还真被我猜中了，于是今天就特别研究了一下，记录下来。&lt;/p&gt;</description></item><item><title>Linux 编译安装 GCC 4.8</title><link>//owent.net/2013/730.html</link><pubDate>Tue, 26 Mar 2013 10:01:33 +0000</pubDate><guid>//owent.net/2013/730.html</guid><description>&lt;h1 id="linux-编译安装-gcc-48"&gt;Linux 编译安装 GCC 4.8&lt;/h1&gt;
+昨天在同事的帮助下，无意中猜了一种可能性，结果还真被我猜中了，于是今天就特别研究了一下，记录下来。&lt;/p&gt;
+&lt;p&gt;其实主要问题是三个模块。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;模块 a, 静态库 a&lt;/li&gt;
+&lt;li&gt;模块 b, 二进制 b, 静态引用a, 动态加载c&lt;/li&gt;
+&lt;li&gt;模块 c, 动态链接库c, 静态引用a&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;关键在于静态库a里有一个静态全局变量，没错就是我们的日志模块。
+原先的这个静态的模块中的静态全局变量是有&lt;strong&gt;构造函数&lt;/strong&gt;的，也就是构造函数干了点事情。&lt;/p&gt;</description></item><item><title>Linux 编译安装 GCC 4.8</title><link>//owent.net/2013/730.html</link><pubDate>Tue, 26 Mar 2013 10:01:33 +0000</pubDate><guid>//owent.net/2013/730.html</guid><description>&lt;h1 id="linux-编译安装-gcc-48"&gt;Linux 编译安装 GCC 4.8&lt;/h1&gt;
 &lt;p&gt;详见: &lt;a href="https://www.owent.net/2013/730.html"&gt;Linux 编译安装 GCC 4.8&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;GCC4.8发布啦，这个脚本在之前4.7的基础上做了点改进，移除一些过时的组件,增加了检测不到时自动下载源码包&lt;/p&gt;</description></item><item><title>Linux编译安装GCC 4.7</title><link>//owent.net/2012/584.html</link><pubDate>Sat, 07 Apr 2012 10:25:18 +0000</pubDate><guid>//owent.net/2012/584.html</guid><description>&lt;h1 id="linux编译安装gcc-47"&gt;Linux编译安装GCC 4.7&lt;/h1&gt;
+&lt;p&gt;GCC4.8发布啦，这个脚本在之前4.7的基础上做了点改进，移除一些过时的组件,增加了检测不到时自动下载源码包&lt;/p&gt;
+&lt;p&gt;PS：4.8.1开始全面支持C++11特性，并且脱离了ppl库，gdb也开始脱离ppl库了&lt;/p&gt;</description></item><item><title>Linux编译安装GCC 4.7</title><link>//owent.net/2012/584.html</link><pubDate>Sat, 07 Apr 2012 10:25:18 +0000</pubDate><guid>//owent.net/2012/584.html</guid><description>&lt;h1 id="linux编译安装gcc-47"&gt;Linux编译安装GCC 4.7&lt;/h1&gt;
 &lt;p&gt;详见: &lt;a href="https://www.owent.net/2012/584.html"&gt;Linux编译安装GCC 4.7&lt;/a&gt;&lt;/p&gt;
 &lt;h4 id="准备环境及依赖项"&gt;准备环境及依赖项&lt;/h4&gt;
 &lt;ol&gt;

@@ -3,4 +3,24 @@
 &lt;h2 id="c-的lambda表达式"&gt;C++ 的Lambda表达式&lt;/h2&gt;
 &lt;p&gt;C++ 11 标准发布，各大编译器都开始支持里面的各种新特性，其中一项比较有意思的就是lambda表达式。&lt;/p&gt;
 &lt;h2 id="语法规则"&gt;语法规则&lt;/h2&gt;
-&lt;p&gt;C++ 11 Lambda表达式的四种声明方式&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;C++ 11 Lambda表达式的四种声明方式&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+\[ capture \]( params ) mutable(optional) exception attribute -&amp;gt; ret { body }&lt;/li&gt;
+&lt;li&gt;
+\[ capture \]( params ) -&amp;gt; ret { body }&lt;/li&gt;
+&lt;li&gt;
+\[ capture \]( params ) { body }&lt;/li&gt;
+&lt;li&gt;
+\[ capture \]{ body }&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;capture&lt;/strong&gt;是外部引用的参数&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;params&lt;/strong&gt;是函数参数&lt;/li&gt;
+&lt;li&gt;后面可以跟一些函数修饰符&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;ret&lt;/strong&gt;是返回值类型，如果不指定，会推断一个类型&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;body&lt;/strong&gt;部分是函数内容
+具体用法可以参照&lt;a href="http://en.cppreference.com/w/cpp/language/lambda"&gt;C++文档&lt;/a&gt;，这里就不复述了&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这四个声明式都会返回一个匿名的&lt;strong&gt;仿函数&lt;/strong&gt;实例）。
+这里有一个比较重要的一点，就是他是一个&lt;strong&gt;仿函数&lt;/strong&gt;实例，而不是直接一个&lt;strong&gt;函数&lt;/strong&gt;。&lt;/p&gt;</description></item></channel></rss>

@@ -6,4 +6,7 @@
 但是这种情况下由于 &lt;a href="https://github.com/open-telemetry/opentelemetry-cpp"&gt;opentelemetry-cpp&lt;/a&gt; 内部存在后台Processor线程、Exporter线程等，指标的采集往往需要跨线程操作。
 这就要求我们上报代码逻辑需要保证线程安全。&lt;/p&gt;</description></item><item><title>踩坑一处（GCC）STL `std::async` 实现BUG导致的crash问题</title><link>//owent.net/2024/2402.html</link><pubDate>Sun, 21 Jul 2024 02:32:45 +0000</pubDate><guid>//owent.net/2024/2402.html</guid><description>&lt;h2 id="前言"&gt;前言&lt;/h2&gt;
 &lt;p&gt;近期发现项目组使用新版本的 &lt;a href="https://github.com/open-telemetry/opentelemetry-cpp"&gt;opentelemetry-cpp&lt;/a&gt; 的时候偶现崩溃。崩溃的位置在STL的 &lt;code&gt;std::future&lt;/code&gt; 析构的地方，而这个 &lt;code&gt;std::future&lt;/code&gt; 由 &lt;code&gt;std::async&lt;/code&gt;创建。
-比较违反直觉，这里记录分享一下分析和解决过程方面其他碰到的小伙伴们。&lt;/p&gt;</description></item></channel></rss>
+比较违反直觉，这里记录分享一下分析和解决过程方面其他碰到的小伙伴们。&lt;/p&gt;
+&lt;h2 id="问题分析"&gt;问题分析&lt;/h2&gt;
+&lt;h3 id="相关代码和规范"&gt;相关代码和规范&lt;/h3&gt;
+&lt;p&gt;首先我们来看下相关代码：&lt;/p&gt;</description></item></channel></rss>

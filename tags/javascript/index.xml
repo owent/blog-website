@@ -28,7 +28,140 @@
 &lt;p&gt;其实对于理解Javascipt的人来说，Lua也很容易理解，因为他们太多的地方相像了。&lt;/p&gt;
 &lt;p&gt;初步看来，Lua的设计模式和思想很像Javascript，也是原型模型（Javascript里叫&lt;strong&gt;prototype&lt;/strong&gt;，Lua里是&lt;strong&gt;metatable&lt;/strong&gt;）&lt;/p&gt;</description></item><item><title>从Javascript到Typescript到Node.js</title><link>//owent.net/2013/851.html</link><pubDate>Wed, 10 Jul 2013 20:19:39 +0000</pubDate><guid>//owent.net/2013/851.html</guid><description>&lt;p&gt;最近看了点typescript的东西，加上以前看过的一点点Node.js，所以就想把他们系统地整理一下。&lt;/p&gt;
 &lt;h2 id="javascript"&gt;Javascript&lt;/h2&gt;
-&lt;p&gt;这玩意搞过Web开发的应该都知道吧，Javascript的语法我就不废话了，挺简单的。这里总结几个Javascript的核心机制部分吧。&lt;/p&gt;</description></item><item><title>JSON显示库 -- showJson （Javascript）</title><link>//owent.net/2012/573.html</link><pubDate>Sun, 01 Apr 2012 06:17:48 +0000</pubDate><guid>//owent.net/2012/573.html</guid><description>&lt;p&gt;现在的web的js开发很方便啊，但是碰到iframe里的东西还是不方便看到变量的内容，所以就写了这么个看json内容的玩意，还可以当控制台输出用。&lt;/p&gt;</description></item><item><title>JQuery扩展插件--提示信息</title><link>//owent.net/2010/128.html</link><pubDate>Fri, 19 Nov 2010 15:20:12 +0000</pubDate><guid>//owent.net/2010/128.html</guid><description>&lt;p&gt;学校做项目顺便写的，还是有点用的。&lt;/p&gt;
+&lt;p&gt;这玩意搞过Web开发的应该都知道吧，Javascript的语法我就不废话了，挺简单的。这里总结几个Javascript的核心机制部分吧。&lt;/p&gt;</description></item><item><title>JSON显示库 -- showJson （Javascript）</title><link>//owent.net/2012/573.html</link><pubDate>Sun, 01 Apr 2012 06:17:48 +0000</pubDate><guid>//owent.net/2012/573.html</guid><description>&lt;p&gt;现在的web的js开发很方便啊，但是碰到iframe里的东西还是不方便看到变量的内容，所以就写了这么个看json内容的玩意，还可以当控制台输出用。&lt;/p&gt;
+&lt;p&gt;很简单,有需要以后开发新功能&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-js"&gt;/** 
+ * Show json in a new page.(For debug)
+ *
+ * Licensed under the MIT or GPL Version 3 licenses.
+ * @version 1.3
+ * @author OWenT
+ * @link http://www.owent.net
+ * @history 
+ * 		2012.12.27 
+ * 			1. 改进JSON内对象循环引用时的导致的栈溢出问题
+ * 			2. 引入层级路径
+ * 			3. 引入锚点
+ */
+ 
+ /**
+ * Object转为字符串
+ * @param {Object} json Object对象 
+ * @param {Number} tab 缩进数量
+ * @param {Object} rules 应用规则
+ * @param {String} path 当前路径
+ * @return 生成的HTML
+ */
+function json2String(json, tab, rules, path) {
+ var tabStr = "", singleTab = "&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;", isClear = false;
+ var txt = "";
+ 
+ if (!rules) {
+ rules = {
+ id: "__json2string_process" + (new Date).getTime().toString() + (json2String.baseIndex ++),
+ objs: []
+ };
+ isClear = true;
+ }
+ 
+ tab = tab || 1;
+ if (!path) {
+ path = "{ROOT}";
+ txt += "&lt;a name=\"" + rules.id + "." + path + "\"&gt; &lt;/a&gt;";
+ }
+ 
+ for (var i = 0; i &lt; tab; i ++) {
+ tabStr += singleTab;
+ }
+ 
+ if (!json &amp;&amp; json !== 0) {
+ txt += '&lt;span style="color: Red;"&gt;null&lt;/span&gt;';
+ } else if (typeof(json) == "object") {
+ var prefix = '&lt;span style="color: DarkGray; font-weight: bolder;"&gt;{&lt;/span&gt;', suffix = '&lt;span style="color: DarkGray; font-weight: bolder;"&gt;}&lt;/span&gt;';
+ try {		
+ if (toString.call(json).match(/array/i)) {
+ prefix = '&lt;span style="color: Orange;"&gt;[&lt;/span&gt;';
+ suffix = '&lt;span style="color: Orange;"&gt;]&lt;/span&gt;';
+ }
+ } catch(e) {
+ // hoho ...
+ }
+ 
+ if (json[rules.id]) {
+ txt += prefix + "此处引用 &lt;a style=\"text-decoration: underline; color: Blue;\" href=\"#" + rules.id + "." + json[rules.id] + "\" target=\"_self\" title=\"跳转到引用 " + json[rules.id] + "\" &gt;" + 
+ json[rules.id] + "&lt;/a&gt;" + suffix;
+ return txt;
+ }
+ json[rules.id] = path;
+ rules.objs.push(json);
+ 
+ txt += prefix + "&lt;br /&gt;\r\n";
+ var first = true;
+ for (var key in json) {
+ if (key == rules.id)
+ continue;
+ 
+ if (first)
+ first = false;
+ else
+ txt += ",&lt;br /&gt;\r\n";
+ txt += tabStr + "&lt;a name=\"" + rules.id + "." + path + "." + key + "\"&gt; &lt;/a&gt;" + "&lt;strong&gt;" + 
+ key + "&lt;/strong&gt; : " +	json2String(json[key], tab + 1, rules, path + "." + key);
+ }
+ txt += "&lt;br /&gt;\r\n" + tabStr.substr(0, tabStr.length - singleTab.length) + suffix;
+ } else if (typeof(json) == "string") {
+ txt += '&lt;span style="color: Green;"&gt;"' + json + '"&lt;/span&gt;';
+ } else if (typeof(json) == "number") {
+ txt += '&lt;span style="color: Blue;"&gt;' + json + '&lt;/span&gt;';
+ } else if (typeof(json) == "function") {
+ txt += '&lt;span style="color: Purple;"&gt;' + json + '&lt;/span&gt;';
+ } else {
+ txt += json.toString();
+ }
+ 
+ if (isClear) {
+ for (var i = 0; i &lt; rules.objs.length; ++ i) {
+ delete rules.objs[i][rules.id];
+ }
+ rules.objs = [];
+ }
+ 
+ return txt;
+}
+ 
+function showJson(json, title, windowName, dlg_opt) {
+ json2String.baseIndex = json2String.baseIndex || 0;
+ 
+ title = title || "Json viewer";
+ windowName = windowName || "result" + (new Date()).toGMTString();
+ if (window.jQuery &amp;&amp; jQuery.fn &amp;&amp; jQuery.fn.dialog) {
+ $("&lt;div&gt;&lt;/div&gt;").append(json2String(json)).css({
+ "text-align": "left"
+ }).dialog($.extend({
+ "modal": false,
+ "title": title,
+ "width": 640,
+ "height": 480,
+ "buttons": {
+ "关闭": function() {
+ $( this ).dialog( "close" );
+ }
+ }
+ }, dlg_opt));
+ } else {
+ var wnd = window.open("about:blank", "_blank", "height=600, width=800, toolbar=no, menubar=no, resizable=yes, location=no, status=no", true);
+ if (!wnd)
+ alert("窗口被拦截！");
+ wnd.document.write("&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;title&gt;" + title + "&lt;/title&gt;&lt;/head&gt;&lt;body&gt;" + json2String(json) + "&lt;/body&gt;&lt;/html&gt;");
+ }
+ return wnd;
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;ol&gt;
+&lt;li&gt;更新对不同类型着色&lt;/li&gt;
+&lt;li&gt;如果载入了jQuery UI 则使用jQuery UI的Dialog打开，用于解决嵌套iframe时浏览器拦截问题&lt;/li&gt;
+&lt;li&gt;解决Object循环引用时栈溢出问题，同时增加引用的指向锚点&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Licensed under the MIT or GPL Version 3 licenses.&lt;/p&gt;</description></item><item><title>JQuery扩展插件--提示信息</title><link>//owent.net/2010/128.html</link><pubDate>Fri, 19 Nov 2010 15:20:12 +0000</pubDate><guid>//owent.net/2010/128.html</guid><description>&lt;p&gt;学校做项目顺便写的，还是有点用的。&lt;/p&gt;
 &lt;pre&gt;&lt;code class="language-js"&gt;/***
  * JQuery扩展插件--提示信息
  *
@@ -94,4 +227,5 @@ jQuery.extend({
  }
 });&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;写在最后补充一下，这个动机基本没什么用了&lt;/p&gt;</description></item><item><title>解析网站字符串型参数 Javascript QueryString 操作 TQueryString类</title><link>//owent.net/2010/104.html</link><pubDate>Mon, 01 Nov 2010 02:15:09 +0000</pubDate><guid>//owent.net/2010/104.html</guid><description>&lt;p&gt;这是学校USRP项目需要而写的一个类，但是既然写出来了，以后也可能用到，就共享出来吧。&lt;/p&gt;
-&lt;p&gt;这个类用于解析网页URL的QueryString参数，或者也可以当做操作一些其他设置的类库。&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;这个类用于解析网页URL的QueryString参数，或者也可以当做操作一些其他设置的类库。&lt;/p&gt;
+&lt;p&gt;本类库支持任意类型的值的记录，支持JSON语法，支持类似“a=b&amp;amp;c=d”作为设置参数，支持对数组和JSON的转换。&lt;/p&gt;</description></item></channel></rss>

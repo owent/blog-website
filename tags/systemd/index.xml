@@ -2,4 +2,5 @@
 &lt;p&gt;这段时间折腾了好久容器搭建开发环境和家里软路由趟的一些坑。这里先记录一下使用容器搭开发环境的一些流程和问题。&lt;/p&gt;
 &lt;p&gt;开发环境一般里面会包含很多的工具和开启一些服务。 我自己的环境测试和搭建了 &lt;a href="https://ubuntu.com/"&gt;ubuntu&lt;/a&gt; 、 &lt;a href="https://centos.org/"&gt;centos&lt;/a&gt; 、 &lt;a href="https://www.archlinux.org/"&gt;archlinux&lt;/a&gt; 。 开启了 &lt;a href="https://en.wikipedia.org/wiki/Systemd"&gt;systemd&lt;/a&gt; ， 支持网络代理+vscode远程开发， 支持 &lt;a href="https://www.docker.com/"&gt;docker&lt;/a&gt; 和 &lt;a href="https://podman.io/"&gt;podman&lt;/a&gt; ，支持k8s，开启了 sshd 。 所有的构建脚本及 Dockerfile 都放在 &lt;a href="https://github.com/owent-utils/docker-setup"&gt;https://github.com/owent-utils/docker-setup&lt;/a&gt; 了，有需要的小伙伴可以自取。&lt;/p&gt;</description></item><item><title>关于firewalld和systemd的一些命令速记</title><link>//owent.net/2015/1160.html</link><pubDate>Thu, 23 Apr 2015 15:55:44 +0000</pubDate><guid>//owent.net/2015/1160.html</guid><description>&lt;!-- toc --&gt;
 &lt;h2 id="前言"&gt;前言&lt;/h2&gt;
-&lt;p&gt;CentOS 7 已经用firewalld替换掉了iptables并用systemd来管理启动服务（之前是chkconfig）。而且下一个Ubuntu的长期支持版也要这么干了。&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;CentOS 7 已经用firewalld替换掉了iptables并用systemd来管理启动服务（之前是chkconfig）。而且下一个Ubuntu的长期支持版也要这么干了。&lt;/p&gt;
+&lt;p&gt;这两个工具在操作上和之前的系统有很多的变化，所以集中记录一下常用的命令，以免每次都要靠搜索引擎。&lt;/p&gt;</description></item></channel></rss>

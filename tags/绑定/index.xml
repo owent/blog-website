@@ -6,4 +6,46 @@
 &lt;li&gt;Visual Studio 2008 SP1 及以上&lt;/li&gt;
 &lt;li&gt;BOOST 1.25及以上（其中function是1.16及以上）&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;先来看一段代码&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;先来看一段代码&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-cpp"&gt;#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+#include &lt;memory&gt;
+#include &lt;functional&gt;
+
+class button
+{
+public:
+
+ std::function&lt;void(int)&gt; onClick;
+};
+
+class player
+{
+public:
+
+ void play(void* sender, int param) {
+ printf("Play: %d =&gt; %d\n", (int)sender, param);
+ };
+ void stop(void* sender, int param) {
+ printf("Play: %d =&gt; %d\n", (int)sender, param);
+ };
+};
+
+button playButton, stopButton;
+player thePlayer;
+
+void connect()
+{
+ playButton.onClick = std::bind(&amp;player::play, &amp;thePlayer, &amp;playButton, std::placeholders::_1);
+ stopButton.onClick = std::bind(&amp;player::stop, &amp;thePlayer, &amp;stopButton, std::placeholders::_1);
+}
+
+int main () {
+ connect();
+ playButton.onClick(0);
+ return 0;
+}
+// 以上代码参考boost中bind库示例代码，在G++ 4.6.1中测试通过&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;木有错，这是C++，并且很方便地实现了委托
+这就是传说中的绑定库和增强型的函数对象
+接下来一个一个来&lt;/p&gt;</description></item></channel></rss>

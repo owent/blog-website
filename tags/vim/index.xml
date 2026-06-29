@@ -1,5 +1,63 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Vim on I'm OWenT</title><link>//owent.net/tags/vim.html</link><description>Recent content in Vim on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md"&gt;&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /&gt;&lt;/a&gt;</copyright><lastBuildDate>Fri, 08 May 2015 11:21:17 +0000</lastBuildDate><atom:link href="//owent.net/tags/vim/index.xml" rel="self" type="application/rss+xml"/><item><title>Vim常用命令</title><link>//owent.net/2015/1170.html</link><pubDate>Fri, 08 May 2015 11:21:17 +0000</pubDate><guid>//owent.net/2015/1170.html</guid><description>&lt;!-- toc --&gt;
-&lt;p&gt;之前有搜集过一些常用的命令脚本，其中有vim的部分。但是vim内置的很多功能那些个命令显然是不够的，而且那些记录的很多也不常用，于是想到专门开一个页面记录vim常用的命令集。&lt;/p&gt;</description></item><item><title>Linux 和 Windows PowerShell 常用工具/命令 记录</title><link>//owent.net/2011/482.html</link><pubDate>Fri, 19 Aug 2011 11:16:55 +0000</pubDate><guid>//owent.net/2011/482.html</guid><description>&lt;h2 id="linux-常用工具"&gt;Linux 常用工具&lt;/h2&gt;
+&lt;p&gt;之前有搜集过一些常用的命令脚本，其中有vim的部分。但是vim内置的很多功能那些个命令显然是不够的，而且那些记录的很多也不常用，于是想到专门开一个页面记录vim常用的命令集。&lt;/p&gt;
+&lt;h2 id="常用配置"&gt;常用配置&lt;/h2&gt;
+&lt;p&gt;见 &lt;a href="https://github.com/owent-utils/vim"&gt;https://github.com/owent-utils/vim&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id="基本命令"&gt;基本命令&lt;/h2&gt;
+&lt;h3 id="编辑和查看"&gt;编辑和查看&lt;/h3&gt;
+&lt;pre&gt;&lt;code class="language-vim"&gt;/ # 向下搜索
+? # 向上搜索 
+v # 进入可视化模式
+Ctrl+v # 列编辑模式
+ Shift+i # 多列插入
+d[d/w] # 剪切[行/单词]
+y[y/w] # 复制[行/单词]
+=[=] # 自动缩进[行]
+p # （查看模式）粘贴
+u # Undo
+Ctrl+r # （查看模式）Redo
+Ctrl+r Ctrl+" # （命令行模式/编辑模式）粘贴
+:e # 更新缓冲区 &lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id="查找和替换"&gt;查找和替换&lt;/h3&gt;
+&lt;pre&gt;&lt;code class="language-vim"&gt;# 和正则表达式不同的的一个地方在于，用于全字匹配的\b在vim里是 \&lt;\&gt;
+:s/src/dst/ # 文本替换(当前行第一个src替换为dst)
+:s/src/dst/g # 文本替换(当前行所有src替换为dst)
+:%s/src/dst/g # 文本替换(所有行第一个src替换为dst)
+:%s/src/dst/g # 文本替换(所有行所有src替换为dst)
+
+:n,$s/ # 从第n行到结尾，类似正则表达式
+:%s/ # 全文搜索
+
+*/# # 在当前文件中搜索当前光标的单词&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id="分屏和tab"&gt;分屏和tab&lt;/h3&gt;
+&lt;pre&gt;&lt;code class="language-vim"&gt;:tabnew # 新tab打开
+g(t/T) # (下/上)一个tab
+
+:He[!] # 上[下]分屏浏览 
+:Ve[!] # 左[右]分屏浏览
+Ctrl+w Ctrl+w # 分屏切换
+:set scb[!] # 开启[关闭]分屏同步移动
+:(s/v)plit # (水平/垂直)分屏打开&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id="缓冲区和文件系统"&gt;缓冲区和文件系统&lt;/h3&gt;
+&lt;pre&gt;&lt;code class="language-vim"&gt;:e . # 打开目录
+:E # 目录导航
+:ls # 列举缓冲区
+N Ctrl+^ # 切换缓冲区&lt;/code&gt;&lt;/pre&gt;
+&lt;h3 id="关键字导航"&gt;关键字导航&lt;/h3&gt;
+&lt;pre&gt;&lt;code class="language-vim"&gt;Ctrl+N # 向下查找关键字关键字[插入模式下]， Ctrl+P 向上查找关键字[插入模式下]
+Ctrl + X 和 Ctrl + D # 宏定义补齐
+Ctrl + X 和 Ctrl + ] # 是 Tag 补齐
+Ctrl + X 和 Ctrl + F # 是文件名补齐
+Ctrl + X 和 Ctrl + I # 也是关键词补齐，但是关键后会有个文件名，告诉你这个关键词在哪个文件中
+Ctrl + X 和 Ctrl +V # 是表达式补齐
+Ctrl + X 和 Ctrl +L # 对整行补齐。&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="常用指令"&gt;常用指令&lt;/h2&gt;
+&lt;pre&gt;&lt;code class="language-vim"&gt;:%!python -m json.tool # jsom 格式化
+:%!xxd[ -r] # 转入[转出]为16进制查看
+gg=G # 全文自动缩进
+:set encoding=utf8 # 设置显示编码
+:set fileencoding=utf-8 # 文件编码转换
+:help encoding-values # 列举支持得编码
+:setl ff=[dos/unix/mac] # 行尾格式转换&lt;/code&gt;&lt;/pre&gt;</description></item><item><title>Linux 和 Windows PowerShell 常用工具/命令 记录</title><link>//owent.net/2011/482.html</link><pubDate>Fri, 19 Aug 2011 11:16:55 +0000</pubDate><guid>//owent.net/2011/482.html</guid><description>&lt;h2 id="linux-常用工具"&gt;Linux 常用工具&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;enca: &lt;a href="http://dl.cihar.com/enca/"&gt;http://dl.cihar.com/enca/&lt;/a&gt;   文件名编码转换&lt;/li&gt;
 &lt;li&gt;iconv: 文件编码转换&lt;/li&gt;

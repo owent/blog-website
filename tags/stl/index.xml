@@ -1,11 +1,27 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Stl on I'm OWenT</title><link>//owent.net/tags/stl.html</link><description>Recent content in Stl on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md"&gt;&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /&gt;&lt;/a&gt;</copyright><lastBuildDate>Sun, 21 Jul 2024 02:32:45 +0000</lastBuildDate><atom:link href="//owent.net/tags/stl/index.xml" rel="self" type="application/rss+xml"/><item><title>踩坑一处（GCC）STL `std::async` 实现BUG导致的crash问题</title><link>//owent.net/2024/2402.html</link><pubDate>Sun, 21 Jul 2024 02:32:45 +0000</pubDate><guid>//owent.net/2024/2402.html</guid><description>&lt;h2 id="前言"&gt;前言&lt;/h2&gt;
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>STL on I'm OWenT</title><link>//owent.net/tags/stl.html</link><description>Recent content in STL on I'm OWenT</description><generator>Hugo</generator><language>zh-cn</language><copyright>&lt;a rel="license" href="https://github.com/owent/blog-hugo/blob/master/LICENSE.md"&gt;&lt;img alt="知识共享许可协议" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /&gt;&lt;/a&gt;</copyright><lastBuildDate>Sun, 21 Jul 2024 02:32:45 +0000</lastBuildDate><atom:link href="//owent.net/tags/stl/index.xml" rel="self" type="application/rss+xml"/><item><title>踩坑一处（GCC）STL `std::async` 实现BUG导致的crash问题</title><link>//owent.net/2024/2402.html</link><pubDate>Sun, 21 Jul 2024 02:32:45 +0000</pubDate><guid>//owent.net/2024/2402.html</guid><description>&lt;h2 id="前言"&gt;前言&lt;/h2&gt;
 &lt;p&gt;近期发现项目组使用新版本的 &lt;a href="https://github.com/open-telemetry/opentelemetry-cpp"&gt;opentelemetry-cpp&lt;/a&gt; 的时候偶现崩溃。崩溃的位置在STL的 &lt;code&gt;std::future&lt;/code&gt; 析构的地方，而这个 &lt;code&gt;std::future&lt;/code&gt; 由 &lt;code&gt;std::async&lt;/code&gt;创建。
-比较违反直觉，这里记录分享一下分析和解决过程方面其他碰到的小伙伴们。&lt;/p&gt;</description></item><item><title>GCC 7和LLVM+Clang+libc++abi 4.0的构建脚本</title><link>//owent.net/2017/1431.html</link><pubDate>Tue, 09 May 2017 11:17:55 +0000</pubDate><guid>//owent.net/2017/1431.html</guid><description>&lt;p&gt;之前的版本发完，有空来更新一下之前的gcc和llvm+clang工具链的编译脚本了。其实GCC 7是才release没多久但是llvm 4.0发布其实有一段时间了。&lt;/p&gt;</description></item><item><title>libatbus基本功能及单元测试终于写完啦</title><link>//owent.net/2016/1214.html</link><pubDate>Fri, 19 Feb 2016 12:44:53 +0000</pubDate><guid>//owent.net/2016/1214.html</guid><description>&lt;h2 id="libatbus"&gt;&lt;a href="https://github.com/atframework/libatbus"&gt;libatbus&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;经过茫茫长时间的编写+过年在家无聊补充和修正单元测试，再加上这两天的整理，终于把以前的这个关于服务器通信中间件的基本功能和相应的单元测试完成啦。还是可以热烈庆祝一下的。&lt;/p&gt;</description></item><item><title>小记最近踩得两个C++坑</title><link>//owent.net/2015/1189.html</link><pubDate>Sat, 25 Jul 2015 14:53:44 +0000</pubDate><guid>//owent.net/2015/1189.html</guid><description>&lt;h1 id="小记最近踩得两个c坑"&gt;小记最近踩得两个C++坑&lt;/h1&gt;
+比较违反直觉，这里记录分享一下分析和解决过程方面其他碰到的小伙伴们。&lt;/p&gt;
+&lt;h2 id="问题分析"&gt;问题分析&lt;/h2&gt;
+&lt;h3 id="相关代码和规范"&gt;相关代码和规范&lt;/h3&gt;
+&lt;p&gt;首先我们来看下相关代码：&lt;/p&gt;</description></item><item><title>GCC 7和LLVM+Clang+libc++abi 4.0的构建脚本</title><link>//owent.net/2017/1431.html</link><pubDate>Tue, 09 May 2017 11:17:55 +0000</pubDate><guid>//owent.net/2017/1431.html</guid><description>&lt;p&gt;之前的版本发完，有空来更新一下之前的gcc和llvm+clang工具链的编译脚本了。其实GCC 7是才release没多久但是llvm 4.0发布其实有一段时间了。&lt;/p&gt;
+&lt;h2 id="gcc"&gt;GCC&lt;/h2&gt;
+&lt;p&gt;这回是GCC的脚本有一些改动。因为我现在开发机的环境很多组件并没有装，所以顺带发现了之前的构建脚本的一些问题。&lt;/p&gt;</description></item><item><title>libatbus基本功能及单元测试终于写完啦</title><link>//owent.net/2016/1214.html</link><pubDate>Fri, 19 Feb 2016 12:44:53 +0000</pubDate><guid>//owent.net/2016/1214.html</guid><description>&lt;h2 id="libatbus"&gt;&lt;a href="https://github.com/atframework/libatbus"&gt;libatbus&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;经过茫茫长时间的编写+过年在家无聊补充和修正单元测试，再加上这两天的整理，终于把以前的这个关于服务器通信中间件的基本功能和相应的单元测试完成啦。还是可以热烈庆祝一下的。&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://www.owent.net/2014/1090.html"&gt;《关于BUS通信系统的一些思考（一）》&lt;/a&gt;
+&lt;a href="https://www.owent.net/2014/1099.html"&gt;《关于BUS通信系统的一些思考（二）》&lt;/a&gt;
+&lt;a href="https://www.owent.net/2015/1201.html"&gt;《关于BUS通信系统的一些思考（三）》&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;主要的思路还是在自动选择&lt;strong&gt;共享内存&lt;/strong&gt;或是&lt;strong&gt;tcp&lt;/strong&gt;或是&lt;strong&gt;unix socket&lt;/strong&gt;进行通信。使用节点ID，屏蔽底层通信细节，屏蔽自动重连细节和节点之间自动建立直连的细节。同时基于目前的游戏服务器架构设计方式预留了一些拓展性的设计，以便于后续服务器框架的实现。主要是指全异步，树形结构，自动化的容灾设计和动态扩容缩容，不停服更新，统计等等。&lt;/p&gt;</description></item><item><title>小记最近踩得两个C++坑</title><link>//owent.net/2015/1189.html</link><pubDate>Sat, 25 Jul 2015 14:53:44 +0000</pubDate><guid>//owent.net/2015/1189.html</guid><description>&lt;h1 id="小记最近踩得两个c坑"&gt;小记最近踩得两个C++坑&lt;/h1&gt;
 &lt;!-- toc --&gt;
 &lt;p&gt;记一下最近踩得两个C++独有的暗坑，其中一个和ABI相关。第二个坑其实之前研究过，但是没有实例，这次算是碰到了个典型的实例。&lt;/p&gt;
 &lt;h2 id="坑一常量引用失效"&gt;坑一：常量引用失效&lt;/h2&gt;
-&lt;p&gt;在项目中碰到的实例的大致流程是:&lt;/p&gt;</description></item><item><title>[libiniloader] Project</title><link>//owent.net/2014/1081.html</link><pubDate>Mon, 14 Jul 2014 19:28:49 +0000</pubDate><guid>//owent.net/2014/1081.html</guid><description>&lt;h2 id="ini-配置读取库发布"&gt;INI 配置读取库发布&lt;/h2&gt;
+&lt;p&gt;在项目中碰到的实例的大致流程是:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;获取某个容易的迭代器，迭代器内包含智能指针（std::shared_ptr）&lt;/li&gt;
+&lt;li&gt;把智能指针通过常量引用方式传入函数&lt;/li&gt;
+&lt;li&gt;执行过程中智能指针被释放&lt;/li&gt;
+&lt;li&gt;于是这时候，我们有了一个空悬的智能指针引用了&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;用代码表示的话，流程如下:&lt;/p&gt;</description></item><item><title>[libiniloader] Project</title><link>//owent.net/2014/1081.html</link><pubDate>Mon, 14 Jul 2014 19:28:49 +0000</pubDate><guid>//owent.net/2014/1081.html</guid><description>&lt;h2 id="ini-配置读取库发布"&gt;INI 配置读取库发布&lt;/h2&gt;
 &lt;p&gt;Github地址: &lt;a href="https://github.com/owent/libiniloader"&gt;https://github.com/owent/libiniloader&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;OSChina镜像: &lt;a href="http://git.oschina.net/owent/libiniloader"&gt;http://git.oschina.net/owent/libiniloader&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;项目中经常会碰到需要读取配置的情况，而用ini配置最大的优势就是简单易懂。
@@ -16,10 +32,32 @@
 &lt;h2 id="c-的lambda表达式"&gt;C++ 的Lambda表达式&lt;/h2&gt;
 &lt;p&gt;C++ 11 标准发布，各大编译器都开始支持里面的各种新特性，其中一项比较有意思的就是lambda表达式。&lt;/p&gt;
 &lt;h2 id="语法规则"&gt;语法规则&lt;/h2&gt;
-&lt;p&gt;C++ 11 Lambda表达式的四种声明方式&lt;/p&gt;</description></item><item><title>捣鼓一个协程库</title><link>//owent.net/2014/1000.html</link><pubDate>Wed, 05 Mar 2014 21:52:49 +0000</pubDate><guid>//owent.net/2014/1000.html</guid><description>&lt;p&gt;今年准备安安心心写一个协程库。一方面是觉得协程挺有意思，另一方面也是因为C/C++在这方面没有一个非常权威的解决方案。
+&lt;p&gt;C++ 11 Lambda表达式的四种声明方式&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+\[ capture \]( params ) mutable(optional) exception attribute -&amp;gt; ret { body }&lt;/li&gt;
+&lt;li&gt;
+\[ capture \]( params ) -&amp;gt; ret { body }&lt;/li&gt;
+&lt;li&gt;
+\[ capture \]( params ) { body }&lt;/li&gt;
+&lt;li&gt;
+\[ capture \]{ body }&lt;/li&gt;
+&lt;/ol&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;capture&lt;/strong&gt;是外部引用的参数&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;params&lt;/strong&gt;是函数参数&lt;/li&gt;
+&lt;li&gt;后面可以跟一些函数修饰符&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;ret&lt;/strong&gt;是返回值类型，如果不指定，会推断一个类型&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;body&lt;/strong&gt;部分是函数内容
+具体用法可以参照&lt;a href="http://en.cppreference.com/w/cpp/language/lambda"&gt;C++文档&lt;/a&gt;，这里就不复述了&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这四个声明式都会返回一个匿名的&lt;strong&gt;仿函数&lt;/strong&gt;实例）。
+这里有一个比较重要的一点，就是他是一个&lt;strong&gt;仿函数&lt;/strong&gt;实例，而不是直接一个&lt;strong&gt;函数&lt;/strong&gt;。&lt;/p&gt;</description></item><item><title>捣鼓一个协程库</title><link>//owent.net/2014/1000.html</link><pubDate>Wed, 05 Mar 2014 21:52:49 +0000</pubDate><guid>//owent.net/2014/1000.html</guid><description>&lt;p&gt;今年准备安安心心写一个协程库。一方面是觉得协程挺有意思，另一方面也是因为C/C++在这方面没有一个非常权威的解决方案。
 按照我自己风格还是喜欢C++，所以协程库定名为 libcopp 。
 源码托管在 github: &lt;a href="https://github.com/owent/libcopp"&gt;https://github.com/owent/libcopp&lt;/a&gt;
-镜像托管 &lt;a href="http://git.oschina.net/owent/distinctionpp"&gt;http://git.oschina.net/owent/distinctionpp&lt;/a&gt;&lt;/p&gt;</description></item><item><title>C++11动态模板参数和type_traits</title><link>//owent.net/2014/971.html</link><pubDate>Mon, 27 Jan 2014 16:27:46 +0000</pubDate><guid>//owent.net/2014/971.html</guid><description>&lt;p&gt;C++11标准里有动态模板参数已经是众所周知的事儿了。但是当时还有个主流编译器还不支持。
+镜像托管 &lt;a href="http://git.oschina.net/owent/distinctionpp"&gt;http://git.oschina.net/owent/distinctionpp&lt;/a&gt;&lt;/p&gt;
+&lt;h1 id="首先介绍-什么是协程"&gt;首先介绍: 什么是协程&lt;/h1&gt;
+&lt;p&gt;协程(coroutine)，是一种用户态模拟线程的组件。（具体说明参见：&lt;a href="http://zh.wikipedia.org/wiki/%E5%8D%8F%E7%A8%8B"&gt;http://zh.wikipedia.org/wiki/%E5%8D%8F%E7%A8%8B&lt;/a&gt;）&lt;/p&gt;</description></item><item><title>C++11动态模板参数和type_traits</title><link>//owent.net/2014/971.html</link><pubDate>Mon, 27 Jan 2014 16:27:46 +0000</pubDate><guid>//owent.net/2014/971.html</guid><description>&lt;p&gt;C++11标准里有动态模板参数已经是众所周知的事儿了。但是当时还有个主流编译器还不支持。
 但是现在，主要的编译器。VC(Windows),GCC(Windows,Linux),Clang(Mac,IOS)都已经支持了。所以就可以准备用于生产环境了。
 type_traits没啥好说的。主要是一些静态检测。主要还是要看动态模板参数和他们两的结合使用上。
 动态模版参数标准文档见:
@@ -27,7 +65,11 @@ type_traits没啥好说的。主要是一些静态检测。主要还是要看动
 和
 &lt;a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf"&gt;http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2555.pdf&lt;/a&gt;
 虽然贴出来了。估计是没人看得。所以就直接说重点。&lt;/p&gt;</description></item><item><title>std和boost的function与bind实现剖析</title><link>//owent.net/2013/938.html</link><pubDate>Thu, 28 Nov 2013 22:01:30 +0000</pubDate><guid>//owent.net/2013/938.html</guid><description>&lt;!-- toc --&gt;
-&lt;p&gt;用过std和boost的function对象和bind函数的童鞋们都知道这玩意用起来腰不酸了，腿不疼了，心情也舒畅了。先上一个简单得示例：&lt;/p&gt;</description></item><item><title>Boost.Spirit 初体验</title><link>//owent.net/2012/674.html</link><pubDate>Thu, 08 Nov 2012 18:57:34 +0000</pubDate><guid>//owent.net/2012/674.html</guid><description>&lt;p&gt;使用代码生成代码是一件十分美妙的事情，于是有了各种代码生成器。但是生成代码，意味着要有对生成规则的分析和处理。
+&lt;p&gt;用过std和boost的function对象和bind函数的童鞋们都知道这玩意用起来腰不酸了，腿不疼了，心情也舒畅了。先上一个简单得示例：&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-cpp"&gt;std::string str;
+std::function&lt;bool()&gt; func = std::bind(&amp;std::string::at, &amp;str);
+bool is_empty = func();&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;但是这是怎么做到的呢？看完源码以后，你会发现这里面有着一些很巧妙的设计。&lt;/p&gt;</description></item><item><title>Boost.Spirit 初体验</title><link>//owent.net/2012/674.html</link><pubDate>Thu, 08 Nov 2012 18:57:34 +0000</pubDate><guid>//owent.net/2012/674.html</guid><description>&lt;p&gt;使用代码生成代码是一件十分美妙的事情，于是有了各种代码生成器。但是生成代码，意味着要有对生成规则的分析和处理。
 Boost.Spirit 就是这么一个语法分析工具，它实现了对&lt;strong&gt;上下文无关文法的LL分析&lt;/strong&gt;。支持&lt;strong&gt;EBNF(扩展巴科斯范式)&lt;/strong&gt;。
 Boost.Spirit 的使用真的是把模板嵌套用到了极致。确实这么做造成了非常强的扩展性，生成的代码也非常高效，但是嵌套的太复杂了，对于初学者而言真心难看懂。
 你能想象在学习阶段一个不是太明白的错误导致编译器报出的几十层模板嵌套错误信息的感受吗？而且，这么复杂的模板嵌套还直接导致了编译速度的巨慢无比。
@@ -51,15 +93,60 @@ get方法， 用于获取引用的对象
 &lt;li&gt;Visual Studio 2008 SP1 及以上&lt;/li&gt;
 &lt;li&gt;BOOST 1.25及以上（其中function是1.16及以上）&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;先来看一段代码&lt;/p&gt;</description></item><item><title>C++ 新特性学习（三） — Regex库</title><link>//owent.net/2011/534.html</link><pubDate>Sat, 22 Oct 2011 14:38:01 +0000</pubDate><guid>//owent.net/2011/534.html</guid><description>&lt;p&gt;C++ STL终于会放点实用的东西了。可喜可贺。&lt;/p&gt;
+&lt;p&gt;先来看一段代码&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-cpp"&gt;#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+#include &lt;memory&gt;
+#include &lt;functional&gt;
+
+class button
+{
+public:
+
+ std::function&lt;void(int)&gt; onClick;
+};
+
+class player
+{
+public:
+
+ void play(void* sender, int param) {
+ printf("Play: %d =&gt; %d\n", (int)sender, param);
+ };
+ void stop(void* sender, int param) {
+ printf("Play: %d =&gt; %d\n", (int)sender, param);
+ };
+};
+
+button playButton, stopButton;
+player thePlayer;
+
+void connect()
+{
+ playButton.onClick = std::bind(&amp;player::play, &amp;thePlayer, &amp;playButton, std::placeholders::_1);
+ stopButton.onClick = std::bind(&amp;player::stop, &amp;thePlayer, &amp;stopButton, std::placeholders::_1);
+}
+
+int main () {
+ connect();
+ playButton.onClick(0);
+ return 0;
+}
+// 以上代码参考boost中bind库示例代码，在G++ 4.6.1中测试通过&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;木有错，这是C++，并且很方便地实现了委托
+这就是传说中的绑定库和增强型的函数对象
+接下来一个一个来&lt;/p&gt;</description></item><item><title>C++ 新特性学习（三） — Regex库</title><link>//owent.net/2011/534.html</link><pubDate>Sat, 22 Oct 2011 14:38:01 +0000</pubDate><guid>//owent.net/2011/534.html</guid><description>&lt;p&gt;C++ STL终于会放点实用的东西了。可喜可贺。&lt;/p&gt;
 &lt;p&gt;这个，显然是正则表达式库，作为一个强大而又NB的库，我表示对其理解甚少，只能先研究下基本用法，更具体的用法要等实际应用中用到的时候在细看了。
 PS：正则表达式的资料见 &lt;a href="http://www.regexlab.com/"&gt;http://www.regexlab.com/&lt;/a&gt;
 更多资料见 &lt;a href="https://www.owent.net/2011/264.html"&gt;https://www.owent.net/2011/264.html&lt;/a&gt;&lt;/p&gt;</description></item><item><title>C++ 新特性学习（二） -- Array、Tuple和Hash库</title><link>//owent.net/2011/518.html</link><pubDate>Fri, 14 Oct 2011 12:17:17 +0000</pubDate><guid>//owent.net/2011/518.html</guid><description>&lt;p&gt;这回的两个库没怎么用过，这里的记录就用VC++写了，使用G++和BOOST的时候和智能指针类似。&lt;/p&gt;
 &lt;p&gt;首先是&lt;strong&gt;Tuple&lt;/strong&gt;库&lt;/p&gt;
 &lt;p&gt;要注意的是这里G++，VC++和BOOST库的函数不太一样，所以使用的时候要注意没有使用到编译器和编译器相关的函数（特别是IDE的弹窗的方法要注意）。&lt;/p&gt;</description></item><item><title>C++ 新特性学习（一） -- 概述+智能指针（smart_ptr）</title><link>//owent.net/2011/508.html</link><pubDate>Fri, 14 Oct 2011 04:12:48 +0000</pubDate><guid>//owent.net/2011/508.html</guid><description>&lt;p&gt;&lt;strong&gt;C++ 0x/11 终于通过了,真是个很爽的消息。于是乎我决定对新的东西系统学习一下。&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;首先当然要从tr1开始，智能指针实际上我已经用过很多次了，但是为了完整起见，还是写出来记录一下。&lt;/p&gt;</description></item><item><title>常用官方文档整理</title><link>//owent.net/2011/264.html</link><pubDate>Tue, 08 Feb 2011 14:04:26 +0000</pubDate><guid>//owent.net/2011/264.html</guid><description>&lt;p&gt;&lt;strong&gt;网站及网页：&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;首先当然要从tr1开始，智能指针实际上我已经用过很多次了，但是为了完整起见，还是写出来记录一下。&lt;/p&gt;
+&lt;p&gt;当然，从简单到复杂，现在接触的部分不是很复杂，不过暂时够用了。&lt;/p&gt;</description></item><item><title>常用官方文档整理</title><link>//owent.net/2011/264.html</link><pubDate>Tue, 08 Feb 2011 14:04:26 +0000</pubDate><guid>//owent.net/2011/264.html</guid><description>&lt;p&gt;&lt;strong&gt;网站及网页：&lt;/strong&gt;&lt;/p&gt;
 &lt;p&gt;基本知识中文学习站（中）：&lt;a href="http://www.w3school.com.cn"&gt;http://www.w3school.com.cn&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;W3C官网（英）：&lt;a href="http://www.w3.org/"&gt;http://www.w3.org/&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;HTML 4.01规范（英）：&lt;a href="http://www.w3.org/TR/html4/"&gt;http://www.w3.org/TR/html4/&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;XHTML™ 1.1规范（英）：&lt;a href="http://www.w3.org/TR/xhtml11/"&gt;http://www.w3.org/TR/xhtml11/&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;CSS官方文档（多国语言）：&lt;a href="http://www.w3.org/Style/CSS/"&gt;http://www.w3.org/Style/CSS/&lt;/a&gt;&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;CSS官方文档（多国语言）：&lt;a href="http://www.w3.org/Style/CSS/"&gt;http://www.w3.org/Style/CSS/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;HTML5规范（英）：&lt;a href="http://www.w3.org/TR/html5/"&gt;http://www.w3.org/TR/html5/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;jQuery（包含UI）官方文档（英）：&lt;a href="http://api.jquery.com/browser/"&gt;http://api.jquery.com/browser/&lt;/a&gt;&lt;/p&gt;</description></item></channel></rss>

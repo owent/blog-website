@@ -4,4 +4,5 @@
 &lt;p&gt;&lt;strong&gt;注：这部分仅测过GCC，VS暂不支持&lt;/strong&gt;&lt;/p&gt;
 &lt;p&gt;在旧的标准C++中支持两种字符编码。&lt;/p&gt;
 &lt;p&gt;直接使用””将产生const char。&lt;/p&gt;
-&lt;p&gt;使用L””将产生const wchar。&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;使用L””将产生const wchar。&lt;/p&gt;
+&lt;p&gt;新标准中增加了三种，即UTF-8、UTF-16和UTF-32。&lt;/p&gt;</description></item></channel></rss>

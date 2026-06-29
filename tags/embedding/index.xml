@@ -7,4 +7,5 @@
 每个数据组都单独运算所以可以大规模并发，但是数据组之间也缺乏关联。
 我大概看了下原理，和我们要关注的 &lt;a href="https://github.com/huggingface/transformers"&gt;Transformer&lt;/a&gt; 关系不大，先略过了。&lt;/p&gt;</description></item><item><title>大预言模型的基石：Transformer 入坑笔记（二） - 基本原理和 Word Embeddings</title><link>//owent.net/2026/2609.html</link><pubDate>Wed, 24 Jun 2026 16:45:45 +0000</pubDate><guid>//owent.net/2026/2609.html</guid><description>&lt;h2 id="背景"&gt;背景&lt;/h2&gt;
 &lt;p&gt;继续我们的 &lt;a href="https://arxiv.org/pdf/1706.03762"&gt;Attention Is All You Need&lt;/a&gt; 学习之旅。&lt;/p&gt;
-&lt;p&gt;我不是这个领域的，只是感兴趣想补一下基础，所以这一篇先只看最通用的原理：神经网络训练的大概流程、Embedding 是什么，以及 Word2Vec 里两种常见优化思路。&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;我不是这个领域的，只是感兴趣想补一下基础，所以这一篇先只看最通用的原理：神经网络训练的大概流程、Embedding 是什么，以及 Word2Vec 里两种常见优化思路。&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://arxiv.org/pdf/1706.03762"&gt;Attention Is All You Need&lt;/a&gt; 最早落在机器翻译任务上，它提出的核心架构就是 Transformer。工程上我们常接触到的 &lt;a href="https://github.com/huggingface/transformers"&gt;Transformers&lt;/a&gt; 库，则是围绕这类模型提供了更完整的封装。&lt;/p&gt;</description></item></channel></rss>

@@ -2,4 +2,10 @@
 现在我还是决定记录一下这些有意思的东西。&lt;/p&gt;
 &lt;h2 id="201004"&gt;2010/04&lt;/h2&gt;
 &lt;p&gt;a ^= b ^= a ^=b;
-这是一个交换值得有意思的方式&lt;/p&gt;</description></item></channel></rss>
+这是一个交换值得有意思的方式&lt;/p&gt;
+&lt;pre&gt;&lt;code class="language-cpp"&gt;// 统计1的个数的有意思的方式
+int count_bin_one(int x) {
+ return x? 1 + count_bin_one(x &amp; (x - 1)): 0;
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;h2 id="201104"&gt;2011/04&lt;/h2&gt;
+&lt;p&gt;同学去爱立信参加笔试+面试碰到的问题 – 1&lt;/p&gt;</description></item></channel></rss>
