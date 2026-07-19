@@ -223,7 +223,13 @@ int main()
 主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>
 </strong><span class=clearfix></span></div></div></footer></div><script type=importmap>
 {"imports":{"@popperjs/core":"https://esm.run/popper.js","bootstrap":"https://esm.run/bootstrap","react":"https://esm.run/react","react-bootstrap":"https://esm.run/react-bootstrap"}}
-</script><script type=module>// import * as Popper from "@popperjs/core";// import * as bootstrap from "bootstrap";
+</script><script type=module>
+
+
+
+import("bootstrap").catch((e) => {
+    if (window.console) { console.error("Failed to load bootstrap:", e); }
+});
 // import React from "react";
 
         

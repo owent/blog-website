@@ -4,6 +4,8 @@
 .toc {
     color: #4078c0;
     text-decoration: none;
+    // Long (English) headings must wrap instead of widening the card.
+    overflow-wrap: break-word;
 
     ul {
         list-style-type: none;
@@ -91,7 +93,10 @@
 }
 
 .article-panel {
-    @include transition(all 0.5s ease-in-out);
+    // No transition here: with "all", breakpoint-driven changes (e.g. the
+    // 1200px font-size bump) become a ~0.5s animated full-article relayout on
+    // every window resize, which stalls the page. Nothing on the panel is
+    // meant to animate.
     background-color: $article-background;
     @include border-radius($border-radius);
     padding: 0.05rem;
@@ -104,6 +109,11 @@
         @include border-radius($border-radius);
         margin: 0.2rem 0.15rem 0.15rem 0.15rem;
         padding: 0.8rem;
+
+        // Narrow screens: trade some inner padding for text width (see #main).
+        @media (max-width: 575.98px) {
+            padding: 0.6rem;
+        }
 
         ul,
         ol {
@@ -191,4 +201,25 @@
     z-index: 1;
     overflow: hidden;
     max-width: 100%;
+}
+
+.article-entry {
+    // Wrap long unbreakable tokens (plain-text URLs, long inline code)
+    // instead of letting them widen the whole page on mobile.
+    overflow-wrap: break-word;
+
+    p,
+    li,
+    td,
+    th {
+        code {
+            overflow-wrap: anywhere;
+        }
+    }
+
+    // Inline SVG diagrams (mermaid / excalidraw exports) must fit the column.
+    svg {
+        max-width: 100%;
+        height: auto;
+    }
 }
