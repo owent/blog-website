@@ -91,7 +91,8 @@ V_E^l &= H_E^{l-1} W_{E}^{V,l}
 \end{aligned}
 \qquad l = 1,\dots,N
 $$<p>右边 Decoder 包含两段注意力计算：<strong>Decoder masked self-attention</strong> 和 <strong>Decoder encoder-decoder attention</strong>。其中：</p><p>第一层:</p>$$
-H_D^{0} = \operatorname{Dropout}\left(\operatorname{Emb}_{tgt}(Y_{<t}) + pe_{tgt}\right) $$<p>然后对后面每一层：</p>$$
+H_D^{0} = \operatorname{Dropout}\left(\operatorname{Emb}_{tgt}(Y_{&lt;t}) + PE_{tgt}\right)
+$$<p>然后对后面每一层：</p>$$
 \begin{aligned}
 A_D^{l}
 &= \operatorname{MaskedMHA}\left(H_D^{l-1}, H_D^{l-1}, H_D^{l-1}\right) \\
