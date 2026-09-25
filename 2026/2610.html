@@ -28,7 +28,7 @@ $$<p>如果序列长度为 $L$，模型维度为 $d_{model}$，位置编码矩�
 \end{aligned}
 $$<p>同理: $\mathbf{PE}_{(\text{pos}+k, 2i+1)} = \mathbf{PE}_{(\text{pos},2i+1)}\cos(k\cdot w_i) - \mathbf{PE}_{(\text{pos},2i)}\sin(k\cdot w_i)$</p><p>所以是满足这些条件的。不过要注意的是，原始公式没有“超过某个位置就不能用”的硬上限；它可以外推，但最长波长的量级大约是 $10000 \times 2\pi$，序列长度远超训练范围后效果不能只靠公式保证。现代长上下文模型通常还会配合 RoPE、ALiBi、位置插值、分块或稀疏注意力等方案。
 最后，显然对确定的总维度，这个位置编码矩阵是可以提前算好的。</p><h3 id=注意力机制>注意力机制</h3><p><a href=https://github.com/huggingface/transformers>Transformer</a> 注意力机制核心部分叫做 self-attention (自注意力)。基本流程可以理解为：当前 Token 拿着 Query 去和所有 Key 做匹配，再按匹配权重汇总对应的 Value。
-当然这些数据都是向量。可以这么理解：</p><ul><li><strong>查询（Q）</strong>：当前 Token 想找什么信息。</li><li><strong>键（K）</strong>：每个 Token 对外提供的匹配索引。</li><li><strong>值（V）</strong>：真正被加权汇总的信息内容。</li></ul><p>实际计算时，同一份输入矩阵 $X$ 会分别乘以三组可训练权重矩阵，得到 $Q$、$K$、$V$ 三组向量。图里把维度压成 4 格只是为了画得清楚；真实模型里，$X \in \mathbb{R}^{L \times d_{model}}$，$W^Q/W^K \in \mathbb{R}^{d_{model} \times d_k}$，$W^V \in \mathbb{R}^{d_{model} \times d_v}$。</p><p><div class=excalidraw-container style="width:100%;height:auto;margin:1rem auto;max-width:800px"><div id=excalidraw-image-3 class=excalidraw-root style=width:100%;height:auto data-excalidraw-src=2610-qkv-projection.excalidraw data-excalidraw-fetch-id=excalidraw-image-3>Q/K/V 线性投影示意图</div></div></p><p><em>图 2：Q/K/V 线性投影。Self-Attention 使用同一份输入 $X$，通过三组不同的权重矩阵生成后续注意力计算需要的 Query、Key 和 Value。</em></p><p><div class=drawio-container style="width:100%;height:auto;margin:1rem auto;max-width:800px"><div id=drawio-image-4 class="drawio-root mxgraph" style="max-width:100%;border:1px solid transparent" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers lightbox","edit":"_blank","url":"transformer-attention.drawio"}'></div></div></p><p><em>图 3：Scaled Dot-Product Attention（左）与 Multi-Head Attention（右）。左侧展示 Q/K/V 的注意力计算流程，右侧展示 h 个并行注意力头拼接后再线性投影的结构。</em></p><p>对于单个单头的注意力，计算公式如下：</p>$$\mathrm{Attention}(Q, K, V) = \mathrm{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$<p>这里的 $d_k$ 是 Key 向量的维度。除以 $\sqrt{d_k}$ 是为了把点积结果拉回更合适的数值范围，避免维度变大后 softmax 太容易进入饱和区。$W^Q$、$W^K$、$W^V$ 这些矩阵也是训练出来的。</p>$$
+当然这些数据都是向量。可以这么理解：</p><ul><li><strong>查询（Q）</strong>：当前 Token 想找什么信息。</li><li><strong>键（K）</strong>：每个 Token 对外提供的匹配索引。</li><li><strong>值（V）</strong>：真正被加权汇总的信息内容。</li></ul><p>实际计算时，同一份输入矩阵 $X$ 会分别乘以三组可训练权重矩阵，得到 $Q$、$K$、$V$ 三组向量。图里把维度压成 4 格只是为了画得清楚；真实模型里，$X \in \mathbb{R}^{L \times d_{model}}$，$W^Q/W^K \in \mathbb{R}^{d_{model} \times d_k}$，$W^V \in \mathbb{R}^{d_{model} \times d_v}$。</p><p><div class=excalidraw-container style="width:100%;height:auto;margin:1rem auto;max-width:800px"><div id=excalidraw-image-3 class=excalidraw-root style=width:100%;height:auto data-excalidraw-src=2610-qkv-projection.excalidraw data-excalidraw-fetch-id=excalidraw-image-3>Q/K/V 线性投影示意图</div></div></p><p><em>图 2：Q/K/V 线性投影。Self-Attention 使用同一份输入 $X$，通过三组不同的权重矩阵生成后续注意力计算需要的 Query、Key 和 Value。</em></p><p><div class=drawio-container style="width:100%;height:auto;margin:1rem auto;max-width:800px"><div id=drawio-image-4 class="drawio-root mxgraph" style="max-width:100%;border:1px solid transparent" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers lightbox","edit":"_blank","url":"transformer-attention.drawio"}'></div></div></p><p><em>图 3：Scaled Dot-Product Attention（左）与 Multi-Head Attention（右）。左侧展示 Q/K/V 的注意力计算流程，右侧展示 h 个并行注意力头拼接后再线性投影的结构。</em></p><p>对于单个单头的注意力，计算公式如下：</p>$$\mathrm{Attention}(Q, K, V) = \mathrm{Softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$<p>这里的 $d_k$ 是 Key 向量的维度。除以 $\sqrt{d_k}$ 是为了把点积结果拉回更合适的数值范围，避免维度变大后 Softmax 太容易进入饱和区。$W^Q$、$W^K$、$W^V$ 这些矩阵也是训练出来的。</p>$$
 \begin{aligned}
 X &\in \mathbb{R}^{L \times d_{model}} \\
 W^Q &\in \mathbb{R}^{d_{model} \times d_k} \\
@@ -59,9 +59,9 @@ $$<p>也就是说，$d_k$ 越大，$QK^T$ 里的分数波动越大，标准差�
 = \frac{\mathrm{Var}(s)}{d_k}
 = 1
 $$<p>如果 $q_i$、$k_i$ 的方差不是 1，而是 $\sigma_q^2$、$\sigma_k^2$，点积方差会变成 $d_k\sigma_q^2\sigma_k^2$，这个缩放项同样能消掉由 $d_k$ 带来的那部分放大。</p><p>Softmax 对这个尺度很敏感。它的梯度是：</p>$$
-\frac{\partial \mathrm{softmax}(z)_i}{\partial z_j}
-= \mathrm{softmax}(z)_i \left(\mathbf{1}_{i=j} - \mathrm{softmax}(z)_j\right)
-$$<p>如果 $z$ 里的某个分数远大于其他分数，Softmax 会非常接近 one-hot：最大项接近 1，其他项接近 0。这时上面的梯度项也会接近 0，反向传播很难把注意力权重再调回来。在 float 精度有限时，指数函数的差距还可能直接把小概率压到接近 0。除以 $\sqrt{d_k}$ 不是为了改变排序，而是让 logits 的尺度别随着 $d_k$ 增大而失控，减轻 Softmax 饱和和梯度变小的问题。</p><p>最后再 Softmax 归一化。</p><p><img src=/2026/2610-self-attention-qkv.png alt=2610-self-attention-qkv.png style="max-width:68%;display:block;margin:1rem auto" loading=lazy></p><p>这个图里还有一次 Mask 遮挡。它的作用是模拟阅读和写作过程：生成当前位置时，后面的词还没看到，所以不应该参与注意力计算。</p><blockquote><p>$\mathrm{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)$ 的结果是一个 $L \times L$ 的注意力权重矩阵，再乘以 $V$ 后得到 $L \times d_v$ 的输出。现代化LLM有些支持1M上下文，不可能真的 1M * 1M 这么夸张的计算量，而是通过线性注意力、FlashAttention等方式优化，这个后面再看。这样可以把计算量从 $O(L^2)$ 压到接近 $O(Lw)$，其中 $w$ 是窗口大小。</p></blockquote><p>到这里，<strong>单头注意力</strong> 的主要流程就结束了。</p><p>每个注意力头都有自己的一组 $W^Q, W^K, W^V$，会学到一类匹配偏好，但单头表达能力有限。为了让模型同时看不同关系，就引入了 <strong>多头注意力</strong>。</p><p><strong>多头注意力</strong> 就是让多个注意力头并行计算，再把结果拼接起来。</p>$$
+\frac{\partial \mathrm{Softmax}(z)_i}{\partial z_j}
+= \mathrm{Softmax}(z)_i \left(\mathbf{1}_{i=j} - \mathrm{Softmax}(z)_j\right)
+$$<p>如果 $z$ 里的某个分数远大于其他分数，Softmax 会非常接近 one-hot：最大项接近 1，其他项接近 0。这时上面的梯度项也会接近 0，反向传播很难把注意力权重再调回来。在 float 精度有限时，指数函数的差距还可能直接把小概率压到接近 0。除以 $\sqrt{d_k}$ 不是为了改变排序，而是让 logits 的尺度别随着 $d_k$ 增大而失控，减轻 Softmax 饱和和梯度变小的问题。</p><p>最后再 Softmax 归一化。</p><p><img src=/2026/2610-self-attention-qkv.png alt=2610-self-attention-qkv.png style="max-width:68%;display:block;margin:1rem auto" loading=lazy></p><p>这个图里还有一次 Mask 遮挡。它的作用是模拟阅读和写作过程：生成当前位置时，后面的词还没看到，所以不应该参与注意力计算。</p><blockquote><p>$\mathrm{Softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)$ 的结果是一个 $L \times L$ 的注意力权重矩阵，再乘以 $V$ 后得到 $L \times d_v$ 的输出。现代化LLM有些支持1M上下文，不可能真的 1M * 1M 这么夸张的计算量，而是通过线性注意力、FlashAttention等方式优化，这个后面再看。这样可以把计算量从 $O(L^2)$ 压到接近 $O(Lw)$，其中 $w$ 是窗口大小。</p></blockquote><p>到这里，<strong>单头注意力</strong> 的主要流程就结束了。</p><p>每个注意力头都有自己的一组 $W^Q, W^K, W^V$，会学到一类匹配偏好，但单头表达能力有限。为了让模型同时看不同关系，就引入了 <strong>多头注意力</strong>。</p><p><strong>多头注意力</strong> 就是让多个注意力头并行计算，再把结果拼接起来。</p>$$
 \begin{aligned}
 \operatorname{MultiHead}(X)
 &= \operatorname{Concat}(\operatorname{head}_1, \dots, \operatorname{head}_h)W^O \\
@@ -69,8 +69,8 @@ $$<p>如果 $z$ 里的某个分数远大于其他分数，Softmax 会非常接�
 &= \operatorname{Attention}(XW_i^Q, XW_i^K, XW_i^V)
 \end{aligned}
 $$<p>这里又引入了一个新的投影矩阵：$W^O \in \mathbb{R}^{hd_v \times d_{model}}$，其中 $h$ 是并行的注意力头数（原论文 $h = 8$）。它负责把拼接后的表示重新投影到 $d_{model}$ 维度。</p><p>到这里，<strong>多头注意力</strong> 的计算过程就完成了。当然后面还会经过 <a href=https://arxiv.org/abs/1512.03385>残差连接</a>（Residual Connection）和 LayerNorm；再通过 <strong>前馈神经网络（FFN）</strong> 执行非线性变换。MoE、激活函数、归一化位置这些优化又是另一个层面的内容，已经超出这篇入门笔记的范围，这里先不展开。</p><blockquote><p><a href=https://arxiv.org/pdf/1706.03762>《Attention Is All You Need》</a> 论文里的 Position-wise FFN 由两个线性变换组成，中间接一个 ReLU 激活函数：$FFN(x) = \max\left(0, xW_1 + b_1\right)W_2 + b_2$。输入和输出维度为 $d_{model} = 512$，中间层维度为 $d_{ff} = 2048$。</p></blockquote><h3 id=整个模型的注意力整合>整个模型的注意力整合</h3><p>我们再回到整体的架构图。</p><p><div class=drawio-container style="width:100%;height:auto;margin:1rem auto;max-width:800px"><div id=drawio-image-7 class="drawio-root mxgraph" style="max-width:100%;border:1px solid transparent" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers lightbox","edit":"_blank","url":"transformer-architecture.drawio"}'></div></div></p><p>在整体架构里，无论是左边 Encoder 的 self-attention (自注意力) 层，还是右边的 self-attention (自注意力) 层 和 encoder-decoder attention 层，都是多层堆叠出来的。
-<a href=https://arxiv.org/pdf/1706.03762>《Attention Is All You Need》</a> 论文的堆叠层数 $N = 6$。</p><p>在左边的 <strong>Encoder 的每层堆叠</strong> 中，除了第 1 层外，Q、K、V 都来自上一层的输出。</p><p>第一层:</p>$$
-H_E^{0} = \operatorname{Dropout}\left(\operatorname{Emb}_{src}(X) + PE_{src}\right)
+<a href=https://arxiv.org/pdf/1706.03762>《Attention Is All You Need》</a> 论文的堆叠层数 $N = 6$。</p><p>在左边的 <strong>Encoder 的每层堆叠</strong> 中，除了第 1 层外，Q、K、V 都来自上一层的输出。</p><p>进入第 1 层前，先得到第 0 层表示。按 <a href=https://arxiv.org/pdf/1706.03762>《Attention Is All You Need》</a> 的写法，Embedding 会先乘以 $\sqrt{d_{model}}$，再和位置编码相加：</p>$$
+H_E^{0} = \operatorname{Dropout}\left(\sqrt{d_{model}}\,\operatorname{Emb}_{\mathrm{src}}(X) + \mathrm{PE}_{\mathrm{src}}\right)
 $$<p>然后对后面每一层：</p>$$
 \begin{aligned}
 A_E^{l}
@@ -83,15 +83,15 @@ H_E^{l}
 &= \operatorname{LayerNorm}\left(\tilde{H}_E^{l} + \operatorname{Dropout}\left(F_E^{l}\right)\right)
 \end{aligned}
 \qquad l = 1, \dots, N
-$$<ul><li>Encoder 的每一层都有自己的 $W^Q,W^K,W^V,W^O$ 和 FFN 参数。</li><li>Encoder self-attention 里，Q/K/V 都来自同一个输入：第一层来自 Embedding + PE，后续层来自上一层输出。</li><li>Encoder 不需要 mask，因为输入序列一次性全部可见，每个 token 可以 attend 到所有输入位置。</li><li>PE: Positional Encoding 不逐层重复添加。位置信息已经混进了 $H^0$，后面通过残差连接、Attention 和 FFN 一层层传下去。</li></ul><p>然后:</p>$$
+$$<ul><li>Encoder 的每一层都有自己的 $W^Q,W^K,W^V,W^O$ 和 FFN 参数。</li><li>Encoder self-attention 里，Q/K/V 都来自同一个输入：第一层来自缩放后的 Embedding + PE，后续层来自上一层输出。</li><li>Encoder 不需要 mask，因为输入序列一次性全部可见，每个 token 可以 attend 到所有输入位置。</li><li>PE: Positional Encoding 不逐层重复添加。位置信息已经混进了 $H^0$，后面通过残差连接、Attention 和 FFN 一层层传下去。</li></ul><p>然后:</p>$$
 \begin{aligned}
 Q_E^l &= H_E^{l-1} W_{E}^{Q,l} \\
 K_E^l &= H_E^{l-1} W_{E}^{K,l} \\
 V_E^l &= H_E^{l-1} W_{E}^{V,l}
 \end{aligned}
 \qquad l = 1,\dots,N
-$$<p>右边 Decoder 包含两段注意力计算：<strong>Decoder masked self-attention</strong> 和 <strong>Decoder encoder-decoder attention</strong>。其中：</p><p>第一层:</p>$$
-H_D^{0} = \operatorname{Dropout}\left(\operatorname{Emb}_{tgt}(Y_{&lt;t}) + PE_{tgt}\right)
+$$<p>右边 Decoder 包含两段注意力计算：<strong>Decoder masked self-attention</strong> 和 <strong>Decoder encoder-decoder attention</strong>。其中：</p><p>同样先得到 Decoder 的第 0 层表示：</p>$$
+H_D^{0} = \operatorname{Dropout}\left(\sqrt{d_{model}}\,\operatorname{Emb}_{\mathrm{tgt}}(Y_{\lt t}) + \mathrm{PE}_{\mathrm{tgt}}\right)
 $$<p>然后对后面每一层：</p>$$
 \begin{aligned}
 A_D^{l}
@@ -122,7 +122,7 @@ K_{D,\mathrm{cross}}^l &= H_E^N W_{D,\mathrm{cross}}^{K,l} \\
 V_{D,\mathrm{cross}}^l &= H_E^N W_{D,\mathrm{cross}}^{V,l}
 \end{aligned}
 \qquad l = 1,\dots,N
-$$<p>在语言模型的 Decoder 端，多层 Transformer block 会先得到每个位置的 hidden state；最后通过 <code>lm_head</code> 映射到词表维度，为每个 Token 生成一个 logit，再经过 softmax 得到概率分布。GPT-2 这类模型的 FFN/MLP 中间层常用 GELU，但输出词表 logits 的那一层本质上还是线性投影。</p><p><img src=/2026/2610-mlp-t-k-to-probability.png alt=2610-mlp-t-k-to-probability.png style="max-width:68%;display:block;margin:1rem auto" loading=lazy></p><p>这张图也能解释现在 LLM 里 temperature、top_p / top_k 这些采样参数的作用。
+$$<p>在语言模型的 Decoder 端，多层 Transformer block 会先得到每个位置的 hidden state；最后通过 <code>lm_head</code> 映射到词表维度，为每个 Token 生成一个 logit，再经过 Softmax 得到概率分布。GPT-2 这类模型的 FFN/MLP 中间层常用 GELU，但输出词表 logits 的那一层本质上还是线性投影。</p><p><img src=/2026/2610-mlp-t-k-to-probability.png alt=2610-mlp-t-k-to-probability.png style="max-width:68%;display:block;margin:1rem auto" loading=lazy></p><p>这张图也能解释现在 LLM 里 temperature、top_p / top_k 这些采样参数的作用。
 如果是贪心解码，就直接选概率最高的那个词；如果是采样解码，就会在筛选后的概率分布里抽样。</p><p>这里也能看出 LLM 的底层目标：在当前上下文里预测下一个 Token 的概率分布。
 所以它输出的往往是训练数据、后训练和解码策略共同推出来的高概率结果。这也导致了，如果某些情况下 “真理往往掌握在少数人手中” 的时候，大语言模型就掌握不了真理。</p><h3 id=怎么训练-->怎么训练 $W^Q$、$W^K$、$W^V$、$W^O$ ？</h3><p>对于一组注意力矩阵来说，$W^Q$、$W^K$、$W^V$、$W^O$ 是同时训练出来的，具体训练方法和上一章 <a href=https://owent.net/2026/2609.html>《大语言模型的基石：Transformer 入坑笔记（二） - 基本原理和 Word Embeddings》</a> 的基本原理一致。主线就是 <strong>前向计算 -> loss -> 反向传播 -> 同时更新参数</strong>。</p><div class=mermaid-container style="width:100%;height:auto;margin:1rem auto"><pre id=mermaid-codeblock-0 class=mermaid>
 flowchart TD
@@ -130,7 +130,7 @@ flowchart TD
 
     subgraph F["前向传播"]
         E --> P["线性投影<br>Q = XW^Q<br>K = XW^K<br>V = XW^V"]
-        P --> A["Attention<br>softmax(QK^T / sqrt(d_k))V"]
+        P --> A["Attention<br>Softmax(QK^T / sqrt(d_k))V"]
         A --> C["多头拼接<br>Concat(head_1, ..., head_h)"]
         C --> O["输出投影<br>Concat(heads) W^O"]
         O --> N["后续层<br>Add and Norm / FFN / 输出层"]
@@ -181,7 +181,7 @@ W^Q \approx W^{DQ}W^{UQ}
 $$<p>这两个矩阵从预训练开始就是模型参数的一部分，不是后面外挂上去的微调插件。</p><h3 id=混合专家模型moe>混合专家模型(MoE)</h3><p>原始 Transformer 里，FFN/MLP 层是 dense 的：一个 Token 经过这一层时，会走这层的全部 FFN 参数。MoE 的想法是把 FFN/MLP 换成多组 Expert，再让 Router 为每个 Token 只选其中一小部分。</p><p>这个思路很符合直觉。写代码时不太需要心理学专家，做数学题时也不太需要一个擅长社交闲聊的专家；如果每个 Token 都让所有专家参与计算，参数容量是上去了，推理成本也会一起上去。于是就有了 <strong>混合专家模型(MoE)</strong>。</p><p><strong>混合专家模型(MoE)</strong> 通常是在 Transformer block 里，把 <strong>前馈神经网络（FFN/MLP）</strong> 从一套 dense MLP 换成多个 Expert。拿到输入 hidden state 后，Router 只会选中一个或几个 Expert 参与计算。</p><p>Router 层会根据输入 hidden state 给每个 Expert 打分，再按概率或 top-k 规则选取要激活的 Expert。</p><blockquote><p>最简单的策略可以是只选分数最高的一个 Expert；选更多 Expert 会增加每个 Token 的计算容量，但也会增加推理成本和路由负载。</p></blockquote><p><div class=drawio-container style="width:100%;height:auto;margin:1rem auto;max-width:800px"><div id=drawio-image-9 class="drawio-root mxgraph" style="max-width:100%;border:1px solid transparent" data-mxgraph='{"highlight":"#0000ff","nav":true,"resize":true,"toolbar":"zoom layers lightbox","edit":"_blank","url":"2610-moe-routing.drawio"}'></div></div></p><p>模型加载时通常仍要加载全部专家，所以内存/显存占用看的是总参数；但每次计算只激活子集，所以实际计算量会小得多。</p><p>MoE Router 也有自己的可训练参数，比如：</p>$$
 \begin{aligned}
 s &= hW^R + b^R \\
-p &= \operatorname{softmax}(s)
+p &= \operatorname{Softmax}(s)
 \end{aligned}
 $$<p>其中：</p><ul><li>$h$ 是进入 MoE 层前的 hidden state；</li><li>$W^R$ 是 Router 的权重矩阵；</li><li>$s$ 是每个 Expert 的打分；</li><li>$p$ 是每个 Expert 被选中的概率；</li><li>然后取 top-k 个 Expert 参与计算。</li></ul><p>专家数量是训练前先定好的，专家“负责什么”通常不是人工指定的，而是在训练过程中自己分化出来的。</p><p><strong>混合专家模型(MoE)</strong> 还有个参数 <code>moe_intermediate_size</code>，可以理解为每个 MoE Expert 内部 FFN/MLP 的中间层维度。
 如果模型用的是 SwiGLU 这类结构，单个 Expert 通常有三组矩阵：</p><ul><li>gate_proj: $d_{model}$ -> $d_{moe}$</li><li>up_proj: $d_{model}$ -> $d_{moe}$</li><li>down_proj: $d_{moe}$ -> $d_{model}$</li></ul><p>所以单个 Expert 参数量粗略是：$3 \times d_{model} \times d_{moe}$，也就是 $3 \times hidden\_size \times moe\_intermediate\_size$。</p><p>一般来说，在其它条件不变、训练数据和训练预算也足够的前提下，moe_intermediate_size 变大，单个 Expert 的表达能力会更好。
