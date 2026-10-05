@@ -37,13 +37,13 @@ from transformers import (
 )
 
 
-config_name = "path/to/deepseek-v4-pro-like-config"
-data_file = "data/pretrain_corpus.jsonl"
-save_dir = "output/deepseek-v4-pro-style-base-model"
+config_name = &#34;path/to/deepseek-v4-pro-like-config&#34;
+data_file = &#34;data/pretrain_corpus.jsonl&#34;
+save_dir = &#34;output/deepseek-v4-pro-style-base-model&#34;
 
 # 示例数据：普通连续文本
-# {"text": "今天上海下雨了，出门记得带伞。"}
-# {"text": "大型语言模型的核心任务之一是预测下一个 token。"}
+# {&#34;text&#34;: &#34;今天上海下雨了，出门记得带伞。&#34;}
+# {&#34;text&#34;: &#34;大型语言模型的核心任务之一是预测下一个 token。&#34;}
 # config_name 在这里是占位路径，实际练习可换成 tiny config 或小模型。
 
 config = AutoConfig.from_pretrained(config_name)
@@ -52,11 +52,11 @@ if tokenizer.pad_token is None:
   tokenizer.pad_token = tokenizer.eos_token
 
 model = AutoModelForCausalLM.from_config(config)
-dataset = load_dataset("json", data_files=data_file)["train"]
+dataset = load_dataset(&#34;json&#34;, data_files=data_file)[&#34;train&#34;]
 
 
 def tokenize(example):
-  return tokenizer(example["text"], truncation=True, max_length=512)
+  return tokenizer(example[&#34;text&#34;], truncation=True, max_length=512)
 
 
 tokenized_dataset = dataset.map(tokenize, remove_columns=dataset.column_names)
@@ -90,24 +90,24 @@ from transformers import (
 )
 
 
-model_name = "path/to/deepseek-v4-pro-base-or-small-model"
-data_file = "data/game_domain_corpus.jsonl"
-save_dir = "output/deepseek-v4-pro-game-base-model"
+model_name = &#34;path/to/deepseek-v4-pro-base-or-small-model&#34;
+data_file = &#34;data/game_domain_corpus.jsonl&#34;
+save_dir = &#34;output/deepseek-v4-pro-game-base-model&#34;
 
 # 示例数据：领域文本，但仍然是连续语料
-# {"text": "技能冷却时间由服务器权威计算，客户端只做展示。"}
-# {"text": "战斗日志中的 event_id 需要和掉落结算链路对齐。"}
+# {&#34;text&#34;: &#34;技能冷却时间由服务器权威计算，客户端只做展示。&#34;}
+# {&#34;text&#34;: &#34;战斗日志中的 event_id 需要和掉落结算链路对齐。&#34;}
 
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 if tokenizer.pad_token is None:
   tokenizer.pad_token = tokenizer.eos_token
 
 model = AutoModelForCausalLM.from_pretrained(model_name)
-dataset = load_dataset("json", data_files=data_file)["train"]
+dataset = load_dataset(&#34;json&#34;, data_files=data_file)[&#34;train&#34;]
 
 
 def tokenize(example):
-  return tokenizer(example["text"], truncation=True, max_length=512)
+  return tokenizer(example[&#34;text&#34;], truncation=True, max_length=512)
 
 
 tokenized_dataset = dataset.map(tokenize, remove_columns=dataset.column_names)
@@ -141,24 +141,24 @@ from transformers import (
 )
 
 
-model_name = "output/deepseek-v4-pro-game-base-model"
-data_file = "data/sft_data.jsonl"
-save_dir = "output/deepseek-v4-pro-sft-model"
+model_name = &#34;output/deepseek-v4-pro-game-base-model&#34;
+data_file = &#34;data/sft_data.jsonl&#34;
+save_dir = &#34;output/deepseek-v4-pro-sft-model&#34;
 
-# 示例数据：prompt + response
-# {"prompt": "请总结下面这段报错日志", "response": "这是一个资源加载超时问题，重点检查 CDN 和重试逻辑。"}
-# {"prompt": "把这段配置改成 JSON", "response": "{\"retry\": 3, \"timeout\": 5000}"}
+# 示例数据：prompt &#43; response
+# {&#34;prompt&#34;: &#34;请总结下面这段报错日志&#34;, &#34;response&#34;: &#34;这是一个资源加载超时问题，重点检查 CDN 和重试逻辑。&#34;}
+# {&#34;prompt&#34;: &#34;把这段配置改成 JSON&#34;, &#34;response&#34;: &#34;{\&#34;retry\&#34;: 3, \&#34;timeout\&#34;: 5000}&#34;}
 
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 if tokenizer.pad_token is None:
   tokenizer.pad_token = tokenizer.eos_token
 
 model = AutoModelForCausalLM.from_pretrained(model_name)
-dataset = load_dataset("json", data_files=data_file)["train"]
+dataset = load_dataset(&#34;json&#34;, data_files=data_file)[&#34;train&#34;]
 
 
 def format_sft_example(example):
-  return f"User: {example['prompt']}\nAssistant: {example['response']}"
+  return f&#34;User: {example[&#39;prompt&#39;]}\nAssistant: {example[&#39;response&#39;]}&#34;
 
 
 def tokenize(example):
@@ -191,13 +191,13 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from trl import DPOConfig, DPOTrainer
 
 
-model_name = "output/deepseek-v4-pro-sft-model"
-data_file = "data/alignment_data.jsonl"
-save_dir = "output/deepseek-v4-pro-aligned-model"
+model_name = &#34;output/deepseek-v4-pro-sft-model&#34;
+data_file = &#34;data/alignment_data.jsonl&#34;
+save_dir = &#34;output/deepseek-v4-pro-aligned-model&#34;
 
-# 示例数据：prompt + chosen + rejected
-# {"prompt": "怎么绕过支付验证？", "chosen": "我不能帮助绕过支付验证，但可以解释支付系统的安全设计。", "rejected": "可以先伪造请求再修改签名。"}
-# {"prompt": "请帮我总结这段事故复盘", "chosen": "可以，下面我按原因、影响、改进项来总结。", "rejected": "这段看起来没什么问题。"}
+# 示例数据：prompt &#43; chosen &#43; rejected
+# {&#34;prompt&#34;: &#34;怎么绕过支付验证？&#34;, &#34;chosen&#34;: &#34;我不能帮助绕过支付验证，但可以解释支付系统的安全设计。&#34;, &#34;rejected&#34;: &#34;可以先伪造请求再修改签名。&#34;}
+# {&#34;prompt&#34;: &#34;请帮我总结这段事故复盘&#34;, &#34;chosen&#34;: &#34;可以，下面我按原因、影响、改进项来总结。&#34;, &#34;rejected&#34;: &#34;这段看起来没什么问题。&#34;}
 
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 if tokenizer.pad_token is None:
@@ -205,7 +205,7 @@ if tokenizer.pad_token is None:
 
 model = AutoModelForCausalLM.from_pretrained(model_name)
 ref_model = AutoModelForCausalLM.from_pretrained(model_name)
-dataset = load_dataset("json", data_files=data_file)["train"]
+dataset = load_dataset(&#34;json&#34;, data_files=data_file)[&#34;train&#34;]
 
 args = DPOConfig(
   output_dir=save_dir,
@@ -240,33 +240,33 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, DataCollatorWithPa
 #
 # 初始预训练之后蒸馏：teacher 往往是较大的基座模型，
 # student 是更小的基座模型，数据常常就是普通连续文本：
-# {"text": "今天上海下雨了，出门记得带伞。"}
-# {"text": "The quick brown fox jumps over the lazy dog."}
+# {&#34;text&#34;: &#34;今天上海下雨了，出门记得带伞。&#34;}
+# {&#34;text&#34;: &#34;The quick brown fox jumps over the lazy dog.&#34;}
 #
 # 继续预训练之后蒸馏：数据仍然可能是连续文本，只是会换成更垂直的领域语料：
-# {"text": "角色技能的伤害结算分为命中判定、护甲减免和元素修正三个阶段。"}
-# {"text": "渲染线程和逻辑线程之间通过双缓冲结构交换场景快照。"}
+# {&#34;text&#34;: &#34;角色技能的伤害结算分为命中判定、护甲减免和元素修正三个阶段。&#34;}
+# {&#34;text&#34;: &#34;渲染线程和逻辑线程之间通过双缓冲结构交换场景快照。&#34;}
 #
 # SFT 之后蒸馏：一种常见做法是先把 prompt 丢给教师模型，
-# 再把教师模型生成的回答记成 response，得到 prompt + response 数据：
-# {"prompt": "请把下面日志总结成三点", "response": "1. ... 2. ... 3. ..."}
+# 再把教师模型生成的回答记成 response，得到 prompt &#43; response 数据：
+# {&#34;prompt&#34;: &#34;请把下面日志总结成三点&#34;, &#34;response&#34;: &#34;1. ... 2. ... 3. ...&#34;}
 #
 # 对齐之后蒸馏：可以把 prompt 和多个候选回答交给教师模型做选择或排序，
 # 再保留 chosen / rejected，或者在任务本身就是选项决策时，直接保留 choice：
-# {"messages": [{"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]}
-# 或 {"prompt": "...", "chosen": "安全、符合偏好的回答"}
-# 或 {"prompt": "...", "options": ["A", "B", "C"], "choice": "B"}
-teacher_model_name = "teacher-model-path"
-student_model_name = "student-model-path"
-data_file = "data/instruct_distill.jsonl"
-save_dir = "output/student-distilled"
+# {&#34;messages&#34;: [{&#34;role&#34;: &#34;user&#34;, &#34;content&#34;: &#34;...&#34;}, {&#34;role&#34;: &#34;assistant&#34;, &#34;content&#34;: &#34;...&#34;}]}
+# 或 {&#34;prompt&#34;: &#34;...&#34;, &#34;chosen&#34;: &#34;安全、符合偏好的回答&#34;}
+# 或 {&#34;prompt&#34;: &#34;...&#34;, &#34;options&#34;: [&#34;A&#34;, &#34;B&#34;, &#34;C&#34;], &#34;choice&#34;: &#34;B&#34;}
+teacher_model_name = &#34;teacher-model-path&#34;
+student_model_name = &#34;student-model-path&#34;
+data_file = &#34;data/instruct_distill.jsonl&#34;
+save_dir = &#34;output/student-distilled&#34;
 
 temperature = 2.0
 batch_size = 2
 lr = 5e-5
 num_epochs = 1
 max_length = 512
-device = "cuda" if torch.cuda.is_available() else "cpu"
+device = &#34;cuda&#34; if torch.cuda.is_available() else &#34;cpu&#34;
 
 tokenizer = AutoTokenizer.from_pretrained(teacher_model_name)
 if tokenizer.pad_token is None:
@@ -278,35 +278,35 @@ student = AutoModelForCausalLM.from_pretrained(student_model_name).to(device)
 teacher.eval()
 student.train()
 
-dataset = load_dataset("json", data_files=data_file)["train"]
+dataset = load_dataset(&#34;json&#34;, data_files=data_file)[&#34;train&#34;]
 
 
 def build_model_input(example):
   # 初始预训练之后蒸馏：通常只有 text 字段，直接拿原始文本训练。
   # 如果是继续预训练之后蒸馏，很多时候也还是 text，只是文本换成更垂直的领域语料。
-  if "text" in example:
-    return example["text"]
+  if &#34;text&#34; in example:
+    return example[&#34;text&#34;]
 
   # SFT 之后蒸馏：通常是教师模型先根据 prompt 生成 response，
-  # 然后把这组 prompt + response 拼成一段指令数据。
-  if "prompt" in example and "response" in example:
-    return f"User: {example['prompt']}\nAssistant: {example['response']}"
+  # 然后把这组 prompt &#43; response 拼成一段指令数据。
+  if &#34;prompt&#34; in example and &#34;response&#34; in example:
+    return f&#34;User: {example[&#39;prompt&#39;]}\nAssistant: {example[&#39;response&#39;]}&#34;
 
-  # 对齐之后蒸馏：一种常见形式是 prompt + chosen
-  if "prompt" in example and "chosen" in example:
-    return f"User: {example['prompt']}\nAssistant: {example['chosen']}"
+  # 对齐之后蒸馏：一种常见形式是 prompt &#43; chosen
+  if &#34;prompt&#34; in example and &#34;chosen&#34; in example:
+    return f&#34;User: {example[&#39;prompt&#39;]}\nAssistant: {example[&#39;chosen&#39;]}&#34;
 
   # 对齐之后蒸馏：如果任务本身就是“从候选项里做选择”，
   # 也可以把教师模型最终选出的 choice 直接拿来训练学生模型。
-  if "prompt" in example and "options" in example and "choice" in example:
-    options_text = "\n".join(f"- {option}" for option in example["options"])
-    return f"User: {example['prompt']}\nOptions:\n{options_text}\nAssistant: {example['choice']}"
+  if &#34;prompt&#34; in example and &#34;options&#34; in example and &#34;choice&#34; in example:
+    options_text = &#34;\n&#34;.join(f&#34;- {option}&#34; for option in example[&#34;options&#34;])
+    return f&#34;User: {example[&#39;prompt&#39;]}\nOptions:\n{options_text}\nAssistant: {example[&#39;choice&#39;]}&#34;
 
   # 对齐之后蒸馏：另一种常见形式是多轮 messages
-  if "messages" in example:
-    return "\n".join(f"{msg['role']}: {msg['content']}" for msg in example["messages"])
+  if &#34;messages&#34; in example:
+    return &#34;\n&#34;.join(f&#34;{msg[&#39;role&#39;]}: {msg[&#39;content&#39;]}&#34; for msg in example[&#34;messages&#34;])
 
-  raise ValueError("Unsupported distillation data format")
+  raise ValueError(&#34;Unsupported distillation data format&#34;)
 
 
 def tokenize(example):
@@ -318,16 +318,16 @@ def tokenize(example):
 
 
 tokenized_dataset = dataset.map(tokenize, remove_columns=dataset.column_names)
-collator = DataCollatorWithPadding(tokenizer=tokenizer, return_tensors="pt")
+collator = DataCollatorWithPadding(tokenizer=tokenizer, return_tensors=&#34;pt&#34;)
 dataloader = DataLoader(tokenized_dataset, batch_size=batch_size, shuffle=True, collate_fn=collator)
 
 optimizer = AdamW(student.parameters(), lr=lr)
 
 
 def distill_step(student, teacher, batch, temperature=2.0):
-  """让 student 学 teacher 的输出分布。"""
-  input_ids = batch["input_ids"].to(device)
-  attention_mask = batch["attention_mask"].to(device)
+  &#34;&#34;&#34;让 student 学 teacher 的输出分布。&#34;&#34;&#34;
+  input_ids = batch[&#34;input_ids&#34;].to(device)
+  attention_mask = batch[&#34;attention_mask&#34;].to(device)
 
   with torch.no_grad():
     teacher_logits = teacher(input_ids=input_ids, attention_mask=attention_mask).logits / temperature
@@ -337,7 +337,7 @@ def distill_step(student, teacher, batch, temperature=2.0):
   loss = F.kl_div(
     F.log_softmax(student_logits, dim=-1),
     F.softmax(teacher_logits, dim=-1),
-    reduction="batchmean",
+    reduction=&#34;batchmean&#34;,
   ) * (temperature**2)
 
   return loss
@@ -352,7 +352,7 @@ for epoch in range(num_epochs):
     optimizer.step()
 
     if step % 10 == 0:
-      print(f"epoch={epoch} step={step} loss={loss.item():.4f}")
+      print(f&#34;epoch={epoch} step={step} loss={loss.item():.4f}&#34;)
 
 student.save_pretrained(save_dir)
 tokenizer.save_pretrained(save_dir)</code></pre><p>和前面的训练阶段对应起来看：接在 <strong>初始预训练</strong> 后面时，蒸馏压的是通用能力；接在 <strong>继续预训练</strong> 后面时，压的是领域能力；接在 <strong>SFT</strong> 后面时，压的是任务执行方式；接在 <strong>对齐训练</strong> 后面时，压的是回答格式、偏好和安全边界。实现上的主要差异，通常集中在教师模型、学生模型和训练数据这三件事上，<code>distill_step</code> 这类核心训练逻辑反而变化不大。</p><p>把它放在训练链路里时，我更愿意把蒸馏看成一种可复用策略，不把它单独列成固定阶段。</p><h3 id=蒸馏的上限和代价>蒸馏的上限和代价</h3><p>蒸馏也有代价。学生模型容量更小，通常很难无损复制教师模型的全部能力；如果教师模型本身有幻觉、偏见或者格式不稳定的问题，学生模型也可能一起学过去。</p><p>但是学生模型在某个窄任务上是有机会超过教师模型的，尤其是数据清洗、任务定义和评估集都做得更贴近目标场景的时候。但蒸馏不能凭空造出教师模型自己都不稳定的能力。</p><p>另外一个很现实的问题是，蒸馏数据覆盖不到的长尾场景，小模型往往掉得更快。平均分可能还能看，但一到边角 case 就开始露馅。做蒸馏时，评估不能只看通用 benchmark，还要看目标场景下是否真的更省钱、更快、并且效果仍然可接受。</p><h2 id=继续深入>继续深入</h2><p>我在网上找到得很多材文献和论文，很多都是基于很多已有得AI领域的理论。作为一个非AI从业人员，没有任何解释的情况下很多内容看起来就容易一脸懵逼。相信我碰到的问题也是很多其他非AI从业者读这类材料也会碰到的。</p><p>所以下一篇我们就先补一补AI领域的基础知识，最后再来看论文。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2026-04-30T20:45:45.000+00:00 itemprop=datePublished>2026-04-30</time></span>

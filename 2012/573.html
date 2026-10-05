@@ -26,12 +26,12 @@
   * @return 生成的HTML
   */
 function json2String(json, tab, rules, path) {
-    var tabStr = "", singleTab = "&nbsp;&nbsp;&nbsp;&nbsp;", isClear = false;
-    var txt = "";
+    var tabStr = &#34;&#34;, singleTab = &#34;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&#34;, isClear = false;
+    var txt = &#34;&#34;;
     
     if (!rules) {
         rules = {
-            id: "__json2string_process" + (new Date).getTime().toString() + (json2String.baseIndex ++),
+            id: &#34;__json2string_process&#34; &#43; (new Date).getTime().toString() &#43; (json2String.baseIndex &#43;&#43;),
             objs: []
         };
         isClear = true;
@@ -39,36 +39,36 @@ function json2String(json, tab, rules, path) {
     
     tab = tab || 1;
     if (!path) {
-        path = "{ROOT}";
-        txt += "<a name='\""' + rules.id + "." + path + "\"> </a>";
+        path = &#34;{ROOT}&#34;;
+        txt &#43;= &#34;&lt;a name=\&#34;&#34; &#43; rules.id &#43; &#34;.&#34; &#43; path &#43; &#34;\&#34;&gt; &lt;/a&gt;&#34;;
     }
     
-    for (var i = 0; i < tab; i ++) {
-        tabStr += singleTab;
+    for (var i = 0; i &lt; tab; i &#43;&#43;) {
+        tabStr &#43;= singleTab;
     }
     
-    if (!json && json !== 0) {
-        txt += '<span style=color:Red>null</span>';
-    } else if (typeof(json) == "object") {
-        var prefix = '<span style=color:#a9a9a9;font-weight:bolder>{</span>', suffix = '<span style=color:#a9a9a9;font-weight:bolder>}</span>';
+    if (!json &amp;&amp; json !== 0) {
+        txt &#43;= &#39;&lt;span style=&#34;color: Red;&#34;&gt;null&lt;/span&gt;&#39;;
+    } else if (typeof(json) == &#34;object&#34;) {
+        var prefix = &#39;&lt;span style=&#34;color: DarkGray; font-weight: bolder;&#34;&gt;{&lt;/span&gt;&#39;, suffix = &#39;&lt;span style=&#34;color: DarkGray; font-weight: bolder;&#34;&gt;}&lt;/span&gt;&#39;;
         try {		
             if (toString.call(json).match(/array/i)) {
-                prefix = '<span style=color:Orange>[</span>';
-                suffix = '<span style=color:Orange>]</span>';
+                prefix = &#39;&lt;span style=&#34;color: Orange;&#34;&gt;[&lt;/span&gt;&#39;;
+                suffix = &#39;&lt;span style=&#34;color: Orange;&#34;&gt;]&lt;/span&gt;&#39;;
             }
         } catch(e) {
             // hoho ...
         }
         
         if (json[rules.id]) {
-            txt += prefix + "此处引用 <a style='\"text-decoration:' underline; color: blue;\" href='\"#"' + rules.id + "." + json[rules.id] + "\" target='\"_self\"' title='\"跳转到引用' " + json[rules.id] + "\">" + 
-                json[rules.id] + "</a>" + suffix;
+            txt &#43;= prefix &#43; &#34;此处引用 &lt;a style=\&#34;text-decoration: underline; color: Blue;\&#34; href=\&#34;#&#34; &#43; rules.id &#43; &#34;.&#34; &#43; json[rules.id] &#43; &#34;\&#34; target=\&#34;_self\&#34; title=\&#34;跳转到引用 &#34; &#43; json[rules.id] &#43; &#34;\&#34; &gt;&#34; &#43; 
+                json[rules.id] &#43; &#34;&lt;/a&gt;&#34; &#43; suffix;
             return txt;
         }
         json[rules.id] = path;
         rules.objs.push(json);
         
-        txt += prefix + "<br>\r\n";
+        txt &#43;= prefix &#43; &#34;&lt;br /&gt;\r\n&#34;;
         var first = true;
         for (var key in json) {
             if (key == rules.id)
@@ -77,23 +77,23 @@ function json2String(json, tab, rules, path) {
             if (first)
                 first = false;
             else
-                txt += ",<br>\r\n";
-            txt += tabStr + "<a name='\""' + rules.id + "." + path + "." + key + "\"> </a>" + "<strong>" + 
-                key + "</strong> : " +	json2String(json[key], tab + 1, rules, path + "." + key);
+                txt &#43;= &#34;,&lt;br /&gt;\r\n&#34;;
+            txt &#43;= tabStr &#43; &#34;&lt;a name=\&#34;&#34; &#43; rules.id &#43; &#34;.&#34; &#43; path &#43; &#34;.&#34; &#43; key &#43; &#34;\&#34;&gt; &lt;/a&gt;&#34; &#43; &#34;&lt;strong&gt;&#34; &#43; 
+                key &#43; &#34;&lt;/strong&gt; : &#34; &#43;	json2String(json[key], tab &#43; 1, rules, path &#43; &#34;.&#34; &#43; key);
         }
-        txt += "<br>\r\n" + tabStr.substr(0, tabStr.length - singleTab.length) + suffix;
-    } else if (typeof(json) == "string") {
-        txt += '<span style=color:Green>"' + json + '"</span>';
-    } else if (typeof(json) == "number") {
-        txt += '<span style=color:Blue>' + json + '</span>';
-    } else if (typeof(json) == "function") {
-        txt += '<span style=color:Purple>' + json + '</span>';
+        txt &#43;= &#34;&lt;br /&gt;\r\n&#34; &#43; tabStr.substr(0, tabStr.length - singleTab.length) &#43; suffix;
+    } else if (typeof(json) == &#34;string&#34;) {
+        txt &#43;= &#39;&lt;span style=&#34;color: Green;&#34;&gt;&#34;&#39; &#43; json &#43; &#39;&#34;&lt;/span&gt;&#39;;
+    } else if (typeof(json) == &#34;number&#34;) {
+        txt &#43;= &#39;&lt;span style=&#34;color: Blue;&#34;&gt;&#39; &#43; json &#43; &#39;&lt;/span&gt;&#39;;
+    } else if (typeof(json) == &#34;function&#34;) {
+        txt &#43;= &#39;&lt;span style=&#34;color: Purple;&#34;&gt;&#39; &#43; json &#43; &#39;&lt;/span&gt;&#39;;
     } else {
-        txt += json.toString();
+        txt &#43;= json.toString();
     }
     
     if (isClear) {
-        for (var i = 0; i < rules.objs.length; ++ i) {
+        for (var i = 0; i &lt; rules.objs.length; &#43;&#43; i) {
             delete rules.objs[i][rules.id];
         }
         rules.objs = [];
@@ -105,27 +105,27 @@ function json2String(json, tab, rules, path) {
 function showJson(json, title, windowName, dlg_opt) {
     json2String.baseIndex = json2String.baseIndex || 0;
     
-    title = title || "Json viewer";
-    windowName = windowName || "result" + (new Date()).toGMTString();
-    if (window.jQuery && jQuery.fn && jQuery.fn.dialog) {
-        $("<div></div>").append(json2String(json)).css({
-            "text-align": "left"
+    title = title || &#34;Json viewer&#34;;
+    windowName = windowName || &#34;result&#34; &#43; (new Date()).toGMTString();
+    if (window.jQuery &amp;&amp; jQuery.fn &amp;&amp; jQuery.fn.dialog) {
+        $(&#34;&lt;div&gt;&lt;/div&gt;&#34;).append(json2String(json)).css({
+            &#34;text-align&#34;: &#34;left&#34;
         }).dialog($.extend({
-            "modal": false,
-            "title": title,
-            "width": 640,
-            "height": 480,
-            "buttons": {
-                "关闭": function() {
-                    $( this ).dialog( "close" );
+            &#34;modal&#34;: false,
+            &#34;title&#34;: title,
+            &#34;width&#34;: 640,
+            &#34;height&#34;: 480,
+            &#34;buttons&#34;: {
+                &#34;关闭&#34;: function() {
+                    $( this ).dialog( &#34;close&#34; );
                 }
             }
         }, dlg_opt));
     } else {
-        var wnd = window.open("about:blank", "_blank", "height=600, width=800, toolbar=no, menubar=no, resizable=yes, location=no, status=no", true);
+        var wnd = window.open(&#34;about:blank&#34;, &#34;_blank&#34;, &#34;height=600, width=800, toolbar=no, menubar=no, resizable=yes, location=no, status=no&#34;, true);
         if (!wnd)
-            alert("窗口被拦截！");
-        wnd.document.write("<!doctype html><html><head><title>" + title + "</title></head><body>" + json2String(json) + "</body></html>");
+            alert(&#34;窗口被拦截！&#34;);
+        wnd.document.write(&#34;&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;title&gt;&#34; &#43; title &#43; &#34;&lt;/title&gt;&lt;/head&gt;&lt;body&gt;&#34; &#43; json2String(json) &#43; &#34;&lt;/body&gt;&lt;/html&gt;&#34;);
     }
     return wnd;
 }</code></pre><ol><li>更新对不同类型着色</li><li>如果载入了jQuery UI 则使用jQuery UI的Dialog打开，用于解决嵌套iframe时浏览器拦截问题</li><li>解决Object循环引用时栈溢出问题，同时增加引用的指向锚点</li></ol><p>Licensed under the MIT or GPL Version 3 licenses.</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/web.html>Web</a></li><li><a href=//owent.net/categories/work.html>Work</a></li></ol></span><span class=article-meta-right><time datetime=2012-04-01T06:17:48.000+00:00 itemprop=datePublished>2012-04-01</time></span>

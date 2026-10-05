@@ -46,60 +46,60 @@
     };
 };</code></pre><p>然后，就可以声明使用协程函数 <code>coroutine_task f();</code> 了。但是要让他转变为协程函数，还需要至少接入一样协程关键字才行。我们先从最基本的 <code>co_await</code> 开始。</p><h1 id=关键字---co_await>关键字 - co_await</h1><p>关键字 <code>co_await</code> 是一个操作符，所以我们只要实现这个操作符重载就可以实现协程等待任意类型。 当然，返回的类型要求实现 <code>bool await_ready(T&) noexcept</code> 、 <code>void await_suspend(T&, std::experimental::coroutine_handle&lt;T>) noexcept</code> 、 <code>void await_resume(T&) noexcept</code> 这三个接口。比如我们实现一个 <code>co_wait</code> 后结束的结构，可以按下面这种接入方式:</p><pre><code class=language-cpp>struct wait_some_times {
     int left_times;
-    std::experimental::coroutine_handle<> handle;
+    std::experimental::coroutine_handle&lt;&gt; handle;
     wait_some_times(int t) : left_times(t), handle(nullptr) {}
 };
 
 struct suspend_some_times {
-    wait_some_times& d;
-    suspend_some_times(wait_some_times& _d): d(_d) {}
+    wait_some_times&amp; d;
+    suspend_some_times(wait_some_times&amp; _d): d(_d) {}
     bool await_ready() noexcept {
-        std::cout << "call await_ready: " << d.left_times << std::endl;
-        return d.left_times <= 0;
+        std::cout &lt;&lt; &#34;call await_ready: &#34; &lt;&lt; d.left_times &lt;&lt; std::endl;
+        return d.left_times &lt;= 0;
     }
 
-    void await_suspend(std::experimental::coroutine_handle <> h) noexcept {
+    void await_suspend(std::experimental::coroutine_handle &lt;&gt; h) noexcept {
         // 记下来handle以便后面resume用
         d.handle = h;
 
-        std::cout << "call await_suspend: " << (--d.left_times) << std::endl;
+        std::cout &lt;&lt; &#34;call await_suspend: &#34; &lt;&lt; (--d.left_times) &lt;&lt; std::endl;
     }
 
     void await_resume() noexcept {
-        std::cout << "call await_resume: " << d.left_times << std::endl;
+        std::cout &lt;&lt; &#34;call await_resume: &#34; &lt;&lt; d.left_times &lt;&lt; std::endl;
         d.handle = nullptr;
     }
-};</code></pre><p>然后把整个连起来，完整的例子如下:</p><pre><code class=language-cpp>#include <iostream>
-#include <iomanip>
-#include <vector>
+};</code></pre><p>然后把整个连起来，完整的例子如下:</p><pre><code class=language-cpp>#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+#include &lt;vector&gt;
 
-#include <memory>
+#include &lt;memory&gt;
 
-#include <experimental/coroutine>
+#include &lt;experimental/coroutine&gt;
 
 struct wait_some_times {
     int left_times;
-    std::experimental::coroutine_handle<> handle;
+    std::experimental::coroutine_handle&lt;&gt; handle;
     wait_some_times(int t) : left_times(t), handle(nullptr) {}
 };
 
 struct suspend_some_times {
-    wait_some_times& d;
-    suspend_some_times(wait_some_times& _d) : d(_d) {}
+    wait_some_times&amp; d;
+    suspend_some_times(wait_some_times&amp; _d) : d(_d) {}
     bool await_ready() noexcept {
-        std::cout << "call await_ready: " << d.left_times << std::endl;
-        return d.left_times <= 0;
+        std::cout &lt;&lt; &#34;call await_ready: &#34; &lt;&lt; d.left_times &lt;&lt; std::endl;
+        return d.left_times &lt;= 0;
     }
 
-    void await_suspend(std::experimental::coroutine_handle <> h) noexcept {
+    void await_suspend(std::experimental::coroutine_handle &lt;&gt; h) noexcept {
         // 记下来handle以便后面resume用
         d.handle = h;
 
-        std::cout << "call await_suspend: " << (--d.left_times) << std::endl;
+        std::cout &lt;&lt; &#34;call await_suspend: &#34; &lt;&lt; (--d.left_times) &lt;&lt; std::endl;
     }
 
     void await_resume() noexcept {
-        std::cout << "call await_resume: " << d.left_times << std::endl;
+        std::cout &lt;&lt; &#34;call await_resume: &#34; &lt;&lt; d.left_times &lt;&lt; std::endl;
         d.handle = nullptr;
     }
 };
@@ -121,29 +121,29 @@ struct coroutine_task {
     };
 };
 
-auto operator co_await(wait_some_times& x) noexcept {
+auto operator co_await(wait_some_times&amp; x) noexcept {
     return suspend_some_times{ x };
 }
 
-coroutine_task f(wait_some_times& waiter) {
-    std::cout << "begin to co_await" << std::endl;
+coroutine_task f(wait_some_times&amp; waiter) {
+    std::cout &lt;&lt; &#34;begin to co_await&#34; &lt;&lt; std::endl;
     co_await waiter; // 只有前三次会协程切出
     co_await waiter;
     co_await waiter;
     co_await waiter; // 这之后await_ready返回true了，不会再切出
     co_await waiter;
-    std::cout << "end of corotine" << std::endl;
+    std::cout &lt;&lt; &#34;end of corotine&#34; &lt;&lt; std::endl;
 }
 
 int main(int argc, char* argv[]) {
 #ifdef __cpp_coroutines
-    std::cout << "__cpp_coroutines: " << __cpp_coroutines << std::endl;
+    std::cout &lt;&lt; &#34;__cpp_coroutines: &#34; &lt;&lt; __cpp_coroutines &lt;&lt; std::endl;
 #endif
     wait_some_times waiter{ 3 };
     f(waiter);
 
-    while (waiter.handle && !waiter.handle.done()) {
-        std::cout << "about to resume: " << waiter.left_times << std::endl;
+    while (waiter.handle &amp;&amp; !waiter.handle.done()) {
+        std::cout &lt;&lt; &#34;about to resume: &#34; &lt;&lt; waiter.left_times &lt;&lt; std::endl;
         // 这里用传出的handle来恢复切入协程
         waiter.handle.resume();
     }
@@ -167,17 +167,17 @@ call await_ready: 0
 call await_resume: 0
 call await_ready: 0
 call await_resume: 0
-end of corotine</code></pre><h1 id=关键字---co_yield>关键字 - co_yield</h1><p>关键字 <code>co_yield</code> 要求实现 <code>COROUTINE_OBJECT::promise_type::yield_value(参数)</code> 。比较贴近于单独一次异步调用的实现。</p><p>简单的描述 <code>co_yield VALUE</code> 就是相当于 <code>co_await p.yield_value(VALUE)</code> 。</p><pre><code class=language-cpp>#include <iostream>
-#include <iomanip>
-#include <vector>
+end of corotine</code></pre><h1 id=关键字---co_yield>关键字 - co_yield</h1><p>关键字 <code>co_yield</code> 要求实现 <code>COROUTINE_OBJECT::promise_type::yield_value(参数)</code> 。比较贴近于单独一次异步调用的实现。</p><p>简单的描述 <code>co_yield VALUE</code> 就是相当于 <code>co_await p.yield_value(VALUE)</code> 。</p><pre><code class=language-cpp>#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+#include &lt;vector&gt;
 
-#include <memory>
+#include &lt;memory&gt;
 
-#include <experimental/coroutine>
+#include &lt;experimental/coroutine&gt;
 
 struct test_rpc_generator {
-    test_rpc_generator(const test_rpc_generator&) = delete;
-    test_rpc_generator(test_rpc_generator&& other): coro(other.coro) {
+    test_rpc_generator(const test_rpc_generator&amp;) = delete;
+    test_rpc_generator(test_rpc_generator&amp;&amp; other): coro(other.coro) {
         other.coro = nullptr;
     };
     ~test_rpc_generator() {
@@ -187,7 +187,7 @@ struct test_rpc_generator {
     }
 
     struct promise_type;
-    using handle = std::experimental::coroutine_handle<promise_type>;
+    using handle = std::experimental::coroutine_handle&lt;promise_type&gt;;
 
     struct promise_type {
         int* current_value;
@@ -231,7 +231,7 @@ struct test_rpc_generator {
     }
 
     bool move_next(int rpc_result) {
-        if (coro && coro.promise().current_value) {
+        if (coro &amp;&amp; coro.promise().current_value) {
             *coro.promise().current_value = rpc_result;
         }
 
@@ -249,36 +249,36 @@ private:
 
 test_rpc_generator f() {
     int rpc_res1, rpc_res2;
-    co_yield &rpc_res1;
+    co_yield &amp;rpc_res1;
     // _alloca(rpc_res1);
-    std::cout<< "resumed got rpc_res1: "<< rpc_res1<< "(@"<< &rpc_res1<< ")" << std::endl;
+    std::cout&lt;&lt; &#34;resumed got rpc_res1: &#34;&lt;&lt; rpc_res1&lt;&lt; &#34;(@&#34;&lt;&lt; &amp;rpc_res1&lt;&lt; &#34;)&#34; &lt;&lt; std::endl;
 
-    co_yield &rpc_res2;
+    co_yield &amp;rpc_res2;
     // _alloca(rpc_res2);
-    std::cout<< "resumed got rpc_res1: "<< rpc_res1<< "(@"<< &rpc_res1<< ")" << ", rpc_res2: "<< rpc_res2 <<"(@"<< &rpc_res2<< ")"<< std::endl;
+    std::cout&lt;&lt; &#34;resumed got rpc_res1: &#34;&lt;&lt; rpc_res1&lt;&lt; &#34;(@&#34;&lt;&lt; &amp;rpc_res1&lt;&lt; &#34;)&#34; &lt;&lt; &#34;, rpc_res2: &#34;&lt;&lt; rpc_res2 &lt;&lt;&#34;(@&#34;&lt;&lt; &amp;rpc_res2&lt;&lt; &#34;)&#34;&lt;&lt; std::endl;
 }
 
 int main(int argc, char * argv[]) {
 #ifdef __cpp_coroutines
-    std::cout<< "__cpp_coroutines: "<< __cpp_coroutines<< std::endl;
+    std::cout&lt;&lt; &#34;__cpp_coroutines: &#34;&lt;&lt; __cpp_coroutines&lt;&lt; std::endl;
 #endif
 
     int rpc_fake_data = 1;
     auto g1 = f();
     auto g2 = f();
     void* detect_addr = malloc(4000);
-    std::cout << "detect_addr:" << detect_addr << std::endl;
+    std::cout &lt;&lt; &#34;detect_addr:&#34; &lt;&lt; detect_addr &lt;&lt; std::endl;
     free(detect_addr);
 
     for (bool is_continue = true; is_continue; is_continue = (!g1.await_ready() || !g2.await_ready())) {
         if (!g1.await_ready()) {
-            g1.move_next(++ rpc_fake_data);
-            std::cout << "g1 value:" << g1.value() << std::endl;
+            g1.move_next(&#43;&#43; rpc_fake_data);
+            std::cout &lt;&lt; &#34;g1 value:&#34; &lt;&lt; g1.value() &lt;&lt; std::endl;
         }
 
         if (!g2.await_ready()) {
-            g2.move_next(++ rpc_fake_data);
-            std::cout << "g2 value:" << g2.value() << std::endl;
+            g2.move_next(&#43;&#43; rpc_fake_data);
+            std::cout &lt;&lt; &#34;g2 value:&#34; &lt;&lt; g2.value() &lt;&lt; std::endl;
         }
     }
     return 0;
@@ -291,15 +291,15 @@ g2 value:00881B30
 resumed got rpc_res1: 2(@0087F96C), rpc_res2: 4(@0087F980)
 g1 value:0087F980
 resumed got rpc_res1: 3(@00881B1C), rpc_res2: 5(@00881B30)
-g2 value:00881B30</code></pre><h1 id=关键字---co_return>关键字 - co_return</h1><p>最后一个是 <code>co_return</code> 。 这个关键字主要是用于直接退出协程函数的, 因为协程函数的返回值是我们自己定义的这个 <code>COROUTINE_OBJECT</code> ， 所以函数逻辑附带的返回值就要用这个关键字来实现。 这个关键字要求实现 <code>COROUTINE_OBJECT::promise_type::return_value(参数)</code> 或者 <code>COROUTINE_OBJECT::promise_type::return_void()</code> 。如果协程函数中有 <code>co_return VALUE</code> 。则是最终调用了 <code>COROUTINE_OBJECT::promise_type::return_value(VALUE)</code> ， 否则是调用 <code>COROUTINE_OBJECT::promise_type::return_void()</code> 。</p><p>我们可以把协程函数的最终结果放在这里面来实现转储到某个地方。这部分的代码和 yield 的很像。就不另外贴了，下面贴一个全部整合到一起的吧。</p><h1 id=全功能整合到一起>全功能整合到一起</h1><p>我们来一个功能完整，并且贴近单线程工程并且时候异步IO的实践的例子。</p><pre><code class=language-cpp>#include <iostream>
-#include <iomanip>
-#include <vector>
+g2 value:00881B30</code></pre><h1 id=关键字---co_return>关键字 - co_return</h1><p>最后一个是 <code>co_return</code> 。 这个关键字主要是用于直接退出协程函数的, 因为协程函数的返回值是我们自己定义的这个 <code>COROUTINE_OBJECT</code> ， 所以函数逻辑附带的返回值就要用这个关键字来实现。 这个关键字要求实现 <code>COROUTINE_OBJECT::promise_type::return_value(参数)</code> 或者 <code>COROUTINE_OBJECT::promise_type::return_void()</code> 。如果协程函数中有 <code>co_return VALUE</code> 。则是最终调用了 <code>COROUTINE_OBJECT::promise_type::return_value(VALUE)</code> ， 否则是调用 <code>COROUTINE_OBJECT::promise_type::return_void()</code> 。</p><p>我们可以把协程函数的最终结果放在这里面来实现转储到某个地方。这部分的代码和 yield 的很像。就不另外贴了，下面贴一个全部整合到一起的吧。</p><h1 id=全功能整合到一起>全功能整合到一起</h1><p>我们来一个功能完整，并且贴近单线程工程并且时候异步IO的实践的例子。</p><pre><code class=language-cpp>#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+#include &lt;vector&gt;
 
-#include <memory>
+#include &lt;memory&gt;
 
-#include <experimental/coroutine>
+#include &lt;experimental/coroutine&gt;
 
-static std::vector<std::pair<int*, std::experimental::coroutine_handle<> > > g_test_rpc_manager;
+static std::vector&lt;std::pair&lt;int*, std::experimental::coroutine_handle&lt;&gt; &gt; &gt; g_test_rpc_manager;
 static int g_test_rpc_fake_data = 0;
 
 struct test_rpc_generator {
@@ -307,11 +307,11 @@ struct test_rpc_generator {
         int final_value;
         int yield_times;
 
-        std::vector<std::experimental::coroutine_handle<> > follower;
+        std::vector&lt;std::experimental::coroutine_handle&lt;&gt; &gt; follower;
     };
 
     struct promise_type;
-    using data_ptr = std::shared_ptr<test_rpc_data>;
+    using data_ptr = std::shared_ptr&lt;test_rpc_data&gt;;
 
     struct promise_type {
         data_ptr data;
@@ -320,10 +320,10 @@ struct test_rpc_generator {
         }
 
         auto get_return_object() {
-            data = std::make_shared<test_rpc_data>();
+            data = std::make_shared&lt;test_rpc_data&gt;();
             if (data) {
-                data->final_value = 0;
-                data->yield_times = 0;
+                data-&gt;final_value = 0;
+                data-&gt;yield_times = 0;
             }
             return test_rpc_generator{ data };
         }
@@ -344,10 +344,10 @@ struct test_rpc_generator {
         void return_value(int v) {
             // 最终co_return时保存最终数据
             if (data) {
-                data->final_value = v;
+                data-&gt;final_value = v;
 
-                auto followers = std::move(data->follower);
-                for (auto& h : followers) {
+                auto followers = std::move(data-&gt;follower);
+                for (auto&amp; h : followers) {
                     h.resume();
                 }
             }
@@ -356,12 +356,12 @@ struct test_rpc_generator {
         // 用以支持 co_yield
         auto yield_value(int* value) {
             // 每次调用都会执行,创建handle用以后面恢复数据
-            g_test_rpc_manager.emplace_back(std::make_pair(value, std::experimental::coroutine_handle<>::from_address(
-                std::experimental::coroutine_handle<promise_type>::from_promise(*this).address()
+            g_test_rpc_manager.emplace_back(std::make_pair(value, std::experimental::coroutine_handle&lt;&gt;::from_address(
+                std::experimental::coroutine_handle&lt;promise_type&gt;::from_promise(*this).address()
             )));
 
             if (data) {
-                ++data->yield_times;
+                &#43;&#43;data-&gt;yield_times;
             }
 
             return std::experimental::suspend_always{};
@@ -371,15 +371,15 @@ struct test_rpc_generator {
     // 下面的接入用侵入式的方式支持 co_await test_rpc_generator
     // MSVC 目前支持使用非侵入式的方式实现，但是clang不支持
     bool await_ready() noexcept {
-        return value() > 0;
+        return value() &gt; 0;
     }
 
     void await_resume() {
-        std::cout << std::setw(32) << __FUNCTION__ << std::setw(3) << ": " << __LINE__ << ": test_rpc_generator resume for " << yield_times() << " time(s)" << std::endl;
+        std::cout &lt;&lt; std::setw(32) &lt;&lt; __FUNCTION__ &lt;&lt; std::setw(3) &lt;&lt; &#34;: &#34; &lt;&lt; __LINE__ &lt;&lt; &#34;: test_rpc_generator resume for &#34; &lt;&lt; yield_times() &lt;&lt; &#34; time(s)&#34; &lt;&lt; std::endl;
     }
 
-    void await_suspend(std::experimental::coroutine_handle<> h) {
-        std::cout << std::setw(32) << __FUNCTION__ << std::setw(3) << ": " << __LINE__ << ": test_rpc_generator yield for " << yield_times() << " time(s), wait for " << h.address() << std::endl;
+    void await_suspend(std::experimental::coroutine_handle&lt;&gt; h) {
+        std::cout &lt;&lt; std::setw(32) &lt;&lt; __FUNCTION__ &lt;&lt; std::setw(3) &lt;&lt; &#34;: &#34; &lt;&lt; __LINE__ &lt;&lt; &#34;: test_rpc_generator yield for &#34; &lt;&lt; yield_times() &lt;&lt; &#34; time(s), wait for &#34; &lt;&lt; h.address() &lt;&lt; std::endl;
 
         // 记录要恢复父协程
         if (h) {
@@ -389,22 +389,22 @@ struct test_rpc_generator {
 
     int value() const {
         if (data) {
-            return data->final_value;
+            return data-&gt;final_value;
         }
         return 0;
     }
 
     int yield_times() const {
         if (data) {
-            return data->yield_times;
+            return data-&gt;yield_times;
         }
 
         return -1;
     }
 
-    void add_follower(std::experimental::coroutine_handle<> h) {
+    void add_follower(std::experimental::coroutine_handle&lt;&gt; h) {
         if (data) {
-            data->follower.emplace_back(std::move(h));
+            data-&gt;follower.emplace_back(std::move(h));
         }
     }
 private:
@@ -415,41 +415,41 @@ private:
 // 异步协程函数
 test_rpc_generator f() {
     int rpc_res1, rpc_res2;
-    co_yield &rpc_res1;
+    co_yield &amp;rpc_res1;
     // _alloca(rpc_res1);
-    std::cout << "resumed got rpc_res1: " << rpc_res1 << "(@" << &rpc_res1 << ")" << std::endl;
+    std::cout &lt;&lt; &#34;resumed got rpc_res1: &#34; &lt;&lt; rpc_res1 &lt;&lt; &#34;(@&#34; &lt;&lt; &amp;rpc_res1 &lt;&lt; &#34;)&#34; &lt;&lt; std::endl;
 
-    co_yield &rpc_res2;
+    co_yield &amp;rpc_res2;
     // _alloca(rpc_res2);
-    std::cout << "resumed got rpc_res1: " << rpc_res1 << "(@" << &rpc_res1 << ")" << ", rpc_res2: " << rpc_res2 << "(@" << &rpc_res2 << ")" << std::endl;
+    std::cout &lt;&lt; &#34;resumed got rpc_res1: &#34; &lt;&lt; rpc_res1 &lt;&lt; &#34;(@&#34; &lt;&lt; &amp;rpc_res1 &lt;&lt; &#34;)&#34; &lt;&lt; &#34;, rpc_res2: &#34; &lt;&lt; rpc_res2 &lt;&lt; &#34;(@&#34; &lt;&lt; &amp;rpc_res2 &lt;&lt; &#34;)&#34; &lt;&lt; std::endl;
 
     // 模拟多次RPC然后返回最终结果
-    co_return rpc_res1 * 100 + rpc_res2;
+    co_return rpc_res1 * 100 &#43; rpc_res2;
 }
 
 // 这里模拟生成数据
 void test_rpc_manager_run() {
-    std::vector<std::pair<int*, std::experimental::coroutine_handle<> > > rpc_manager;
+    std::vector&lt;std::pair&lt;int*, std::experimental::coroutine_handle&lt;&gt; &gt; &gt; rpc_manager;
     g_test_rpc_manager.swap(rpc_manager);
 
-    for (auto& generator : rpc_manager) {
+    for (auto&amp; generator : rpc_manager) {
         if (generator.first) {
-            *generator.first = ++g_test_rpc_fake_data;
+            *generator.first = &#43;&#43;g_test_rpc_fake_data;
         }
 
-        if (generator.second && !generator.second.done()) {
+        if (generator.second &amp;&amp; !generator.second.done()) {
             generator.second.resume();
         }
     }
 }
 
 struct test_task {
-    using ptr_t = std::shared_ptr<test_task>;
+    using ptr_t = std::shared_ptr&lt;test_task&gt;;
 
     test_task(int ms) : status(0), max_status(ms) {}
 
     bool is_ready() const noexcept {
-        return status >= max_status;
+        return status &gt;= max_status;
     }
 
     int status;
@@ -458,8 +458,8 @@ struct test_task {
 
 struct test_task_future {
     struct promise_type;
-    using ptr_t = std::shared_ptr<test_task>;
-    using handle = std::experimental::coroutine_handle<promise_type>;
+    using ptr_t = std::shared_ptr&lt;test_task&gt;;
+    using handle = std::experimental::coroutine_handle&lt;promise_type&gt;;
 
     struct promise_type {
         static auto get_return_object_on_allocation_failure() {
@@ -483,7 +483,7 @@ struct test_task_future {
         }
 
         void return_void() {
-            for (auto& h : follower) {
+            for (auto&amp; h : follower) {
                 h.resume();
             }
         }
@@ -495,12 +495,12 @@ struct test_task_future {
         }
 
         ptr_t task;
-        std::vector<handle> follower;
+        std::vector&lt;handle&gt; follower;
     };
 
     // 下面的接入用侵入式的方式支持 co_await test_task::ptr_t
     struct awaitable {
-        awaitable(const test_task_future& pt) {
+        awaitable(const test_task_future&amp; pt) {
             if (pt.coro) {
                 data = pt.coro.promise().task;
                 coro = pt.coro;
@@ -508,9 +508,9 @@ struct test_task_future {
         };
 
         bool await_ready() const {
-            bool ret = !data || data->is_ready();
+            bool ret = !data || data-&gt;is_ready();
             if (ret) {
-                std::cout << std::setw(32) << __FUNCTION__ << std::setw(3) << ": " << __LINE__ << ": task " << data.get() << " ready" << std::endl;
+                std::cout &lt;&lt; std::setw(32) &lt;&lt; __FUNCTION__ &lt;&lt; std::setw(3) &lt;&lt; &#34;: &#34; &lt;&lt; __LINE__ &lt;&lt; &#34;: task &#34; &lt;&lt; data.get() &lt;&lt; &#34; ready&#34; &lt;&lt; std::endl;
             }
 
             return ret;
@@ -518,19 +518,19 @@ struct test_task_future {
 
         void await_resume() {
             if (data) {
-                ++data->status;
-                std::cout << std::setw(32) << __FUNCTION__ << std::setw(3) << ": " << __LINE__ << ": task " << data.get() << " resume to " << (data ? data->status : -1) << std::endl;
+                &#43;&#43;data-&gt;status;
+                std::cout &lt;&lt; std::setw(32) &lt;&lt; __FUNCTION__ &lt;&lt; std::setw(3) &lt;&lt; &#34;: &#34; &lt;&lt; __LINE__ &lt;&lt; &#34;: task &#34; &lt;&lt; data.get() &lt;&lt; &#34; resume to &#34; &lt;&lt; (data ? data-&gt;status : -1) &lt;&lt; std::endl;
             }
         }
 
         void await_suspend(handle h) {
             if (data) {
-                std::cout << std::setw(32) << __FUNCTION__ << std::setw(3) << ": " << __LINE__ << ": task " << data.get() << " suspend test_task_future::handle from " << (data ? data->status : -1) <<
-                    ", wait for " << h.address() << std::endl;
+                std::cout &lt;&lt; std::setw(32) &lt;&lt; __FUNCTION__ &lt;&lt; std::setw(3) &lt;&lt; &#34;: &#34; &lt;&lt; __LINE__ &lt;&lt; &#34;: task &#34; &lt;&lt; data.get() &lt;&lt; &#34; suspend test_task_future::handle from &#34; &lt;&lt; (data ? data-&gt;status : -1) &lt;&lt;
+                    &#34;, wait for &#34; &lt;&lt; h.address() &lt;&lt; std::endl;
 
             }
 
-            if (coro && h) {
+            if (coro &amp;&amp; h) {
                 coro.promise().follower.emplace_back(h);
             }
         }
@@ -549,7 +549,7 @@ private:
 };
 
 // 接入 co_await test_task::ptr_t
-auto operator co_await(const test_task_future & pt) noexcept {
+auto operator co_await(const test_task_future &amp; pt) noexcept {
     return test_task_future::awaitable{ pt };
 }
 
@@ -558,10 +558,10 @@ test_task_future h(test_task::ptr_t task) {
     co_yield task;
 
     // 模拟任务内部流程并调用外部RPC
-    std::cout << std::setw(32) << __FUNCTION__ << std::setw(3) << ": " << __LINE__ << ": task " << task.get() << std::endl;
+    std::cout &lt;&lt; std::setw(32) &lt;&lt; __FUNCTION__ &lt;&lt; std::setw(3) &lt;&lt; &#34;: &#34; &lt;&lt; __LINE__ &lt;&lt; &#34;: task &#34; &lt;&lt; task.get() &lt;&lt; std::endl;
     test_rpc_generator rpc_res = f();
     co_await rpc_res;
-    std::cout << std::setw(32) << __FUNCTION__ << std::setw(3) << ": " << __LINE__ << ": task " << task.get() << " call f() ret: " << rpc_res.value() << std::endl;
+    std::cout &lt;&lt; std::setw(32) &lt;&lt; __FUNCTION__ &lt;&lt; std::setw(3) &lt;&lt; &#34;: &#34; &lt;&lt; __LINE__ &lt;&lt; &#34;: task &#34; &lt;&lt; task.get() &lt;&lt; &#34; call f() ret: &#34; &lt;&lt; rpc_res.value() &lt;&lt; std::endl;
 }
 
 test_task_future g(test_task::ptr_t task) {
@@ -569,19 +569,19 @@ test_task_future g(test_task::ptr_t task) {
     co_yield task;
 
     // 等待子任务完成
-    while (task && !task->is_ready()) {
-        std::cout << std::setw(32) << __FUNCTION__ << std::setw(3) << ": " << __LINE__ << ": task " << task.get() << std::endl;
+    while (task &amp;&amp; !task-&gt;is_ready()) {
+        std::cout &lt;&lt; std::setw(32) &lt;&lt; __FUNCTION__ &lt;&lt; std::setw(3) &lt;&lt; &#34;: &#34; &lt;&lt; __LINE__ &lt;&lt; &#34;: task &#34; &lt;&lt; task.get() &lt;&lt; std::endl;
         co_await h(task);
     }
 }
 
 int main(int argc, char* argv[]) {
 #ifdef __cpp_coroutines
-    std::cout << "__cpp_coroutines: " << __cpp_coroutines << std::endl;
+    std::cout &lt;&lt; &#34;__cpp_coroutines: &#34; &lt;&lt; __cpp_coroutines &lt;&lt; std::endl;
 #endif
 
     // 创建一个任务
-    test_task::ptr_t task = std::make_shared<test_task>(3);
+    test_task::ptr_t task = std::make_shared&lt;test_task&gt;(3);
     // 运行任务
     auto fut = g(task);
     // 模拟从外部获取数据然会恢复协程
@@ -619,12 +619,12 @@ resumed got rpc_res1: 5(@0x1d3d150), rpc_res2: 6(@0x1d3d154)
                                h : 271: task 0x1d3c028 call f() ret: 506
                     await_resume : 229: task 0x1d3c028 resume to 3</code></pre><h1 id=promisefuture-支持>promise/future 支持</h1><p>我本地测试的Clang版本（7.0.1）尚未实现支持。
 MSVC的标准库用偏特化的方式对 std::promise 和 std::future 实现了协程的接入。它的接入代码如下（为了简短，精简掉了一个偏特化实现，流程和不特化的类似）:</p><pre><code class=language-cpp>namespace experimental {
-    template <class _ty, class... _argtypes>
-    struct coroutine_traits<future<_ty>, _ArgTypes...> { // defines resumable traits for functions returning future<_Ty>
+    template &lt;class _Ty, class... _ArgTypes&gt;
+    struct coroutine_traits&lt;future&lt;_Ty&gt;, _ArgTypes...&gt; { // defines resumable traits for functions returning future&lt;_Ty&gt;
         struct promise_type {
-            promise<_Ty> _MyPromise;
+            promise&lt;_Ty&gt; _MyPromise;
 
-            future<_Ty> get_return_object() {
+            future&lt;_Ty&gt; get_return_object() {
                 return _MyPromise.get_future();
             }
 
@@ -636,9 +636,9 @@ MSVC的标准库用偏特化的方式对 std::promise 和 std::future 实现了�
                 return false;
             }
 
-            template <class _ut>
-            void return_value(_Ut&& _Value) {
-                _MyPromise.set_value(_STD forward<_Ut>(_Value));
+            template &lt;class _Ut&gt;
+            void return_value(_Ut&amp;&amp; _Value) {
+                _MyPromise.set_value(_STD forward&lt;_Ut&gt;(_Value));
             }
 
             void set_exception(exception_ptr _Exc) {
@@ -648,39 +648,39 @@ MSVC的标准库用偏特化的方式对 std::promise 和 std::future 实现了�
     };
 } // namespace experimental
 
-template <class _ty>
-bool await_ready(future<_Ty>& _Fut) {
+template &lt;class _Ty&gt;
+bool await_ready(future&lt;_Ty&gt;&amp; _Fut) {
     return _Fut._Is_ready();
 }
 
-template <class _ty>
-void await_suspend(future<_Ty>& _Fut,
-    experimental::coroutine_handle<> _ResumeCb) { // change to .then when future gets .then
-    thread _WaitingThread([&_Fut, _ResumeCb] {
+template &lt;class _Ty&gt;
+void await_suspend(future&lt;_Ty&gt;&amp; _Fut,
+    experimental::coroutine_handle&lt;&gt; _ResumeCb) { // change to .then when future gets .then
+    thread _WaitingThread([&amp;_Fut, _ResumeCb] {
         _Fut.wait();
         _ResumeCb();
     });
     _WaitingThread.detach();
 }
 
-template <class _ty>
-auto await_resume(future<_Ty>& _Fut) {
+template &lt;class _Ty&gt;
+auto await_resume(future&lt;_Ty&gt;&amp; _Fut) {
     return _Fut.get();
-}</code></pre><p>可以看到，它的 <code>co_await std::future&lt;T></code> 挂起是开了个新线程来等待，真他喵暴力，建议不要用。但是还是可以比较容易地让自己的管理器接入 <code>co_await</code> 。</p><p>我们借助STL的协程接入， 可以实现一个最小化的自定义协程支持：</p><pre><code class=language-cpp>#include <iostream>
-#include <future>
-#include <thread>
-#include <chrono>
+}</code></pre><p>可以看到，它的 <code>co_await std::future&lt;T></code> 挂起是开了个新线程来等待，真他喵暴力，建议不要用。但是还是可以比较容易地让自己的管理器接入 <code>co_await</code> 。</p><p>我们借助STL的协程接入， 可以实现一个最小化的自定义协程支持：</p><pre><code class=language-cpp>#include &lt;iostream&gt;
+#include &lt;future&gt;
+#include &lt;thread&gt;
+#include &lt;chrono&gt;
 
-#include <experimental/coroutine>
+#include &lt;experimental/coroutine&gt;
 
 struct custom_rpc_generator {};
 
 struct suspend_custom_rpc : public std::experimental::suspend_always {
-    void await_suspend(std::experimental::coroutine_handle<> h) noexcept {
+    void await_suspend(std::experimental::coroutine_handle&lt;&gt; h) noexcept {
         std::thread thd{ [h]() {
             using namespace std;
             std::this_thread::sleep_for(2s);
-            std::cout << "start to resume coroutine" << std::endl;
+            std::cout &lt;&lt; &#34;start to resume coroutine&#34; &lt;&lt; std::endl;
             h.resume();
         } };
 
@@ -688,19 +688,19 @@ struct suspend_custom_rpc : public std::experimental::suspend_always {
     }
 };
 
-auto operator co_await(const custom_rpc_generator&) {
+auto operator co_await(const custom_rpc_generator&amp;) {
     return suspend_custom_rpc{};
 }
 
-std::future<void> outter_fn() {
+std::future&lt;void&gt; outter_fn() {
     co_await custom_rpc_generator{};
 }
 
 int main() {
     auto fut = outter_fn();
-    std::cout << "start to wait future" << std::endl;
+    std::cout &lt;&lt; &#34;start to wait future&#34; &lt;&lt; std::endl;
     fut.wait();
-    std::cout << "future finished, ready to exit" << std::endl;
+    std::cout &lt;&lt; &#34;future finished, ready to exit&#34; &lt;&lt; std::endl;
     return 0;
 }</code></pre><h1 id=总结>总结</h1><p>总体感觉上，C++20协程为了兼顾灵活和支持非侵入式接入，设计了好几个互相交织的大模块，函数级有处理协程函数内部的 <code>promise_type</code> 、 协程函数对外暴露的交互对象 （我们这里统称为 <code>future</code>） 、 用于协程上下文切换的 <code>handle</code> ，单次切换有用于支持await功能的 <code>awaitable</code> 和一些回调函数接口。几个对象之间的数据共享也并不是很方便。而且和传统有栈协程的区别仅仅是约束了返回值类型，并且可以依次在编译期推断出需要多少栈空间，从而减少浪费。</p><p>我打算后面有时间尝试对 <a href=https://github.com/owent/libcopp>libcopp</a> 接入C++协程支持，在研究C++协程的时候也想到几个问题。在和 <a href=https://github.com/ultramanhu>ultramanhu</a> 讨论了一下以后主要的问题也有了一些初步的解决方案的想法，但是目前细节上还是有一些没太想清楚的地方。</p><p>首先是如果业务有自己的线程池，其实还是要由管理层来控制resume，不能直接像STL那样开线程，那基本上就和 <code>std::future&lt;T></code> say Good-Bye 了。虽然在小心维护的情况下，避免 <code>co_await std::future&lt;T></code> 也是可以避免STL乱开线程的，但是我觉得一旦使用了，后面就很难控制住。特别是这个C++协程的对象关系互耦合插如此严重的情况下，本身就不容易理解。</p><p>第二个问题是调用链。C++协程接口设计是非对称的，我们实际业务中，肯定还是需要对称协程的支持，即子协程结束后能够自动恢复 <code>co_await</code> 它的父协程。这个需要我们自己去实现，上面 <code>std::future&lt;T></code> 也就是这里是开了个线程去实现的（都开线程了还用协程干啥）。在上面的sample代码中，我是开了一个共享数据区，在 <strong>await_suspend</strong> 的时候去追加等待链，在 <code>return_void/return_value</code> 的时候去执行父级协程的恢复切入，这里面写成vector是为了支持N个协程await一个协程的情况，实际上用链表会更好一些。这里有个比较“脏”的设计是handle的加入是在 <code>awaitable</code> 执行挂起的时候，而恢复是在 <code>promise_type</code> 的 <code>return_void/return_value</code> 事件里。这就分了两个地方。这里的 <code>awaitable</code> 对 <code>promise_type</code> 和N个协程等一个协程是保持一致的N:1关系。但是 <code>awaitable</code> 仅仅能访问 <code>future</code> ， 要让 <code>promise_type</code> 也能访问 <code>future</code> 的话，一种方法是开一个共享数据块，在 <code>promise_type</code> 创建 <code>future</code> 的时候传进去这样了。这也是上面sample代码里 <code>using data_ptr = std::shared_ptr&lt;test_rpc_data>;</code> 的实现。 MSVC的STL的实现也是这样 <code>promise::get_future()</code> 是使用了promise内部的数据创建的future对象。 另外一种尝试的方法是后面task的，进入协程后先 <code>co_yield</code> 一次，然后 <code>yield_value(VALUE)</code> 函数返回 <code>std::experimental::suspend_never</code>。这样不会造成协程挂起，并且可以给 <code>promise_type</code> 注入任意数据。不过这样就有个约定式的规范了，也不是很严谨。这方面等后面支持了 <code>promise_type</code> 的带参数构造函数可能可以好一些。</p><p>第三个问题是handle提前结束的问题。在看了MSVC的实现，这个handle是可以copy也可以转换的。copy开销也很小，里面只包含一个和 <code>promise_type</code> 地址有关的指针（就是 <code>promise_type</code> 的地址然后加了 align和padding）。比如一个RPC任务，我可能copy一个handle用来在有数据的时候resume，然后我还会copy一个handle在超时的时候强行resume然后走失败流程。现在这种情况，就是需要在 <code>awaitable</code> 的 <strong>await_suspend</strong> 里添加这两个handle到两个manager里，然后在 <strong>await_resume</strong> 里要把这两个都移除。不管哪个流程，肯定有一个handle是处于resume回调中的，这还涉及递归调用的问题（删除正在resume过程中的handle）。 我目前的想法是，封装一个handle resumer，让多个事件manager都指向同一个 handle resumer的weak_ptr。这个resumer的生命周期可以和 <code>awaitable</code> 共存，一旦 <code>awaitable</code> 消失，这次的await也就结束了。</p><p><a href=https://github.com/owent/libcopp>libcopp</a> 所有组件都是可拆卸和自定义的，所以剩下还有些细节就是接入哪些东西的哪些接口，如果拆卸掉某些组件之后怎么保证这些接入仍然可用和是否要支持 <a href=https://github.com/owent/libcopp>libcopp</a> 内yield或是await其他C++协程对象。这些在后面结合一些实际应用再取舍吧。</p><p>最后，贴一个更详细一点的C++20 Coroutine生成的汇编（ <a href=https://gist.github.com/owent/aa7b093caddcea5a79f32d0ebf4efa88>https://gist.github.com/owent/aa7b093caddcea5a79f32d0ebf4efa88</a> ）。如果上面有哪些理解不对的地方或者建议，欢迎有兴趣的小伙伴们一起来交流探讨哈。</p></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span class=article-meta-right><time datetime=2019-03-04T20:38:00.000+00:00 itemprop=datePublished>2019-03-04</time></span>
 <span class=clearfix></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/cxx.html>cxx</a></li><li class=article-tag-list-item><a href=//owent.net/tags/cpp.html>cpp</a></li><li class=article-tag-list-item><a href=//owent.net/tags/coroutine.html>coroutine</a></li><li class=article-tag-list-item><a href=//owent.net/tags/std.html>std</a></li><li class=article-tag-list-item><a href=//owent.net/tags/iso.html>iso</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E5%8D%8F%E7%A8%8B.html>协程</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E6%97%A0%E6%A0%88%E5%8D%8F%E7%A8%8B.html>无栈协程</a></li><li class=article-tag-list-item><a href=//owent.net/tags/msvc.html>msvc</a></li><li class=article-tag-list-item><a href=//owent.net/tags/clang.html>clang</a></li><li class=article-tag-list-item><a href=//owent.net/tags/llvm.html>llvm</a></li><li class=article-tag-list-item><a href=//owent.net/tags/libcxx.html>libcxx</a></li><li class=article-tag-list-item><a href=//owent.net/tags/libc++.html>libc++</a></li><li class=article-tag-list-item><a href=//owent.net/tags/libcxxabi.html>libcxxabi</a></li><li class=article-tag-list-item><a href=//owent.net/tags/libc++abi.html>libc++abi</a></li></ul></div></footer></div><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-newer class=article-nav-link-wrap href=//owent.net/2019/1905.html>上一篇<strong>Anna（支持任意扩展和超高性能的KV数据库系统）阅读笔记</strong></a></li><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2019/1903.html>下一篇<strong>libcopp merge boost.context 1.69.0</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;owent

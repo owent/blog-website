@@ -8,40 +8,41 @@
 我们曾经发现过一个IO问题，交易行服务在停服时需要保存大量的订单数据，会导致集中保存。大量的IO导致触发了公共集群数据库的限频。
 然后后台失败重试，最终导致雪崩。</p><p><img src=/2025/2504-07.png alt=2504-07.png loading=lazy></p><p>我们通过一个动态消峰的机制解决了这个问题，并且之后加入了IO监控来监视这类情况的风险。</p><p>在业务层面，我们也有很多的应用。比如交易行模块有一个视图索引设计，用于多维护多标签的搜索和推荐。但是要平衡搜索和推荐的视图数量和LRU参数是否合理，于是有了视图和基础索引的开销分析。</p><p><img src=/2025/2504-08.png alt=2504-08.png loading=lazy></p><p>我们同样为策划提供交易行订单分析能力，用于监控实时市场价格和订单分布变化，以便做宏观调控。</p><p><img src=/2025/2504-09.png alt=2504-09.png loading=lazy></p><p>并且在Steam新品节期间，比安全组件更快发现工作室倒金行为。</p><p><img src=/2025/2504-10.png alt=2504-10.png loading=lazy></p><p>通过结合指标拉取聚合能力，我们实现了允许业务开发在业务层实现动态策略能力，比如根据交易行不同商品的订单数动态调整一口价的撮合节点数，并且评估撮合策略的合理性。</p><p><img src=/2025/2504-11.png alt=2504-11.png loading=lazy></p><p>还有按地图和玩法分类，根据玩家数决定排队长度等等。</p><h3 id=日志>日志</h3><p>日志方面，<a href=https://opentelemetry.io>OpenTelemetry</a> 的主要目标是统一接口和模型。我们典型的使用案例是利用事件日志告警（当然也有根据指标告警）。</p><p><img src=/2025/2504-12.png alt=2504-12.png loading=lazy></p><p>另外日志还可以和链路跟踪自动关联，这样我们调试问题的时候可以直接一键拉到问题链路相关的日志，就不用人工查找分析了。</p><h2 id=基本概念和框架>基本概念和框架</h2><p>案例举例就到这里，接下来我们先来看一下可观测性 （<a href=https://opentelemetry.io>OpenTelemetry</a>） 的基本概念和框架结构。</p><h3 id=基础组件>基础组件</h3><p>早期 <a href=https://opentelemetry.io>OpenTelemetry</a> 的基础结构如下所示。</p><p><img src=/2025/2504-15.png alt=2504-15.png loading=lazy></p><p>其核心资源分为三个部分： <strong>链路跟踪</strong> 、 <strong>指标</strong> 和 <strong>日志</strong> 。</p><p><img src=/2025/2504-16.png alt=2504-16.png loading=lazy></p><h3 id=快速上手>快速上手</h3><p>如果只是作为使用者，产生和上报数据。最简单的接入使用非常简单。</p><pre><code class=language-cpp>// ======================== 链路跟踪 ========================
 auto provider = trace::Provider::GetTracerProvider();
-auto tracer = provider->GetTracer("foo_library");
+auto tracer = provider-&gt;GetTracer(&#34;foo_library&#34;);
 void f1() {
-  auto scoped_span = trace::Scope(get_tracer()->StartSpan("f1"));
+  auto scoped_span = trace::Scope(get_tracer()-&gt;StartSpan(&#34;f1&#34;));
 }
 void f2() {
-  auto scoped_span = trace::Scope(get_tracer()->StartSpan("f2"));
+  auto scoped_span = trace::Scope(get_tracer()-&gt;StartSpan(&#34;f2&#34;));
   f1();
   f1();
 }
-// f2 -> f1+f1
+// f2 -&gt; f1&#43;f1
 
 // ======================== 指标 ========================
 auto provider = metrics_api::Provider::GetMeterProvider();
-auto meter = provider->GetMeter(name, "1.2.0");
+auto meter = provider-&gt;GetMeter(name, &#34;1.2.0&#34;);
 // 同步指令
-auto double_counter = meter->CreateDoubleCounter("sync_counter");
-for (uint32_t i = 0; i < 20; ++i) {
-  double val = (rand() % 700) + 1.1;
-  double_counter->Add(val);
+auto double_counter = meter-&gt;CreateDoubleCounter(&#34;sync_counter&#34;);
+for (uint32_t i = 0; i &lt; 20; &#43;&#43;i) {
+  double val = (rand() % 700) &#43; 1.1;
+  double_counter-&gt;Add(val);
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
 }
 // 异步(回调)指令
-auto observable_counter = meter->CreateDoubleObservableCounter("async_counter");
-observable_counter->AddCallback([](opentelemetry::metrics::ObserverResult observer_result, void * /* state */) {
-    if (opentelemetry::nostd::holds_alternative<opentelemetry::nostd::shared_ptr<             opentelemetry::metrics::observerresultt<double>>>(observer_result)) {
-      opentelemetry::nostd::get<
-          opentelemetry::nostd::shared_ptr<opentelemetry::metrics::observerresultt<double>>>(observer_result)->Observe((rand() % 700) + 1.1);
+auto observable_counter = meter-&gt;CreateDoubleObservableCounter(&#34;async_counter&#34;);
+observable_counter-&gt;AddCallback([](opentelemetry::metrics::ObserverResult observer_result, void * /* state */) {
+    if (opentelemetry::nostd::holds_alternative&lt;opentelemetry::nostd::shared_ptr&lt;
+            opentelemetry::metrics::ObserverResultT&lt;double&gt;&gt;&gt;(observer_result)) {
+      opentelemetry::nostd::get&lt;
+          opentelemetry::nostd::shared_ptr&lt;opentelemetry::metrics::ObserverResultT&lt;double&gt;&gt;&gt;(observer_result)-&gt;Observe((rand() % 700) &#43; 1.1);
     }
 }, nullptr);
 
 // ======================== 日志 ========================
 auto provider = logs::Provider::GetLoggerProvider();
-auto logger = provider->GetLogger("foo_library_logger", "foo_library");
-logger->Debug("body", ctx.trace_id(), ctx.span_id(), ctx.trace_flags());</code></pre><h3 id=sdk设计结构>SDK设计结构</h3><p><a href=https://opentelemetry.io>OpenTelemetry</a> 整体的设计汲取了之前的链路跟踪（比如gtrace）和指标（比如 <a href=https://prometheus.io/>prometheus</a>，<a href=https://opencensus.io/>opencensus</a>）的诸多应用场景和经验。
+auto logger = provider-&gt;GetLogger(&#34;foo_library_logger&#34;, &#34;foo_library&#34;);
+logger-&gt;Debug(&#34;body&#34;, ctx.trace_id(), ctx.span_id(), ctx.trace_flags());</code></pre><h3 id=sdk设计结构>SDK设计结构</h3><p><a href=https://opentelemetry.io>OpenTelemetry</a> 整体的设计汲取了之前的链路跟踪（比如gtrace）和指标（比如 <a href=https://prometheus.io/>prometheus</a>，<a href=https://opencensus.io/>opencensus</a>）的诸多应用场景和经验。
 所以整个设计结构和概念其实是比较复杂的。</p><p><img src=/2025/2504-17.png alt=2504-17.png loading=lazy></p><p>API层要求最小消耗的空实现，SDK层是正式的功能实现。他们通过符号引用可以热插拔得嵌入到上报者和框架集成方。然后Exporter是复制数据IO的。
 这些结构落地到C++ SDK实现大概是这个样子。</p><p><img src=/2025/2504-21.png alt=2504-21.png loading=lazy></p><p><img src=/2025/2504-22.png alt=2504-22.png loading=lazy></p><p>Provider是一个全局的资源管理器，所有的组件创建数据都从Provider开始。数据产生后交由Processor处理。
 比如一个标准的Processor叫BatchProcessor，顾名思义它会把产生的数据自动按负载合并并Batch化发送。
@@ -66,41 +67,41 @@ Recordable对应何磊组件里生成的数据接口，Exporter则是负责怎�
 那么怎么保证我们的上报点不冲突？这可以通过不同的Scope来区分。
 然后同样在一个进程里，上报的数据会包含比如host信息，进程名字、业务类型等等和进程相关的信息。但是我们有2000个指标，显然我们不需要把这些信息重复上报 2000 份。
 而在OTLP里，只要在Resource去上报一次就行了。接下来就是各自的数据区。</p><p>对于指标而言，还有一些更细致的分类和结构,当然也是和指标本身的概念相关。</p><pre><code class=language-proto>//    Metric
-//  +------------+
+//  &#43;------------&#43;
 //  |name        |
 //  |description |
-//  |unit        |     +------------------------------------+
-//  |data        |---> |Gauge, Sum, Histogram, Summary, ... |
-//  +------------+     +------------------------------------+
+//  |unit        |     &#43;------------------------------------&#43;
+//  |data        |---&gt; |Gauge, Sum, Histogram, Summary, ... |
+//  &#43;------------&#43;     &#43;------------------------------------&#43;
 //
 //    Data [One of Gauge, Sum, Histogram, Summary, ...]
-//  +-----------+
+//  &#43;-----------&#43;
 //  |...        |  // Metadata about the Data.
-//  |points     |--+
-//  +-----------+  |
-//                 |      +---------------------------+
+//  |points     |--&#43;
+//  &#43;-----------&#43;  |
+//                 |      &#43;---------------------------&#43;
 //                 |      |DataPoint 1                |
-//                 v      |+------+------+   +------+ |
-//              +-----+   ||label |label |...|label | |
-//              |  1  |-->||value1|value2|...|valueN| |
-//              +-----+   |+------+------+   +------+ |
-//              |  .  |   |+-----+                    |
+//                 v      |&#43;------&#43;------&#43;   &#43;------&#43; |
+//              &#43;-----&#43;   ||label |label |...|label | |
+//              |  1  |--&gt;||value1|value2|...|valueN| |
+//              &#43;-----&#43;   |&#43;------&#43;------&#43;   &#43;------&#43; |
+//              |  .  |   |&#43;-----&#43;                    |
 //              |  .  |   ||value|                    |
-//              |  .  |   |+-----+                    |
-//              |  .  |   +---------------------------+
+//              |  .  |   |&#43;-----&#43;                    |
+//              |  .  |   &#43;---------------------------&#43;
 //              |  .  |                   .
 //              |  .  |                   .
 //              |  .  |                   .
-//              |  .  |   +---------------------------+
+//              |  .  |   &#43;---------------------------&#43;
 //              |  .  |   |DataPoint M                |
-//              +-----+   |+------+------+   +------+ |
-//              |  M  |-->||label |label |...|label | |
-//              +-----+   ||value1|value2|...|valueN| |
-//                        |+------+------+   +------+ |
-//                        |+-----+                    |
+//              &#43;-----&#43;   |&#43;------&#43;------&#43;   &#43;------&#43; |
+//              |  M  |--&gt;||label |label |...|label | |
+//              &#43;-----&#43;   ||value1|value2|...|valueN| |
+//                        |&#43;------&#43;------&#43;   &#43;------&#43; |
+//                        |&#43;-----&#43;                    |
 //                        ||value|                    |
-//                        |+-----+                    |
-//                        +---------------------------+</code></pre><h4 id=标准协议和实际落地的取舍>标准协议和实际落地的取舍</h4><p>原始的OTLP协议属性是可以完全动态且嵌套的。
+//                        |&#43;-----&#43;                    |
+//                        &#43;---------------------------&#43;</code></pre><h4 id=标准协议和实际落地的取舍>标准协议和实际落地的取舍</h4><p>原始的OTLP协议属性是可以完全动态且嵌套的。
 但是在我们的C++的实现中，为了降低不必要的开销的生命周期管理，大多数属性引用都是用视图传递。
 这就失去生命周期的管理，就没法实现完整的OTLP协议。这里C++ SDK在性能和完整性上做了一些平衡和取舍，只实现了子集。</p><p><img src=/2025/2504-20.png alt=2504-20.png loading=lazy></p><h3 id=指标的复杂性结构>指标的复杂性结构</h3><p>相对于 <strong>链路跟踪</strong> 和 <strong>日志</strong> 来说，<strong>指标</strong> 要更复杂一些。
 多了一些概念，比如Push模式、Pull模式。增量值、累计值，计数器、Gauge、直方图等等。</p><p><img src=/2025/2504-23.png alt=2504-23.png loading=lazy></p><p>这里比 <a href=https://prometheus.io/>prometheus</a> 复杂得多。这是因为考虑和非常多的引用场景。
@@ -108,46 +109,46 @@ Recordable对应何磊组件里生成的数据接口，Exporter则是负责怎�
 再比如对一份上报的数据，可能命中多个属性集合视图。那么SDK会自动拆分到多个Storage里，不需要调用者关心。</p><p>还有直方图数据类型可能和我们直观的感知有差异，我们很多小伙伴在使用过程中都会发生误解和困惑。</p><blockquote><p>关于直方图建议阅读 <a href=https://prometheus.io/docs/practices/histograms/>https://prometheus.io/docs/practices/histograms/</a> 。</p></blockquote><p>这些最终造成 <strong>指标</strong> 比其他的组件要更复杂。</p><h3 id=生态适配>生态适配</h3><h4 id=存量生态>存量生态</h4><p>前面也提到 <a href=https://opentelemetry.io>OpenTelemetry</a> 是结合了之前各类组件的经验，目标是成为可观测性领域大一统标准。比如 <strong>链路跟踪</strong> 替代了gtrace，指标大量参考了 <a href=https://prometheus.io/>prometheus</a>，<a href=https://opencensus.io/>opencensus</a> 等。</p><p>那对于一些旧有项目，怎么提供一些简单的迁移方式呢？目前有两种方式。一是通过shim库转换数据，二是通过Exporter层做数据格式转换。</p><p><img src=/2025/2504-24.png alt=2504-24.png loading=lazy></p><h4 id=prometheus和otel-metrics的异同和适配>Prometheus和OTEL Metrics的异同和适配</h4><p>虽然我们的通信接口都是 <a href=https://opentelemetry.io>OpenTelemetry</a> 规范，但是有时候会上传到其他平台。比如目前指标领域的事实标准-<a href=https://prometheus.io/>Prometheus</a>。</p><p><a href=https://prometheus.io/>Prometheus</a> 其实数据结构是比较简单的，比如指标名只允许 <code>[a-zA-Z_:][a-zA-Z0-9_:]*</code> 这个规范。只有一层标签的概念，标签名必须满足 <code>[a-zA-Z_][a-zA-Z0-9_]*</code> ，并且只有一层。</p><blockquote><p>参考: <a href=https://prometheus.io/docs/concepts/data_model/>https://prometheus.io/docs/concepts/data_model/</a></p></blockquote><p>前面提到的一个进程内有2000个指标，上报共享的进程信息的时候，如果用原始的 <a href=https://prometheus.io/>Prometheus</a> 我们不得不把这些信息重复上报 2000 份。</p><p><img src=/2025/2504-34.png alt=2504-34.png loading=lazy></p><blockquote><p>实际上对于进程级资源共享，<a href=https://prometheus.io/>Prometheus</a> 和 <a href=https://opencensus.io/>OpenCensus</a> 都有一个方案。定义了一个 <a href=https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#supporting-target-metadata-in-both-push-based-and-pull-based-systems>target_info</a> 类型的特殊指标来承载这些信息。
 同一个连接，<a href=https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#supporting-target-metadata-in-both-push-based-and-pull-based-systems>target_info</a> 只要上报一次即可。后面上报的指标自动关联这些属性。但是这个并不是所有平台都兼容，将具体是否可用还要咨询使用的平台。
 有兴趣可以阅读 <a href=https://opentelemetry.io/docs/specs/otel/compatibility/prometheus_and_openmetrics/#resource-attributes-1>https://opentelemetry.io/docs/specs/otel/compatibility/prometheus_and_openmetrics/#resource-attributes-1</a></p></blockquote><p>除此之外，<a href=https://opentelemetry.io>OpenTelemetry</a> 的指标有unit的概念。在转换成 <a href=https://prometheus.io/>Prometheus</a>也需要做一些单位标准化。</p><pre><code class=language-cpp>// Time
-{"d", "days"},
-{"h", "hours"},
-{"min", "minutes"},
-{"s", "seconds"},
-{"ms", "milliseconds"},
-{"us", "microseconds"},
-{"ns", "nanoseconds"},
+{&#34;d&#34;, &#34;days&#34;},
+{&#34;h&#34;, &#34;hours&#34;},
+{&#34;min&#34;, &#34;minutes&#34;},
+{&#34;s&#34;, &#34;seconds&#34;},
+{&#34;ms&#34;, &#34;milliseconds&#34;},
+{&#34;us&#34;, &#34;microseconds&#34;},
+{&#34;ns&#34;, &#34;nanoseconds&#34;},
 // Bytes
-{"By", "bytes"},
-{"KiBy", "kibibytes"},
-{"MiBy", "mebibytes"},
-{"GiBy", "gibibytes"},
-{"TiBy", "tibibytes"},
-{"KBy", "kilobytes"},
-{"MBy", "megabytes"},
-{"GBy", "gigabytes"},
-{"TBy", "terabytes"},
-{"By", "bytes"},
-{"KBy", "kilobytes"},
-{"MBy", "megabytes"},
-{"GBy", "gigabytes"},
-{"TBy", "terabytes"},
+{&#34;By&#34;, &#34;bytes&#34;},
+{&#34;KiBy&#34;, &#34;kibibytes&#34;},
+{&#34;MiBy&#34;, &#34;mebibytes&#34;},
+{&#34;GiBy&#34;, &#34;gibibytes&#34;},
+{&#34;TiBy&#34;, &#34;tibibytes&#34;},
+{&#34;KBy&#34;, &#34;kilobytes&#34;},
+{&#34;MBy&#34;, &#34;megabytes&#34;},
+{&#34;GBy&#34;, &#34;gigabytes&#34;},
+{&#34;TBy&#34;, &#34;terabytes&#34;},
+{&#34;By&#34;, &#34;bytes&#34;},
+{&#34;KBy&#34;, &#34;kilobytes&#34;},
+{&#34;MBy&#34;, &#34;megabytes&#34;},
+{&#34;GBy&#34;, &#34;gigabytes&#34;},
+{&#34;TBy&#34;, &#34;terabytes&#34;},
 // SI
-{"m", "meters"},
-{"V", "volts"},
-{"A", "amperes"},
-{"J", "joules"},
-{"W", "watts"},
-{"g", "grams"},
+{&#34;m&#34;, &#34;meters&#34;},
+{&#34;V&#34;, &#34;volts&#34;},
+{&#34;A&#34;, &#34;amperes&#34;},
+{&#34;J&#34;, &#34;joules&#34;},
+{&#34;W&#34;, &#34;watts&#34;},
+{&#34;g&#34;, &#34;grams&#34;},
 // Misc
-{"Cel", "celsius"},
-{"Hz", "hertz"},
-{"1", ""},
-{"%", "percent"}</code></pre><p>比如我们定义的一个OTEL的指标为 <code>{name="abc", description="XXX", unit="%"}</code> ，最后输出的 <a href=https://prometheus.io/>Prometheus</a> 指标名是 <code>abc_percent</code> 。
+{&#34;Cel&#34;, &#34;celsius&#34;},
+{&#34;Hz&#34;, &#34;hertz&#34;},
+{&#34;1&#34;, &#34;&#34;},
+{&#34;%&#34;, &#34;percent&#34;}</code></pre><p>比如我们定义的一个OTEL的指标为 <code>{name="abc", description="XXX", unit="%"}</code> ，最后输出的 <a href=https://prometheus.io/>Prometheus</a> 指标名是 <code>abc_percent</code> 。
 这些规则还在演进变化中，另外早期的OTEL-CPP SDK有个BUG，没有设置单位的属性多余输出了下划线。
 比如 <code>{name="abc", description="XXX", unit=""}</code> 对应的 <a href=https://prometheus.io/>Prometheus</a> 指标名应该是 <code>abc</code>, 但是早期版本会使用 <code>abc_</code> 。</p><p>那为了抹平拉取聚合这一侧用户使用的复杂性，我们抽象了 <code>SanitizePrometheusName</code> 接口，保持和OTEL-CPP里一样的转换规则。
 而提取指标名则是搞了个“奇技淫巧”,先创建一个虚假的指标。执行一次OTEL里的指标转换，在提取生成的指标名。代码如下:</p><pre><code class=language-cpp>  opentelemetry::sdk::metrics::ResourceMetrics fake_resource_metrics;
   opentelemetry::sdk::metrics::MetricData fake_metrics_data;
   opentelemetry::sdk::metrics::PointDataAttributes fake_point_data;
-  auto fake_scope = opentelemetry::sdk::instrumentationscope::InstrumentationScope::Create("none");
+  auto fake_scope = opentelemetry::sdk::instrumentationscope::InstrumentationScope::Create(&#34;none&#34;);
   fake_metrics_data.aggregation_temporality = opentelemetry::sdk::metrics::AggregationTemporality::kCumulative;
   fake_metrics_data.instrument_descriptor.name_ = metrics_name_;
   fake_metrics_data.instrument_descriptor.description_ = metrics_description_;
@@ -168,13 +169,13 @@ Recordable对应何磊组件里生成的数据接口，Exporter则是负责怎�
     }
   }
   fake_metrics_data.point_data_attr_.push_back(fake_point_data);
-#if OPENTELEMETRY_VERSION_MAJOR * 1000 + OPENTELEMETRY_VERSION_MINOR >= 1012
+#if OPENTELEMETRY_VERSION_MAJOR * 1000 &#43; OPENTELEMETRY_VERSION_MINOR &gt;= 1012
   fake_resource_metrics.scope_metric_data_.push_back(
-      {fake_scope.get(), std::vector<opentelemetry::sdk::metrics::metricdata>{fake_metrics_data}});
+      {fake_scope.get(), std::vector&lt;opentelemetry::sdk::metrics::MetricData&gt;{fake_metrics_data}});
 #else
   fake_resource_metrics.scope_metric_data_.push_back({fake_scope.get(), {fake_metrics_data}});
 #endif
-#if OPENTELEMETRY_VERSION_MAJOR * 1000 + OPENTELEMETRY_VERSION_MINOR < 1012
+#if OPENTELEMETRY_VERSION_MAJOR * 1000 &#43; OPENTELEMETRY_VERSION_MINOR &lt; 1012
   auto prometheus_family =
       opentelemetry::exporter::metrics::PrometheusExporterUtils::TranslateToPrometheus(fake_resource_metrics);
 #else
@@ -193,44 +194,44 @@ static long ncpus = 0;
 
 static void init_ncpus() {
   ncpus = sysconf(_SC_NPROCESSORS_CONF);
-  if (ncpus < 1 || ncpus > INT32_MAX) {
-    LOG(ERROR) << "Cannot determine number of CPUs: assuming 1";
+  if (ncpus &lt; 1 || ncpus &gt; INT32_MAX) {
+    LOG(ERROR) &lt;&lt; &#34;Cannot determine number of CPUs: assuming 1&#34;;
     ncpus = 1;
   }
 }
 
 unsigned gpr_cpu_num_cores(void) {
   static gpr_once once = GPR_ONCE_INIT;
-  gpr_once_init(&once, init_ncpus);
+  gpr_once_init(&amp;once, init_ncpus);
   return (unsigned)ncpus;
 }
 
 // executor.cc
 Executor::Executor(const char* name) : name_(name) {
   adding_thread_lock_ = GPR_SPINLOCK_STATIC_INITIALIZER;
-  gpr_atm_rel_store(&num_threads_, 0);
+  gpr_atm_rel_store(&amp;num_threads_, 0);
   max_threads_ = std::max(1u, 2 * gpr_cpu_num_cores());
 }</code></pre><p>这个问题我们有两个优化方向：</p><ul><li>优化一：共享gRPC Context。</li></ul><blockquote><p>这个优化已经合入社区，详见: <a href=https://github.com/open-telemetry/opentelemetry-cpp/pull/3041>https://github.com/open-telemetry/opentelemetry-cpp/pull/3041</a></p></blockquote><ul><li>优化二：Hook获取CPU数的接口。</li></ul><p>并没有地方可以改这个 <code>max_threads_</code> 值。所以我写了个hook工具，然后 <code>LD_PRELOAD</code> 来从环境变量改 <code>sysconf(_SC_NPROCESSORS_CONF)</code> 的返回值。</p><pre><code class=language-cpp>long sysconf(int name) { //NOLINT: runtime/int
     // 获取原始的sysconf函数
     using sysconf_fn_t = long (*)(int); //NOLINT: runtime/int
     static sysconf_fn_t real_sysconf = nullptr;
     if (!real_sysconf) {
-        real_sysconf = (sysconf_fn_t)dlsym(RTLD_NEXT, "sysconf");
+        real_sysconf = (sysconf_fn_t)dlsym(RTLD_NEXT, &#34;sysconf&#34;);
     }
 
     // 只修改_SC_NPROCESSORS_CONF和_SC_NPROCESSORS_ONLN的返回值
     if (name == _SC_NPROCESSORS_CONF || name == _SC_NPROCESSORS_ONLN) {
         // 检查是否设置了环境变量
-        const char* fake_cpu_count = getenv("MY_APP_RES_LIMITS_CPU");
-        if (fake_cpu_count && strlen(fake_cpu_count) > 0) {
+        const char* fake_cpu_count = getenv(&#34;MY_APP_RES_LIMITS_CPU&#34;);
+        if (fake_cpu_count &amp;&amp; strlen(fake_cpu_count) &gt; 0) {
             char* endptr;
-            long count = strtol(fake_cpu_count, &endptr, 10); //NOLINT: runtime/int
+            long count = strtol(fake_cpu_count, &amp;endptr, 10); //NOLINT: runtime/int
 
             // 检查转换是否成功且值合理
-            if (*endptr == '\0' && count > 0) {
+            if (*endptr == &#39;\0&#39; &amp;&amp; count &gt; 0) {
                 return count;
             } else {
-                fprintf(stderr, "Warning: Invalid MY_APP_RES_LIMITS_CPU value: %s, using real value\n", fake_cpu_count);
+                fprintf(stderr, &#34;Warning: Invalid MY_APP_RES_LIMITS_CPU value: %s, using real value\n&#34;, fake_cpu_count);
             }
         }
     }
@@ -297,17 +298,17 @@ flowchart LR
 同时为了支持多维护的调试统计，我们也把链路跟踪清洗成指标。由于API和SDK层属性集合是完全动态的，导致每次Merge数据和属性计算的开销巨大无比。</p><p>早期 <a href=https://github.com/open-telemetry/opentelemetry-cpp>OTEL-CPP</a> 为了保证无序属性设置不影响属性比较（比如 <code>{ {"a, 1}, {"b", 2} } == { {"b", 2}, {"a", 1} }</code>），底层直接用了 <code>std::map</code> 。
 这就导致每次插入必须做大量的字符串比较，开销巨大。但是在链路跟踪场景里，实际上对于一种类型的调用，大部分属性往往是一样的。</p><p><img src=/2025/2504-42.png alt=2504-42.png loading=lazy></p><p>这样我们 <strong>第一阶段优化</strong> 就很明确了：</p><ul><li>内部统计聚合，缩减和简化索引，聚合后上报（OTEL库调用降频）</li><li>分离上报和采集，减少多线程锁冲突</li></ul><p>这一阶段的 <em><strong>优化效果</strong></em> 是：链路跟踪负载降低约60%。数据量大时仍然有较高的CPU开销（低于20%）。</p><p><a href=https://opentelemetry.io>OpenTelemetry</a> 社区自带一个 <a href=https://opentelemetry.io/docs/collector/>collector</a> 组件，可以用于缓冲和代理数据转发。里面也附带清洗功能。所以我们 <strong>第二阶段优化</strong> 的就是把清洗负载从业务进程分离出去。而且<a href=https://opentelemetry.io/docs/collector/>collector</a>还能再做二次聚合，降低上报服务的负载。另外由于平台限制, 我们通过 <a href=https://prometheus.io/>Prometheus</a> 上报指标不得不复制大量相似属性（不支持前面提到的 <a href=https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#supporting-target-metadata-in-both-push-based-and-pull-based-systems>target_info</a>），但是OTLP没这问题。</p><p><strong>第二阶段优化</strong> 核心优化内容是：</p><ul><li>otelcol代理缓冲，使用connector组件外部进程trace转指标</li><li>无需双向拉取上报的指标，全部使用OTLP代替Prometheus</li></ul><p><img src=/2025/2504-44.png alt=2504-44.png loading=lazy></p><p>同时我也在推进社区改进算法，截至带今天。指标部分已经采用带HashCode缓存的HashMap去管理属性集了。开销已经大幅下降了。</p><p>最终完整版接入方案如下：</p><p><img src=/2025/2504-45.png alt=2504-45.png loading=lazy></p><p>再附上几个阶段和最早RapidJSON+TDR的性能对比。</p><p><img src=/2025/2504-46.png alt=2504-46.png loading=lazy></p><p>这里的第二代方案指的是不包含我们上述 <strong>第一阶段优化</strong> 和 <strong>第二阶段优化</strong>，仅仅是替换完使用 <a href=https://github.com/open-telemetry/opentelemetry-cpp>OTEL-CPP</a> 的OTLP上报链路跟踪的结果。</p><p>然后我们还进行了 <strong>第三阶段优化</strong> （尚未压测），主要核心点是：</p><ul><li>增加动态的线程池，分离高负载调用到Worker线程。<blockquote><p>不仅仅应用于链路跟踪，也应用于Logs上报和数据库等IO任务。这样可以降低主线程的负载和卡顿。</p></blockquote></li><li>动态采样方案</li></ul><h4 id=基础的部分采样方案>基础的部分采样方案</h4><p><a href=https://opentelemetry.io>OpenTelemetry</a> 的链路跟踪自带部分采样的方案。只要我们创建TraceProvider的时候使用 <code>TraceIdRatioBasedSampler</code> 就可以了。
 它的核心代码很简单:</p><pre><code class=language-cpp>SamplingResult TraceIdRatioBasedSampler::ShouldSample(
-    const trace_api::SpanContext & /*parent_context*/,
+    const trace_api::SpanContext &amp; /*parent_context*/,
     trace_api::TraceId trace_id,
     nostd::string_view /*name*/,
     trace_api::SpanKind /*span_kind*/,
-    const opentelemetry::common::KeyValueIterable & /*attributes*/,
-    const trace_api::SpanContextKeyValueIterable & /*links*/) noexcept
+    const opentelemetry::common::KeyValueIterable &amp; /*attributes*/,
+    const trace_api::SpanContextKeyValueIterable &amp; /*links*/) noexcept
 {
   if (threshold_ == 0)
     return {Decision::DROP, nullptr, {}};
 
-  if (CalculateThresholdFromBuffer(trace_id) <= threshold_)
+  if (CalculateThresholdFromBuffer(trace_id) &lt;= threshold_)
   {
     return {Decision::RECORD_AND_SAMPLE, nullptr, {}};
   }
@@ -317,14 +318,14 @@ flowchart LR
 那我们不能子节点要采样，父节点不采样。或者中间父节点不采样，前后采样。所以整个是基于要么整个链路都采样，要么整个链路都不踩。
 这么实现的好处是不需要RPC层跨线程传输额外的数据。</p><h4 id=动态部分采样方案>动态部分采样方案</h4><p>但是我们更希望，低负载的场景尽量多采样，高负载场景才根据负载动态采样。这时候如果涉及跨进程，span是否需要采样是需要RPC层带一些标识数据的。
 因为决定是否采样的决策层可能不在本进程上。我给我们框架写了一个动态采样的Sampler去提供这个功能。</p><pre><code class=language-cpp>// 主调和被调关系采样标记继承
-if (nullptr != options.parent_network_span &&
-    options.parent_network_span->trace_id().size() == trace_id_span::extent &&
-    options.parent_network_span->span_id().size() == span_id_span::extent) {
+if (nullptr != options.parent_network_span &amp;&amp;
+    options.parent_network_span-&gt;trace_id().size() == trace_id_span::extent &amp;&amp;
+    options.parent_network_span-&gt;span_id().size() == span_id_span::extent) {
   // -  网络（跨进程）
-  const uint8_t *parent_trace_id = reinterpret_cast<const uint8_t *>(options.parent_network_span->trace_id().c_str());
-  const uint8_t *parent_span_id = reinterpret_cast<const uint8_t *>(options.parent_network_span->span_id().c_str());
+  const uint8_t *parent_trace_id = reinterpret_cast&lt;const uint8_t *&gt;(options.parent_network_span-&gt;trace_id().c_str());
+  const uint8_t *parent_span_id = reinterpret_cast&lt;const uint8_t *&gt;(options.parent_network_span-&gt;span_id().c_str());
   uint8_t trace_flags = opentelemetry::trace::TraceFlags::kIsRandom;
-  if (!options.parent_network_span->dynamic_ignore()) {
+  if (!options.parent_network_span-&gt;dynamic_ignore()) {
     trace_flags |= opentelemetry::trace::TraceFlags::kIsSampled;
   }
   span_options.parent = opentelemetry::trace::SpanContext{
@@ -333,38 +334,38 @@ if (nullptr != options.parent_network_span &&
       opentelemetry::trace::TraceFlags{trace_flags}, options.is_remote};
 } else if (options.parent_memory_span) { 
   // -  本地
-  if (!options.parent_memory_span->IsRecording()) {
+  if (!options.parent_memory_span-&gt;IsRecording()) {
     return false;
   }
-  span_options.parent = options.parent_memory_span->GetContext();
+  span_options.parent = options.parent_memory_span-&gt;GetContext();
 }
 
 // 第一个Trace Span决策是否采样
 static bool should_sample_trace_span() {
   time_t now = atfw::util::time::time_utility::get_sys_now();
 
-  auto &metrics_data = get_rpc_context_mertrics_data();
+  auto &amp;metrics_data = get_rpc_context_mertrics_data();
   if (now != metrics_data.last_collect_per_second_timepoint) {
     calculate_trace_span_permillage(now);
   }
 
-  if (metrics_data.configure_max_count_per_second > 0 &&
-      metrics_data.configure_max_count_per_second + metrics_data.last_second_timepoint_sample_trace_span_count <
+  if (metrics_data.configure_max_count_per_second &gt; 0 &amp;&amp;
+      metrics_data.configure_max_count_per_second &#43; metrics_data.last_second_timepoint_sample_trace_span_count &lt;
           metrics_data.total_sample_trace_span_count) {
     return false;
   }
 
-  if (metrics_data.configure_max_count_per_minute > 0 &&
-      metrics_data.configure_max_count_per_minute + metrics_data.last_minute_timepoint_sample_trace_span_count <
+  if (metrics_data.configure_max_count_per_minute &gt; 0 &amp;&amp;
+      metrics_data.configure_max_count_per_minute &#43; metrics_data.last_minute_timepoint_sample_trace_span_count &lt;
           metrics_data.total_sample_trace_span_count) {
     return false;
   }
 
-  if (metrics_data.sample_rate <= 0 || metrics_data.sample_rate > 0xFFFFFF) {
+  if (metrics_data.sample_rate &lt;= 0 || metrics_data.sample_rate &gt; 0xFFFFFF) {
     return true;
   }
 
-  return atfw::util::random_engine::fast_random_between<int64_t>(0, 0x1000000) < metrics_data.sample_rate;
+  return atfw::util::random_engine::fast_random_between&lt;int64_t&gt;(0, 0x1000000) &lt; metrics_data.sample_rate;
 }</code></pre><h3 id=指标的性能和易用性优化>指标的性能和易用性优化</h3><p>前面提到，指标的采集和合并其实实在单独的后台线程。上报也分Pull模式和Push模式。整个流程是有差异的。</p><p>大致的采集流程如下：</p><div class=mermaid-container style="width:100%;height:auto;margin:1rem auto"><pre id=mermaid-codeblock-11 class=mermaid>
 flowchart LR
  subgraph PullExporter["Pull模式驱动器"]
@@ -435,21 +436,21 @@ flowchart LR
     Meters -- Collect获取结果后 --> PushExporter
     SyncMetricStorage@{ shape: lin-cyl}
     AsyncMetricStorage@{ shape: lin-cyl}
-  </pre></div><p>为了性能考虑，我们主要使用指标的一部接口。下面是一个简单的注册上百示例：</p><pre><code class=language-cpp>using otel_observer_result_int64 = opentelemetry::metrics::ObserverResultT<int64_t>;
-using otel_observer_result_double = opentelemetry::metrics::ObserverResultT<double>;
+  </pre></div><p>为了性能考虑，我们主要使用指标的一部接口。下面是一个简单的注册上百示例：</p><pre><code class=language-cpp>using otel_observer_result_int64 = opentelemetry::metrics::ObserverResultT&lt;int64_t&gt;;
+using otel_observer_result_double = opentelemetry::metrics::ObserverResultT&lt;double&gt;;
 
-auto meter = provider->GetMeter("meter name");
-auto instrument = meter->CreateInt64ObservableGauge("instrument name", "instrument description", "instrument unit");
+auto meter = provider-&gt;GetMeter(&#34;meter name&#34;);
+auto instrument = meter-&gt;CreateInt64ObservableGauge(&#34;instrument name&#34;, &#34;instrument description&#34;, &#34;instrument unit&#34;);
 
-instrument->AddCallback([](opentelemetry::metrics::ObserverResult result, void* /*private_data*/) {
-    if (opentelemetry::nostd::holds_alternative<opentelemetry::nostd::shared_ptr<otel_observer_result_int64>>(result)) {
-        auto type_result = opentelemetry::nostd::get<opentelemetry::nostd::shared_ptr<otel_observer_result_int64>>(result);
+instrument-&gt;AddCallback([](opentelemetry::metrics::ObserverResult result, void* /*private_data*/) {
+    if (opentelemetry::nostd::holds_alternative&lt;opentelemetry::nostd::shared_ptr&lt;otel_observer_result_int64&gt;&gt;(result)) {
+        auto type_result = opentelemetry::nostd::get&lt;opentelemetry::nostd::shared_ptr&lt;otel_observer_result_int64&gt;&gt;(result);
         if (type_result) {
-            type_result->Observe(static_cast<int64_t>(get_result_value()), {} /* attributes */);
+            type_result-&gt;Observe(static_cast&lt;int64_t&gt;(get_result_value()), {} /* attributes */);
         }
-    } else if (opentelemetry::nostd::holds_alternative<opentelemetry::nostd::shared_ptr<otel_observer_result_double>>(result)) {
-        auto type_result = opentelemetry::nostd::get<opentelemetry::nostd::shared_ptr<otel_observer_result_double>>(result);
-        type_result->Observe(static_cast<double>(result_value), {} /* attributes */);
+    } else if (opentelemetry::nostd::holds_alternative&lt;opentelemetry::nostd::shared_ptr&lt;otel_observer_result_double&gt;&gt;(result)) {
+        auto type_result = opentelemetry::nostd::get&lt;opentelemetry::nostd::shared_ptr&lt;otel_observer_result_double&gt;&gt;(result);
+        type_result-&gt;Observe(static_cast&lt;double&gt;(result_value), {} /* attributes */);
     }
 } /*, void* private_data*/);</code></pre><p>异步接口的使用有几个需要注意的地方:</p><ul><li>上报一个指标，有meter和instrument的概念。目前v1版本是不支持删除callback、instrument和meter的。目前即便v2版本也删不干净。所以如果reload，最好是重新创建provider，那么这里这个meter、instrument和callback都要重新创建和注册。</li></ul><blockquote><p>由于最后一个Provider引用释放的时候，otel-cpp会自动调用一次Flush吧所有已经导出的数据强制刷出。这会导致线程Block，所以为了不影响业务主线程。这里还要处理一次Reload的时候另起线程来执行Flush。</p></blockquote><ul><li>指标类型和调用Observe的传入类型要匹配，如果涉及浮点和整数转换的话，还要考虑 <a href=https://en.cppreference.com/w/cpp/types/numeric_limits/epsilon>epsilon</a> 。</li><li>回调函数的签名是 <code>using ObservableCallbackPtr = void (*)(ObserverResult, void *);</code> 只能透传一个 <code>void*</code> ，如果要包装更复杂的数据透传需要自己封装。</li><li>回调执行会跨线程，所以数据上报要保证线程安全。</li></ul><blockquote><p>业务层如果加锁粒度太粗，有可能影响主线程业务执行。如果无脑加很细粒度的锁，很容易频繁加解锁而导致不少开销。</p></blockquote><ul><li>多源拉取时可能会反复触发回调，所以不能简单地根据回调时间差来计算增量部分，否则可能导致误差。</li></ul><p>为了解决这个问题，我们利用前面的Worker池，抽象了指标注册的包装来解决注册和Reload的问题，使用无所队列中转来解决线程安全的问题。</p><p><img src=/2025/2503-01.png alt=2503-01.png loading=lazy></p><p>更多详情可以参见另一篇文章: <a href=https://owent.net/2025/2503.html>指标上报的多线程优化和多拉取源点优化</a> ，这里就不展开了。</p><h3 id=动态策略控制模块和新一代hpa方案>动态策略控制模块和新一代HPA方案</h3><p>游戏业务里很多服务都是有状态的，而对于上云以后的有状态服务的HPA能力支持，现在很多项目组已经有一些解决方案了。</p><ul><li>方案一: BCS Hook,PreDeleteHook触发迁移</li></ul><blockquote><p>采用一些Hook，在集群认为需要缩容的时候通知业务节点，然后定期询问业务节点状态数据是否已经迁出。这种方案对业务侧状态数据管理有一定要求，比如要随时可以短时间迁出，自己处理路由一致性问题，不适用一些长状态业务，因为有些实现可能会阻塞控制器。</p></blockquote><ul><li>方案二:外部Sidecar服务管理，API触发集群变更</li></ul><blockquote><p>还有采用外部Sidecar服务管理，最终通过API触发集群变更的。这种方式Sidecar服务可以和业务框架RPC系统打通，可以抽象一些路由模型。但是由于对业务层来说是独立的外部组件，要做更深一步的定制化会要求这个独立服务的能力支持，这方面会复杂一些。
 也有一些项目这方面采用自己维护私有版本istio的方式，给它增加私有协议支持，我们交流下来他们的主要问题是istio演进很快，那么他们的侵入式实现方案得follow istio的变化，成本会越来越高。后面他们也打算改成独立agent的方式，本质上也是一个外部服务。</p></blockquote><ul><li>方案三:业务内集成指标，通过指标触发集群变更</li></ul><blockquote><p>随着k8s新版HPAv2本对外部指标的支持，那么还有第三种方案就是业务层自己上报指标，导入到k8s外部指标里控制它的HPA行为。这种方式则需要业务层框架有自定义的指标上报能力，属于侵入式的，初期接入成本会高一些。</p></blockquote><p>而除了基础的HPA和消息路由的整合以外，我们在业务层经常会有很多其他动态策略调整和监控的能力，其实是和有状态服务的HPA的流程很像。

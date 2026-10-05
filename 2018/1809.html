@@ -5,14 +5,14 @@
 <input class=form-control type=text placeholder=搜索 name=q>
 <button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-4e6922d295b6243a55a2cee26939cbe6 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2018/1809.html target=_blank itemprop=url>Rust的第二次接触-写个小服务器程序</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#just-practice>JUST PRACTICE</a></li><li><a href=#推翻惯性思维>推翻惯性思维</a><ul><li><a href=#getopt-clap>getopt->clap</a></li><li><a href=#不优雅的全局静态变量>不优雅的全局静态变量</a></li><li><a href=#多层option和result带来的缩进问题>多层Option和Result带来的缩进问题</a></li><li><a href=#生命周期转移的习惯差异>生命周期转移的习惯差异</a></li><li><a href=#生命周期的模板推导>生命周期的模板推导</a></li><li><a href=#面向对象惯性思维的冲突>面向对象惯性思维的冲突</a></li><li><a href=#c习惯对借用理解的冲突>C++习惯对借用理解的冲突</a></li></ul></li><li><a href=#加密组件>加密组件</a><ul><li><a href=#rustlswebpki和ring>rustls、webpki和ring</a></li><li><a href=#百度传说中心脏不再出血的mesalink>百度传说中心脏不再出血的MesaLink</a></li><li><a href=#openssl和openssl-sys>openssl和openssl-sys</a></li></ul></li><li><a href=#交叉编译工具链-cross>交叉编译工具链-cross</a></li><li><a href=#rust2018>Rust2018</a><ul><li><a href=#宏的细节>宏的细节</a></li><li><a href=#宏与await>宏与await</a></li><li><a href=#go-2的范型和错误处理草案>Go 2的范型和错误处理草案</a></li></ul></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><h2 id=just-practice>JUST PRACTICE</h2><p>蛮久前入门了一下 <a href=https://rust-lang.org/>Rust</a> 语言。它的设计模型非常地吸引C/C++的开发者。但是学习语言嘛还是要练习一下，之前也用它给我们项目写了个命令行小工具。这回拿来写个小型的服务器程序吧。</p><p><a href=https://rust-lang.org/>Rust</a> 的生态还处于非常初级的阶段。很多组件和库都处于开发中和设计变更的阶段，比起golang来，很多功能库都没有。
 服务器编程本身特别注重高并发能力和，高性能。和原来很多客户端程序的思路是不太一样的。所以本来想等新的Futures和await和2.0版本的宏机制完成再搞。而老的<a href=https://crates.io/crates/futures>Futures</a>库由于即将移入核心库，在<a href=https://crates.io/>crates.io</a>上下架了。现在似乎很多<a href=https://rust-lang.org/>Rust</a>的库都按<a href=https://tokio.rs/>Tokio</a>的的模式来，于是我看了一下基于<a href=https://crates.io/crates/futures>Futures</a>的多路复用IO库<a href=https://tokio.rs/>Tokio</a>的文档来练习一下这个小服务器程序。</p><p>至于写个啥呢？之前想把 <a href=http://blog.lanyus.com/archives/326.html>IntelliJ IDEA License Server v1.6</a> 部署到路由器上玩来着。无奈看了一下作者似乎是用golang写的。golang也是个地址怪兽，启动后虽然内存消耗只有4MB，但是地质空间分配了800MB。这对大型服务器程序其实没什么，但是我看了下我的路由器上是开了 <code>vm.overcommit_memory=2</code> 的，这意味着进程地址空间太大也会直接OOM。所以就尝试按他们提供的方法，<a href=https://rust-lang.org/>Rust</a>写一个看看吧。当然这只是玩具，有条件的童鞋还是支持正版呗。</p><p>先说结论，最终完成版放在 <a href=https://gitee.com/owent/ideaactsvr/>https://gitee.com/owent/ideaactsvr/</a> 。二进制大小和go语言版本差不多，地址空间（VSZ）大约是golang版本的4%。内存（RSS）大约是golang版本的70%。</p><p>在web框架选型里，我对比了一些框架（<a href=https://actix.rs/>actix-web</a>、<a href=https://crates.io/crates/iron>iron</a>、<a href=https://crates.io/crates/nickel>nickel</a>、<a href=https://hyper.rs/>hyper</a>、<a href=https://rocket.rs/>rocket</a>等）的易用性、社区活跃度和功能支持。最终选择了<a href=https://actix.rs/>actix-web</a> ，<a href=https://actix.rs/>actix-web</a> 支持websocket，支持HTTP/HTTPS ，可定制化尚可，又不像<a href=https://hyper.rs/>hyper</a>那样提供的过于底层的接口据难用，也不像<a href=https://rocket.rs/>rocket</a>那样提供的封装过于高层，以至于定制化比较困难而且使用特性有点激进。特别是<a href=https://actix.rs/>actix-web</a>支持websocket，所以做完这个小玩具之后，顺带我拿它也来优化了一下之前写的gmtools-cli。</p><p>以下记录一些碰到的问题点。</p><h2 id=推翻惯性思维>推翻惯性思维</h2><h3 id=getopt-clap>getopt->clap</h3><p>之前做gmtools-cli的时候用的启动参数解析是getopt，但是后来发现<a href=https://clap.rs/>clap</a>是个更好也是更多人的选择。它提供了一些更高级的特性，同时还提供了一些宏来读取<a href=https://doc.rust-lang.org/cargo/>cargo</a>里的配置的。这样一些应用程序说明和名字之类就不用复制几遍了。版本号也可以托管进配置。</p><h3 id=不优雅的全局静态变量>不优雅的全局静态变量</h3><p>在通常的软件里，从一些位置或者启动参数读取配置然后以便全局使用是一个再正常不过的事儿吧？但是在<a href=https://rust-lang.org/>Rust</a>里就不太容易了。因为<a href=https://rust-lang.org/>Rust</a>会默认不允许线程不安全的代码，而全局变量和静态对象怎么保证不会出现访问冲突呢？</p><p>在通常的C/C++程序里，我们可能会在一开始初始化，后面不再变了。当然这是我们人工保证的，写起来也比较容易。然后如果需要reload的资源，可能会加锁。或者read和write的地方加锁，并不需要阻止已有的worker的继续用老版本的数据工作。</p><p>而在<a href=https://rust-lang.org/>Rust</a>里，直接访问全局变量是 <strong>unsafe</strong> 的。而直接Copy一份配置出来开销可能会很大。并且使用 <code>Rc&lt;T></code>或者<code>Arc&lt;T></code>又不能保证一定只有在一个地方被借用（<a href=https://rust-lang.org/>Rust</a>里多个同时存在的运行时借用会被panic掉）。所以这里我用了一个非常绕且麻烦的方法。</p><p>首先创建了一个对象来存储全局数据:</p><pre><code class=language-rust>struct AppEnvironmentInfo {
-    pub host: Option<string>,
+    pub host: Option&lt;String&gt;,
     pub port: i32,
-    pub username: Option<string>,
-    pub prefix: Option<string>,
-    pub log: Option<string>,
+    pub username: Option&lt;String&gt;,
+    pub prefix: Option&lt;String&gt;,
+    pub log: Option&lt;String&gt;,
     pub log_rotate: i32,
     pub log_rotate_size: usize,
-    pub pid_file: Option<string>,
+    pub pid_file: Option&lt;String&gt;,
 }
 
 static mut APP_ENV_INFO_STORE: AppEnvironmentInfo = AppEnvironmentInfo {
@@ -27,24 +27,24 @@ static mut APP_ENV_INFO_STORE: AppEnvironmentInfo = AppEnvironmentInfo {
 };</code></pre><p>上面之所以用Option来包裹String是因为这些数据是后面才会初始化的，并且没有引入<a href=https://crates.io/crates/lazy_static>lazy_static</a>的情况下，静态对象里的String并不能从常量中初始化（不规定顺序）。
 而且我觉得<a href=https://crates.io/crates/lazy_static>lazy_static</a>也没多好用。</p><p>然后第二步就是创建一个类型，里面全是引用。这样来减少复制开销。</p><pre><code class=language-rust>#[derive(Debug, Clone, Copy)]
 pub struct AppEnvironment {
-    pub appname: &'static str,
-    pub host: &'static str,
+    pub appname: &amp;&#39;static str,
+    pub host: &amp;&#39;static str,
     pub port: i32,
-    pub username: &'static str,
-    pub version: &'static str,
-    pub prefix: &'static str,
-    pub log: &'static str,
+    pub username: &amp;&#39;static str,
+    pub version: &amp;&#39;static str,
+    pub prefix: &amp;&#39;static str,
+    pub log: &amp;&#39;static str,
     pub log_rotate: i32,
     pub log_rotate_size: usize,
-    pub pid_file: &'static str,
-}</code></pre><p>最后获取数据的时候就这样:</p><pre><code class=language-rust>fn generate_app_env() -> AppEnvironment {
+    pub pid_file: &amp;&#39;static str,
+}</code></pre><p>最后获取数据的时候就这样:</p><pre><code class=language-rust>fn generate_app_env() -&gt; AppEnvironment {
     unsafe {
         AppEnvironment {
             appname: crate_name!(),
             host: if let Some(ref x) = APP_ENV_INFO_STORE.host {
                 x.as_str()
             } else {
-                "127.0.0.1"
+                &#34;127.0.0.1&#34;
             },
             port: APP_ENV_INFO_STORE.port,
             username: if let Some(ref x) = APP_ENV_INFO_STORE.username {
@@ -56,28 +56,28 @@ pub struct AppEnvironment {
             prefix: if let Some(ref x) = APP_ENV_INFO_STORE.prefix {
                 x.as_str()
             } else {
-                "/"
+                &#34;/&#34;
             },
             log: if let Some(ref x) = APP_ENV_INFO_STORE.log {
                 x.as_str()
             } else {
-                "server.log"
+                &#34;server.log&#34;
             },
             log_rotate: APP_ENV_INFO_STORE.log_rotate,
             log_rotate_size: APP_ENV_INFO_STORE.log_rotate_size,
             pid_file: if let Some(ref x) = APP_ENV_INFO_STORE.pid_file {
                 x.as_str()
             } else {
-                "server.pid"
+                &#34;server.pid&#34;
             },
         }
     }
 }</code></pre><p>再后面AppEnvironment的对象在多线程环境里就可以随便复制了。</p><h3 id=多层option和result带来的缩进问题>多层Option和Result带来的缩进问题</h3><p>第二个碰到的伤心处和<a href=https://rust-lang.org/>Rust</a>的设计模型有关。<a href=https://rust-lang.org/>Rust</a>默认要开发者关心错误，并且没有空类型，这是个很好的想法。于是返回的对象一般是<code>Option&lt;T></code>或者<code>Result&lt;T, E></code>。然后麻烦就来了。有多级这个错误处理的缩进相当客观。如果全部重构成小的碎片代码维护成本和十分可观。比如，日志模块的初始化函数我这么写的:</p><pre><code class=language-rust>pub fn init_with_level(
     level: Level,
-    file_path: &str,
+    file_path: &amp;str,
     rotate_num: i32,
     rotate_size: usize,
-) -> Result<(), SetLoggerError> {
+) -&gt; Result&lt;(), SetLoggerError&gt; {
     let mut init_rotate = 0;
     let mut last_modify_time = SystemTime::UNIX_EPOCH.clone();
     for idx in 0..rotate_num {
@@ -86,14 +86,14 @@ pub struct AppEnvironment {
         if let Ok(file) = test_file {
             if let Ok(meta) = file.metadata() {
                 if let Ok(time) = meta.modified() {
-                    if time > last_modify_time {
+                    if time &gt; last_modify_time {
                         last_modify_time = time.clone();
                         init_rotate = idx;
                     }
                 }
             }
         } else {
-            init_rotate = if idx > 0 { idx - 1 } else { idx };
+            init_rotate = if idx &gt; 0 { idx - 1 } else { idx };
             break;
         }
     }
@@ -105,15 +105,15 @@ a.act1();  // 先做第一个逻辑
 a.act2();  // 再第二个
 a.act3()); // 再第三个
 // ...</code></pre><p>上面的逻辑或是逻辑相关，或是有前置检查。也比较自然，但是碰到<a href=https://rust-lang.org/>Rust</a>的函数声明如果是:</p><pre><code class=language-rust>impl clazz {
-    pub fn act1(mut self) -> Self {
+    pub fn act1(mut self) -&gt; Self {
         // ...
         self
     }
-    pub fn act2(mut self) -> Self {
+    pub fn act2(mut self) -&gt; Self {
         // ...
         self
     }
-    pub fn act3(mut self) -> Self {
+    pub fn act3(mut self) -&gt; Self {
         // ...
         self
     }
@@ -121,7 +121,7 @@ a.act3()); // 再第三个
 
 a.act1();  // 先做第一个逻辑
 a.act2();  // 再第二个
-a.act3()); // 再第三个</code></pre><p>这样就会编译不过了。这是因为这三个函数接管了<code>clazz</code>的生命周期。然后通过返回值返回了。那么什么地方会有上面这种形式的接口呢？比如说那个命令行参数的解析库<a href=https://clap.rs/>clap</a>里的注册参数的函数:</p><pre><code class=language-rust>pub fn arg<a: into<arg<'a, 'b>>>(mut self, a: A) -> Self {
+a.act3()); // 再第三个</code></pre><p>这样就会编译不过了。这是因为这三个函数接管了<code>clazz</code>的生命周期。然后通过返回值返回了。那么什么地方会有上面这种形式的接口呢？比如说那个命令行参数的解析库<a href=https://clap.rs/>clap</a>里的注册参数的函数:</p><pre><code class=language-rust>pub fn arg&lt;A: Into&lt;Arg&lt;&#39;a, &#39;b&gt;&gt;&gt;(mut self, a: A) -&gt; Self {
     self.p.add_arg(a.into());
     self
 }</code></pre><p>这种形式比第一个参数直接传入<code>&amp;self</code>的好处是可以内部转移生命周期和执行生命周期推断和检查，也可以在内部分析是否有必要复制（如果要切换到多线程环境）。对于这种情况，有两种调用方法:</p><pre><code class=language-rust>// 连续调用
@@ -136,17 +136,17 @@ a = act2();
 // do something
 a = act3();</code></pre><h3 id=生命周期的模板推导>生命周期的模板推导</h3><p>现在<a href=https://rust-lang.org/>Rust</a>的模板推导已经非常强大了，但是感觉生命周期的推导还不是很完善。因为有些地方我认为理论上是可以推导出来的生命周期申明，但实际上推导不出来，需要显式声明。这个在写上面那个小小服务器程序的过程中碰到了，但是后来我换了一种方法，原来的有问题的sample code找不到了，也不是那么容易碰到的问题。</p><h3 id=面向对象惯性思维的冲突>面向对象惯性思维的冲突</h3><p>在写这个程序的时候，发生了几次思维模式上的冲突。一开始我想使用<a href=https://actix.rs/>actix-web</a>的自定义handle的方式来处理请求调度。<a href=https://actix.rs/>actix-web</a>的自定义如下：</p><pre><code class=language-rust>// handle的声明
 #[allow(unused_variables)]
-pub trait Handler<s>: 'static {
+pub trait Handler&lt;S&gt;: &#39;static {
     /// The type of value that handler will return.
     type Result: Responder;
 
     /// Handle request
-    fn handle(&self, req: &HttpRequest<s>) -> Self::Result;
+    fn handle(&amp;self, req: &amp;HttpRequest&lt;S&gt;) -&gt; Self::Result;
 }
 
 // 接口声明如下
-impl<s> Resource<s> {
-    pub fn h<h: handler<s>>(&mut self, handler: H) {
+impl&lt;S&gt; Resource&lt;S&gt; {
+    pub fn h&lt;H: Handler&lt;S&gt;&gt;(&amp;mut self, handler: H) {
         self.routes.push(Route::default());
         self.routes.last_mut().unwrap().h(handler)
     }
@@ -154,24 +154,24 @@ impl<s> Resource<s> {
 我想加一个类似 <em><strong>基类</strong></em> 的traits，然后统一处理Repsonse和错误处理。所以声明了一个父traits然后声明了新的接口实现像这样（为了多模拟一些更复杂且更贴近实际使用的场景里面没有用最简单的结构）:</p><pre><code class=language-rust>use std::marker::PhantomData;
 
 #[allow(unused_variables)]
-trait Handler<s> {
+trait Handler&lt;S&gt; {
     type Result: std::fmt::Display;
 
-    fn handle(&self) -> Self::Result;
+    fn handle(&amp;self) -&gt; Self::Result;
 }
 
-trait BaseT<s>: Handler<s, result=String> {
-    fn dispatch(&self, s: String) -> String;
+trait BaseT&lt;S&gt;: Handler&lt;S, Result = String&gt; {
+    fn dispatch(&amp;self, s: String) -&gt; String;
 
-    fn handle(&self) -> String {
-        self.dispatch(String::from("Hello, world!"))
+    fn handle(&amp;self) -&gt; String {
+        self.dispatch(String::from(&#34;Hello, world!&#34;))
     }
 }
 
 struct ObjectT();
 
-impl<s> BaseT<s> for ObjectT {
-    fn dispatch(&self, s: String) -> String {
+impl&lt;S&gt; BaseT&lt;S&gt; for ObjectT {
+    fn dispatch(&amp;self, s: String) -&gt; String {
         s
     }
 }
@@ -179,8 +179,8 @@ impl<s> BaseT<s> for ObjectT {
 struct Manager();
 
 impl Manager {
-    pub fn h<h: handler<string>>(&self, handler: H) {
-        println!("{}", handler.handle());
+    pub fn h&lt;H: Handler&lt;String&gt;&gt;(&amp;self, handler: H) {
+        println!(&#34;{}&#34;, handler.handle());
     }
 }
 
@@ -190,31 +190,31 @@ fn main() {
 }</code></pre><p>一切看似很美好，然而这是编译不通过的。报出的错误是<code>ObjectT</code>没有提供<code>Handler&lt;S></code>的实现。按照通常的理解，我们有<code>impl&lt;S> BaseT&lt;S> for ObjectT</code>，而<code>BaseT&lt;S></code>又是继承<code>Handler&lt;S, Result = String></code>的，那么<code>ObjectT</code>也应该有<code>Handler&lt;S, Result = String></code>的实现才对，但是实际上不能直接这么做。以下是一种针对这种情况可行的方法:</p><pre><code class=language-rust>use std::marker::PhantomData;
 
 #[allow(unused_variables)]
-trait Handler<s> {
+trait Handler&lt;S&gt; {
     type Result: std::fmt::Display;
 
-    fn handle(&self) -> Self::Result;
+    fn handle(&amp;self) -&gt; Self::Result;
 }
 
-trait BaseT<s>: Handler<s, result=String> {
-    fn dispatch(&self, s: String) -> String;
+trait BaseT&lt;S&gt;: Handler&lt;S, Result = String&gt; {
+    fn dispatch(&amp;self, s: String) -&gt; String;
 }
 
 struct ObjectT();
 
-impl<s, t> Handler<s> for T
+impl&lt;S, T&gt; Handler&lt;S&gt; for T
 where
-    T: BaseT<s>,
+    T: BaseT&lt;S&gt;,
 {
     type Result = String;
 
-    fn handle(&self) -> String {
-        self.dispatch(String::from("Hello, world!"))
+    fn handle(&amp;self) -&gt; String {
+        self.dispatch(String::from(&#34;Hello, world!&#34;))
     }
 }
 
-impl<s> BaseT<s> for ObjectT {
-    fn dispatch(&self, s: String) -> String {
+impl&lt;S&gt; BaseT&lt;S&gt; for ObjectT {
+    fn dispatch(&amp;self, s: String) -&gt; String {
         s
     }
 }
@@ -222,8 +222,8 @@ impl<s> BaseT<s> for ObjectT {
 struct Manager();
 
 impl Manager {
-    pub fn h<h: handler<string>>(&self, handler: H) {
-        println!("{}", handler.handle());
+    pub fn h&lt;H: Handler&lt;String&gt;&gt;(&amp;self, handler: H) {
+        println!(&#34;{}&#34;, handler.handle());
     }
 }
 
@@ -234,41 +234,41 @@ fn main() {
 sudo apt install docker docker-compose
 sudo yum install docker
 sudo dnf install docker docker-compose</code></pre><p>然后它默认大部分是用<a href=https://doc.rust-lang.org/cargo/>cargo</a>编译，但是少数环境会用<a href=https://github.com/japaric/xargo>xargo</a>，所以还要安装<a href=https://github.com/japaric/xargo>xargo</a>。<a href=https://github.com/japaric/xargo>xargo</a>多了sysroot的管理。之前尝试压缩二进制的时候重新编译std库也是用这个。如果要指定特定目标的编译环境选项的话可以用nightly的rustc用下面的命令导出模板。</p><pre><code class=language-rust>rustc -Z unstable-options --print target-spec-json --target aarch64-unknown-linux-gnu | tee aarch64-unknown-linux-uclibc.json</code></pre><p>然后改内容。先移除<code>is-builtin</code>选项，再改自己的其他选项，比如:</p><pre><code class=language-diff>{
-  "abi-blacklist": [
-    "stdcall",
-    "fastcall",
-    "vectorcall",
-    "thiscall",
-    "win64",
-    "sysv64"
+  &#34;abi-blacklist&#34;: [
+    &#34;stdcall&#34;,
+    &#34;fastcall&#34;,
+    &#34;vectorcall&#34;,
+    &#34;thiscall&#34;,
+    &#34;win64&#34;,
+    &#34;sysv64&#34;
   ],
-  "arch": "aarch64",
-  "data-layout": "e-m:e-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128",
-  "dynamic-linking": true,
-- "env": "gnu",
-+ "env": "uclibc",
-  "executables": true,
-  "has-elf-tls": true,
-  "has-rpath": true,
-- "is-builtin": true,
-  "linker-flavor": "gcc",
-  "linker-is-gnu": true,
-  "llvm-target": "aarch64-unknown-linux-gnu",
-  "max-atomic-width": 128,
-  "os": "linux",
-  "position-independent-executables": true,
-  "pre-link-args": {
-    "gcc": [
-      "-Wl,--as-needed",
-      "-Wl,-z,noexecstack"
+  &#34;arch&#34;: &#34;aarch64&#34;,
+  &#34;data-layout&#34;: &#34;e-m:e-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128&#34;,
+  &#34;dynamic-linking&#34;: true,
+- &#34;env&#34;: &#34;gnu&#34;,
+&#43; &#34;env&#34;: &#34;uclibc&#34;,
+  &#34;executables&#34;: true,
+  &#34;has-elf-tls&#34;: true,
+  &#34;has-rpath&#34;: true,
+- &#34;is-builtin&#34;: true,
+  &#34;linker-flavor&#34;: &#34;gcc&#34;,
+  &#34;linker-is-gnu&#34;: true,
+  &#34;llvm-target&#34;: &#34;aarch64-unknown-linux-gnu&#34;,
+  &#34;max-atomic-width&#34;: 128,
+  &#34;os&#34;: &#34;linux&#34;,
+  &#34;position-independent-executables&#34;: true,
+  &#34;pre-link-args&#34;: {
+    &#34;gcc&#34;: [
+      &#34;-Wl,--as-needed&#34;,
+      &#34;-Wl,-z,noexecstack&#34;
     ]
   },
-  "relro-level": "full",
-  "target-c-int-width": "32",
-  "target-endian": "little",
-  "target-family": "unix",
-  "target-pointer-width": "64",
-  "vendor": "unknown"
+  &#34;relro-level&#34;: &#34;full&#34;,
+  &#34;target-c-int-width&#34;: &#34;32&#34;,
+  &#34;target-endian&#34;: &#34;little&#34;,
+  &#34;target-family&#34;: &#34;unix&#34;,
+  &#34;target-pointer-width&#34;: &#34;64&#34;,
+  &#34;vendor&#34;: &#34;unknown&#34;
 }</code></pre><p>然后直接用<a href=https://crates.io/crates/cross>cross</a>编译即可:</p><pre><code class=language-bash>cross build --target aarch64-unknown-linux-uclibc ;
 # cross build --target aarch64-unknown-linux-uclibc --release --features system-alloc ; </code></pre><p>不过这一套还是有些局限性。可能因为是基于docker的，我这里在 <a href=https://manjaro.org/>manjora</a> 发行版的Linux下尝试，只能打出linux+x86_64/i686和aarch64的二进制。其他的都失败了，可能和docker和宿主机共享内核有关。也可能其他环境的环境镜像没有很完善。</p><h2 id=rust2018>Rust2018</h2><p>上次看<a href=https://rust-lang.org/>Rust</a>的时候看到了它的2018计划，其中包括比较重要的std内的Futures库和2.0版本的宏，还有基于这两个的await功能。这也是比较吸引我的地方。不过<a href=https://aturon.github.io/apr/>官方的异步编程指引</a>似乎还没有完成。并且第二版的《Rust 程序设计语言》又被整理出了2018版： <a href=https://doc.rust-lang.org/book/>https://doc.rust-lang.org/book/</a></p><p>现在也是看到越来越多的工具系统增加了对<a href=https://rust-lang.org/>Rust</a>的支持。比如 <a href=https://gdbgui.com/docs.html>gdbgui</a> 里专门对<a href=https://rust-lang.org/>Rust</a>的支持，<a href=https://rust-lang.org/>Rust</a>也有自己的<a href=https://en.wikipedia.org/wiki/Name_mangling#Rust>符号表规则</a> 。虽然发展速度和go差距甚远，但是看到进展神速也是蛮开心的。</p><h3 id=宏的细节>宏的细节</h3><p><a href=https://rust-lang.org/>Rust</a>的宏我还没能完全理解，我目前的理解是<a href=https://rust-lang.org/>Rust</a>的提供了对<a href=https://rust-lang.org/>Rust</a>的AST的控制能力，宏支持模式匹配，但是匹配规则都是基于AST的。 <a href=https://danielkeep.github.io/tlborm/book/mbe-min-captures-and-expansion-redux.html>https://danielkeep.github.io/tlborm/book/mbe-min-captures-and-expansion-redux.html</a> 这里描述了宏的匹配规则和可用的一些匹配模式。</p><p>另外<a href=https://rust-lang.org/>Rust</a>的宏还有一些特别的约束：</p><ul><li><p>变量和表达式以<code>$</code>开头，其他都按字面值匹配。</p><blockquote><p>这样就不像C得必须按<code>,</code>分隔。语法形式就能比较自由。</p></blockquote></li><li><p>不定长匹配的每个模式的个数要想等。</p><blockquote><p><a href=https://rust-lang.org/>Rust</a>的宏可以多个变长参数，不过这时候每个变长参数的个数必须相同</p></blockquote></li><li><p>类型推断不可回退</p></li><li><p><a href=https://rust-lang.org/>Rust</a>的宏作用域是跟着模块走的</p><blockquote><p>父模块里的宏子模块也有效，外部模块可以通过 <code>#[macro_use] extern crate MODULE;</code> 来引入</p></blockquote></li></ul><p>它还可以定义</p><pre><code class=language-rust>macro_rules! bitflags {
     (
@@ -277,9 +277,9 @@ sudo dnf install docker docker-compose</code></pre><p>然后它默认大部分�
             $(
                 $(#[$inner:ident $($args:tt)*])*
                 const $Flag:ident = $value:expr;
-            )+
+            )&#43;
         }
-    ) => { ... };
+    ) =&gt; { ... };
 }</code></pre><p>这样的宏，来实现类似C#和typescript里属性器的功能。不过这部分我还没看懂。</p><p><img src=/2018/1809-01.png alt=1809-01.png loading=lazy>
 有人还写了个<a href=https://rust-lang.org/>Rust</a>的宏匹配流程的图形化工具，挺有意思滴 <a href=https://lukaslueg.github.io/macro_railroad_wasm_demo/>https://lukaslueg.github.io/macro_railroad_wasm_demo/</a></p><h3 id=宏与await>宏与await</h3><p>年初的时候，说是<a href=https://rust-lang.org/>Rust</a>要搞个官方流程的futures和await流程。我看了一篇介绍 <a href=https://boats.gitlab.io/blog/post/2018-04-06-async-await-final/>https://boats.gitlab.io/blog/post/2018-04-06-async-await-final/</a> 。虽然现在还没有release，但是最近Tokio已经出了预览版的sample了。</p><p>在写这篇总结的过程中，我又看到篇长长长长长的文章， <a href=http://bryangilbert.com/post/code/rust/adventures-futures-tokio-rust/>http://bryangilbert.com/post/code/rust/adventures-futures-tokio-rust/</a> 写得比较白话文一点。</p><p>大概代码长这样</p><pre><code class=language-rust>// Somewhere towards the top
 
@@ -294,11 +294,11 @@ fn handle(mut stream: TcpStream) {
         let mut buf = [0; 1024];
 
         loop {
-            match await!(stream.read_async(&mut buf)).unwrap() {
-                0 => break, // Socket closed
-                n => {
+            match await!(stream.read_async(&amp;mut buf)).unwrap() {
+                0 =&gt; break, // Socket closed
+                n =&gt; {
                     // Send the data back
-                    await!(stream.write_all_async(&buf[0..n])).unwrap();
+                    await!(stream.write_all_async(&amp;buf[0..n])).unwrap();
                 }
             }
         }
@@ -307,8 +307,8 @@ fn handle(mut stream: TcpStream) {
 
 // The main function
 fn main() {
-  let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
-  let listener = TcpListener::bind(&addr).unwrap();
+  let addr: SocketAddr = &#34;127.0.0.1:8080&#34;.parse().unwrap();
+  let listener = TcpListener::bind(&amp;addr).unwrap();
 
     tokio::run_async(async {
         let mut incoming = listener.incoming();

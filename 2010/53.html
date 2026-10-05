@@ -3,9 +3,9 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-2934702e3af18da2f6e9ff47b217b3a6 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2010/53.html target=_blank itemprop=url>ZOJ 3309 Search New Posts 解题报告</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav></div><br><div class=article-entry itemprop=articleBody><p>题目链接：<a href="http://acm.zju.edu.cn/onlinejudge/showProblem.do?problemCode=3309">http://acm.zju.edu.cn/onlinejudge/showProblem.do?problemCode=3309</a></p><p>一道典型的Hash题</p><p>题目很好理解。这里不复述</p><p>由于输入语句最大数量200000，不用Hash铁定TLE。然后数据量不超过10000，所以必然有很多search和reply的操作。</p><p>对于这个稍微做下优化就OK了</p><p>贴代码：</p><pre><code class=language-cpp>#include <iostream>
-#include <cstring>
-#include <vector>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-2934702e3af18da2f6e9ff47b217b3a6 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2010/53.html target=_blank itemprop=url>ZOJ 3309 Search New Posts 解题报告</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav></div><br><div class=article-entry itemprop=articleBody><p>题目链接：<a href="http://acm.zju.edu.cn/onlinejudge/showProblem.do?problemCode=3309">http://acm.zju.edu.cn/onlinejudge/showProblem.do?problemCode=3309</a></p><p>一道典型的Hash题</p><p>题目很好理解。这里不复述</p><p>由于输入语句最大数量200000，不用Hash铁定TLE。然后数据量不超过10000，所以必然有很多search和reply的操作。</p><p>对于这个稍微做下优化就OK了</p><p>贴代码：</p><pre><code class=language-cpp>#include &lt;iostream&gt;
+#include &lt;cstring&gt;
+#include &lt;vector&gt;
 using namespace std;
 
 const long hashsize = 51071; //Hash表大小
@@ -14,18 +14,18 @@ unsigned long ELFHash(char* strIn)
     unsigned long hashInt = 0 ;
     unsigned long x = 0 ;
     long i;
-    for (i = 0; i <= strlen(strIn) - 1; i++)
+    for (i = 0; i &lt;= strlen(strIn) - 1; i&#43;&#43;)
     {
-        hashInt = (hashInt << 4) + strIn[i];
-        if ((x = hashInt & 0xF0000000L) != 0)
+        hashInt = (hashInt &lt;&lt; 4) &#43; strIn[i];
+        if ((x = hashInt &amp; 0xF0000000L) != 0)
         {
-            hashInt ^= ( x >> 24 ) ;
-            hashInt &= ~x ;
+            hashInt ^= ( x &gt;&gt; 24 ) ;
+            hashInt &amp;= ~x ;
         }
     }
-    return (hashInt & 0x7FFFFFFF) % hashsize;
+    return (hashInt &amp; 0x7FFFFFFF) % hashsize;
 }
-template<typename _t>
+template&lt;typename _T&gt;
 class _My_Hash_ToInt_Data
 {
 public:
@@ -38,7 +38,7 @@ public:
     long times;
     long next;
 };
-template<long _sz,class _t, unsigned long pfun(_t& _off)>
+template&lt;long _SZ,class _T, unsigned long pFun(_T&amp; _Off)&gt;
 class _My_Hash_ToInt
 {
 public:
@@ -51,7 +51,7 @@ public:
     long find(_T _Off)
     {
         long pos = hash[pFun(_Off)];
-        while(pos >= 0)
+        while(pos &gt;= 0)
         {
             if(data[pos].data == _Off)
                 return pos;
@@ -64,11 +64,11 @@ public:
     {
         long oldPos = pFun(_Off);
         long pos = hash[oldPos];
-        while(pos >= 0)
+        while(pos &gt;= 0)
         {
             if(data[pos].data == _Off)
             {
-                data[pos].times ++;
+                data[pos].times &#43;&#43;;
                 return pos;
             }
             else
@@ -78,7 +78,7 @@ public:
         data[length].times = 1;
         data[length].next = hash[oldPos];
         hash[oldPos] = length ;
-        return length ++;
+        return length &#43;&#43;;
     }
     void clear()
     {
@@ -88,97 +88,97 @@ public:
     }
     //Member
     long length;
-    _My_Hash_ToInt_Data<_T> data[_SZ];
+    _My_Hash_ToInt_Data&lt;_T&gt; data[_SZ];
     long hash[hashsize];
 };
 class node
 {
 public:
     char str[60];
-    bool operator == (node &strin)
+    bool operator == (node &amp;strin)
     {
         return !strcmp(str, strin.str);
     }
-    node& operator = (node &strin)
+    node&amp; operator = (node &amp;strin)
     {
         strcpy(str, strin.str);
         return (*this);
     }
 };
-unsigned long ELFHashEx(node &strIn)
+unsigned long ELFHashEx(node &amp;strIn)
 {
     return ELFHash(strIn.str);
 }
-_My_Hash_ToInt<10005, node, ELFHashEx>hash;
+_My_Hash_ToInt&lt;10005, node, ELFHashEx&gt;hash;
 long usedR[10005] = {0};
-vector<long>list;
+vector&lt;long&gt;list;
 char cmd[10];
 int main()
 {
     long n,round = 0, i;
     long hashlen = 0;
     node str;
-    while(scanf("%ld", &n) != EOF)
+    while(scanf(&#34;%ld&#34;, &amp;n) != EOF)
     {
-        round ++;
+        round &#43;&#43;;
         hash.clear();
         list.clear();
         while(n --)
         {
-            scanf("%s", cmd);
-            if(!strcmp("new", cmd))
+            scanf(&#34;%s&#34;, cmd);
+            if(!strcmp(&#34;new&#34;, cmd))
             {
-                scanf("%s", str.str);
+                scanf(&#34;%s&#34;, str.str);
                 hashlen = hash.insert(str);
                 usedR[hashlen] = round;
                 list.push_back(hashlen);
-                hashlen ++;
+                hashlen &#43;&#43;;
             }
-            else if(!strcmp("reply", cmd))
+            else if(!strcmp(&#34;reply&#34;, cmd))
             {
-                scanf("%s", str.str);
+                scanf(&#34;%s&#34;, str.str);
                 long pos = hash.find(str);
                 usedR[pos] = round;
                 list.push_back(pos);
             }
-            else if(!strcmp("tag", cmd))
+            else if(!strcmp(&#34;tag&#34;, cmd))
             {
-                scanf("%s", str.str);
+                scanf(&#34;%s&#34;, str.str);
                 long pos = hash.find(str);
                 usedR[pos] = 0;
             }
-            else if(!strcmp("search", cmd))
+            else if(!strcmp(&#34;search&#34;, cmd))
             {
                 long outN = 100;
-                for(i = list.size() - 1; i >= 0 && outN; i --)
+                for(i = list.size() - 1; i &gt;= 0 &amp;&amp; outN; i --)
                 {
-                    if(usedR[list[i]] && usedR[list[i]] <= round)
+                    if(usedR[list[i]] &amp;&amp; usedR[list[i]] &lt;= round)
                     {
-                        printf("%s\n", hash.data[ list[i] ].data.str );
-                        usedR[list[i]] = round + 1;
+                        printf(&#34;%s\n&#34;, hash.data[ list[i] ].data.str );
+                        usedR[list[i]] = round &#43; 1;
                         outN --;
                     }
                 }
 
-                printf("###\n");
-                round ++;
+                printf(&#34;###\n&#34;);
+                round &#43;&#43;;
             }
 
         }
 
-        putchar('\n');
+        putchar(&#39;\n&#39;);
     }
    return 0;
-}</code></pre><p>使用STL又过了一遍。内存消耗减少了近300kb，时间大概是原来的3倍。370Ms</p><pre><code class=language-cpp>#include <iostream>
-#include <cstring>
-#include <vector>
-#include <string>
-#include <map>
+}</code></pre><p>使用STL又过了一遍。内存消耗减少了近300kb，时间大概是原来的3倍。370Ms</p><pre><code class=language-cpp>#include &lt;iostream&gt;
+#include &lt;cstring&gt;
+#include &lt;vector&gt;
+#include &lt;string&gt;
+#include &lt;map&gt;
 using namespace std;
 
-map<string, long>hash;
+map&lt;string, long&gt;hash;
 long usedR[10005] = {0};
-vector<long>list;
+vector&lt;long&gt;list;
 char cmd[10];
 string strO[10005];
 int main()
@@ -186,57 +186,57 @@ int main()
     long n,round = 0, i;
     long hashlen = 0;
     string str;
-    while(scanf("%ld", &n) != EOF)
+    while(scanf(&#34;%ld&#34;, &amp;n) != EOF)
     {
-        round ++;
+        round &#43;&#43;;
         hashlen = 0;
         hash.clear();
         list.clear();
         while(n --)
         {
-            scanf("%s", cmd);
-            if(!strcmp("new", cmd))
+            scanf(&#34;%s&#34;, cmd);
+            if(!strcmp(&#34;new&#34;, cmd))
             {
-                cin>> str;
+                cin&gt;&gt; str;
                 hash[ str ] = hashlen;
                 usedR[hashlen] = round;
                 list.push_back(hashlen);
                 strO[hashlen] = str;
-                hashlen ++;
+                hashlen &#43;&#43;;
             }
-            else if(!strcmp("reply", cmd))
+            else if(!strcmp(&#34;reply&#34;, cmd))
             {
-                cin>> str;
+                cin&gt;&gt; str;
                 long pos = hash[str];
                 usedR[pos] = round;
                 list.push_back(pos);
             }
-            else if(!strcmp("tag", cmd))
+            else if(!strcmp(&#34;tag&#34;, cmd))
             {
-                cin>> str;
+                cin&gt;&gt; str;
                 long pos = hash[str];
                 usedR[pos] = 0;
             }
-            else if(!strcmp("search", cmd))
+            else if(!strcmp(&#34;search&#34;, cmd))
             {
                 long outN = 100;
-                for(i = list.size() - 1; i >= 0 && outN; i --)
+                for(i = list.size() - 1; i &gt;= 0 &amp;&amp; outN; i --)
                 {
-                    if(usedR[list[i]] && usedR[list[i]] <= round)
+                    if(usedR[list[i]] &amp;&amp; usedR[list[i]] &lt;= round)
                     {
-                        cout<< strO[ list[i] ]<< endl;
-                        usedR[list[i]] = round + 1;
+                        cout&lt;&lt; strO[ list[i] ]&lt;&lt; endl;
+                        usedR[list[i]] = round &#43; 1;
                         outN --;
                     }
                 }
 
-                printf("###\n");
-                round ++;
+                printf(&#34;###\n&#34;);
+                round &#43;&#43;;
             }
 
         }
 
-        putchar('\n');
+        putchar(&#39;\n&#39;);
     }
    return 0;
 }</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2010-03-15T14:49:52.000+00:00 itemprop=datePublished>2010-03-15</time></span>

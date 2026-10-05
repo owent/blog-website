@@ -11,13 +11,13 @@ DP方程是 <em>bc[i][j] = min(bc[i][k] + bc[k][j])</em> 注：bc[i][j]表示字
 不解释，贴代码：</p><pre><code class=language-cpp>/**
  * URL:http://acm.pku.edu.cn/JudgeOnline/problem?id=1141
  * Author: OWenT
- * DP问题:DP 方程bc[i][j] = min(bc[i][k] + bc[k][j])
+ * DP问题:DP 方程bc[i][j] = min(bc[i][k] &#43; bc[k][j])
  */
 
-#include <iostream>
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
+#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+#include &lt;cstring&gt;
+#include &lt;cstdlib&gt;
 using namespace std;
 
 #define MAXN 105
@@ -38,24 +38,24 @@ int main()
         memset(strSplit, -1, sizeof(strSplit));
         if(len == 0)
         {
-            putchar('\n');
+            putchar(&#39;\n&#39;);
             continue;
         }
-        for(i = 0; i < len; i ++)
+        for(i = 0; i &lt; len; i &#43;&#43;)
             bc[i][i] = 1;
 
-        for(i = 1; i < len; i ++)//跃进个数
+        for(i = 1; i &lt; len; i &#43;&#43;)//跃进个数
         {
-            for(j = 0; j + i < len; j ++)//起始位置
+            for(j = 0; j &#43; i &lt; len; j &#43;&#43;)//起始位置
             {
-                tmpEd = i + j;
-                long tmpTBc, minBc = 1<< 16;
-                if((str[j] == '(' && str[tmpEd] == ')') || (str[j] == '[' && str[tmpEd] == ']'))
-                    minBc = bc[j + 1][tmpEd - 1];//如果不匹配下面必然有分割
-                for(k = j; k < tmpEd; k ++)
+                tmpEd = i &#43; j;
+                long tmpTBc, minBc = 1&lt;&lt; 16;
+                if((str[j] == &#39;(&#39; &amp;&amp; str[tmpEd] == &#39;)&#39;) || (str[j] == &#39;[&#39; &amp;&amp; str[tmpEd] == &#39;]&#39;))
+                    minBc = bc[j &#43; 1][tmpEd - 1];//如果不匹配下面必然有分割
+                for(k = j; k &lt; tmpEd; k &#43;&#43;)
                 {
-                    tmpTBc = bc[j][k] + bc[k + 1][tmpEd];//跃进个数为第一层循环就是要保证这里的子域都处理过了
-                    if(tmpTBc < minBc)
+                    tmpTBc = bc[j][k] &#43; bc[k &#43; 1][tmpEd];//跃进个数为第一层循环就是要保证这里的子域都处理过了
+                    if(tmpTBc &lt; minBc)
                     {
                         minBc = tmpTBc;//最少补充个数
                         strSplit[j][tmpEd] = k;//分割点
@@ -66,34 +66,34 @@ int main()
         }
 
         printStr(0, len - 1);
-        putchar('\n');
+        putchar(&#39;\n&#39;);
     }
     return 0;
 }
 
 void printStr(long b, long e)
 {
-    if(b > e)
+    if(b &gt; e)
         return;
     else if(b == e)
     {
-        if(str[b] == '(' || str[b] == ')')
-            printf("()");
+        if(str[b] == &#39;(&#39; || str[b] == &#39;)&#39;)
+            printf(&#34;()&#34;);
         else
-            printf("[]");
+            printf(&#34;[]&#34;);
     }
     else
     {
-        if(strSplit[b][e] < 0)//无分割点
+        if(strSplit[b][e] &lt; 0)//无分割点
         {
             putchar(str[b]);
-            printStr( b + 1, e - 1);
-            putchar((str[b] == '(')? ')' : ']');
+            printStr( b &#43; 1, e - 1);
+            putchar((str[b] == &#39;(&#39;)? &#39;)&#39; : &#39;]&#39;);
         }
         else
         {
             printStr(b, strSplit[b][e]);
-            printStr(strSplit[b][e] + 1, e);
+            printStr(strSplit[b][e] &#43; 1, e);
         }
     }
 }</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2010-04-05T16:52:28.000+00:00 itemprop=datePublished>2010-04-05</time></span>

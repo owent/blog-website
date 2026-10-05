@@ -3,24 +3,24 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-843910dbe6995a060787a096bcb558ac class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2013/890.html target=_blank itemprop=url>VC和GCC内成员函数指针实现的研究(一)</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#单继承>单继承</a></li><li><a href=#vc单继承成员函数指针实现>VC单继承成员函数指针实现</a></li><li><a href=#gcc单继承成员函数指针实现>GCC单继承成员函数指针实现</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><p>最近在《C++对象模型》一书里说到的virtual的成员函数指针，低于128的被cfront编译器认为是虚表偏移量（支持子类对父类函数的覆盖）。VC只是提了下单继承、多继承和虚继承的实现方案不同，GCC没有提及，所以就专门稍微深入分析研究下他们的实现机制。</p><p>以下所有代码都使用了64位编译，所以32位编译和运行的结果可能有略微差异。</p><h2 id=单继承>单继承</h2><p>首先是单继承的情况。这里用到的代码如下所示：</p><pre><code class=language-cpp>#include <ctime>
-#include <vector>
-#include <algorithm>
-#include <cstdio>
-#include <stdint.h>
-#include <cstddef>
-#include <string>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-843910dbe6995a060787a096bcb558ac class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2013/890.html target=_blank itemprop=url>VC和GCC内成员函数指针实现的研究(一)</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#单继承>单继承</a></li><li><a href=#vc单继承成员函数指针实现>VC单继承成员函数指针实现</a></li><li><a href=#gcc单继承成员函数指针实现>GCC单继承成员函数指针实现</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><p>最近在《C++对象模型》一书里说到的virtual的成员函数指针，低于128的被cfront编译器认为是虚表偏移量（支持子类对父类函数的覆盖）。VC只是提了下单继承、多继承和虚继承的实现方案不同，GCC没有提及，所以就专门稍微深入分析研究下他们的实现机制。</p><p>以下所有代码都使用了64位编译，所以32位编译和运行的结果可能有略微差异。</p><h2 id=单继承>单继承</h2><p>首先是单继承的情况。这里用到的代码如下所示：</p><pre><code class=language-cpp>#include &lt;ctime&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;cstdio&gt;
+#include &lt;stdint.h&gt;
+#include &lt;cstddef&gt;
+#include &lt;string&gt;
 
 class foo_a
 {
 public:
     virtual ~foo_a(){}
     virtual void info() {
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
+        printf(&#34;%s:%d\n&#34;, __FUNCTION__, __LINE__);
     }
 
     void print() {
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
+        printf(&#34;%s:%d\n&#34;, __FUNCTION__, __LINE__);
     }
 };
 
@@ -29,23 +29,23 @@ class foo_b: public foo_a
 {
 public:
     virtual void info() {
-        printf("%s:%d\n", __FUNCTION__, __LINE__);
+        printf(&#34;%s:%d\n&#34;, __FUNCTION__, __LINE__);
     }
 };
 
 
 int main(int argc, char* argv[]) {
-    void (foo_a::*vptr)() = &foo_a::info;
-    void (foo_a::*ptr)() = &foo_a::print;
+    void (foo_a::*vptr)() = &amp;foo_a::info;
+    void (foo_a::*ptr)() = &amp;foo_a::print;
 
     foo_b b;
     foo_a a;
 
     
-    printf("word size = %d\n", (int)(sizeof(size_t)));
-    printf("address of &foo_a::info = 0x%llxH\n", &foo_a::info);
-    printf("pointer to &foo_a::info = 0x%llxH\n", vptr);
-    printf("sizeof vptr = %d\n", (int)(sizeof(vptr)));
+    printf(&#34;word size = %d\n&#34;, (int)(sizeof(size_t)));
+    printf(&#34;address of &amp;foo_a::info = 0x%llxH\n&#34;, &amp;foo_a::info);
+    printf(&#34;pointer to &amp;foo_a::info = 0x%llxH\n&#34;, vptr);
+    printf(&#34;sizeof vptr = %d\n&#34;, (int)(sizeof(vptr)));
 
     (a.*vptr)();
     (b.*vptr)();

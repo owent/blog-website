@@ -3,7 +3,27 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/tags/showjson/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-573"><div class="article-panel-inner archive-article-inner"><header class="article-header archive-article-title" title="JSON显示库 -- showJson （Javascript）"><h1 itemprop=name><a class=article-title href=//owent.net/2012/573.html target=_blank itemprop=url>JSON显示库 -- showJson （Javascript）</a></h1></header><div class=article-summary>现在的web的js开发很方便啊，但是碰到iframe里的东西还是不方便看到变量的内容，所以就写了这么个看json内容的玩意，还可以当控制台输出用。 很简单,有需要以后开发新功能 /** * Show json in a new page.(For debug) * * Licensed under the MIT or GPL Version 3 licenses. * @version 1.3 * @author OWenT * @link…</div><div class=article-more><a href=//owent.net/2012/573.html target=_blank itemprop=url>更多</a></div><div class="article-panel-footer archive-article-footer"><time datetime=2012-04-01T06:17:48.000+00:00 itemprop=datePublished>2012-04-01</time></div></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-573"><div class="article-panel-inner archive-article-inner"><div class=archive-card-meta><time datetime=2012-04-01T06:17:48.000+00:00 itemprop=datePublished>2012-04-01</time></div><header class="article-header archive-article-title"><h2 itemprop=name><a class=article-title href=//owent.net/2012/573.html target=_blank rel=noopener itemprop=url title="JSON显示库 -- showJson （Javascript）">JSON显示库 -- showJson （Javascript）</a></h2></header><div class=article-summary><div class=archive-summary-content><p>现在的web的js开发很方便啊，但是碰到iframe里的东西还是不方便看到变量的内容，所以就写了这么个看json内容的玩意，还可以当控制台输出用。</p><p>很简单,有需要以后开发新功能</p><pre><code class=language-js>/** 
+ * Show json in a new page.(For debug)
+ *
+ * Licensed under the MIT or GPL Version 3 licenses.
+ * @version 1.3
+ * @author OWenT
+ * @link http://www.owent.net
+ * @history 
+ * 		2012.12.27 
+ * 			1. 改进JSON内对象循环引用时的导致的栈溢出问题
+ * 			2. 引入层级路径
+ * 			3. 引入锚点
+ */
+ 
+ /**
+  * Object转为字符串
+  * @param {Object} json Object对象 
+  * @param {Number} tab 缩进数量
+  * @param {Object} rules…</code></pre></div></div><footer class=archive-article-footer><div class=archive-card-tags><a class=archive-card-tag href=/tags/javascript.html title=Javascript>Javascript</a>
+<a class=archive-card-tag href=/tags/json.html title=JSON>JSON</a>
+<a class=archive-card-tag href=/tags/showjson.html title=Showjson>Showjson</a></div><div class=article-more><a href=//owent.net/2012/573.html target=_blank rel=noopener itemprop=url aria-label="更多: JSON显示库 -- showJson （Javascript）">更多<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div></footer></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class="inner clearfix"><strong id=footer-left class="float-left float-start"><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>2026&nbsp;OWenT
 </strong><strong id=footer-right class="float-right float-end"><a href=https://beian.miit.gov.cn/ target=_blank>沪ICP备2022003252号</a>&nbsp;&nbsp;<a href=https://github.com/owent/blog-hugo target=_blank>本站源码</a>,
 发布者 <a href=https://gohugo.io/ target=_blank>Hugo</a>,
 主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank>distinctionpp</a>

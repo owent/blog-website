@@ -79,70 +79,70 @@ flowchart LR
     Meters -- Collect获取结果后 --> PushExporter
     SyncMetricStorage@{ shape: lin-cyl}
     AsyncMetricStorage@{ shape: lin-cyl}
-  </pre></div><p>但是异步接口调用有一定复杂度，一个最简单的注册指标的流程如下:</p><pre><code class=language-cpp>using otel_observer_result_int64 = opentelemetry::metrics::ObserverResultT<int64_t>;
-using otel_observer_result_double = opentelemetry::metrics::ObserverResultT<double>;
+  </pre></div><p>但是异步接口调用有一定复杂度，一个最简单的注册指标的流程如下:</p><pre><code class=language-cpp>using otel_observer_result_int64 = opentelemetry::metrics::ObserverResultT&lt;int64_t&gt;;
+using otel_observer_result_double = opentelemetry::metrics::ObserverResultT&lt;double&gt;;
 
-auto meter = provider->GetMeter("meter name");
-auto instrument = meter->CreateInt64ObservableGauge("instrument name", "instrument description", "instrument unit");
+auto meter = provider-&gt;GetMeter(&#34;meter name&#34;);
+auto instrument = meter-&gt;CreateInt64ObservableGauge(&#34;instrument name&#34;, &#34;instrument description&#34;, &#34;instrument unit&#34;);
 
-instrument->AddCallback([](opentelemetry::metrics::ObserverResult result, void* /*private_data*/) {
-    if (opentelemetry::nostd::holds_alternative<opentelemetry::nostd::shared_ptr<otel_observer_result_int64>>(result)) {
-        auto type_result = opentelemetry::nostd::get<opentelemetry::nostd::shared_ptr<otel_observer_result_int64>>(result);
+instrument-&gt;AddCallback([](opentelemetry::metrics::ObserverResult result, void* /*private_data*/) {
+    if (opentelemetry::nostd::holds_alternative&lt;opentelemetry::nostd::shared_ptr&lt;otel_observer_result_int64&gt;&gt;(result)) {
+        auto type_result = opentelemetry::nostd::get&lt;opentelemetry::nostd::shared_ptr&lt;otel_observer_result_int64&gt;&gt;(result);
         if (type_result) {
-            type_result->Observe(static_cast<int64_t>(get_result_value()), {} /* attributes */);
+            type_result-&gt;Observe(static_cast&lt;int64_t&gt;(get_result_value()), {} /* attributes */);
         }
-    } else if (opentelemetry::nostd::holds_alternative<opentelemetry::nostd::shared_ptr<otel_observer_result_double>>(result)) {
-        auto type_result = opentelemetry::nostd::get<opentelemetry::nostd::shared_ptr<otel_observer_result_double>>(result);
-        type_result->Observe(static_cast<double>(result_value), {} /* attributes */);
+    } else if (opentelemetry::nostd::holds_alternative&lt;opentelemetry::nostd::shared_ptr&lt;otel_observer_result_double&gt;&gt;(result)) {
+        auto type_result = opentelemetry::nostd::get&lt;opentelemetry::nostd::shared_ptr&lt;otel_observer_result_double&gt;&gt;(result);
+        type_result-&gt;Observe(static_cast&lt;double&gt;(result_value), {} /* attributes */);
     }
-} /*, void* private_data*/);</code></pre><p>这个接口有几个需要注意的地方:</p><ul><li>上报一个指标，有meter和instrument的概念。目前v1版本是不支持删除callback、instrument和meter的。目前即便v2版本也删不干净。所以如果reload，最好是重新创建provider，那么这里这个meter、instrument和callback都要重新创建和注册。</li></ul><blockquote><p>由于最后一个Provider引用释放的时候，otel-cpp会自动调用一次Flush吧所有已经导出的数据强制刷出。这会导致线程Block，所以为了不影响业务主线程。这里还要处理一次Reload的时候另起线程来执行Flush。</p></blockquote><ul><li>指标类型和调用Observe的传入类型要匹配，如果涉及浮点和整数转换的话，还要考虑 <a href=https://en.cppreference.com/w/cpp/types/numeric_limits/epsilon>epsilon</a> 。</li><li>回调函数的签名是 <code>using ObservableCallbackPtr = void (*)(ObserverResult, void *);</code> 只能透传一个 <code>void*</code> ，如果要包装更复杂的数据透传需要自己封装。</li><li>回调执行会跨线程，所以数据上报要保证线程安全。</li><li>多源拉取时可能会反复触发回调，所以不能简单地根据回调时间差来计算增量部分，否则可能导致误差。</li></ul><p>我们通过抽象了一层来一次性解决这些问题。每次业务层采集从缓存里读数据，并且底层直接处理掉类型转换。比如:</p><pre><code class=language-cpp>for (auto& record : metrics_item->collected_records) {
+} /*, void* private_data*/);</code></pre><p>这个接口有几个需要注意的地方:</p><ul><li>上报一个指标，有meter和instrument的概念。目前v1版本是不支持删除callback、instrument和meter的。目前即便v2版本也删不干净。所以如果reload，最好是重新创建provider，那么这里这个meter、instrument和callback都要重新创建和注册。</li></ul><blockquote><p>由于最后一个Provider引用释放的时候，otel-cpp会自动调用一次Flush吧所有已经导出的数据强制刷出。这会导致线程Block，所以为了不影响业务主线程。这里还要处理一次Reload的时候另起线程来执行Flush。</p></blockquote><ul><li>指标类型和调用Observe的传入类型要匹配，如果涉及浮点和整数转换的话，还要考虑 <a href=https://en.cppreference.com/w/cpp/types/numeric_limits/epsilon>epsilon</a> 。</li><li>回调函数的签名是 <code>using ObservableCallbackPtr = void (*)(ObserverResult, void *);</code> 只能透传一个 <code>void*</code> ，如果要包装更复杂的数据透传需要自己封装。</li><li>回调执行会跨线程，所以数据上报要保证线程安全。</li><li>多源拉取时可能会反复触发回调，所以不能简单地根据回调时间差来计算增量部分，否则可能导致误差。</li></ul><p>我们通过抽象了一层来一次性解决这些问题。每次业务层采集从缓存里读数据，并且底层直接处理掉类型转换。比如:</p><pre><code class=language-cpp>for (auto&amp; record : metrics_item-&gt;collected_records) {
     if (!record) {
     continue;
     }
-    ++export_record_count;
+    &#43;&#43;export_record_count;
 
-    if (opentelemetry::nostd::holds_alternative<
-            opentelemetry::nostd::shared_ptr<opentelemetry::metrics::observerresultt<int64_t>>>(result)) {
-    auto real_observer = opentelemetry::nostd::get<
-        opentelemetry::nostd::shared_ptr<opentelemetry::metrics::observerresultt<int64_t>>>(result);
+    if (opentelemetry::nostd::holds_alternative&lt;
+            opentelemetry::nostd::shared_ptr&lt;opentelemetry::metrics::ObserverResultT&lt;int64_t&gt;&gt;&gt;(result)) {
+    auto real_observer = opentelemetry::nostd::get&lt;
+        opentelemetry::nostd::shared_ptr&lt;opentelemetry::metrics::ObserverResultT&lt;int64_t&gt;&gt;&gt;(result);
     if (real_observer) {
-        real_observer->Observe(get_opentelemetry_utility_metrics_record_value_as_int64(record->value),
-                                opentelemetry_utility::get_attributes(record->attributes));
+        real_observer-&gt;Observe(get_opentelemetry_utility_metrics_record_value_as_int64(record-&gt;value),
+                                opentelemetry_utility::get_attributes(record-&gt;attributes));
     }
-    } else if (opentelemetry::nostd::holds_alternative<
-                    opentelemetry::nostd::shared_ptr<opentelemetry::metrics::observerresultt<double>>>(result)) {
-    auto real_observer = opentelemetry::nostd::get<
-        opentelemetry::nostd::shared_ptr<opentelemetry::metrics::observerresultt<double>>>(result);
+    } else if (opentelemetry::nostd::holds_alternative&lt;
+                    opentelemetry::nostd::shared_ptr&lt;opentelemetry::metrics::ObserverResultT&lt;double&gt;&gt;&gt;(result)) {
+    auto real_observer = opentelemetry::nostd::get&lt;
+        opentelemetry::nostd::shared_ptr&lt;opentelemetry::metrics::ObserverResultT&lt;double&gt;&gt;&gt;(result);
     if (real_observer) {
-        real_observer->Observe(get_opentelemetry_utility_metrics_record_value_as_double(record->value),
-                                opentelemetry_utility::get_attributes(record->attributes));
+        real_observer-&gt;Observe(get_opentelemetry_utility_metrics_record_value_as_double(record-&gt;value),
+                                opentelemetry_utility::get_attributes(record-&gt;attributes));
     }
     }
-}</code></pre><p>这里 <code>metrics_item->collected_records</code> 什么时候刷新呢？每次触发采集的时候，我们会检查采集版本号，当超出采集周期的时候会自增需要采集的版本号。</p><pre><code class=language-cpp>if (now - metrics_item->collected_timepoint > metrics_item->collect_interval) {
-  metrics_item->export_version.store(metrics_item->collect_version.load(std::memory_order_acquire),
+}</code></pre><p>这里 <code>metrics_item->collected_records</code> 什么时候刷新呢？每次触发采集的时候，我们会检查采集版本号，当超出采集周期的时候会自增需要采集的版本号。</p><pre><code class=language-cpp>if (now - metrics_item-&gt;collected_timepoint &gt; metrics_item-&gt;collect_interval) {
+  metrics_item-&gt;export_version.store(metrics_item-&gt;collect_version.load(std::memory_order_acquire),
                                      std::memory_order_release);
   callback_data_set.second.collecting_version.fetch_add(1, std::memory_order_release);
-  metrics_item->collected_timepoint = now;
-  std::lock_guard<std::recursive_mutex> collected_lock_guard{metrics_item->collected_lock};
-  metrics_item->collected_records.clear();
-} else if (now < metrics_item->collected_timepoint) {
-  metrics_item->collected_timepoint = now;
+  metrics_item-&gt;collected_timepoint = now;
+  std::lock_guard&lt;std::recursive_mutex&gt; collected_lock_guard{metrics_item-&gt;collected_lock};
+  metrics_item-&gt;collected_records.clear();
+} else if (now &lt; metrics_item-&gt;collected_timepoint) {
+  metrics_item-&gt;collected_timepoint = now;
 }</code></pre><p>然后外部Tick的时候，发现这个collecting_version大于导出数据版本的时候，才去触发用户层采集接口。
 在多源抓取的时候，可能在一个采集周期内多次触发采集回调。这时候就能直接命中缓存，直接返回。</p><p>这里有个小细节是因为指标数量可能比较多，如果一帧里全量采集可能会导致卡顿。所以有必要在一次采集消耗过高时分针增量采集。
 我们现在是以一个指标为单位，比如有2000个指标，采集200个就话费了比较长时间了，就让出时间片，下一个Tick从第201个开始。
 这里也要限制每个Tick的采集量，尽可能公平调度，防止引起其他功能模块饥饿。</p><p>由于希望业务层不要关心线程安全的复杂性，所以我们的OTEL层采集在专门的采集线程上，但是业务层的采集总是在主线程执行。中间用无锁队列串起来，大致结构如下:</p><div class=bg-dark><p><img src=/2025/2503-01.png alt=2503-01.png loading=lazy></p></div><h2 id=自动重注册>自动重注册</h2><p>在Reload的时候，我们需要支持重新加载所有的配置资源、processor、exporter等组件。但是整个OTEL SDK里是没有移除接口的。整个处理组件和IO组件一旦搭配好就处于immutable状态。
 那么为了实现Reload，最简单的方式就是从最上游开始，也就是从Provider层开始整个重建。这里涉及两个问题。</p><p>问题一：在创建完新Provider后，销毁前一个Provider时，会触发对正在导出的数据的Flush操作。这有可能是个延迟操作，会阻塞调用方。显然我们不能接受足额阻塞我们业务线程。
-所以这里的解决方法就是创建一个专门的销毁线程。</p><pre><code class=language-cpp>std::shared_ptr<global_service_data_type> current_service_cache = get_global_service_data();
+所以这里的解决方法就是创建一个专门的销毁线程。</p><pre><code class=language-cpp>std::shared_ptr&lt;global_service_data_type&gt; current_service_cache = get_global_service_data();
 if (!current_service_cache) {
     return;
 }
 
 // 我们的系统存在多分组，所以要处理一下默认分组和命名分组
-std::shared_ptr<group_type> previous_group = group;
-if (group->group_name.empty()) {
-    current_service_cache->default_group.swap(previous_group);
+std::shared_ptr&lt;group_type&gt; previous_group = group;
+if (group-&gt;group_name.empty()) {
+    current_service_cache-&gt;default_group.swap(previous_group);
 } else {
-    current_service_cache->named_groups[group->group_name].swap(previous_group);
+    current_service_cache-&gt;named_groups[group-&gt;group_name].swap(previous_group);
 }
 
 // Shutdown in another thread to avoid blocking
@@ -151,14 +151,14 @@ do {
         break;
     }
     // 这里引用provider是为了续上provider的生命周期传给自线程内执行Flush，否则最后一个引用计数结束会立即执行Flush阻塞。
-    if (previous_group->logs_handle.provider == group->logs_handle.provider) {
-        previous_group->logs_handle.reset();
+    if (previous_group-&gt;logs_handle.provider == group-&gt;logs_handle.provider) {
+        previous_group-&gt;logs_handle.reset();
     }
-    if (previous_group->metrics_handle.provider == group->metrics_handle.provider) {
-        previous_group->metrics_handle.reset();
+    if (previous_group-&gt;metrics_handle.provider == group-&gt;metrics_handle.provider) {
+        previous_group-&gt;metrics_handle.reset();
     }
-    if (previous_group->tracer_handle.provider == group->tracer_handle.provider) {
-        previous_group->tracer_handle.reset();
+    if (previous_group-&gt;tracer_handle.provider == group-&gt;tracer_handle.provider) {
+        previous_group-&gt;tracer_handle.reset();
     }
     std::thread cleanup_thread([previous_group, current_service_cache]() {
         // 子线程执行Flush和销毁操作,这里面是执行一些线程安全相关的设置和Flush
@@ -167,36 +167,36 @@ do {
     cleanup_thread.detach();
 } while (false);
 
-static void _opentelemetry_cleanup_group(std::shared_ptr<::mx::telemetry::group_type> group,
-                                         const std::shared_ptr<global_service_data_type> &current_service_cache) {
-  std::list<std::shared_ptr<std::thread>> shutdown_threads;
+static void _opentelemetry_cleanup_group(std::shared_ptr&lt;::mx::telemetry::group_type&gt; group,
+                                         const std::shared_ptr&lt;global_service_data_type&gt; &amp;current_service_cache) {
+  std::list&lt;std::shared_ptr&lt;std::thread&gt;&gt; shutdown_threads;
 
-  if (current_service_cache && group && group->initialized) {
-    atfw::util::lock::read_lock_holder<atfw::util::lock::spin_rw_lock> lock_guard{
-        current_service_cache->on_group_destroy_callback_lock};
-    for (auto &callback_fn : current_service_cache->on_group_destroy_callbacks) {
+  if (current_service_cache &amp;&amp; group &amp;&amp; group-&gt;initialized) {
+    atfw::util::lock::read_lock_holder&lt;atfw::util::lock::spin_rw_lock&gt; lock_guard{
+        current_service_cache-&gt;on_group_destroy_callback_lock};
+    for (auto &amp;callback_fn : current_service_cache-&gt;on_group_destroy_callbacks) {
       if (callback_fn) {
         callback_fn(group);
       }
     }
 
-    group->initialized = false;
+    group-&gt;initialized = false;
   }
 
   if (group) {
     // Provider must be destroy before logger
     {
-      atfw::util::lock::write_lock_holder<atfw::util::lock::spin_rw_lock> lock_guard{group->logger_lock};
-      if (group->logs_handle.provider) {
-        if (group->logs_handle.shutdown_callback) {
-          auto handle = group->logs_handle;
+      atfw::util::lock::write_lock_holder&lt;atfw::util::lock::spin_rw_lock&gt; lock_guard{group-&gt;logger_lock};
+      if (group-&gt;logs_handle.provider) {
+        if (group-&gt;logs_handle.shutdown_callback) {
+          auto handle = group-&gt;logs_handle;
           // 每个组件分别再在子线程内销毁，减少远端配置错误或者远端延迟导致累计延迟
           shutdown_threads.push_back(
-              atfw::memory::stl::make_shared<std::thread>([handle]() { handle.shutdown_callback(handle.provider); }));
+              atfw::memory::stl::make_shared&lt;std::thread&gt;([handle]() { handle.shutdown_callback(handle.provider); }));
         }
-        group->logs_handle.reset();
+        group-&gt;logs_handle.reset();
       }
-      group->default_logger = opentelemetry::nostd::shared_ptr<opentelemetry::logs::logger>();
+      group-&gt;default_logger = opentelemetry::nostd::shared_ptr&lt;opentelemetry::logs::Logger&gt;();
     }
 
     // ...
@@ -204,7 +204,7 @@ static void _opentelemetry_cleanup_group(std::shared_ptr<::mx::telemetry::group_
 
 // 这里是其中一个Shutdown回调的代码
 ret.shutdown_callback =
-    [processors_ptr](const opentelemetry::nostd::shared_ptr<opentelemetry::trace::tracerprovider> &provider) {
+    [processors_ptr](const opentelemetry::nostd::shared_ptr&lt;opentelemetry::trace::TracerProvider&gt; &amp;provider) {
     if (!provider) {
         return;
     }
@@ -212,75 +212,75 @@ ret.shutdown_callback =
     auto trace_provider = opentelemetry::trace::Provider::GetTracerProvider();
     if (trace_provider == provider) {
         opentelemetry::trace::Provider::SetTracerProvider(
-            opentelemetry::nostd::shared_ptr<opentelemetry::trace::tracerprovider>(
+            opentelemetry::nostd::shared_ptr&lt;opentelemetry::trace::TracerProvider&gt;(
                 new opentelemetry::trace::NoopTracerProvider()));
     }
 
     // 处理优雅退出时无限等待的问题
-    if (processors_ptr && !processors_ptr->empty()) {
+    if (processors_ptr &amp;&amp; !processors_ptr-&gt;empty()) {
         std::chrono::microseconds timeout =
-            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::seconds{10});
+            std::chrono::duration_cast&lt;std::chrono::microseconds&gt;(std::chrono::seconds{10});
         auto app = atapp::app::get_last_instance();
         if (nullptr != app) {
-        timeout = std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::seconds{app->get_origin_configure().timer().stop_timeout().seconds() / 2});
-        timeout += std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::nanoseconds{app->get_origin_configure().timer().stop_timeout().nanos() / 2});
+        timeout = std::chrono::duration_cast&lt;std::chrono::microseconds&gt;(
+            std::chrono::seconds{app-&gt;get_origin_configure().timer().stop_timeout().seconds() / 2});
+        timeout &#43;= std::chrono::duration_cast&lt;std::chrono::microseconds&gt;(
+            std::chrono::nanoseconds{app-&gt;get_origin_configure().timer().stop_timeout().nanos() / 2});
         }
         // 某些老版本Provider层调用Shutdown没有透传timeout到processor，会导致Flush时间过长。这里显示调用一次来解决
-        for (auto &processor : *processors_ptr) {
-            processor->Shutdown(timeout);
+        for (auto &amp;processor : *processors_ptr) {
+            processor-&gt;Shutdown(timeout);
         }
-        processors_ptr->clear();
+        processors_ptr-&gt;clear();
     }
 
-    static_cast<opentelemetry::sdk::trace::tracerprovider *>(provider.get())->Shutdown();
+    static_cast&lt;opentelemetry::sdk::trace::TracerProvider *&gt;(provider.get())-&gt;Shutdown();
     };</code></pre><p>问题二：在重新创建后所有的指标监听都需要重建。我们有不希望把这个重复注册的复杂性暴露给用户层，所以底层做了另外一层缓存。在重建Provider之后也自动重新注册。</p><p>因为我们之前采集层面已经做了数据层缓存分离了，所以我们这里在那个缓存层之上顺便把注册也缓存了就行了。</p><pre><code class=language-cpp>SERVER_FRAME_API bool opentelemetry_utility::add_global_metics_observable_int64(
     metrics_observable_type type, opentelemetry::nostd::string_view meter_name, meter_instrument_key metrics_key,
-    std::function<void(metrics_observer&)> fn) {
+    std::function&lt;void(metrics_observer&amp;)&gt; fn) {
   if (!fn) {
     return false;
   }
 
   // opentelemetry only use metrics name as key of metric storage
-  std::string key = atfw::util::log::format("{}:{}", gsl::string_view{meter_name.data(), meter_name.size()},
+  std::string key = atfw::util::log::format(&#34;{}:{}&#34;, gsl::string_view{meter_name.data(), meter_name.size()},
                                             gsl::string_view{metrics_key.name.data(), metrics_key.name.size()});
 
-  std::pair<std::recursive_mutex&, opentelemetry_utility_global_metrics_set&> data_set = get_global_metrics_set();
+  std::pair&lt;std::recursive_mutex&amp;, opentelemetry_utility_global_metrics_set&amp;&gt; data_set = get_global_metrics_set();
   {
-    std::lock_guard<std::recursive_mutex> lock_guard{data_set.first};
+    std::lock_guard&lt;std::recursive_mutex&gt; lock_guard{data_set.first};
     auto iter = data_set.second.int64_observable_by_key.find(key);
-    if (data_set.second.int64_observable_by_key.end() != iter && iter->second) {
-      iter->second->callback = fn;
+    if (data_set.second.int64_observable_by_key.end() != iter &amp;&amp; iter-&gt;second) {
+      iter-&gt;second-&gt;callback = fn;
       return true;
     }
   }
 
-  auto handle = atfw::memory::stl::make_shared<opentelemetry_utility::metrics_observer>();
+  auto handle = atfw::memory::stl::make_shared&lt;opentelemetry_utility::metrics_observer&gt;();
   if (!handle) {
     return false;
   }
-  handle->key = key;
-  handle->type = type;
-  handle->meter_name = static_cast<std::string>(meter_name);
-  handle->meter_instrument_name = static_cast<std::string>(metrics_key.name);
-  handle->meter_instrument_description = static_cast<std::string>(metrics_key.description);
-  handle->meter_instrument_unit = static_cast<std::string>(metrics_key.unit);
-  handle->collect_interval = protobuf_to_chrono_duration<>(
-      logic_config::me()->get_logic().telemetry().opentelemetry().metrics().reader().export_interval());
-  if (handle->collect_interval < std::chrono::seconds{2}) {
-    handle->collect_interval = std::chrono::seconds{15};
+  handle-&gt;key = key;
+  handle-&gt;type = type;
+  handle-&gt;meter_name = static_cast&lt;std::string&gt;(meter_name);
+  handle-&gt;meter_instrument_name = static_cast&lt;std::string&gt;(metrics_key.name);
+  handle-&gt;meter_instrument_description = static_cast&lt;std::string&gt;(metrics_key.description);
+  handle-&gt;meter_instrument_unit = static_cast&lt;std::string&gt;(metrics_key.unit);
+  handle-&gt;collect_interval = protobuf_to_chrono_duration&lt;&gt;(
+      logic_config::me()-&gt;get_logic().telemetry().opentelemetry().metrics().reader().export_interval());
+  if (handle-&gt;collect_interval &lt; std::chrono::seconds{2}) {
+    handle-&gt;collect_interval = std::chrono::seconds{15};
   } else {
-    handle->collect_interval -= std::chrono::seconds{1};
+    handle-&gt;collect_interval -= std::chrono::seconds{1};
   }
-  handle->callback = std::move(fn);
-  handle->origin_callback = nullptr;
+  handle-&gt;callback = std::move(fn);
+  handle-&gt;origin_callback = nullptr;
   if (false == data_set.second.initialized.load(std::memory_order_acquire) ||
       internal_add_global_metrics_observable_int64(*handle)) {
-    std::lock_guard<std::recursive_mutex> lock_guard{data_set.first};
+    std::lock_guard&lt;std::recursive_mutex&gt; lock_guard{data_set.first};
     data_set.second.int64_observable_by_key[key] = handle;
-    data_set.second.int64_observable_by_pointer[reinterpret_cast<void*>(handle.get())] = handle;
-    ++data_set.second.collecting_version;
+    data_set.second.int64_observable_by_pointer[reinterpret_cast&lt;void*&gt;(handle.get())] = handle;
+    &#43;&#43;data_set.second.collecting_version;
     return true;
   } else {
     return false;
@@ -302,87 +302,87 @@ ret.shutdown_callback =
 //            ├── Histogram
 //            ├── ExponentialHistogram
 //            └── Summary</code></pre><p>里面的属性结构更加复杂:</p><pre><code class=language-proto>//    Metric
-//  +------------+
+//  &#43;------------&#43;
 //  |name        |
 //  |description |
-//  |unit        |     +------------------------------------+
-//  |data        |---> |Gauge, Sum, Histogram, Summary, ... |
-//  +------------+     +------------------------------------+
+//  |unit        |     &#43;------------------------------------&#43;
+//  |data        |---&gt; |Gauge, Sum, Histogram, Summary, ... |
+//  &#43;------------&#43;     &#43;------------------------------------&#43;
 //
 //    Data [One of Gauge, Sum, Histogram, Summary, ...]
-//  +-----------+
+//  &#43;-----------&#43;
 //  |...        |  // Metadata about the Data.
-//  |points     |--+
-//  +-----------+  |
-//                 |      +---------------------------+
+//  |points     |--&#43;
+//  &#43;-----------&#43;  |
+//                 |      &#43;---------------------------&#43;
 //                 |      |DataPoint 1                |
-//                 v      |+------+------+   +------+ |
-//              +-----+   ||label |label |...|label | |
-//              |  1  |-->||value1|value2|...|valueN| |
-//              +-----+   |+------+------+   +------+ |
-//              |  .  |   |+-----+                    |
+//                 v      |&#43;------&#43;------&#43;   &#43;------&#43; |
+//              &#43;-----&#43;   ||label |label |...|label | |
+//              |  1  |--&gt;||value1|value2|...|valueN| |
+//              &#43;-----&#43;   |&#43;------&#43;------&#43;   &#43;------&#43; |
+//              |  .  |   |&#43;-----&#43;                    |
 //              |  .  |   ||value|                    |
-//              |  .  |   |+-----+                    |
-//              |  .  |   +---------------------------+
+//              |  .  |   |&#43;-----&#43;                    |
+//              |  .  |   &#43;---------------------------&#43;
 //              |  .  |                   .
 //              |  .  |                   .
 //              |  .  |                   .
-//              |  .  |   +---------------------------+
+//              |  .  |   &#43;---------------------------&#43;
 //              |  .  |   |DataPoint M                |
-//              +-----+   |+------+------+   +------+ |
-//              |  M  |-->||label |label |...|label | |
-//              +-----+   ||value1|value2|...|valueN| |
-//                        |+------+------+   +------+ |
-//                        |+-----+                    |
+//              &#43;-----&#43;   |&#43;------&#43;------&#43;   &#43;------&#43; |
+//              |  M  |--&gt;||label |label |...|label | |
+//              &#43;-----&#43;   ||value1|value2|...|valueN| |
+//                        |&#43;------&#43;------&#43;   &#43;------&#43; |
+//                        |&#43;-----&#43;                    |
 //                        ||value|                    |
-//                        |+-----+                    |
-//                        +---------------------------+</code></pre><p>那为什么要这么复杂呢？
+//                        |&#43;-----&#43;                    |
+//                        &#43;---------------------------&#43;</code></pre><p>那为什么要这么复杂呢？
 我们举例一个场景，比如我们自己接入了指标上报，我们依赖的gRPC或者其他第三方组件也接入了可观测性。
 那么怎么保证我们的上报点不冲突？这可以通过不同的Scope来区分。
 然后同样在一个进程里，上报的数据会包含比如host信息，进程名字、业务类型等等和进程相关的信息。但是我们有2000个指标，那么用原始的 <a href=https://prometheus.io/>Prometheus</a> 我们不得不把这些信息重复上报 2000 份。
 而在OTEL里，只要在Resource去上报一次就行了。同理还有指标级共享和每个Point不同的数据区，也是能减少不必要的重复上报。</p><blockquote><p>实际上对于进程级资源共享，<a href=https://prometheus.io/>Prometheus</a> 和 <a href=https://opencensus.io/>OpenCensus</a> 都有一个方案。定义了一个 <a href=https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#supporting-target-metadata-in-both-push-based-and-pull-based-systems>target_info</a> 类型的特殊指标来承载这些信息。
 同一个连接，<a href=https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#supporting-target-metadata-in-both-push-based-and-pull-based-systems>target_info</a> 只要上报一次即可。后面上报的指标自动关联这些属性。但是这个并不是所有平台都兼容，将具体是否可用还要咨询使用的平台。
 有兴趣可以阅读 <a href=https://opentelemetry.io/docs/specs/otel/compatibility/prometheus_and_openmetrics/#resource-attributes-1>https://opentelemetry.io/docs/specs/otel/compatibility/prometheus_and_openmetrics/#resource-attributes-1</a></p></blockquote><p>这里涉及数据标签的问题。另外，规范里还定义了一些特殊的单位转换，比如:</p><pre><code class=language-cpp>// Time
-{"d", "days"},
-{"h", "hours"},
-{"min", "minutes"},
-{"s", "seconds"},
-{"ms", "milliseconds"},
-{"us", "microseconds"},
-{"ns", "nanoseconds"},
+{&#34;d&#34;, &#34;days&#34;},
+{&#34;h&#34;, &#34;hours&#34;},
+{&#34;min&#34;, &#34;minutes&#34;},
+{&#34;s&#34;, &#34;seconds&#34;},
+{&#34;ms&#34;, &#34;milliseconds&#34;},
+{&#34;us&#34;, &#34;microseconds&#34;},
+{&#34;ns&#34;, &#34;nanoseconds&#34;},
 // Bytes
-{"By", "bytes"},
-{"KiBy", "kibibytes"},
-{"MiBy", "mebibytes"},
-{"GiBy", "gibibytes"},
-{"TiBy", "tibibytes"},
-{"KBy", "kilobytes"},
-{"MBy", "megabytes"},
-{"GBy", "gigabytes"},
-{"TBy", "terabytes"},
-{"By", "bytes"},
-{"KBy", "kilobytes"},
-{"MBy", "megabytes"},
-{"GBy", "gigabytes"},
-{"TBy", "terabytes"},
+{&#34;By&#34;, &#34;bytes&#34;},
+{&#34;KiBy&#34;, &#34;kibibytes&#34;},
+{&#34;MiBy&#34;, &#34;mebibytes&#34;},
+{&#34;GiBy&#34;, &#34;gibibytes&#34;},
+{&#34;TiBy&#34;, &#34;tibibytes&#34;},
+{&#34;KBy&#34;, &#34;kilobytes&#34;},
+{&#34;MBy&#34;, &#34;megabytes&#34;},
+{&#34;GBy&#34;, &#34;gigabytes&#34;},
+{&#34;TBy&#34;, &#34;terabytes&#34;},
+{&#34;By&#34;, &#34;bytes&#34;},
+{&#34;KBy&#34;, &#34;kilobytes&#34;},
+{&#34;MBy&#34;, &#34;megabytes&#34;},
+{&#34;GBy&#34;, &#34;gigabytes&#34;},
+{&#34;TBy&#34;, &#34;terabytes&#34;},
 // SI
-{"m", "meters"},
-{"V", "volts"},
-{"A", "amperes"},
-{"J", "joules"},
-{"W", "watts"},
-{"g", "grams"},
+{&#34;m&#34;, &#34;meters&#34;},
+{&#34;V&#34;, &#34;volts&#34;},
+{&#34;A&#34;, &#34;amperes&#34;},
+{&#34;J&#34;, &#34;joules&#34;},
+{&#34;W&#34;, &#34;watts&#34;},
+{&#34;g&#34;, &#34;grams&#34;},
 // Misc
-{"Cel", "celsius"},
-{"Hz", "hertz"},
-{"1", ""},
-{"%", "percent"}</code></pre><p>比如我们定义的一个OTEL的指标为 <code>{name="abc", description="XXX", unit="%"}</code> ，最后输出的 <a href=https://prometheus.io/>Prometheus</a> 指标名是 <code>abc_percent</code> 。
+{&#34;Cel&#34;, &#34;celsius&#34;},
+{&#34;Hz&#34;, &#34;hertz&#34;},
+{&#34;1&#34;, &#34;&#34;},
+{&#34;%&#34;, &#34;percent&#34;}</code></pre><p>比如我们定义的一个OTEL的指标为 <code>{name="abc", description="XXX", unit="%"}</code> ，最后输出的 <a href=https://prometheus.io/>Prometheus</a> 指标名是 <code>abc_percent</code> 。
 这些规则还在演进变化中，另外早期的OTEL-CPP SDK有个BUG，没有设置单位的属性多余输出了下划线。
 比如 <code>{name="abc", description="XXX", unit=""}</code> 对应的 <a href=https://prometheus.io/>Prometheus</a> 指标名应该是 <code>abc</code>, 但是早期版本会使用 <code>abc_</code> 。</p><p>那为了抹平拉取聚合这一侧用户使用的复杂性，我们抽象了 <code>SanitizePrometheusName</code> 接口，保持和OTEL-CPP里一样的转换规则。
 而提取指标名则是搞了个“奇技淫巧”,先创建一个虚假的指标。执行一次OTEL里的指标转换，在提取生成的指标名。代码如下:</p><pre><code class=language-cpp>  opentelemetry::sdk::metrics::ResourceMetrics fake_resource_metrics;
   opentelemetry::sdk::metrics::MetricData fake_metrics_data;
   opentelemetry::sdk::metrics::PointDataAttributes fake_point_data;
-  auto fake_scope = opentelemetry::sdk::instrumentationscope::InstrumentationScope::Create("none");
+  auto fake_scope = opentelemetry::sdk::instrumentationscope::InstrumentationScope::Create(&#34;none&#34;);
   fake_metrics_data.aggregation_temporality = opentelemetry::sdk::metrics::AggregationTemporality::kCumulative;
   fake_metrics_data.instrument_descriptor.name_ = metrics_name_;
   fake_metrics_data.instrument_descriptor.description_ = metrics_description_;
@@ -403,21 +403,21 @@ ret.shutdown_callback =
     }
   }
   fake_metrics_data.point_data_attr_.push_back(fake_point_data);
-#if OPENTELEMETRY_VERSION_MAJOR * 1000 + OPENTELEMETRY_VERSION_MINOR >= 1012
+#if OPENTELEMETRY_VERSION_MAJOR * 1000 &#43; OPENTELEMETRY_VERSION_MINOR &gt;= 1012
   fake_resource_metrics.scope_metric_data_.push_back(
-      {fake_scope.get(), std::vector<opentelemetry::sdk::metrics::metricdata>{fake_metrics_data}});
+      {fake_scope.get(), std::vector&lt;opentelemetry::sdk::metrics::MetricData&gt;{fake_metrics_data}});
 #else
   fake_resource_metrics.scope_metric_data_.push_back({fake_scope.get(), {fake_metrics_data}});
 #endif
-#if OPENTELEMETRY_VERSION_MAJOR * 1000 + OPENTELEMETRY_VERSION_MINOR < 1012
+#if OPENTELEMETRY_VERSION_MAJOR * 1000 &#43; OPENTELEMETRY_VERSION_MINOR &lt; 1012
   auto prometheus_family =
       opentelemetry::exporter::metrics::PrometheusExporterUtils::TranslateToPrometheus(fake_resource_metrics);
 #else
   auto prometheus_family =
       opentelemetry::exporter::metrics::PrometheusExporterUtils::TranslateToPrometheus(fake_resource_metrics, false);
-#endif</code></pre><p>最终我们提供给用户层的配置大概是这样。</p><pre><code class=language-yaml>- metrics_name: "ds_fps_gauge"
+#endif</code></pre><p>最终我们提供给用户层的配置大概是这样。</p><pre><code class=language-yaml>- metrics_name: &#34;ds_fps_gauge&#34;
   metrics_unit: us
-  metrics_description: "DS Runtime Fps Metrics"
+  metrics_description: &#34;DS Runtime Fps Metrics&#34;
   metrics_type: gauge
   aggregation: count
   aggregation_parameter:
@@ -428,14 +428,14 @@ ret.shutdown_callback =
   simple_function:
   - last_over_time: 1m
   selectors:
-  "PlayerInit": "true"
-  "service_name": "DsMonitor"
+  &#34;PlayerInit&#34;: &#34;true&#34;
+  &#34;service_name&#34;: &#34;DsMonitor&#34;
   without_auto_selectors:
   - service_name
   - hpa_target_name
-- metrics_name: "product_sales_order"
+- metrics_name: &#34;product_sales_order&#34;
   metrics_unit: count
-  metrics_description: "OrderSvr Product Sales Order Count"
+  metrics_description: &#34;OrderSvr Product Sales Order Count&#34;
   metrics_type: gauge
   aggregation: sum
   aggregation_parameter:
@@ -450,39 +450,39 @@ ret.shutdown_callback =
   - service_name
   - hpa_target_name</code></pre><p>受<a href=https://grafana.com/>Grafana</a>的启发，我们也提供了一些基础的函数包装和聚合转换，并且自动注入一些聚合标签来做多环境隔离，避免用户直接配置PromQL，防止出错的可能性。</p><h2 id=基础的部分采样方案>基础的部分采样方案</h2><p>最后，我们提供给使用者一方的的指标接口就相当简单，比如交易行服务的IO毛刺监控:</p><pre><code class=language-cpp>// 一秒内IO数
 rpc::telemetry::opentelemetry_utility::add_global_metics_observable_int64(
-    rpc::telemetry::metrics_observable_type::kGauge, "trade_order", {"trade_order_second_max_io_count", "", ""},
-    [](rpc::telemetry::opentelemetry_utility::metrics_observer& result) {
+    rpc::telemetry::metrics_observable_type::kGauge, &#34;trade_order&#34;, {&#34;trade_order_second_max_io_count&#34;, &#34;&#34;, &#34;&#34;},
+    [](rpc::telemetry::opentelemetry_utility::metrics_observer&amp; result) {
     if (global_order_manager::is_instance_destroyed()) {
         return;
     }
-    metrics_global_data& metrics_data = global_order_manager::me()->metrics_data_;
+    metrics_global_data&amp; metrics_data = global_order_manager::me()-&gt;metrics_data_;
     int64_t value = metrics_data.second_max_io_count.load(std::memory_order_acquire);
     metrics_data.second_max_io_count.store(metrics_data.second_current_max_io_count, std::memory_order_release);
     rpc::telemetry::opentelemetry_utility::global_metics_observe_record(result, value);
     });</code></pre><p><img src=/2025/2503-02.png alt=2503-02.png loading=lazy></p><p>再展示个更复杂的动态多层级指标:</p><pre><code class=language-cpp>// 更新视图索引索引CPU消耗
 rpc::telemetry::opentelemetry_utility::add_global_metics_observable_int64(
-    rpc::telemetry::metrics_observable_type::kGauge, "trade_order", {"trade_order_slot_distribution", "", ""},
-    [](rpc::telemetry::opentelemetry_utility::metrics_observer& result) {
+    rpc::telemetry::metrics_observable_type::kGauge, &#34;trade_order&#34;, {&#34;trade_order_slot_distribution&#34;, &#34;&#34;, &#34;&#34;},
+    [](rpc::telemetry::opentelemetry_utility::metrics_observer&amp; result) {
     if (global_order_manager::is_instance_destroyed()) {
         return;
     }
 
-    std::shared_ptr<::rpc::telemetry::group_type> lifetime;
+    std::shared_ptr&lt;::rpc::telemetry::group_type&gt; lifetime;
 
-    for (auto& area_data : global_order_manager::me()->metrics_data_.area_metric_data) {
+    for (auto&amp; area_data : global_order_manager::me()-&gt;metrics_data_.area_metric_data) {
         if (!area_data.second) {
         continue;
         }
-        for (auto& order_type_data : area_data.second->order_type_metric) {
+        for (auto&amp; order_type_data : area_data.second-&gt;order_type_metric) {
         if (!order_type_data.second) {
             continue;
         }
 
-        for (auto& slot_dist : order_type_data.second->slot_distribution) {
+        for (auto&amp; slot_dist : order_type_data.second-&gt;slot_distribution) {
             rpc::telemetry::trace_attribute_pair_type internal_attributes[] = {
-                {"trade_area_code", area_data.first},
-                {"trade_order_type", order_type_data.first},
-                {"trade_order_slot_id", slot_dist}};
+                {&#34;trade_area_code&#34;, area_data.first},
+                {&#34;trade_order_type&#34;, order_type_data.first},
+                {&#34;trade_order_slot_id&#34;, slot_dist}};
 
             rpc::telemetry::opentelemetry_utility::global_metics_observe_record_extend_attrubutes(
                 result, 1, lifetime, internal_attributes);

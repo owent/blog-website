@@ -10,13 +10,13 @@ Qt的工具做得还挺上流的。</p></blockquote><ol start=3><li>Qt自己实�
 #define DEBUGER_EXPORT __declspec(dllexport)
 #define DEBUGER_IMPORT __declspec(dllimport)
 #else
-#define DEBUGER_EXPORT __attribute__((visibility("default")))
-#define DEBUGER_IMPORT __attribute__((visibility("default")))
+#define DEBUGER_EXPORT __attribute__((visibility(&#34;default&#34;)))
+#define DEBUGER_IMPORT __attribute__((visibility(&#34;default&#34;)))
 #endif
 
-#pragma comment(lib, "debuger.lib")
+#pragma comment(lib, &#34;debuger.lib&#34;)
 
-extern "C" {
+extern &#34;C&#34; {
     typedef void(*debuger_js_fn)(const char **, size_t*, size_t, char**, size_t*);
 
     DEBUGER_IMPORT void debuger_init_app(int argc, char** argv);
@@ -39,14 +39,14 @@ extern "C" {
 
     // 注册的回调函数
     static void debuger_invoke_run_code(const char ** argv, size_t* argv_len, size_t argc, char** ret, size_t* ret_len) {
-        if (argc < 2) {
-            cocos2d::log("run lua code require 2 parameters.");
+        if (argc &lt; 2) {
+            cocos2d::log(&#34;run lua code require 2 parameters.&#34;);
             return;
         }
 
         std::string code(argv[1], argv_len[1]);
-        code.push_back('\0');
-        script::lua::LuaEngine::Instance()->addPendingCode(code);
+        code.push_back(&#39;\0&#39;);
+        script::lua::LuaEngine::Instance()-&gt;addPendingCode(code);
     }
 }
 
@@ -58,11 +58,11 @@ extern "C" {
         // 初始化
         debuger_init_app(cmd_argc_, cmd_argv_);
         // 打开本地web页
-        debuger_open_local_file("../proj.win32/debuger.webview/index.html", 0);
-        // debuger_open_url("http://www.baidu.com", 0);
+        debuger_open_local_file(&#34;../proj.win32/debuger.webview/index.html&#34;, 0);
+        // debuger_open_url(&#34;http://www.baidu.com&#34;, 0);
 
         // 函数注入
-        debuger_invoke("run_code", debuger_invoke_run_code);
+        debuger_invoke(&#34;run_code&#34;, debuger_invoke_run_code);
     }</code></pre><p>再把一个web组件导进来，就完工了。我边导入了jQuery、jQuery UI和codemirror。
 <strong>唯一要注意</strong>的是由于Qt线程和cocos2d处于不同线程下，注意下多线程安全就可以了</p><h2 id=搞定收工>搞定收工</h2><p>这么一来可以写Web页来做客户端工具，比用C++方便多了。
 效果如下:

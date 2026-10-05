@@ -3,38 +3,38 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-1133c22edff91795ae0f41afdb056be8 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2012/652.html target=_blank itemprop=url>AC自动机</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav></div><br><div class=article-entry itemprop=articleBody><p>某个课程的作业，促使我来看看这玩意。</p><p>整个程序的算法思想是看别人的ACM的blog看懂的，感觉确实和KMP很像。但是代码呢就比较工程化一点。顺便回忆了一把ACM的感觉。</p><p>基本原理呢基于字典树，并增加了失败节点。</p><p>实现原理类似KMP算法，但是一次可以匹配多个字符串。在匹配失败时转向失败节点，并从失败节点开始继续向下匹配。</p><p>比如：我们有字典集合</p><p>acd、aceb、bef、cef</p><p>节点关系如图所示，红色为失败指针</p><pre><code class=language-dot>digraph "ac_automation" {
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-1133c22edff91795ae0f41afdb056be8 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2012/652.html target=_blank itemprop=url>AC自动机</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents></nav></div><br><div class=article-entry itemprop=articleBody><p>某个课程的作业，促使我来看看这玩意。</p><p>整个程序的算法思想是看别人的ACM的blog看懂的，感觉确实和KMP很像。但是代码呢就比较工程化一点。顺便回忆了一把ACM的感觉。</p><p>基本原理呢基于字典树，并增加了失败节点。</p><p>实现原理类似KMP算法，但是一次可以匹配多个字符串。在匹配失败时转向失败节点，并从失败节点开始继续向下匹配。</p><p>比如：我们有字典集合</p><p>acd、aceb、bef、cef</p><p>节点关系如图所示，红色为失败指针</p><pre><code class=language-dot>digraph &#34;ac_automation&#34; {
     node [shape=box, fontsize = 14, labelfontsize = 14];
     edge [fontsize = 14, labelfontsize = 14];
 
-    char_0 [label="0"];
-    char_1 [label="1"];
-    char_2 [label="2"];
-    char_3 [label="acd"];
-    char_4 [label="4"];
-    char_5 [label="aceb"];
-    char_6 [label="6"];
-    char_7 [label="7"];
-    char_8 [label="bef"];
-    char_9 [label="9"];
-    char_10 [label="10"];
-    char_11 [label="cef"];
+    char_0 [label=&#34;0&#34;];
+    char_1 [label=&#34;1&#34;];
+    char_2 [label=&#34;2&#34;];
+    char_3 [label=&#34;acd&#34;];
+    char_4 [label=&#34;4&#34;];
+    char_5 [label=&#34;aceb&#34;];
+    char_6 [label=&#34;6&#34;];
+    char_7 [label=&#34;7&#34;];
+    char_8 [label=&#34;bef&#34;];
+    char_9 [label=&#34;9&#34;];
+    char_10 [label=&#34;10&#34;];
+    char_11 [label=&#34;cef&#34;];
 
-    char_0 -> char_1 [style=bold,label="a"];
-    char_0 -> char_6 [style=bold,label="b"];
-    char_0 -> char_9 [style=bold,label="c"];
-    char_1 -> char_2 [style=bold,label="c"];
-    char_2 -> char_9 [color=red];
-    char_2 -> char_3 [style=bold,label="d"];
-    char_2 -> char_4 [style=bold,label="e"];
-    char_3 -> char_9 [color=red];
-    char_4 -> char_10 [color=red];
-    char_4 -> char_5 [style=bold,label="b"];
-    char_5 -> char_10 [color=red];
-    char_6 -> char_7 [style=bold,label="e"];
-    char_7 -> char_8 [style=bold,label="f"];
-    char_9 -> char_10 [style=bold,label="e"];
-    char_10 -> char_11 [style=bold,label="f"];
+    char_0 -&gt; char_1 [style=bold,label=&#34;a&#34;];
+    char_0 -&gt; char_6 [style=bold,label=&#34;b&#34;];
+    char_0 -&gt; char_9 [style=bold,label=&#34;c&#34;];
+    char_1 -&gt; char_2 [style=bold,label=&#34;c&#34;];
+    char_2 -&gt; char_9 [color=red];
+    char_2 -&gt; char_3 [style=bold,label=&#34;d&#34;];
+    char_2 -&gt; char_4 [style=bold,label=&#34;e&#34;];
+    char_3 -&gt; char_9 [color=red];
+    char_4 -&gt; char_10 [color=red];
+    char_4 -&gt; char_5 [style=bold,label=&#34;b&#34;];
+    char_5 -&gt; char_10 [color=red];
+    char_6 -&gt; char_7 [style=bold,label=&#34;e&#34;];
+    char_7 -&gt; char_8 [style=bold,label=&#34;f&#34;];
+    char_9 -&gt; char_10 [style=bold,label=&#34;e&#34;];
+    char_10 -&gt; char_11 [style=bold,label=&#34;f&#34;];
 }</code></pre><p>当查找acefcab时，首先会按aceb的支路一直匹配到e，在e的位置发现找不到f，然后跳转到e的失败节点（即cef支路的e节点），查到f。并以此完成了第一次匹配。</p><p>接下来从根节点重新匹配并分别进入第一层的c节点，回到根节点，进入a节点，回到根节点，和进入b节点。</p><p>并在最终只匹配成功了cef</p><p>代码如下：</p><pre><code class=language-cpp>/**
  * AC 自动机， 数节点类和自动机功能类
  * 文档格式：doxygen
@@ -45,28 +45,28 @@
 #ifndef __AC_AUTOMATION_HPP_
 #define __AC_AUTOMATION_HPP_
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+#if defined(_MSC_VER) &amp;&amp; (_MSC_VER &gt;= 1020)
 # pragma once
 #endif
 
-#include <map>
-#include <string>
-#include <cstddef>
-#include <list>
-#include <vector>
-#include <assert.h>
-#include "smart_ptr.h"
+#include &lt;map&gt;
+#include &lt;string&gt;
+#include &lt;cstddef&gt;
+#include &lt;list&gt;
+#include &lt;vector&gt;
+#include &lt;assert.h&gt;
+#include &#34;smart_ptr.h&#34;
 
 
-template<typename ch=char>
-class ACTrie: public std::enable_shared_from_this< ACTrie<ch> >
+template&lt;typename CH = char&gt;
+class ACTrie: public std::enable_shared_from_this&lt; ACTrie&lt;CH&gt; &gt;
 {
 public:
-    typedef std::shared_ptr< ACTrie<ch> > ptr_type;
+    typedef std::shared_ptr&lt; ACTrie&lt;CH&gt; &gt; ptr_type;
 
 private:
     /**
-     * 关联的匹配字符串<br>
+     * 关联的匹配字符串&lt;br /&gt;
      * size不为0表示该节点有关联的字符串并且是最后一个节点
      */
     std::string m_strMatchedString;
@@ -79,29 +79,29 @@ private:
     /**
      * 下一个查找项
      */
-    std::map<ch, ptr_type> m_stNext;
+    std::map&lt;CH, ptr_type&gt; m_stNext;
 
     /**
      * 初始化自身和子节点的失败指针
      * @param pPreFailed 初始搜索的指针（一般为父节点的失败指针）
      * @param cChar 搜索的字符
      */
-    void _init_failed(ptr_type pPreFailed, const CH& cChar)
+    void _init_failed(ptr_type pPreFailed, const CH&amp; cChar)
     {
-        typedef typename std::map<ch, ptr_type>::iterator iter_type;
+        typedef typename std::map&lt;CH, ptr_type&gt;::iterator iter_type;
 
         // 设置自身的失败指针
         iter_type iter;
-        for(;; pPreFailed = pPreFailed->m_pFailed)
+        for(;; pPreFailed = pPreFailed-&gt;m_pFailed)
         {
-            iter = pPreFailed->m_stNext.find(cChar);
-            if (iter != pPreFailed->m_stNext.end())
+            iter = pPreFailed-&gt;m_stNext.find(cChar);
+            if (iter != pPreFailed-&gt;m_stNext.end())
             {
-                m_pFailed = iter->second;
+                m_pFailed = iter-&gt;second;
                 break;
             }
 
-            if (NULL == pPreFailed->m_pFailed.get())
+            if (NULL == pPreFailed-&gt;m_pFailed.get())
             {
                 m_pFailed = pPreFailed;
                 break;
@@ -110,19 +110,19 @@ private:
     }
 
     /**
-     * 把子节点填充到链表中（用于BFS）<br>
+     * 把子节点填充到链表中（用于BFS）&lt;br /&gt;
      * 调用此函数时，当前节点的失败指针必须已经设置好
      * @param stList 填充目标
      */
-    void _fill_children(std::list< std::pair<ch, ptr_type> >& stList)
+    void _fill_children(std::list&lt; std::pair&lt;CH, ptr_type&gt; &gt;&amp; stList)
     {
-        typedef typename std::map<ch, ptr_type>::iterator iter_type;
+        typedef typename std::map&lt;CH, ptr_type&gt;::iterator iter_type;
         for(iter_type iter = m_stNext.begin();
             iter != m_stNext.end();
-            ++ iter)
+            &#43;&#43; iter)
         {
-            iter->second->m_pFailed = m_pFailed;    // 临时用于记录父节点的失败指针
-            stList.push_back(std::make_pair(iter->first, iter->second));
+            iter-&gt;second-&gt;m_pFailed = m_pFailed;    // 临时用于记录父节点的失败指针
+            stList.push_back(std::make_pair(iter-&gt;first, iter-&gt;second));
         }
     }
 
@@ -132,7 +132,7 @@ private:
      */
     ptr_type _get_ptr()
     {
-        return this->shared_from_this();
+        return this-&gt;shared_from_this();
     }
 public:
     ACTrie(ptr_type pRoot): m_pFailed(pRoot){}
@@ -147,32 +147,32 @@ public:
     }
 
     /**
-     * 初始化根节点中，子节点的失败指针<br>
+     * 初始化根节点中，子节点的失败指针&lt;br /&gt;
      * 当前节点会被视为根节点
      */
     void InitFailed()
     {
         m_pFailed = ptr_type(NULL);
-        std::list< std::pair<ch, ptr_type> > stList;
+        std::list&lt; std::pair&lt;CH, ptr_type&gt; &gt; stList;
 
-        typedef typename std::map<ch, ptr_type>::iterator iter_type;
+        typedef typename std::map&lt;CH, ptr_type&gt;::iterator iter_type;
 
         // 第一层节点
         for(iter_type iter = m_stNext.begin();
             iter != m_stNext.end();
-            ++ iter)
+            &#43;&#43; iter)
         {
-            iter->second->m_pFailed = _get_ptr();
-            iter->second->_fill_children(stList);
+            iter-&gt;second-&gt;m_pFailed = _get_ptr();
+            iter-&gt;second-&gt;_fill_children(stList);
         }
 
         // 后续节点 BFS 建树
-        while (stList.size() > 0)
+        while (stList.size() &gt; 0)
         {
-            std::pair<ch, ptr_type> stNode = stList.front();
+            std::pair&lt;CH, ptr_type&gt; stNode = stList.front();
             stList.pop_front();
-            stNode.second->_init_failed(stNode.second->m_pFailed, stNode.first);
-            stNode.second->_fill_children(stList);
+            stNode.second-&gt;_init_failed(stNode.second-&gt;m_pFailed, stNode.first);
+            stNode.second-&gt;_fill_children(stList);
         }
     }
 
@@ -190,7 +190,7 @@ public:
      */
     bool IsLastNode() const
     {
-        return m_strMatchedString.size() > 0;
+        return m_strMatchedString.size() &gt; 0;
     }
 
     /**
@@ -199,10 +199,10 @@ public:
      * @param iLeftBytes    关键字剩余字节数
      * @param strOrigin     关键字原始内容
      */
-    void InsertChildren(const CH* pStr, int iLeftBytes, const std::string& strOrigin)
+    void InsertChildren(const CH* pStr, int iLeftBytes, const std::string&amp; strOrigin)
     {
         // 最后一个节点
-        if (0 >= iLeftBytes)
+        if (0 &gt;= iLeftBytes)
         {
             m_strMatchedString.assign(strOrigin.data(), strOrigin.size());
             return;
@@ -210,28 +210,28 @@ public:
 
         iLeftBytes -= sizeof(CH);
 
-        typedef typename std::map<ch, ptr_type>::iterator iter_type;
+        typedef typename std::map&lt;CH, ptr_type&gt;::iterator iter_type;
         iter_type iter = m_stNext.find(*pStr);
         if (iter != m_stNext.end())
         {
-            iter->second->InsertChildren(pStr + 1, iLeftBytes, strOrigin);
+            iter-&gt;second-&gt;InsertChildren(pStr &#43; 1, iLeftBytes, strOrigin);
             return;
         }
 
-        std::pair<iter_type, bool> iter_new = m_stNext.insert(std::make_pair(*pStr, ptr_type(new ACTrie<ch>(m_pFailed))));
+        std::pair&lt;iter_type, bool&gt; iter_new = m_stNext.insert(std::make_pair(*pStr, ptr_type(new ACTrie&lt;CH&gt;(m_pFailed))));
         assert(iter_new.second);
 
-        iter_new.first->second->InsertChildren(pStr + 1, iLeftBytes, strOrigin);
+        iter_new.first-&gt;second-&gt;InsertChildren(pStr &#43; 1, iLeftBytes, strOrigin);
     }
 
     /**
      * 匹配目标字符
      * @param pChar 目标字符指针
      * @param iLeftBytes 剩余字节数
-     * @return 第一项为匹配完成后剩余字节数，第二项为匹配的关键字<br>
+     * @return 第一项为匹配完成后剩余字节数，第二项为匹配的关键字&lt;br /&gt;
      *         如果匹配失败，第一项为0或负数，第二项为空串
      */
-    std::pair<int, std::string> Match(const CH* pChar, int iLeftBytes) const
+    std::pair&lt;int, std::string&gt; Match(const CH* pChar, int iLeftBytes) const
     {
         using namespace std;
         // 成功匹配
@@ -241,41 +241,41 @@ public:
         }
 
         // 已到目标串目末尾，无匹配
-        if (iLeftBytes <= 0)
+        if (iLeftBytes &lt;= 0)
         {
-            return std::make_pair(iLeftBytes, std::string(""));
+            return std::make_pair(iLeftBytes, std::string(&#34;&#34;));
         }
 
         // 匹配下一项
-        typedef typename std::map<ch, ptr_type>::const_iterator iter_type;
+        typedef typename std::map&lt;CH, ptr_type&gt;::const_iterator iter_type;
         iter_type iter = m_stNext.find(*pChar);
         if (iter != m_stNext.end())
         {
-            return iter->second->Match(pChar + 1, iLeftBytes - sizeof(CH));
+            return iter-&gt;second-&gt;Match(pChar &#43; 1, iLeftBytes - sizeof(CH));
         }
         // 如果是root节点，往后匹配
-        if (NULL == m_pFailed->m_pFailed.get())
+        if (NULL == m_pFailed-&gt;m_pFailed.get())
         {
-            return Match(pChar + 1, iLeftBytes - sizeof(CH));
+            return Match(pChar &#43; 1, iLeftBytes - sizeof(CH));
         }
         // 否则, failed节点进行匹配
-        return m_pFailed->Match(pChar, iLeftBytes);
+        return m_pFailed-&gt;Match(pChar, iLeftBytes);
     }
 };
 
-template<typename ch=char>
+template&lt;typename CH = char&gt;
 class ACAutomation
 {
 public:
-    typedef typename ACTrie<ch>::ptr_type trie_type;
-    typedef std::pair<size_t, const std::string> item_type;
-    typedef std::vector< item_type > value_type;
+    typedef typename ACTrie&lt;CH&gt;::ptr_type trie_type;
+    typedef std::pair&lt;size_t, const std::string&gt; item_type;
+    typedef std::vector&lt; item_type &gt; value_type;
 
 private:
     /**
      * 根节点(空节点)
      */
-    std::shared_ptr< ACTrie<ch> > m_pRoot; 
+    std::shared_ptr&lt; ACTrie&lt;CH&gt; &gt; m_pRoot; 
 
     bool m_bIsInited;
 
@@ -287,36 +287,36 @@ private:
         if (m_bIsInited)
             return;
 
-        m_pRoot->InitFailed();
+        m_pRoot-&gt;InitFailed();
 
         m_bIsInited = true;
     }
 
 public:
     ACAutomation():
-        m_pRoot(new ACTrie<ch>( std::shared_ptr< ACTrie<ch> >(NULL) )),
+        m_pRoot(new ACTrie&lt;CH&gt;( std::shared_ptr&lt; ACTrie&lt;CH&gt; &gt;(NULL) )),
         m_bIsInited(false)
     {
         // 临时的自环
-        m_pRoot->SetFailed(m_pRoot);
+        m_pRoot-&gt;SetFailed(m_pRoot);
     }
 
     ~ACAutomation()
     {
         // 解除自环，防止内存泄漏
-        m_pRoot->SetFailed(std::shared_ptr< ACTrie<ch> >(NULL));
+        m_pRoot-&gt;SetFailed(std::shared_ptr&lt; ACTrie&lt;CH&gt; &gt;(NULL));
     }
 
     /**
      * 增加关键字
      * @param strKeyword 关键字字符串
      */
-    void InsertKeyword(const std::string& strKeyword)
+    void InsertKeyword(const std::string&amp; strKeyword)
     {
-        assert(strKeyword.size() > 0);
+        assert(strKeyword.size() &gt; 0);
 
         m_bIsInited = false;
-        m_pRoot->InsertChildren(static_cast<const ch*>(strKeyword.c_str()), strKeyword.size(), strKeyword);
+        m_pRoot-&gt;InsertChildren(static_cast&lt;const CH*&gt;(strKeyword.c_str()), strKeyword.size(), strKeyword);
     }
 
     /**
@@ -324,22 +324,22 @@ public:
      * @param strContent 目标字符串
      * @return 返回的结果列表,返回结果的first为开始位置，second为匹配的关键字
      */
-    value_type Match(const std::string& strContent)
+    value_type Match(const std::string&amp; strContent)
     {
         using std::size_t;
         init();
         using namespace std;
         value_type ret;
-        int iSize = static_cast<int>(strContent.size()), iLeft = iSize;
-        const char* pEnd = strContent.data() + iSize;
+        int iSize = static_cast&lt;int&gt;(strContent.size()), iLeft = iSize;
+        const char* pEnd = strContent.data() &#43; iSize;
 
-        while (iLeft > 0)
+        while (iLeft &gt; 0)
         {
-            pair<int, string> res = m_pRoot->Match(static_cast<const ch*>(pEnd - iLeft), iLeft);
+            pair&lt;int, string&gt; res = m_pRoot-&gt;Match(static_cast&lt;const CH*&gt;(pEnd - iLeft), iLeft);
             iLeft = res.first;
-            if (res.second.size() > 0)
+            if (res.second.size() &gt; 0)
             {
-                ret.push_back(std::make_pair(static_cast<size_t>(iSize - iLeft) - res.second.size(),
+                ret.push_back(std::make_pair(static_cast&lt;size_t&gt;(iSize - iLeft) - res.second.size(),
                     res.second));
             }
         }
@@ -352,7 +352,7 @@ public:
      */
     void Reset()
     {
-        m_pRoot->Reset();
+        m_pRoot-&gt;Reset();
     }
 };
 
@@ -363,32 +363,32 @@ public:
 接下来是测试使用的文件
 
 /**
- * AC 自动机， 关键字过滤作业，匹配逻辑<br>
+ * AC 自动机， 关键字过滤作业，匹配逻辑&lt;br /&gt;
  * VC 11        中编译测试通过[Windows]
- * GCC 4.7.1    中编译测试通过[Linux]  （with -std=c++11 -lstdc++）
+ * GCC 4.7.1    中编译测试通过[Linux]  （with -std=c&#43;&#43;11 -lstdc&#43;&#43;）
  * 文档格式：doxygen
  * @author owentou, owt5008137@live.com
  * @date 2012.08.25
  */
 
-#include <iostream>
-#include "ACAutomation.hpp"
+#include &lt;iostream&gt;
+#include &#34;ACAutomation.hpp&#34;
 
 
 int main()
 {
-    ACAutomation<> stAcTree;
+    ACAutomation&lt;&gt; stAcTree;
 
-    stAcTree.InsertKeyword("acd");
-    stAcTree.InsertKeyword("aceb");
-    stAcTree.InsertKeyword("bef");
-    stAcTree.InsertKeyword("cef");
+    stAcTree.InsertKeyword(&#34;acd&#34;);
+    stAcTree.InsertKeyword(&#34;aceb&#34;);
+    stAcTree.InsertKeyword(&#34;bef&#34;);
+    stAcTree.InsertKeyword(&#34;cef&#34;);
 
-    ACAutomation<>::value_type stRes = stAcTree.Match("acefcab");
+    ACAutomation&lt;&gt;::value_type stRes = stAcTree.Match(&#34;acefcab&#34;);
 
     for(auto stItem: stRes) 
     {
-        std::cout<< "Position: "<< stItem.first<< " Matched Keyword: "<< stItem.second<< std::endl;
+        std::cout&lt;&lt; &#34;Position: &#34;&lt;&lt; stItem.first&lt;&lt; &#34; Matched Keyword: &#34;&lt;&lt; stItem.second&lt;&lt; std::endl;
     }
 
     return 0;

@@ -11,7 +11,7 @@ typedef double LISTYPE;
 #define LISMAXN 10000
 int LIScmp(LISTYPE a,LISTYPE b)
 {
-    return a < b;
+    return a &lt; b;
 }
 long LISLength(LISTYPE list[],long n,LISTYPE lengthRecord[])
 {
@@ -19,49 +19,49 @@ long LISLength(LISTYPE list[],long n,LISTYPE lengthRecord[])
     LISTYPE lR[LISMAXN];
     lR[0] = list[0];
 
-    for(int i = 1 ; i < n ; i ++)
+    for(int i = 1 ; i &lt; n ; i &#43;&#43;)
     {
         //二分查找,复杂度 log(n)
         int b,e,m;
         b = 0;
         e = length - 1;
-        while(b <= e && e >= 0)
+        while(b &lt;= e &amp;&amp; e &gt;= 0)
         {
-            m = (b + e) / 2;
+            m = (b &#43; e) / 2;
             if(LIScmp(lR[m],list[i]))
-                b = m + 1;
+                b = m &#43; 1;
             else
                 e = m - 1;
         }
         lR[b] = list[i];
-        if(b >= length)
-            length ++;
+        if(b &gt;= length)
+            length &#43;&#43;;
     }
     /*
     *计算序列部分
     *复杂度nlog(n)
     */
     lth = 1;
-    for(int i = 1 ; i < n ; i ++)
+    for(int i = 1 ; i &lt; n ; i &#43;&#43;)
     {
         //二分查找,复杂度 log(n)
         int b,e,m;
         b = 0;
         e = lth - 1;
-        while(b <= e && e >= 0)
+        while(b &lt;= e &amp;&amp; e &gt;= 0)
         {
-            m = (b + e) / 2;
+            m = (b &#43; e) / 2;
             if(LIScmp(lR[m],list[i]))
-                b = m + 1;
+                b = m &#43; 1;
             else
                 e = m - 1;
         }
         lR[b] = list[i];
-        if(b >= lth)
-            lth ++;
+        if(b &gt;= lth)
+            lth &#43;&#43;;
         if(lth == length)
         {
-            for(b = 0 ; b < length ; b ++)
+            for(b = 0 ; b &lt; length ; b &#43;&#43;)
                 lengthRecord[b] = lR[b];
             break;
         }

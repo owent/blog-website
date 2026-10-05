@@ -5,10 +5,10 @@
 <input class=form-control type=text placeholder=搜索 name=q>
 <button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-8ed0f5da17ceff387ccd3f9bb1d604e0 class="article-panel article article-type-post" itemscope itemprop=blogPost><div class="article-panel-inner article-inner"><div class=article-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2022/2206.html target=_blank itemprop=url>libcopp对C++20协程的接入和接口设计</a></h1></header><hr><div id=toc class="well toc m-3 p-1 pr-1 pt-1 pb-2 float-md-right float-md-end"><nav id=TableOfContents><ul><li><a href=#前言>前言</a></li><li><a href=#c20-coroutine-伪代码>C++20 Coroutine 伪代码</a></li><li><a href=#使用场景分析>使用场景分析</a></li><li><a href=#c20协程接入的设计模型>C++20协程接入的设计模型</a></li><li><a href=#设计模式适配>设计模式适配</a><ul><li><a href=#task_manager><code>task_manager</code></a></li><li><a href=#task_futurethen><code>task_future::then</code></a></li><li><a href=#some-any-和-all><code>some()</code>, <code>any()</code> 和 <code>all()</code></a></li></ul></li><li><a href=#杂项优化>杂项优化</a></li><li><a href=#benchmark>Benchmark</a></li><li><a href=#接入过程中的易踩坑点>接入过程中的易踩坑点</a></li><li><a href=#从有栈协程迁移>从有栈协程迁移</a></li><li><a href=#压力测试>压力测试</a></li><li><a href=#未来优化方向>未来优化方向</a></li><li><a href=#最后>最后</a></li></ul></nav></div><br><div class=article-entry itemprop=articleBody><h2 id=前言>前言</h2><p>最近开的坑有点多。有点忙不过来了所以好久没写Blog了。这个C++20的协程接入一直在改造计划中，但是一直没抽出时间来正式实施。
 在之前，我写过一个初版的C++20协程接入 <a href=https://owent.net/2020/2004.html>《libcopp接入C++20 Coroutine和一些过渡期的设计》</a> 。当时主要是考虑到 Rust也有和C++类似的历史包袱问题，所以参考了一些Rust协程改造过程中的设计。
-但是后来尝试在项目中使用的时候发现还是有一些问题。首先C++20的协程并不是零开销抽象，所以强行用Rust的模式反而带来了一定开销和理解上的难度。其次原先的设计中 generator 是按类型去实现外部接入的。但是实际接入SDK的过程中我们有相当一部分类型相同但是接入流程不同的情况，再加上现在各大编译器也都已经让C++20协程的特性脱离 experimental 阶段了，有一些细节有所变化。所以干脆根据我们实际的使用场景，重新设计了下组织结构。</p><p>我们整个服务器框架的和协程相关的改造分为两部分，第一部分是 <a href=https://github.com/owent/libcopp>libcopp</a> 这个库的底层支持，另一个就是现有业务流程的改造过程。我先完成了 <a href=https://github.com/owent/libcopp>libcopp</a> 对C++20协程适配支持，这也是本篇分享的主要内容。</p><h2 id=c20-coroutine-伪代码>C++20 Coroutine 伪代码</h2><p>为了方便查阅和理解，还是先贴一下 C++20 Coroutine 基本原理的伪代码。</p><pre><code class=language-cpp>template<class... targs>
-COROUTINE_OBJECT func(TARGS&&... args) {
+但是后来尝试在项目中使用的时候发现还是有一些问题。首先C++20的协程并不是零开销抽象，所以强行用Rust的模式反而带来了一定开销和理解上的难度。其次原先的设计中 generator 是按类型去实现外部接入的。但是实际接入SDK的过程中我们有相当一部分类型相同但是接入流程不同的情况，再加上现在各大编译器也都已经让C++20协程的特性脱离 experimental 阶段了，有一些细节有所变化。所以干脆根据我们实际的使用场景，重新设计了下组织结构。</p><p>我们整个服务器框架的和协程相关的改造分为两部分，第一部分是 <a href=https://github.com/owent/libcopp>libcopp</a> 这个库的底层支持，另一个就是现有业务流程的改造过程。我先完成了 <a href=https://github.com/owent/libcopp>libcopp</a> 对C++20协程适配支持，这也是本篇分享的主要内容。</p><h2 id=c20-coroutine-伪代码>C++20 Coroutine 伪代码</h2><p>为了方便查阅和理解，还是先贴一下 C++20 Coroutine 基本原理的伪代码。</p><pre><code class=language-cpp>template&lt;class... TARGS&gt;
+COROUTINE_OBJECT func(TARGS&amp;&amp;... args) {
   try {
-    P p(std::forward<targs>(args)...);
+    P p(std::forward&lt;TARGS&gt;(args)...);
     // 这个P是自己定义的 using P = COROUTINE_OBJECT::promise_type;
     // 文档上说promise_constructor_arguments 是空或者函数的参数的左值传入 args... ，但是目前版本的MSVC还仅支持空参数列表
 
@@ -31,9 +31,9 @@ COROUTINE_OBJECT func(TARGS&&... args) {
     return COROUTINE_OBJECT::promise_type::get_return_object_on_allocation_failure(); // noexcept
   }
 }</code></pre><h2 id=使用场景分析>使用场景分析</h2><p>我们来看一下协程的使用场景。首先从使用者的角色上，主要是有3类。</p><ul><li>业务层: 由于有栈协程比如是侵入式的，那么业务调用的时候其实上下文关系是需要层层透传的。</li><li>调度层: 在框架层，我们要能总控和调度资源，控制生命周期。</li><li>接入层: 一般用于各类SDK接入、event loop接入或者其他事件机制接入。用来把各类平台服务或者功能库抽象成统一的协程模型。</li></ul><p>我们在新的协程模型中，针对这三种场景设计了三个不同的工具类。在我们之前的工程实践中，采用 <a href=https://github.com/owent/libcopp>libcopp</a> 的有栈协程也是有这些角色分工的，做一个简单的映射关系就是:</p><table><thead><tr><th>功能点</th><th><code>cotask::task&lt;T></code></th><th><code>C++20 coroutine</code></th><th>附注</th></tr></thead><tbody><tr><td>调度层 - 任务管理</td><td><code>cotask::task&lt;T></code></td><td><code>task_future&lt;TRETURN, TPRIVATE></code></td><td>前者的私有数据分配在栈上，通过接口获取。后者的私有数据就是 <code>TPRIVATE</code></td></tr><tr><td>接入层 - 延时操作</td><td><code>task::resume(void*)</code></td><td><code>generator_future&lt;TRETURN></code></td><td>前者通过参数 <code>void*</code> 指向自定义类型，需要外部额外检查数据有效性，后者内置 <code>set_value</code> 接口，自动管理有效性</td></tr><tr><td>业务层 - 组合</td><td><code>task::yield(void*)</code></td><td><code>callable_future&lt;TRETURN></code></td><td>前者通过参数 <code>void*</code> 指向自定义类型来接收数据，后者通过 <code>co_await</code> 的返回</td></tr><tr><td>返回值类型</td><td><code>int</code></td><td><code>自定义</code></td><td></td></tr></tbody></table><p>C++20协程其实是对称协程的设计，即不区分主调和被调。虽然对称协程在逻辑耦合上比非对称协程更低，且开销更低。但是在实际应用场景中，还是非对称更实用一些，导致我们使用的时候很自然地就会封装成非对称的调用方式。试想这种场景：</p><pre><code class=language-cpp>
-callable_future<int> bar();
+callable_future&lt;int&gt; bar();
 
-callable_future<int> foo() {
+callable_future&lt;int&gt; foo() {
   // some codes
   co_await bar(); // IO operation
   // other codes
@@ -47,77 +47,77 @@ callable_future<int> foo() {
 在新的C++20协程的 <code>task_future</code> 的 <code>then</code> 中我对它做了更多的扩展。
 首先，我们的 <code>then</code> 接口的返回值类型既支持返回 <code>callable_future</code> ，也支持返回 <code>task_future</code> 。两者的区别是前者更轻量级一些且不带私有数据，后者相反。那么很显然，我们可以用单参数的 <code>then</code> 来返回 <code>callable_future</code>， 用两个参数的 <code>then</code> 来返回 <code>task_future</code> 。其中第二个参数用于构造私有数据。可以用第二个参数传 <code>nullptr</code> 表示要创建的 <code>task_future</code> 的私有数据类型是 <code>void</code> 。
 首先因为 <code>then</code> 接口里其实是需要上一步的返回值的，而返回类型是可以自定义的，并且可以是 <code>void</code> 。这里使用了特化来处理 <code>void</code> 这种特殊情况。
-于是，我们就可以这么使用 <code>then</code> 接口。</p><pre><code class=language-cpp>cotask::task_future<int, void> t = task_func_await_int_simple();
+于是，我们就可以这么使用 <code>then</code> 接口。</p><pre><code class=language-cpp>cotask::task_future&lt;int, void&gt; t = task_func_await_int_simple();
 auto f = t.then(
   [](task_future_int_type::context_pointer_type, task_future_int_type::value_type value) {
-    std::cout << "The first thenable got "<< value <<" and return int" << std::endl;
+    std::cout &lt;&lt; &#34;The first thenable got &#34;&lt;&lt; value &lt;&lt;&#34; and return int&#34; &lt;&lt; std::endl;
     return value;
   },
   3000)
   .then(
-      [](cotask::task_future<int, int>::context_pointer_type ctx, task_future_int_type::value_type value) {
-        std::cout << "The second thenable got "<< value <<" and return void" << std::endl;
+      [](cotask::task_future&lt;int, int&gt;::context_pointer_type ctx, task_future_int_type::value_type value) {
+        std::cout &lt;&lt; &#34;The second thenable got &#34;&lt;&lt; value &lt;&lt;&#34; and return void&#34; &lt;&lt; std::endl;
       },
       nullptr);
   .then(
-      [](cotask::task_future<void, int>::context_pointer_type ctx) {
-        std::cout << "The second thenable got void and return int again" << std::endl;
+      [](cotask::task_future&lt;void, int&gt;::context_pointer_type ctx) {
+        std::cout &lt;&lt; &#34;The second thenable got void and return int again&#34; &lt;&lt; std::endl;
         return 0;
       },
       nullptr);</code></pre><p>还有一种情况，有时候我们可能希望在 <code>then</code> 的回调里运行时返回一个新的协程，相当于运行时把某些流程插在静态的 <strong>thenable</strong> 调用链中间（类似Rust里的 <code>Future</code> 的回调里返回另一个 <code>Future</code>）。
-举个例子:</p><pre><code class=language-cpp>cotask::task_future<int, void> t = task_func_await_int_simple();
+举个例子:</p><pre><code class=language-cpp>cotask::task_future&lt;int, void&gt; t = task_func_await_int_simple();
 auto f = t.then(
-    [](task_future_int_type::context_pointer_type &&,
-        task_future_int_type::value_type value) -> copp::callable_future<int> {
-      std::cout << "The thenable return callable_future<int>" << std::endl;
+    [](task_future_int_type::context_pointer_type &amp;&amp;,
+        task_future_int_type::value_type value) -&gt; copp::callable_future&lt;int&gt; {
+      std::cout &lt;&lt; &#34;The thenable return callable_future&lt;int&gt;&#34; &lt;&lt; std::endl;
       co_return value;
     },
     3000)
     .then(
-        [](cotask::task_future<int, int>::context_pointer_type ctx, task_future_int_type::value_type value) {
-          std::cout << "The second thenable await first thenable and the returned callable_future<int>" << std::endl;
-          return value + ctx->get_private_data();
+        [](cotask::task_future&lt;int, int&gt;::context_pointer_type ctx, task_future_int_type::value_type value) {
+          std::cout &lt;&lt; &#34;The second thenable await first thenable and the returned callable_future&lt;int&gt;&#34; &lt;&lt; std::endl;
+          return value &#43; ctx-&gt;get_private_data();
         },
-        nullptr);</code></pre><p>当然返回 <code>task_future</code> 也是可以的。</p><pre><code class=language-cpp>cotask::task_future<int, void> t = task_func_await_int_simple();
+        nullptr);</code></pre><p>当然返回 <code>task_future</code> 也是可以的。</p><pre><code class=language-cpp>cotask::task_future&lt;int, void&gt; t = task_func_await_int_simple();
 auto f = t.then(
   [](task_future_int_type::context_pointer_type,
-      task_future_int_type::value_type value) -> cotask::task_future<int, void> {
-    std::cout << "The first thenable return task_future<int>" << std::endl;
+      task_future_int_type::value_type value) -&gt; cotask::task_future&lt;int, void&gt; {
+    std::cout &lt;&lt; &#34;The first thenable return task_future&lt;int&gt;&#34; &lt;&lt; std::endl;
     co_return value;
   },
   3000)
   .then(
-      [](cotask::task_future<int, int>::context_pointer_type ctx, task_future_int_type::value_type value) {
-        std::cout << "The second thenable await first thenable and the returned task_future<int>" << std::endl;
-        return value + ctx->get_private_data();
+      [](cotask::task_future&lt;int, int&gt;::context_pointer_type ctx, task_future_int_type::value_type value) {
+        std::cout &lt;&lt; &#34;The second thenable await first thenable and the returned task_future&lt;int&gt;&#34; &lt;&lt; std::endl;
+        return value &#43; ctx-&gt;get_private_data();
       },
-      nullptr);</code></pre><p>以上的实现方式同样也是针对传入callable object的返回值类型做了特化实现的，目前仅仅针对我的 <a href=https://github.com/owent/libcopp>libcopp</a> 内部提供的类型做了特殊处理。检测callable object的返回值类型属于 type_traits 的范畴这里不再展开。当然理论上是可以对所有协程做特化处理的，但是检测是否符合所有协程要求的 <code>promise_type</code> 的 traits 实现起来会比较麻烦，所以暂未提供，以后有需要可能可以加吧。</p><h3 id=some-any-和-all><code>some()</code>, <code>any()</code> 和 <code>all()</code></h3><p>在某些场景中，我们需要使用到 <code>some()</code>, <code>any()</code> 和 <code>all()</code> 的功能。比如在批量保存场景中，我们可以起一批保存任务，然后 <code>co_await all(tasks...);</code> 。又或者在我们服务器的分布式事务系统中，实现了 <a href=http://www.dbms2.com/2010/05/01/ryw-read-your-writes-consistency/>Read Your Writes</a> 一致性模型，在这个模型中假设有 <strong>N</strong> 个副本，只要读副本数 <strong>R</strong> + 写成功副本数 <strong>W</strong> > <strong>N</strong> 时，即可认为事务成功。那么我们发起 <strong>N</strong> 个写请求是不需要等待它们全部完成的，只需要等待 <strong>W</strong> 个成功就行了，这时候我们可以用 <code>co_await some(W, tasks[N]);</code> 。</p><p>实际上 <code>any()</code> 和 <code>all()</code> 都是特殊形式的 <code>some()</code> ，前者相当于只要等待1个，后者则是需要等待全部。所以这两个的实现比较简单:</p><pre><code class=language-cpp>template <class tready_container, class twaiting_container>
-    LIBCOPP_COPP_API_HEAD_ONLY inline callable_future<promise_status> any(TREADY_CONTAINER&&ready_futures,
-                                                                          TWAITING_CONTAINER&&pending_futures)
-        requires SomeContainerConvertible<
-          typename some_ready_container<tready_container>::value_type,
-          typename some_waiting_container_traits<twaiting_container>::value_type
-        >
+      nullptr);</code></pre><p>以上的实现方式同样也是针对传入callable object的返回值类型做了特化实现的，目前仅仅针对我的 <a href=https://github.com/owent/libcopp>libcopp</a> 内部提供的类型做了特殊处理。检测callable object的返回值类型属于 type_traits 的范畴这里不再展开。当然理论上是可以对所有协程做特化处理的，但是检测是否符合所有协程要求的 <code>promise_type</code> 的 traits 实现起来会比较麻烦，所以暂未提供，以后有需要可能可以加吧。</p><h3 id=some-any-和-all><code>some()</code>, <code>any()</code> 和 <code>all()</code></h3><p>在某些场景中，我们需要使用到 <code>some()</code>, <code>any()</code> 和 <code>all()</code> 的功能。比如在批量保存场景中，我们可以起一批保存任务，然后 <code>co_await all(tasks...);</code> 。又或者在我们服务器的分布式事务系统中，实现了 <a href=http://www.dbms2.com/2010/05/01/ryw-read-your-writes-consistency/>Read Your Writes</a> 一致性模型，在这个模型中假设有 <strong>N</strong> 个副本，只要读副本数 <strong>R</strong> + 写成功副本数 <strong>W</strong> > <strong>N</strong> 时，即可认为事务成功。那么我们发起 <strong>N</strong> 个写请求是不需要等待它们全部完成的，只需要等待 <strong>W</strong> 个成功就行了，这时候我们可以用 <code>co_await some(W, tasks[N]);</code> 。</p><p>实际上 <code>any()</code> 和 <code>all()</code> 都是特殊形式的 <code>some()</code> ，前者相当于只要等待1个，后者则是需要等待全部。所以这两个的实现比较简单:</p><pre><code class=language-cpp>template &lt;class TREADY_CONTAINER, class TWAITING_CONTAINER&gt;
+    LIBCOPP_COPP_API_HEAD_ONLY inline callable_future&lt;promise_status&gt; any(TREADY_CONTAINER&amp;&amp;ready_futures,
+                                                                          TWAITING_CONTAINER&amp;&amp;pending_futures)
+        requires SomeContainerConvertible&lt;
+          typename some_ready_container&lt;TREADY_CONTAINER&gt;::value_type,
+          typename some_waiting_container_traits&lt;TWAITING_CONTAINER&gt;::value_type
+        &gt;
 {
-  return some_delegate<typename some_ready_container<tready_container>::value_type>::template run(
-      std::forward<tready_container>(ready_futures), 1, &pending_futures);
+  return some_delegate&lt;typename some_ready_container&lt;TREADY_CONTAINER&gt;::value_type&gt;::template run(
+      std::forward&lt;TREADY_CONTAINER&gt;(ready_futures), 1, &amp;pending_futures);
 }
 
-template <class tready_container, class twaiting_container>
-    LIBCOPP_COPP_API_HEAD_ONLY inline callable_future<promise_status> all(TREADY_CONTAINER&&ready_futures,
-                                                                          TWAITING_CONTAINER&&pending_futures)
-        requires SomeContainerConvertible<
-          typename some_ready_container<tready_container>::value_type,
-          typename some_waiting_container_traits<twaiting_container>::value_type
+template &lt;class TREADY_CONTAINER, class TWAITING_CONTAINER&gt;
+    LIBCOPP_COPP_API_HEAD_ONLY inline callable_future&lt;promise_status&gt; all(TREADY_CONTAINER&amp;&amp;ready_futures,
+                                                                          TWAITING_CONTAINER&amp;&amp;pending_futures)
+        requires SomeContainerConvertible&lt;
+          typename some_ready_container&lt;TREADY_CONTAINER&gt;::value_type,
+          typename some_waiting_container_traits&lt;TWAITING_CONTAINER&gt;::value_type
 #  endif
 {
-  return some_delegate<typename some_ready_container<tready_container>::value_type>::template run(
-      std::forward<tready_container>(ready_futures), gsl::size(pending_futures), &pending_futures);
-}</code></pre><p>而对于 <code>some()</code> , 最简单的方式就是在一个 <code>while</code> 循环中等待我们要关注的对象。主循环如下:</p><pre><code class=language-cpp>promise_type some_promise{&context};
-while (context.status < promise_status::kDone) {
+  return some_delegate&lt;typename some_ready_container&lt;TREADY_CONTAINER&gt;::value_type&gt;::template run(
+      std::forward&lt;TREADY_CONTAINER&gt;(ready_futures), gsl::size(pending_futures), &amp;pending_futures);
+}</code></pre><p>而对于 <code>some()</code> , 最简单的方式就是在一个 <code>while</code> 循环中等待我们要关注的对象。主循环如下:</p><pre><code class=language-cpp>promise_type some_promise{&amp;context};
+while (context.status &lt; promise_status::kDone) {
   // Killed by caller
-  auto current_status = co_yield callable_future<promise_status>::yield_status();
-  if (current_status >= promise_status::kDone) {
+  auto current_status = co_yield callable_future&lt;promise_status&gt;::yield_status();
+  if (current_status &gt;= promise_status::kDone) {
     context.status = current_status;
     break;
   }
@@ -130,7 +130,7 @@ while (context.status < promise_status::kDone) {
   auto caller = get_caller();
   if (caller) {
     if (nullptr != caller.promise) {
-      caller.promise->set_flag(promise_flag::kInternalWaitting, false);
+      caller.promise-&gt;set_flag(promise_flag::kInternalWaitting, false);
     }
     set_caller(nullptr);
   }
@@ -139,49 +139,49 @@ while (context.status < promise_status::kDone) {
     return;
   }
 
-  ++context_->scan_bound;
-  if (context_->scan_bound >= context_->ready_bound) {
+  &#43;&#43;context_-&gt;scan_bound;
+  if (context_-&gt;scan_bound &gt;= context_-&gt;ready_bound) {
     scan_ready(*context_);
-    context_->scan_bound = context_->ready.size();
+    context_-&gt;scan_bound = context_-&gt;ready.size();
 
-    if (context_->scan_bound >= context_->ready_bound && context_->status < promise_status::kDone) {
-      context_->status = promise_status::kDone;
+    if (context_-&gt;scan_bound &gt;= context_-&gt;ready_bound &amp;&amp; context_-&gt;status &lt; promise_status::kDone) {
+      context_-&gt;status = promise_status::kDone;
     }
   }
-}</code></pre><p>最后，我贴一个单元测试的代码来暂时一下使用示例吧:</p><pre><code class=language-cpp>static copp::callable_future<int> callable_func_some_callable_in_initialize_list(size_t expect_ready_count,
+}</code></pre><p>最后，我贴一个单元测试的代码来暂时一下使用示例吧:</p><pre><code class=language-cpp>static copp::callable_future&lt;int&gt; callable_func_some_callable_in_initialize_list(size_t expect_ready_count,
                                                                                  copp::promise_status expect_status) {
   size_t resume_ready_count = 0;
 
-  copp::callable_future<int> callable1 = callable_func_some_any_all_callable_suspend(471);
-  copp::callable_future<int> callable2 = callable_func_some_any_all_callable_suspend(473);
-  copp::callable_future<int> callable3 = callable_func_some_any_all_callable_suspend(477);
+  copp::callable_future&lt;int&gt; callable1 = callable_func_some_any_all_callable_suspend(471);
+  copp::callable_future&lt;int&gt; callable2 = callable_func_some_any_all_callable_suspend(473);
+  copp::callable_future&lt;int&gt; callable3 = callable_func_some_any_all_callable_suspend(477);
 
-  copp::some_ready<copp::callable_future<int>>::type readys;
+  copp::some_ready&lt;copp::callable_future&lt;int&gt;&gt;::type readys;
   // 这里是单独变量转span，直接用容器(比如vector)包callable也是可以的
-  std::reference_wrapper<copp::callable_future<int>> pending[] = {callable1, callable2, callable3};
+  std::reference_wrapper&lt;copp::callable_future&lt;int&gt;&gt; pending[] = {callable1, callable2, callable3};
   auto some_result = co_await copp::some(readys, 2, copp::gsl::make_span(pending));
-  CASE_EXPECT_EQ(static_cast<int>(expect_status), static_cast<int>(some_result));
+  CASE_EXPECT_EQ(static_cast&lt;int&gt;(expect_status), static_cast&lt;int&gt;(some_result));
 
   int result = 1;
-  for (auto &ready_callable : readys) {
-    if (ready_callable->is_ready()) {
-      result += ready_callable->get_internal_promise().data();
-      ++resume_ready_count;
+  for (auto &amp;ready_callable : readys) {
+    if (ready_callable-&gt;is_ready()) {
+      result &#43;= ready_callable-&gt;get_internal_promise().data();
+      &#43;&#43;resume_ready_count;
     }
   }
 
   CASE_EXPECT_EQ(expect_ready_count, resume_ready_count);
 
   co_return result;
-}</code></pre><h2 id=杂项优化>杂项优化</h2><ul><li>小对象优化: 对于 <code>generator_future</code> 和 <code>task_future</code> 的返回类型，我都采用了小对象优化。即，对于 <code>trivally_copyable</code> 且size小的类型，使用 <code>memcpy</code> 来传递 <code>return_value</code> 和外部传入的数据到 <code>co_await</code> 的返回值，否则使用 <code>unique_ptr</code> 来转移数据。而对于 <code>callable_future</code>，我希望更加精简，所有总是转移右值。</li><li>Module和 <code>enable_if</code> : 有些编译器已经支持 Module 了，我再编译时会尝试检测编译器特性，如果支持的话就使用 Module 来限定模板类型，对编译期的压力也会降低。不支持的话就fallback到 <code>enable_if</code> 的 type_traits。</li></ul><h2 id=benchmark>Benchmark</h2><p>压力测试仍然是分为trivial类型返回和非trivial类型返回两部分。非trivial类型因为有构造和析构函数，是会影响编译优化的效果的。</p><p>目前看起来 ，在高并发场景下 task 的创建CPU开销和原来有栈协程带栈池的开销降低了约 25%，切换开销降低了约 65%。低并发场景下切换开销降低了约 25%。如果复用 <code>copp::generator_future</code> , 切换的CPU开销还能再降低40%左右。其实这个CPU开销对于业务逻辑来说占比非常低了，C++20更大的优势在于内存管理。</p><p>按 <a href=https://en.cppreference.com/w/cpp/language/coroutines#Heap_allocation>https://en.cppreference.com/w/cpp/language/coroutines#Heap_allocation</a> 的描述，某些场景下C++20协程是可以把promise的分配优化掉的。那么在高性能的接口层 （ <code>callable_future</code> ） 我们当然也想尽可能利用好编译器的特性。在 <a href=https://github.com/owent/libcopp/actions>单元测试</a> 里 <code>libcopp_sample_benchmark_std_couroutine_callable_recursive</code> 相关的项目中。可以看到 create 时间很长，但是 resume 时间为0，这估计就是触发这个优化+尾调用优化了，直接创建协程的时候就把后面的跑完了。</p><h2 id=接入过程中的易踩坑点>接入过程中的易踩坑点</h2><p>首先，在 <a href=https://owent.net/2020/2004.html>《libcopp接入C++20 Coroutine和一些过渡期的设计》</a> 里提到的 GCC <a href=https://owent.net/2020/2004.html#%E7%AC%A6%E5%8F%B7%E9%97%AE%E9%A2%98>在MinGW环境下的链接符号问题</a> 在当前的 GCC 12 中已经修复了， GCC 11 我没有测试。</p><p>第二个坑，是临时对象的析构顺序，如果 <code>co_await</code> 一个 <code>future</code> 对象，返回 <code>awaitable</code> 用于协程切出和恢复，在GCC 10的某些版本中，这个 <code>future</code> 对象析构会在 <code>await_suspend</code> 的之前完成（ 10.3 以前的版本）。这里如果有资源引用可能主要注意一下生命周期。具体可以看一下 <a href=https://godbolt.org/z/dbrxns66b>https://godbolt.org/z/dbrxns66b</a> 这里的sample。</p><p>第三个易踩坑点是关于协程内 <code>promise_type</code> 类型的。由于带类型的 <code>coroutine_handle&lt;Promise></code> 有个接口 <code>coroutine_handle&lt;Promise>::promise()</code> 可以获取内部的 promise 类型。并且有个接口 <code>std::coroutine_handle&lt;Promise>::from_promise</code> 可以从某个 promise 构造handle。我们可能很自然地会想到可以用一个 promise 基类来实现一下公共的功能，然后模块直接传递基类的 <code>coroutine_handle&lt;Promise></code> 。但是这是行不通的，我们来看看 <code>from_promise</code> 的实现:</p><p>MSVC的实现:</p><pre><code class=language-cpp>static const size_t _ALIGNED_SIZE = is_empty_v<_PromiseT> ? 0 : ((sizeof(_PromiseT) + _ALIGN_REQ - 1) & ~(_ALIGN_REQ - 1));
-static coroutine_handle from_promise(_PromiseT& _Prom) noexcept {
-  auto _FramePtr = reinterpret_cast<char*>(_STD addressof(_Prom)) + _ALIGNED_SIZE;
-  coroutine_handle<_PromiseT> _Result;
-  _Result._Ptr = reinterpret_cast<_Resumable_frame_prefix*>(_FramePtr);
+}</code></pre><h2 id=杂项优化>杂项优化</h2><ul><li>小对象优化: 对于 <code>generator_future</code> 和 <code>task_future</code> 的返回类型，我都采用了小对象优化。即，对于 <code>trivally_copyable</code> 且size小的类型，使用 <code>memcpy</code> 来传递 <code>return_value</code> 和外部传入的数据到 <code>co_await</code> 的返回值，否则使用 <code>unique_ptr</code> 来转移数据。而对于 <code>callable_future</code>，我希望更加精简，所有总是转移右值。</li><li>Module和 <code>enable_if</code> : 有些编译器已经支持 Module 了，我再编译时会尝试检测编译器特性，如果支持的话就使用 Module 来限定模板类型，对编译期的压力也会降低。不支持的话就fallback到 <code>enable_if</code> 的 type_traits。</li></ul><h2 id=benchmark>Benchmark</h2><p>压力测试仍然是分为trivial类型返回和非trivial类型返回两部分。非trivial类型因为有构造和析构函数，是会影响编译优化的效果的。</p><p>目前看起来 ，在高并发场景下 task 的创建CPU开销和原来有栈协程带栈池的开销降低了约 25%，切换开销降低了约 65%。低并发场景下切换开销降低了约 25%。如果复用 <code>copp::generator_future</code> , 切换的CPU开销还能再降低40%左右。其实这个CPU开销对于业务逻辑来说占比非常低了，C++20更大的优势在于内存管理。</p><p>按 <a href=https://en.cppreference.com/w/cpp/language/coroutines#Heap_allocation>https://en.cppreference.com/w/cpp/language/coroutines#Heap_allocation</a> 的描述，某些场景下C++20协程是可以把promise的分配优化掉的。那么在高性能的接口层 （ <code>callable_future</code> ） 我们当然也想尽可能利用好编译器的特性。在 <a href=https://github.com/owent/libcopp/actions>单元测试</a> 里 <code>libcopp_sample_benchmark_std_couroutine_callable_recursive</code> 相关的项目中。可以看到 create 时间很长，但是 resume 时间为0，这估计就是触发这个优化+尾调用优化了，直接创建协程的时候就把后面的跑完了。</p><h2 id=接入过程中的易踩坑点>接入过程中的易踩坑点</h2><p>首先，在 <a href=https://owent.net/2020/2004.html>《libcopp接入C++20 Coroutine和一些过渡期的设计》</a> 里提到的 GCC <a href=https://owent.net/2020/2004.html#%E7%AC%A6%E5%8F%B7%E9%97%AE%E9%A2%98>在MinGW环境下的链接符号问题</a> 在当前的 GCC 12 中已经修复了， GCC 11 我没有测试。</p><p>第二个坑，是临时对象的析构顺序，如果 <code>co_await</code> 一个 <code>future</code> 对象，返回 <code>awaitable</code> 用于协程切出和恢复，在GCC 10的某些版本中，这个 <code>future</code> 对象析构会在 <code>await_suspend</code> 的之前完成（ 10.3 以前的版本）。这里如果有资源引用可能主要注意一下生命周期。具体可以看一下 <a href=https://godbolt.org/z/dbrxns66b>https://godbolt.org/z/dbrxns66b</a> 这里的sample。</p><p>第三个易踩坑点是关于协程内 <code>promise_type</code> 类型的。由于带类型的 <code>coroutine_handle&lt;Promise></code> 有个接口 <code>coroutine_handle&lt;Promise>::promise()</code> 可以获取内部的 promise 类型。并且有个接口 <code>std::coroutine_handle&lt;Promise>::from_promise</code> 可以从某个 promise 构造handle。我们可能很自然地会想到可以用一个 promise 基类来实现一下公共的功能，然后模块直接传递基类的 <code>coroutine_handle&lt;Promise></code> 。但是这是行不通的，我们来看看 <code>from_promise</code> 的实现:</p><p>MSVC的实现:</p><pre><code class=language-cpp>static const size_t _ALIGNED_SIZE = is_empty_v&lt;_PromiseT&gt; ? 0 : ((sizeof(_PromiseT) &#43; _ALIGN_REQ - 1) &amp; ~(_ALIGN_REQ - 1));
+static coroutine_handle from_promise(_PromiseT&amp; _Prom) noexcept {
+  auto _FramePtr = reinterpret_cast&lt;char*&gt;(_STD addressof(_Prom)) &#43; _ALIGNED_SIZE;
+  coroutine_handle&lt;_PromiseT&gt; _Result;
+  _Result._Ptr = reinterpret_cast&lt;_Resumable_frame_prefix*&gt;(_FramePtr);
   return _Result;
-}</code></pre><p>GCC实现:</p><pre><code class=language-cpp>static coroutine_handle from_promise(_Promise& __p) {
+}</code></pre><p>GCC实现:</p><pre><code class=language-cpp>static coroutine_handle from_promise(_Promise&amp; __p) {
   coroutine_handle __self;
-  __self._M_fr_ptr = __builtin_coro_promise((char*) &__p, __alignof(_Promise), true);
+  __self._M_fr_ptr = __builtin_coro_promise((char*) &amp;__p, __alignof(_Promise), true);
   return __self;
 }</code></pre><p>可以看到，handle的地址和promise的对齐大小强相关，所以即便promise有继承关系，如果对齐长度不一致会导致互相转换之后地址错误。
 简单地说，假设 <code>struct PromiseA : public PromiseB</code> , 有 <code>coroutine_handle&lt;PromiseB> b;</code> ，不允许使用, <code>coroutine_handle&lt;PromiseA>::from_address(b.address())</code> 或 <code>coroutine_handle&lt;PromiseA>::from_promise(b.promise())</code> 。</p><p>我们实现了一个 <code>handle_delegate</code> 来保存基类地址来解决这个问题。</p><p>第四个坑是在 <code>return_value()/return_void()</code> 里不能 <code>handle.destroy()</code> ，否则GCC的实现中会执行部分协程栈变量的析构函数。这里不同编译器地行为也不完全一样，但是这个应该本身就是UB。</p><blockquote><p>有些时候我们会采用引用计数来记录资源，那么在协程执行结束后的 <code>return_value()/return_void()</code> 里有可能会引起引用解绑。如果这时候是最后一个引用被移除的时候可能会触发回收的机制，调用 <code>handle.destroy()</code> 来释放协程，这时候会就产生问题。在 <a href=https://github.com/owent/libcopp>libcopp</a> 的 <code>task_future</code> 中就有类似问题。 <code>task_future</code> 通过对 <code>task_context</code> 的引用计数来管理生命周期，如果这时候释放了最后一个 <code>task_context</code> 就会产生问题。所以我这里的做法是把这个数据的释放放在了 <code>final_suspend()</code> 中。</p></blockquote><h2 id=从有栈协程迁移>从有栈协程迁移</h2><p>我们之前的有栈协程提供了一个带超时管理的 <code>task_manager</code> ，为了方便迁移。对于 <code>task_future</code> 我也提供了一个特化实现的 <code>task_manager</code> 提供相同的功能。当然，超时错误的错误返回不能像之前一样使用特定错误码。而是要走错误状态转换的 <code>copp::promise_error_transform&lt;TRETURN></code> ，并接受 <code>kCancle/kKilled/kTimeout</code> 作为参数。</p><p>其他的迁移出钱前文提到的 <code>some()</code>, <code>any()</code> 和 <code>all()</code> 之外，都和项目中具体的使用方式与新老协程在接口形式上的约束有关了。我后面全部完成完整版本后会再专门开一篇分享在实际项目中各种应用场景下的的迁移过程。</p><h2 id=压力测试>压力测试</h2><p>补充一个简单的压力测试: (带jemalloc 5.3.0)</p><ul><li>CPU: AMD EPYC 7K62 48-Core Processor(2.6GHz)</li><li>Memory: 32GB</li><li>GCC Version: 12.2.0</li><li>Clang Version: 15.0.1</li></ul><div class=chartjs-container style="width:100%;height:auto;margin:1rem auto"><canvas id=chartjs-shortcode-0 data-chartjs-config-id=chartjs-shortcode-0-config>Chart 0</canvas></div><script type=application/json id=chartjs-shortcode-0-config>{

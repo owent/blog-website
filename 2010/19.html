@@ -25,9 +25,9 @@
 
 9850.50
 
-0.00</code></pre><p>代码如下：</p><pre><code class=language-cpp>#include <iostream>
-#include <cstdio>
-#include <cmath>
+0.00</code></pre><p>代码如下：</p><pre><code class=language-cpp>#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+#include &lt;cmath&gt;
 
 const double eps = 1e-8;
 struct point
@@ -37,13 +37,13 @@ struct point
     point(){}
     point(int _x, int _y):x(_x),y(_y){};
 
-    static int xmult(const point &p1, const point &p2, const point & p0)
+    static int xmult(const point &amp;p1, const point &amp;p2, const point &amp; p0)
     {
         return (p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y);
     }
-    bool operator > (const point &_p) const
+    bool operator &gt; (const point &amp;_p) const
     {
-        return y > _p.y;
+        return y &gt; _p.y;
     }
 };
 
@@ -52,25 +52,25 @@ struct segment
     point s, e;
 
     segment(){}
-    segment(const point &_s, const point &_e):s(_s),e(_e){}
+    segment(const point &amp;_s, const point &amp;_e):s(_s),e(_e){}
 
-    double operator *(const segment &_Off) const
+    double operator *(const segment &amp;_Off) const
     {
         return (e.x - s.x) * (_Off.e.y - _Off.s.y) - (e.y - s.y) * (_Off.e.x - _Off.s.x);
     }
-    bool cross(const segment &_Off) const
+    bool cross(const segment &amp;_Off) const
     {
         return (
-            (std::max(s.x, e.x) >= std::min(_Off.s.x, _Off.e.x)) &&
-            (std::max(_Off.s.x, _Off.e.x) >= std::min(s.x, e.x)) &&
-            (std::max(s.y, e.y) >= std::min(_Off.s.y, _Off.e.y)) &&
-            (std::max(_Off.s.y, _Off.e.y) >= std::min(s.y, e.y)) &&
-            ((segment(_Off.s, s) * _Off) * (_Off * segment(_Off.s, e)) >= 0.0) &&
-            ((segment(s, _Off.s) * (*this)) * ((*this) * segment(s, _Off.e)) >= 0.0)
+            (std::max(s.x, e.x) &gt;= std::min(_Off.s.x, _Off.e.x)) &amp;&amp;
+            (std::max(_Off.s.x, _Off.e.x) &gt;= std::min(s.x, e.x)) &amp;&amp;
+            (std::max(s.y, e.y) &gt;= std::min(_Off.s.y, _Off.e.y)) &amp;&amp;
+            (std::max(_Off.s.y, _Off.e.y) &gt;= std::min(s.y, e.y)) &amp;&amp;
+            ((segment(_Off.s, s) * _Off) * (_Off * segment(_Off.s, e)) &gt;= 0.0) &amp;&amp;
+            ((segment(s, _Off.s) * (*this)) * ((*this) * segment(s, _Off.e)) &gt;= 0.0)
             );
     }
 
-    bool par(const segment &_s) const
+    bool par(const segment &amp;_s) const
     {
         return (e.y - s.y) * (_s.e.x - _s.s.x) - (e.x - s.x) * (_s.e.y - _s.s.y) == 0;
     }
@@ -81,7 +81,7 @@ struct segment
     }
 };
 
-std::pair<double, double> cross(const segment &a, const segment &b)
+std::pair&lt;double, double&gt; cross(const segment &amp;a, const segment &amp;b)
 {
     double a1 = a.s.y - a.e.y;
     double b1 = a.e.x - a.s.x;
@@ -93,22 +93,22 @@ std::pair<double, double> cross(const segment &a, const segment &b)
             , (c1 * a2 - c2 * a1) / (b2 * a1 - b1 * a2));
 }
 
-double dis(std::pair<double, double> a, std::pair<double, double> b)
+double dis(std::pair&lt;double, double&gt; a, std::pair&lt;double, double&gt; b)
 {
-    return std::sqrt((a.first - b.first) * (a.first - b.first) + (a.second - b.second) * (a.second - b.second));
+    return std::sqrt((a.first - b.first) * (a.first - b.first) &#43; (a.second - b.second) * (a.second - b.second));
 }
 double area(double a, double b, double c)
 {
-    double s = (a + b + c) / 2;
+    double s = (a &#43; b &#43; c) / 2;
     return std::sqrt(s * (s - a) * (s - b) * (s - c));
 }
-std::pair<double, double> getpt(std::pair<double, double> x, const point &pt, double y)
+std::pair&lt;double, double&gt; getpt(std::pair&lt;double, double&gt; x, const point &amp;pt, double y)
 {
     double py = pt.y - x.second;
     double px = pt.x - x.first;
-    if(std::fabs(py) < eps)
+    if(std::fabs(py) &lt; eps)
         return x;
-    return std::make_pair(x.first + (y - x.second) * px / py, y);
+    return std::make_pair(x.first &#43; (y - x.second) * px / py, y);
 }
 
 int main()
@@ -116,33 +116,33 @@ int main()
     segment a, b;
     point ap, bp, mxp, mnp;
     int i, t;
-    std::scanf("%d", &t);
+    std::scanf(&#34;%d&#34;, &amp;t);
     while(t --)
     {
-        std::scanf("%d %d %d %d %d %d %d %d"
-            , &a.s.x, &a.s.y, &a.e.x, &a.e.y
-            , &b.s.x, &b.s.y, &b.e.x, &b.e.y);
+        std::scanf(&#34;%d %d %d %d %d %d %d %d&#34;
+            , &amp;a.s.x, &amp;a.s.y, &amp;a.e.x, &amp;a.e.y
+            , &amp;b.s.x, &amp;b.s.y, &amp;b.e.x, &amp;b.e.y);
         if(a.her() || b.her() || a.cross(b) == false || a.par(b))
         {
-            std::printf("0.00\n");
+            std::printf(&#34;0.00\n&#34;);
             continue;
         }
-        ap = (a.s > a.e)? a.s: a.e;
-        bp = (b.s > b.e)? b.s: b.e;
+        ap = (a.s &gt; a.e)? a.s: a.e;
+        bp = (b.s &gt; b.e)? b.s: b.e;
 
-        std::pair<double, double> pt1, pt2, pt0 = ::cross(a, b);
+        std::pair&lt;double, double&gt; pt1, pt2, pt0 = ::cross(a, b);
 
-        if((ap.x - pt0.first) * (bp.x - pt0.first) > eps)
+        if((ap.x - pt0.first) * (bp.x - pt0.first) &gt; eps)
         {
-            mnp = (ap > bp)?bp: ap;
-            if(segment(mnp, point(mnp.x, 30000)).cross(a) && segment(mnp, point(mnp.x, 30000)).cross(b))
+            mnp = (ap &gt; bp)?bp: ap;
+            if(segment(mnp, point(mnp.x, 30000)).cross(a) &amp;&amp; segment(mnp, point(mnp.x, 30000)).cross(b))
             {
-                std::printf("0.00\n");
+                std::printf(&#34;0.00\n&#34;);
                 continue;
             }
         }
 
-        if(ap > bp)
+        if(ap &gt; bp)
         {
             pt1 = std::make_pair(bp.x, bp.y);
             pt2 = ::getpt(pt0, ap, pt1.second);
@@ -153,7 +153,7 @@ int main()
             pt2 = ::getpt(pt0, bp, pt1.second);
         }
 
-        std::printf("%.2lf\n", ::area(::dis(pt0, pt1), ::dis(pt0, pt2), ::dis(pt2, pt1)) + eps);
+        std::printf(&#34;%.2lf\n&#34;, ::area(::dis(pt0, pt1), ::dis(pt0, pt2), ::dis(pt2, pt1)) &#43; eps);
     }
     return 0;
 }</code></pre></div><hr><footer class=article-footer><div class="article-panel-footer article-meta article-footer clearfix"><span class=article-meta-left><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/my-acm-icpc-career.html>My ACM-ICPC Career</a></li></ol></span><span class=article-meta-right><time datetime=2010-08-07T08:54:04.000+00:00 itemprop=datePublished>2010-08-07</time></span>

@@ -7,8 +7,8 @@
 现在我还是决定记录一下这些有意思的东西。</p><h2 id=201004>2010/04</h2><p>a ^= b ^= a ^=b;
 这是一个交换值得有意思的方式</p><pre><code class=language-cpp>// 统计1的个数的有意思的方式
 int count_bin_one(int x) {
-    return x? 1 +  count_bin_one(x & (x - 1)): 0;
-}</code></pre><h2 id=201104>2011/04</h2><p>同学去爱立信参加笔试+面试碰到的问题 – 1</p><pre><code class=language-cpp>#include <cstdio>
+    return x? 1 &#43;  count_bin_one(x &amp; (x - 1)): 0;
+}</code></pre><h2 id=201104>2011/04</h2><p>同学去爱立信参加笔试+面试碰到的问题 – 1</p><pre><code class=language-cpp>#include &lt;cstdio&gt;
 
 int main () {
 
@@ -25,21 +25,21 @@ int main () {
 
     a[4] = 6;
 
-    printf("i = > %d\nj => %d\nk => %d\n", i, j, k);
+    printf(&#34;i = &gt; %d\nj =&gt; %d\nk =&gt; %d\n&#34;, i, j, k);
 
-    printf("a[0] = > %d\na[1] => %d\n", a[0], a[1]);
+    printf(&#34;a[0] = &gt; %d\na[1] =&gt; %d\n&#34;, a[0], a[1]);
 
-    printf("i:%u\nj:%u\nk:%u\na:%u\na[1]:%u\n\n", &i, &j, &k, a, &a[1]);
+    printf(&#34;i:%u\nj:%u\nk:%u\na:%u\na[1]:%u\n\n&#34;, &amp;i, &amp;j, &amp;k, a, &amp;a[1]);
 
-    printf("a[2]:%u\na[3]:%u\na[4]:%u\n", &a[2], &a[3], &a[4]);
+    printf(&#34;a[2]:%u\na[3]:%u\na[4]:%u\n&#34;, &amp;a[2], &amp;a[3], &amp;a[4]);
 
     return 0;
 
-}</code></pre><p>这段看起来错误的代码，事实上在VC++运行下是报错的，然而在G++之下正确，而不同系统和编译器下结果可能不一样，这和内存分配有关，以下为我在Fedora 15下G++ 4.6.0的结果</p><pre><code class=language-text>i = > 5
-j => 3
-k => 4
-a[0] = > 1
-a[1] => 2
+}</code></pre><p>这段看起来错误的代码，事实上在VC++运行下是报错的，然而在G++之下正确，而不同系统和编译器下结果可能不一样，这和内存分配有关，以下为我在Fedora 15下G++ 4.6.0的结果</p><pre><code class=language-text>i = &gt; 5
+j =&gt; 3
+k =&gt; 4
+a[0] = &gt; 1
+a[1] =&gt; 2
 i:3219340844
 j:3219340828
 k:3219340840
@@ -48,51 +48,51 @@ a[1]:3219340836
 
 a[2]:3219340840
 a[3]:3219340844
-a[4]:3219340848</code></pre><p><del>这就很明显了，至少在Fedora + G++4.6.0下内存分配是地址递减的，顺便这段代码在Win7 下 G++ 4.5.2结果是一样的。</del></p><blockquote><p>整理的时候又看到这个，忍不住鄙视一下这种拿UB当面试题的。他想考内存布局？然而不排除有的栈是向上增长的，并且不同编译器或者不同版本甚至不同编译选项对局部变量都有不同的优化。像是内存对齐啊，加入调试信息什么的。比如VC的Debug编译就会插调试信息，你能知道越界后的内容是啥？</p></blockquote><h2 id=201104-1>2011/04</h2><p>同学去爱立信参加笔试+面试碰到的问题 – 2</p><pre><code class=language-cpp>#include <cstdio>
-#include <cstdlib>
+a[4]:3219340848</code></pre><p><del>这就很明显了，至少在Fedora + G++4.6.0下内存分配是地址递减的，顺便这段代码在Win7 下 G++ 4.5.2结果是一样的。</del></p><blockquote><p>整理的时候又看到这个，忍不住鄙视一下这种拿UB当面试题的。他想考内存布局？然而不排除有的栈是向上增长的，并且不同编译器或者不同版本甚至不同编译选项对局部变量都有不同的优化。像是内存对齐啊，加入调试信息什么的。比如VC的Debug编译就会插调试信息，你能知道越界后的内容是啥？</p></blockquote><h2 id=201104-1>2011/04</h2><p>同学去爱立信参加笔试+面试碰到的问题 – 2</p><pre><code class=language-cpp>#include &lt;cstdio&gt;
+#include &lt;cstdlib&gt;
 
 class a {
 public:
     void foo() {
-        puts("Hello world!");
+        puts(&#34;Hello world!&#34;);
     }
 };
 
 int main () {
     a *p = new a();
-    p->foo();
+    p-&gt;foo();
     p = NULL;
-    p->foo();
+    p-&gt;foo();
 
     return 0;
-}</code></pre><p>没错，这段代码输出了两次Hello world!看来我之前记错了或者那个教科书是错的，普通成员函数的也是直接查类的函数表的，而不是用变量记函数指针。</p><h2 id=201104-2>2011/04</h2><p>同学去爱立信参加笔试+面试碰到的问题 – 3</p><pre><code class=language-cpp>#include <cstdio>
-#include <cstring>
+}</code></pre><p>没错，这段代码输出了两次Hello world!看来我之前记错了或者那个教科书是错的，普通成员函数的也是直接查类的函数表的，而不是用变量记函数指针。</p><h2 id=201104-2>2011/04</h2><p>同学去爱立信参加笔试+面试碰到的问题 – 3</p><pre><code class=language-cpp>#include &lt;cstdio&gt;
+#include &lt;cstring&gt;
 
 int main () {
 
-    const char* p1 = "abcdefg";
-    char* const p2 = "abcdefg";
+    const char* p1 = &#34;abcdefg&#34;;
+    char* const p2 = &#34;abcdefg&#34;;
 
-    // p1[2] = '2'; // 编译错误
-    p1 = "zxmn";
-    // p2 = "zxmn"; // 编译错误
-    p2[2] = '2';    // 运行错误
+    // p1[2] = &#39;2&#39;; // 编译错误
+    p1 = &#34;zxmn&#34;;
+    // p2 = &#34;zxmn&#34;; // 编译错误
+    p2[2] = &#39;2&#39;;    // 运行错误
 
-    char* p3 = const_cast<char>(p1);
-    char*& p4 = const_cast<char>(p2);  //G++ 编译错误
+    char* p3 = const_cast&lt;char&gt;(p1);
+    char*&amp; p4 = const_cast&lt;char&gt;(p2);  //G&#43;&#43; 编译错误
 
-    p3[2] = '2';   // 运行错误
-    p4 = "test";   // G++编译错误，VC正常
+    p3[2] = &#39;2&#39;;   // 运行错误
+    p4 = &#34;test&#34;;   // G&#43;&#43;编译错误，VC正常
 
     puts(p1);
     puts(p2);
 
     return 0;
 }</code></pre><p>这个不用解释了。</p><h2 id=201005>2010/05</h2><p>这个是写OSG的时候想到的一个忘记的关于C++类继承的自动调用构造和析构函数问题
-测试代码如下：</p><pre><code class=language-cpp>#include <iostream>
-#include <cstdio>
-#include <cmath>
-#include <algorithm>
+测试代码如下：</p><pre><code class=language-cpp>#include &lt;iostream&gt;
+#include &lt;cstdio&gt;
+#include &lt;cmath&gt;
+#include &lt;algorithm&gt;
 
 namespace test {
     using namespace std;
@@ -102,28 +102,28 @@ namespace test {
         int d;
         a(){
             d = 0;
-            puts("a");
+            puts(&#34;a&#34;);
         }
         a(int s){
-            puts("sa");
+            puts(&#34;sa&#34;);
             d = s;
         }
         ~a(){
-            printf("%d~a\n", d);
+            printf(&#34;%d~a\n&#34;, d);
         }
     };
 
     class b : public a{
     public:
         b(){
-            puts("b");
+            puts(&#34;b&#34;);
         }
         b(int s){
-            puts("sb");
+            puts(&#34;sb&#34;);
             d = s;
         }
         ~b(){
-            printf("%d~b\n", d);
+            printf(&#34;%d~b\n&#34;, d);
         }
     };
 
