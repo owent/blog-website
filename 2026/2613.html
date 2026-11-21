@@ -1,0 +1,2356 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>一篇文章从零手搓大预言模型训练和推理|I'm OWenT</title><meta name=viewport content="width=device-width,initial-scale=1"><link rel=canonical href=//owent.net/2026/2613.html><link rel=icon href=/favicon.ico><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css crossorigin=anonymous><link rel=stylesheet href=//owent.net//css/style.css><link rel=stylesheet href=//owent.net/css/syntax.css><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8180054975285991" crossorigin=anonymous></script><meta content="codeva-4M5iohb9TW" name=baidu-site-verification></head><body><div id=container><div id=wrap><header id=header><div id=banner></div><div id=header-outer><div id=header-title><h1 id=site-title><a href=//owent.net/ id=logo>I'm OWenT</a></h1><h2 id=site-description>Challenge Everything</h2></div><div id=header-inner><nav id=main-nav class="navbar navbar-expand-md navbar-dark"><button class="navbar-toggler navbar-toggler-right" type=button data-bs-toggle=collapse data-bs-target=#main-nav-links aria-controls=main-nav-links aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
+<input class=form-control type=text placeholder=搜索 name=q>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=post-content><article id=post-46878df26da9b09d11b74d0ff02a0d5c class="article-panel reading-panel article article-type-post" itemscope itemprop=blogPost><div class=article-panel-inner><header class=article-header><h1 itemprop=name><a class=article-title href=//owent.net/2026/2613.html target=_blank itemprop=url>一篇文章从零手搓大预言模型训练和推理</a></h1></header><div class="article-layout has-toc"><details id=toc class=toc><summary>目录</summary><nav id=TableOfContents><ul><li><a href=#背景>背景</a></li><li><a href=#基本训练流程>基本训练流程</a><ul><li><a href=#完整脚本>完整脚本</a></li><li><a href=#梯度累积与参数更新>梯度累积与参数更新</a></li><li><a href=#学习率>学习率</a></li><li><a href=#rope-rotary-position-embedding旋转位置编码>RoPE: Rotary Position Embedding，旋转位置编码</a></li></ul></li><li><a href=#模型结构>模型结构</a></li><li><a href=#附录>附录</a><ul><li><a href=#chat_template>chat_template</a></li></ul></li><li><a href=#总结>总结</a></li></ul></nav></details><div class=article-entry itemprop=articleBody><p><img src=/2026/2613-banner.png loading=lazy></p><h2 id=背景>背景</h2><p>前段时间通过
+<a href=https://owent.net/2026/2608.html>《大预言模型的基石：Transformer 入坑笔记（一） - 大模型训练链路》</a>,
+<a href=https://owent.net/2026/2609.html>《大预言模型的基石：Transformer 入坑笔记（二） - 基本原理和 Word Embeddings》</a>,
+<a href=https://owent.net/2026/2610.html>《大语言模型的基石：Transformer 入坑笔记（三） - 注意力机制和 Transformer》</a>,
+<a href=https://owent.net/2026/2611.html>《大语言模型的基石：Transformer 入坑笔记（四） - 线性注意力(Linear Attention) 的基础》</a>,
+<a href=https://owent.net/2026/2612.html>《大语言模型的基石：Transformer 入坑笔记（五） - 线性注意力(Linear Attention) 的优化》</a>
+梳理了大语言模型训练、词嵌入和注意力机制的基础。</p><p>接下来我想把这些知识用到一个小模型的训练脚本里，看看预训练和微调怎么串起来，以及这些论文公式怎么落地。</p><p>训练流程主要参考 <a href=https://github.com/jingyaogong/minimind>MiniMind</a>。我把预训练和全参数监督微调（SFT）合到一个脚本里，后续再尝试前文讨论的线性注意力方案。</p><h2 id=基本训练流程>基本训练流程</h2><p>这里复用 <a href=https://github.com/jingyaogong/minimind>MiniMind</a> 的 tokenizer。使用 <code>--from-weight none</code> 时，Word Embedding 和其余模型参数都会从头训练；
+加载已有权重后，脚本仍会更新全部模型参数。</p><p>下面的命令只下载数据集说明。预训练和 SFT 示例分别使用 <code>pretrain_t2t_mini.jsonl</code> 和 <code>sft_t2t_mini.jsonl</code>，训练时通过 <code>--input-data-path</code> 指定已下载的样本文件。</p><pre><code class=language-bash>modelscope download --dataset gongjy/minimind_dataset README.md --local_dir ./dataset</code></pre><p>下面的图对应 <code>2613-llm-train-basic.py</code> 当前实现的训练流程。预训练和全参数 SFT 共用模型与参数更新代码，
+由 <code>--stage</code> 选择 Dataset，由 <code>--from-weight</code> 指定新训练的初始权重，<code>--resume</code> 则恢复完整的续训状态。
+图表按从左向右的顺序排列，超出正文宽度时可以在图内横向滚动。</p><h3 id=完整脚本>完整脚本</h3><p>脚本的流程大致是准备设备、模型和数据，随后进入逐个 epoch 的训练循环。续训检查点会先校验配置和输入内容，
+再恢复模型、优化器及进度；RNG 状态在构造 DataLoader 后、读取下一批数据前恢复。</p><p><div class=d2-container data-diagram-key=5e009c3f1be2ac22be9a7f3ad3f0d8711cf9d4a0d108b353e76f66f65cd918e7 data-d2-key=5e009c3f1be2ac22be9a7f3ad3f0d8711cf9d4a0d108b353e76f66f65cd918e7 style="width:100%;height:auto;margin:1rem auto;overflow:auto" role=group aria-label="预训练与 SFT 的入口、数据分支及断点恢复流程"><svg style="display:block;width:100%;height:auto;min-width:1579px" xmlns:xlink="http://www.w3.org/1999/xlink" data-d2-version="v0.9.0" preserveAspectRatio="xMinYMin meet" viewBox="0 0 1579 198"><svg class="d2-2730494604 d2-svg" width="1579" height="198" viewBox="-9 -9 1579 198"><rect x="-9" y="-9" width="1579" height="198" rx="0" fill="transparent" stroke-width="0"/><style>.d2-2730494604 .text-bold{font-family:d2-2730494604-font-bold}@font-face{font-family:d2-2730494604-font-bold;src:url(data:application/font-woff;base64,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)}.d2-2730494604 .text-italic{font-family:d2-2730494604-font-italic}@font-face{font-family:d2-2730494604-font-italic;src:url(data:application/font-woff;base64,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)}</style><style>.shape{shape-rendering:geometricPrecision;stroke-linejoin:round}.connection{stroke-linecap:round;stroke-linejoin:round}.blend{mix-blend-mode:multiply;opacity:.5}.d2-2730494604 .fill-N1{fill:#0a0f25}.d2-2730494604 .fill-N2{fill:#676c7e}.d2-2730494604 .fill-B1{fill:#000536}.d2-2730494604 .stroke-B1{stroke:#000536}.d2-2730494604 .stroke-B2{stroke:#0f66b7}.appendix text.text{fill:#0a0f25}.md{--color-fg-default:#0A0F25;--color-fg-muted:#676C7E;--color-fg-subtle:#9499AB;--color-canvas-default:#FFFFFF;--color-canvas-subtle:#EEF1F8;--color-border-default:#000536;--color-border-muted:#0F66B7;--color-neutral-muted:#EEF1F8;--color-accent-fg:#0F66B7;--color-accent-emphasis:#0F66B7;--color-attention-subtle:#676C7E;--color-danger-fg:red}.light-code{display:block}.dark-code{display:none}</style><g class="aW5pdA== step"><g class="shape"><rect x="12" y="46" width="181" height="86" rx="8" stroke="#81a4b7" fill="#edf5fa" style="stroke-width:2"/></g><text x="102.5" y="86.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:18px"><tspan x="102.5" dy="0">配置与初始化</tspan><tspan x="102.5" dy="20.5">tokenizer · 模型</tspan></text></g><g class="cHJldHJhaW4= step"><g class="shape"><rect x="397" y="12" width="179" height="68" rx="8" stroke="#81a4b7" fill="#edf5fa" style="stroke-width:2"/></g><text x="486.5" y="52.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:18px">预训练 Dataset</text></g><g class="c2Z0 step"><g class="shape"><rect x="416" y="100" width="140" height="68" rx="8" stroke="#81a4b7" fill="#edf5fa" style="stroke-width:2"/></g><text x="486" y="140.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:18px">SFT Dataset</text></g><g class="c3RhdGU= state"><g class="shape"><rect x="656" y="30" width="227" height="120" rx="8" stroke="#c6a46d" fill="#fff4e3" style="stroke-width:2"/></g><text x="769.5" y="87.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:18px"><tspan x="769.5" dy="0">新建或恢复</tspan><tspan x="769.5" dy="20.5">优化器与训练状态</tspan></text></g><g class="dHJhaW4= train"><g class="shape"><rect x="963" y="24" width="181" height="68" rx="8" stroke="#74a894" fill="#eaf6f1" style="stroke-width:2"/></g><text x="1053.5" y="64.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:18px">训练窗口循环</text></g><g class="c2F2ZQ== state"><g class="shape"><rect x="1391" y="46" width="158" height="86" rx="8" stroke="#c6a46d" fill="#fff4e3" style="stroke-width:2"/></g><text x="1470" y="86.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:18px"><tspan x="1470" dy="0">保存检查点</tspan><tspan x="1470" dy="20.5">导出权重</tspan></text></g><g class="KGluaXQgLSZndDsgcHJldHJhaW4pWzBd"><marker id="mk-d2-2730494604-3488378134" markerWidth="10" markerHeight="12" refX="7" refY="6" viewBox="0 0 10 12" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0,0 10,6 0,12" fill="#000536" class="connection fill-B1" stroke-width="2"/></marker><path d="M195 75.666h28s10 0 10-10V56s0-10 10-10H393" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2" marker-end="url(#mk-d2-2730494604-3488378134)" mask="url(#d2-2730494604)"/><text x="280" y="52" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">pretrain</text></g><g class="KGluaXQgLSZndDsgc2Z0KVswXQ=="><path d="M195 104.333h28s10 0 10 10V124s0 10 10 10H413" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2" marker-end="url(#mk-d2-2730494604-3488378134)" mask="url(#d2-2730494604)"/><text x="290" y="140" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">sft</text></g><g class="KHByZXRyYWluIC0mZ3Q7IHN0YXRlKVswXQ=="><path d="M578 46h74" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2" marker-end="url(#mk-d2-2730494604-3488378134)" mask="url(#d2-2730494604)"/></g><g class="KHNmdCAtJmd0OyBzdGF0ZSlbMF0="><path d="M558 134h94" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2" marker-end="url(#mk-d2-2730494604-3488378134)" mask="url(#d2-2730494604)"/></g><g class="KHN0YXRlIC0mZ3Q7IHRyYWluKVswXQ=="><path d="M885 58h74" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2" marker-end="url(#mk-d2-2730494604-3488378134)" mask="url(#d2-2730494604)"/></g><g class="KHRyYWluIC0mZ3Q7IHNhdmUpWzBd"><path d="M1146 75.666h241" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2" marker-end="url(#mk-d2-2730494604-3488378134)" mask="url(#d2-2730494604)"/><text x="1267.5" y="81" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">到保存时机</text></g><g class="KHNhdmUgLSZndDsgc3RhdGUpWzBd"><marker id="mk-d2-2730494604-3091222845" markerWidth="10" markerHeight="12" refX="7" refY="6" viewBox="0 0 10 12" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0,0 10,6 0,12" fill="#a98b5b" class="connection" stroke-width="2"/></marker><path d="M1389 122H887" stroke="#a98b5b" fill="none" class="connection" style="stroke-width:2;stroke-dasharray:8,7.892511" marker-end="url(#mk-d2-2730494604-3091222845)" mask="url(#d2-2730494604)"/><text x="1137.5" y="128" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:15px">--resume</text></g><mask id="d2-2730494604" maskUnits="userSpaceOnUse" x="-9" y="-9" width="1579" height="198"><rect x="-9" y="-9" width="1579" height="198" fill="#fff"/><rect x="251" y="36" width="58" height="21" fill="#000"/><rect x="279" y="124" width="22" height="21" fill="#000"/><rect x="1217" y="65" width="101" height="21" fill="#000"/><rect x="1108" y="113" width="59" height="19" fill="#000"/></mask></svg></svg></div></p><p><em>图 1：脚本入口流程。虚线表示下次启动时通过 <code>--resume</code> 恢复检查点；图中省略日志和可视化初始化。</em></p><p><strong>下面的脚本的注释里以及补充了每一步在做什么的注解，有部分注释里不好表述的补充到后面的章节里了。</strong></p><pre><code class=language-python>import os
+import sys
+import random
+import argparse
+import time
+import math
+import warnings
+import glob
+import hashlib
+import tempfile
+from pathlib import Path
+import json
+from contextlib import nullcontext
+from typing import Any, Literal
+from enum import Enum
+from itertools import islice
+
+import numpy
+
+__package__ = &#34;trainer&#34;
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+
+from pydantic import BaseModel, Field
+
+from datasets import load_dataset, Features, Value
+import torch
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel
+from torch.utils.data import DataLoader, DistributedSampler, Sampler
+from transformers.activations import ACT2FN
+from transformers import PreTrainedModel, GenerationMixin, PretrainedConfig
+from transformers import AutoTokenizer, AutoModel, AutoModelForSequenceClassification
+from transformers.cache_utils import Cache
+from transformers.modeling_outputs import MoeCausalLMOutputWithPast
+from transformers.utils.chat_template_utils import render_jinja_template
+
+warnings.filterwarnings(&#34;ignore&#34;)
+
+
+# 下载数据集说明：modelscope download --dataset gongjy/minimind_dataset README.md --local_dir ./dataset
+
+PYTORCH_IGNORE_INDEX: int = -100
+
+
+class LLMTrainWeightType(Enum):
+    kNone = 0
+    kPretrain = 1
+    kFullSFT = 2
+
+
+class LLMTrainConfigureSave(BaseModel):
+    save_weight: LLMTrainWeightType
+    dir: str
+    step_interval: int
+
+
+class LLMTrainConfigureRopeScaling(BaseModel):
+    beta_fast: int
+    beta_slow: int
+    factor: int
+    original_max_position_embeddings: int
+    attention_factor: float
+    type: str
+
+
+class LLMTrainConfigureTrain(BaseModel):
+    stage: Literal[&#34;pretrain&#34;, &#34;sft&#34;] = &#34;pretrain&#34;
+    from_weight: LLMTrainWeightType
+    batch_size: int
+    epochs: int
+    learning_rate: float
+    device: str
+    use_compile: bool
+    seed: int
+    accumulation_steps: int
+    grad_clip: float
+
+
+class LLMTrainConfigureParam(BaseModel):
+    eps: float
+    dtype: Literal[&#34;bfloat16&#34;, &#34;float16&#34;, &#34;float32&#34;]
+    hidden_size: int
+    num_hidden_layers: int
+    dropout: float
+    vocab_size: int
+    bos_token_id: int
+    eos_token_id: int
+    flash_attn: bool
+    num_attention_heads: int
+    num_key_value_heads: int
+    hidden_act: str
+    intermediate_size: int
+    max_position_embeddings: int
+    rope_theta: float
+    tie_word_embeddings: bool
+    inference_rope_scaling: bool
+    rope_scaling: LLMTrainConfigureRopeScaling | None = None
+    use_moe: bool
+    moe_num_experts: int
+    moe_num_experts_per_tok: int
+    moe_intermediate_size: int
+    norm_topk_prob: bool
+    router_aux_loss_coef: float
+
+
+class LLMTrainConfigureLoader(BaseModel):
+    num_workers: int
+    data_item_max_length: int
+    tokenizer_path: str
+    sft_add_system_ratio: float = Field(default=0.2, ge=0, le=1)
+    sft_empty_think_ratio: float = Field(default=0.2, ge=0, le=1)
+
+
+class LLMTrainConfigureVisualizationWanDB(BaseModel):
+    project: str
+
+
+class LLMTrainConfigureVisualization(BaseModel):
+    wandb: LLMTrainConfigureVisualizationWanDB | None
+
+
+class LLMTrainConfigureLog(BaseModel):
+    step_interval: int
+
+
+class LLMTrainConfigureAll(BaseModel):
+    model_name: str
+    save: LLMTrainConfigureSave
+    train: LLMTrainConfigureTrain
+    param: LLMTrainConfigureParam
+    loader: LLMTrainConfigureLoader
+    visualization: LLMTrainConfigureVisualization | None
+    log: LLMTrainConfigureLog
+
+
+# torchrun 启动时会设置 RANK 和 LOCAL_RANK 环境变量
+def init_distributed_mode(settings: LLMTrainConfigureAll):
+    distributed = int(os.environ.get(&#34;RANK&#34;, -1)) != -1
+    local_rank = int(os.environ[&#34;LOCAL_RANK&#34;]) if distributed else 0
+    device = torch.device(settings.train.device)
+    if device.type == &#34;cuda&#34;:
+        if distributed and not dist.is_nccl_available():
+            raise RuntimeError(
+                &#34;当前 PyTorch 未提供 NCCL/RCCL，无法启动 GPU DDP；请使用单进程 GPU，或在支持该后端的环境中运行。CPU DDP 可将 train.device 设为 cpu。&#34;
+            )
+        if not torch.cuda.is_available():
+            raise RuntimeError(&#34;配置要求 CUDA/ROCm 设备，但当前环境不可用&#34;)
+        device = torch.device(
+            &#34;cuda&#34;,
+            (
+                local_rank
+                if distributed
+                else (
+                    device.index
+                    if device.index is not None
+                    else torch.cuda.current_device()
+                )
+            ),
+        )
+        torch.cuda.set_device(device)
+    elif device.type != &#34;cpu&#34;:
+        raise ValueError(&#34;本示例支持的训练设备为 cpu 和 cuda&#34;)
+    settings.train.device = str(device)
+    if distributed:
+        backend = &#34;nccl&#34; if device.type == &#34;cuda&#34; else &#34;gloo&#34;
+        if backend == &#34;gloo&#34; and not dist.is_gloo_available():
+            raise RuntimeError(&#34;当前 PyTorch 未提供 Gloo，无法启动 CPU DDP&#34;)
+        dist.init_process_group(backend=backend)
+    return local_rank
+
+
+LLM_TRAIN_CONST_VALUE_HIDDEN_SIZE: int = 768
+LLM_TRAIN_SETTINGS = LLMTrainConfigureAll.model_validate(
+    {
+        &#34;model_name&#34;: &#34;OWenTLLM&#34;,
+        &#34;save&#34;: {
+            &#34;save_weight&#34;: LLMTrainWeightType.kPretrain,
+            &#34;dir&#34;: &#34;./out&#34;,
+            # 每隔多少个 microbatch 保存一次，实际保存延后到窗口结束。
+            &#34;step_interval&#34;: 1000,
+        },
+        &#34;train&#34;: {
+            # 基于哪个权重训练，为none则从头开始
+            &#34;from_weight&#34;: LLMTrainWeightType.kNone,
+            # Batch size
+            &#34;batch_size&#34;: 8,
+            # 训练轮数
+            &#34;epochs&#34;: 2,
+            # 余弦衰减的学习率上限，第一次更新按首个窗口的结束位置取值。
+            &#34;learning_rate&#34;: 2e-5,
+            # 训练设备(如果有多GPU或者AMD的独显&#43;集显，请注意选择正确的显卡设备)
+            &#34;device&#34;: &#34;cuda&#34; if torch.cuda.is_available() else &#34;cpu&#34;,
+            # 是否使用torch.compile加速
+            &#34;use_compile&#34;: False,
+            # 每个 epoch 的进程随机种子为 seed &#43; epoch &#43; rank，续训要求配置中的 seed 一致。
+            &#34;seed&#34;: 42,
+            # 梯度累积步数。每个窗口最多 8 个 microbatch，窗口结束时尝试更新一次参数。
+            # “梯度累积与参数更新” 章节详解了它的作用原理
+            &#34;accumulation_steps&#34;: 8,
+            # 梯度裁剪阈值。所有参数梯度合在一起后的全局 L2 范数上限。
+            # 近似处理公式 $g \leftarrow g \cdot \min\left(1,\frac{1.0}{\lVert g\rVert_2}\right)$
+            # 总梯度范数超过阈值时，按同一比例缩小所有参数的梯度。
+            &#34;grad_clip&#34;: 1.0,
+        },
+        &#34;param&#34;: {
+            # epsilon 参数
+            &#34;eps&#34;: 1e-6,
+            # 混合精度类型
+            &#34;dtype&#34;: &#34;bfloat16&#34;,
+            # Embedding 输出直接进入 Decoder Block。残差流、注意力和 FFN 的输入与输出均为 hidden_size。
+            &#34;hidden_size&#34;: LLM_TRAIN_CONST_VALUE_HIDDEN_SIZE,
+            # Decoder Block 数量，各层依次执行因果自注意力和前馈网络。
+            &#34;num_hidden_layers&#34;: 8,
+            # Dropout 概率，设为 0 时关闭。
+            &#34;dropout&#34;: 0.0,
+            # 词表大小，包括普通 token 和特殊 token
+            &#34;vocab_size&#34;: 6400,
+            # BOS: Beginning of Sequence，表示序列开始。
+            # 这个 ID 必须与 tokenizer 中的定义一致。ID 本身没有特殊语义，语义来自 tokenizer、训练数据和生成代码的共同约定。
+            &#34;bos_token_id&#34;: 1,
+            # EOS，即 End of Sequence，表示序列结束。
+            # 这个 ID 必须与 tokenizer 中的定义一致。ID 本身没有特殊语义，语义来自 tokenizer、训练数据和生成代码的共同约定。
+            &#34;eos_token_id&#34;: 2,
+            # 是否允许走 PyTorch SDPA 路径，具体内核由 PyTorch 选择。
+            &#34;flash_attn&#34;: True,
+            # 多头注意力的头数量，每个头分开计算。然后再concat到一起
+            &#34;num_attention_heads&#34;: 8,
+            # KV头数量。 只有 4 个头，构成 GQA（Grouped Query Attention）
+            # 这样可以将 K/V 投影参数量和 KV cache 减半，降低自回归解码时的显存占用和读取带宽；注意力输出仍保持 8 个头。
+            # - num_key_value_heads == num_attention_heads：普通 MHA。
+            # - num_key_value_heads == 1：MQA。
+            &#34;num_key_value_heads&#34;: 4,
+            # 前馈网络使用的激活函数： $\operatorname{SiLU}(x)=x\operatorname{sigmoid}(x)$
+            # 当前 FFN 实际使用的是 SwiGLU 结构：$\operatorname{FFN}(x) = W_{\text{down}} \left( \operatorname{SiLU}(W_{\text{gate}}x) \odot W_{\text{up}}x \right)$
+            &#34;hidden_act&#34;: &#34;silu&#34;,
+            # 普通稠密 FFN 的中间维度。当前计算结果为： $\left\lceil\frac{768\pi}{64}\right\rceil\times64 =38\times64 =2432$
+            # 乘以 π 并向上对齐到 64 是这份模型的维度设计，不是 Transformer 的数学要求。
+            &#34;intermediate_size&#34;: math.ceil(
+                LLM_TRAIN_CONST_VALUE_HIDDEN_SIZE * math.pi / 64
+            )
+            * 64,
+            # 当前代码用它确定预计算 RoPE 正余弦表的长度，因此可表示位置：0 ～ 32767
+            # RoPE: Rotary Position Embedding，旋转位置编码。详见 “RoPE: Rotary Position Embedding，旋转位置编码” 章节。
+            &#34;max_position_embeddings&#34;: 32768,
+            # RoPE 的频率基数。对维度为 d 的注意力头，第 j 个频率为： $f_j=\theta^{-2j/d}$
+            # rope_theta 决定不同维度的旋转周期。
+            &#34;rope_theta&#34;: 1e6,
+            # 表示输入 Embedding 和输出 lm_head 共享同一个参数矩阵
+            &#34;tie_word_embeddings&#34;: True,
+            # 为 True 时构造 YaRN 配置，训练和推理共用按该配置生成的位置表。
+            &#34;inference_rope_scaling&#34;: False,
+            # None表示使用原始 RoPE，不做额外频率缩放。
+            &#34;rope_scaling&#34;: None,
+            # 是否是MOE模型
+            &#34;use_moe&#34;: True,
+            # MOE 专家数
+            &#34;moe_num_experts&#34;: 8,
+            # MOE 激活专家数
+            &#34;moe_num_experts_per_tok&#34;: 2,
+            # 每一个 MoE 专家内部的 FFN 中间维度，当前也是 2432。
+            &#34;moe_intermediate_size&#34;: math.ceil(
+                LLM_TRAIN_CONST_VALUE_HIDDEN_SIZE * math.pi / 64
+            )
+            * 64,
+            # 路由器先计算全部 moe_num_experts 个专家的 softmax 概率，再选择 Top-moe_num_experts_per_tok。
+            # 设为 True 时，多专家权重归一化，Top-1 的前向权重固定为 1。
+            &#34;norm_topk_prob&#34;: True,
+            # 这是每层负载均衡辅助损失的系数，控制 $a_{i,l}$ 对总训练损失的相对影响
+            # 详见 “梯度累积与参数更新” 中 “MoE 的负载均衡辅助损失 $A_i$ 计算” 子章节
+            &#34;router_aux_loss_coef&#34;: 5e-4,
+        },
+        &#34;loader&#34;: {
+            # DataLoader 的 worker 进程数。
+            &#34;num_workers&#34;: 8,
+            # 单条训练序列的长度上限，包含特殊 token。短序列补齐到该长度。Unsloth里QWen 3.8 27B默认2048，GPT-20b-oss默认1024 。
+            &#34;data_item_max_length&#34;: 2048,
+            # tokenizer路径
+            &#34;tokenizer_path&#34;: &#34;./model&#34;,
+        },
+        &#34;visualization&#34;: None,
+        &#34;log&#34;: {
+            # 日志打印间隔
+            &#34;step_interval&#34;: 100,
+        },
+    }
+)
+
+if LLM_TRAIN_SETTINGS.param.inference_rope_scaling:
+    LLM_TRAIN_SETTINGS.param.rope_scaling = LLMTrainConfigureRopeScaling.model_validate(
+        {
+            # 快旋转分量的边界。原长度内旋转超过约 32 周的高频维度基本保持原频率，以保留局部位置分辨率。
+            &#34;beta_fast&#34;: 32,
+            # 慢旋转分量的边界。原长度内旋转不足约 1 周的低频维度充分除以 factor。
+            &#34;beta_slow&#34;: 1,
+            # 上下文扩展倍率 s = 16 , 充分缩放的低频分量，其频率会除以 16
+            &#34;factor&#34;: 16,
+            # 扩展前的参考上下文长度,用于计算各 RoPE 维度在原长度内旋转多少周。这里与训练样本最大长度 2048 对应。
+            &#34;original_max_position_embeddings&#34;: 2048,
+            # 同时缩放 RoPE 的 cos/sin，从而缩放旋转后的 Q、K；当前为 1，表示不做额外的注意力温度修正。
+            &#34;attention_factor&#34;: 1.0,
+            # YaRN 缩放类型。
+            &#34;type&#34;: &#34;yarn&#34;,
+        }
+    )
+
+
+def is_main_process():
+    return not dist.is_initialized() or dist.get_rank() == 0
+
+
+def Logger(content):
+    if is_main_process():
+        print(content)
+
+
+# 取 SGDR 的一段余弦衰减曲线，下限为 lr 的 0.1 倍。
+# current_step 是窗口末尾的累计 microbatch 序号，total_steps 是训练计划的总 microbatch 数。
+# SGDR: Stochastic Gradient Descent with Warm Restarts（Loshchilov &amp; Hutter, 2017）
+# lr_t = lr_min &#43; (lr_max - lr_min) * (1 &#43; cos(pi * x)) / 2
+def get_learning_rate(current_step, total_steps, lr):
+    return lr * (0.1 &#43; 0.45 * (1 &#43; math.cos(math.pi * current_step / total_steps)))
+
+
+# 创建优化器
+# Adam 项按梯度的一阶矩和二阶原始矩调整更新幅度，权重衰减独立应用于参数。
+def create_optimizer(model, settings: LLMTrainConfigureAll, **kargs):
+    return torch.optim.AdamW(
+        model.parameters(), lr=settings.train.learning_rate, **kargs
+    )
+
+
+# 初始化种子
+def setup_seed(seed: int):
+    random.seed(seed)
+    numpy.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+
+# 运行时配置结构
+class LLMTrainRuntimeConfig(PretrainedConfig):
+    model_type = LLM_TRAIN_SETTINGS.model_name
+
+    def __init__(self, settings: LLMTrainConfigureAll | None = None, **kwargs):
+        param = (settings or LLM_TRAIN_SETTINGS).param
+        values = param.model_dump(
+            exclude={&#34;dtype&#34;, &#34;eps&#34;, &#34;moe_num_experts&#34;, &#34;moe_num_experts_per_tok&#34;}
+        )
+        values.update(
+            rms_norm_eps=param.eps,
+            num_experts=param.moe_num_experts,
+            num_experts_per_tok=param.moe_num_experts_per_tok,
+        )
+        # 支持 Transformers 用序列化后的配置重新构造，不覆盖调用者传入的值。
+        values.update(kwargs)
+        values[&#34;head_dim&#34;] = values[&#34;hidden_size&#34;] // values[&#34;num_attention_heads&#34;]
+
+        # Transformers 5 在父类初始化时标准化 RoPE，所需长度须提前可用。
+        legacy_rope = values.pop(&#34;rope_scaling&#34;, None)
+        rope_parameters = dict(values.pop(&#34;rope_parameters&#34;, None) or legacy_rope or {})
+        rope_parameters.setdefault(&#34;rope_type&#34;, rope_parameters.pop(&#34;type&#34;, &#34;default&#34;))
+        rope_parameters.setdefault(&#34;rope_theta&#34;, values.pop(&#34;rope_theta&#34;))
+        self.max_position_embeddings = values[&#34;max_position_embeddings&#34;]
+        self.rope_parameters = rope_parameters
+        values[&#34;rope_parameters&#34;] = rope_parameters
+        super().__init__(**values)
+
+
+def lm_get_ckp_file_name(settings: LLMTrainConfigureAll, weight: LLMTrainWeightType):
+    moe_path = &#34;-moe&#34; if settings.param.use_moe else &#34;&#34;
+    return f&#34;{weight.name[1:].lower()}-{settings.param.hidden_size}{moe_path}.pth&#34;
+
+
+def lm_get_ckp_resume_file_name(
+    settings: LLMTrainConfigureAll, weight: LLMTrainWeightType
+):
+    moe_path = &#34;-moe&#34; if settings.param.use_moe else &#34;&#34;
+    return (
+        f&#34;{weight.name[1:].lower()}-{settings.param.hidden_size}{moe_path}.resume.pth&#34;
+    )
+
+
+def find_weight_file(directory, settings, weight, *, resume=False):
+    name = (
+        lm_get_ckp_resume_file_name(settings, weight)
+        if resume
+        else lm_get_ckp_file_name(settings, weight)
+    )
+    current = Path(directory) / name
+    legacy_name = f&#34;{weight.name[1:]}-{settings.param.hidden_size}{&#39;-moe&#39; if settings.param.use_moe else &#39;&#39;}&#34;
+    legacy = Path(directory) / (legacy_name &#43; (&#34;.resume.pth&#34; if resume else &#34;.pth&#34;))
+    if current.is_file():
+        return current
+    if legacy.is_file():
+        Logger(f&#34;读取旧文件名的权重：{legacy}&#34;)
+        return legacy
+    raise FileNotFoundError(f&#34;未找到文件：{current}（也已检查旧文件名 {legacy.name}）&#34;)
+
+
+def sha256_file(path):
+    with open(path, &#34;rb&#34;) as source:
+        return hashlib.file_digest(source, &#34;sha256&#34;).hexdigest()
+
+
+def build_resume_metadata(settings, dataset, tokenizer):
+    # 内容哈希在开始训练前计算一次；保存每个检查点时复用，不重复扫描语料。
+    with tempfile.TemporaryDirectory(prefix=&#34;2613-tokenizer-&#34;) as directory:
+        tokenizer.save_pretrained(directory)
+        tokenizer_files = {
+            path.relative_to(directory).as_posix(): sha256_file(path)
+            for path in sorted(Path(directory).rglob(&#34;*&#34;))
+            if path.is_file()
+        }
+    return {
+        &#34;version&#34;: 2,
+        &#34;train&#34;: settings.train.model_dump(
+            mode=&#34;json&#34;, exclude={&#34;device&#34;, &#34;from_weight&#34;}
+        ),
+        &#34;model&#34;: settings.param.model_dump(mode=&#34;json&#34;),
+        &#34;loader&#34;: {
+            &#34;data_item_max_length&#34;: dataset.max_length,
+            &#34;num_workers&#34;: settings.loader.num_workers,
+        },
+        &#34;device_type&#34;: torch.device(settings.train.device).type,
+        &#34;dataset&#34;: {
+            &#34;files&#34;: dataset.source_fingerprint,
+            &#34;rows&#34;: len(dataset),
+            &#34;processing&#34;: dataset.processing_config,
+        },
+        &#34;tokenizer&#34;: tokenizer_files,
+    }
+
+
+def validate_resume_metadata(checkpoint, expected):
+    saved = checkpoint.get(&#34;resume_metadata&#34;)
+    if saved is None:
+        raise ValueError(
+            &#34;旧检查点缺少完整续训信息，无法核对模型、精度、数据及 tokenizer；请通过 train.from_weight 加载对应导出权重，开始新训练。&#34;
+        )
+    changed = sorted(
+        key
+        for key in saved.keys() | expected.keys()
+        if saved.get(key) != expected.get(key)
+    )
+    if changed:
+        raise ValueError(
+            f&#34;续训配置或输入内容与检查点不一致：{&#39;, &#39;.join(changed)}；请恢复原配置与数据，或从权重开始新训练。&#34;
+        )
+
+
+def capture_rng_state(device):
+    device = torch.device(device)
+    numpy_state = numpy.random.get_state()
+    return {
+        &#34;python&#34;: random.getstate(),
+        &#34;numpy&#34;: (numpy_state[0], numpy_state[1].tolist(), *numpy_state[2:]),
+        &#34;torch&#34;: torch.get_rng_state(),
+        &#34;cuda&#34;: (
+            torch.cuda.get_rng_state(device=device) if device.type == &#34;cuda&#34; else None
+        ),
+    }
+
+
+def restore_rng_state(state, device):
+    device = torch.device(device)
+    if (state[&#34;cuda&#34;] is not None) != (device.type == &#34;cuda&#34;):
+        raise ValueError(&#34;随机数状态的设备类型与当前训练设备不一致&#34;)
+    random.setstate(state[&#34;python&#34;])
+    numpy_state = state[&#34;numpy&#34;]
+    numpy.random.set_state(
+        (
+            numpy_state[0],
+            numpy.array(numpy_state[1], dtype=numpy.uint32),
+            *numpy_state[2:],
+        )
+    )
+    torch.set_rng_state(state[&#34;torch&#34;])
+    if device.type == &#34;cuda&#34;:
+        torch.cuda.set_rng_state(state[&#34;cuda&#34;], device=device)
+
+
+# 读取或保存检查点
+def lm_checkpoint(
+    settings: LLMTrainConfigureAll,
+    model=None,
+    optimizer=None,
+    epoch=0,
+    step=0,
+    wandb=None,
+    *,
+    resume_metadata,
+    **kwargs,
+):
+    save_dir = f&#34;{settings.save.dir}/checkpoint&#34;
+    os.makedirs(save_dir, exist_ok=True)
+    ckp_path = f&#34;{save_dir}/{lm_get_ckp_file_name(settings, settings.save.save_weight)}&#34;
+    resume_path = (
+        f&#34;{save_dir}/{lm_get_ckp_resume_file_name(settings, settings.save.save_weight)}&#34;
+    )
+
+    if model is not None:
+        # 所有 rank 都参与收集；只由主进程写文件。
+        rng_states = [capture_rng_state(settings.train.device)]
+        if dist.is_initialized():
+            local_rng_state = rng_states[0]
+            rng_states = [None] * dist.get_world_size()
+            dist.all_gather_object(rng_states, local_rng_state)
+        if not is_main_process():
+            return
+        raw_model = (
+            model.module if isinstance(model, DistributedDataParallel) else model
+        )
+        raw_model = getattr(raw_model, &#34;_orig_mod&#34;, raw_model)
+        state_dict = raw_model.state_dict()
+        state_dict = {k: v.detach().cpu() for k, v in state_dict.items()}
+        ckp_tmp = ckp_path &#43; &#34;.tmp&#34;
+        torch.save(
+            {
+                k: v.half() if v.is_floating_point() else v
+                for k, v in state_dict.items()
+            },
+            ckp_tmp,
+        )
+        os.replace(ckp_tmp, ckp_path)
+        wandb_id = None
+        if wandb:
+            if hasattr(wandb, &#34;get_run&#34;):
+                run = wandb.get_run()
+                wandb_id = getattr(run, &#34;id&#34;, None) if run else None
+            else:
+                wandb_id = getattr(wandb, &#34;id&#34;, None)
+
+        resume_data = {
+            &#34;model&#34;: state_dict,
+            &#34;optimizer&#34;: optimizer.state_dict(),
+            &#34;epoch&#34;: epoch,
+            &#34;step&#34;: step,
+            &#34;world_size&#34;: dist.get_world_size() if dist.is_initialized() else 1,
+            &#34;wandb_id&#34;: wandb_id,
+            &#34;rng_states&#34;: rng_states,
+            &#34;resume_metadata&#34;: resume_metadata,
+        }
+        for key, value in kwargs.items():
+            if value is not None:
+                if hasattr(value, &#34;state_dict&#34;):
+                    raw_value = (
+                        value.module
+                        if isinstance(value, DistributedDataParallel)
+                        else value
+                    )
+                    raw_value = getattr(raw_value, &#34;_orig_mod&#34;, raw_value)
+                    resume_data[key] = raw_value.state_dict()
+                else:
+                    resume_data[key] = value
+
+        resume_tmp = resume_path &#43; &#34;.tmp&#34;
+        torch.save(resume_data, resume_tmp)
+        os.replace(resume_tmp, resume_path)
+        del state_dict, resume_data
+        torch.cuda.empty_cache()
+    else:  # 加载模式
+        resume_path = find_weight_file(
+            save_dir, settings, settings.save.save_weight, resume=True
+        )
+        ckp_data = torch.load(resume_path, map_location=&#34;cpu&#34;, weights_only=True)
+        saved_ws = ckp_data.get(&#34;world_size&#34;, 1)
+        current_ws = dist.get_world_size() if dist.is_initialized() else 1
+        if saved_ws != current_ws:
+            raise ValueError(
+                f&#34;续训要求 world_size 保持一致（保存值 {saved_ws}，当前值 {current_ws}）；改变 GPU 数量请从模型权重开始新训练。&#34;
+            )
+        validate_resume_metadata(ckp_data, resume_metadata)
+        if len(ckp_data.get(&#34;rng_states&#34;, [])) != current_ws:
+            raise ValueError(&#34;检查点缺少各 rank 的随机数状态，无法续训&#34;)
+        return ckp_data
+
+
+# ==================================== 模型内容部分 ====================================
+
+
+# 均方根归一化
+class RMSNorm(torch.nn.Module):
+    def __init__(self, dim: int, eps: float = LLM_TRAIN_SETTINGS.param.eps):
+        super().__init__()
+        self.eps = eps
+        # 把weight变成可训练参数
+        self.weight = torch.nn.Parameter(torch.ones(dim))
+
+    def norm(self, x):
+        # x.pow(2) 逐元素平方。mean(-1) 沿最后一维取均值，每个 token 得到一个值。
+        # 对形状为 (B, T, D) 的 x，keepdim=True 让结果为 (B, T, 1)，可以沿特征维广播到 x。
+        # 数据举例
+        #    x = [[[1, 2, 3],      ← token A，坐标 (b=0, s=0)
+        #        [4, 5, 6]]]       ← token B，坐标 (b=0, s=1)
+        #    x.pow(2):
+        #    token A: [1, 4, 9]      → 喂给 token A 自己的均值 (1&#43;4&#43;9)/3
+        #    token B: [16, 25, 36]   → 喂给 token B 自己的均值 (16&#43;25&#43;36)/3
+        return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) &#43; self.eps)
+
+    def forward(self, x):
+        return (self.weight * self.norm(x.float())).type_as(x)
+
+
+def precompute_freqs_cis(
+    dim: int,
+    end: int = int(32 * 1024),
+    rope_base: float = 1e6,
+    rope_scaling: dict = None,
+):
+    freqs, attn_factor = (
+        1.0 / (rope_base ** (torch.arange(0, dim, 2)[: (dim // 2)].float() / dim)),
+        1.0,
+    )
+    if (
+        rope_scaling is not None
+        and rope_scaling.get(&#34;rope_type&#34;, rope_scaling.get(&#34;type&#34;, &#34;yarn&#34;)) == &#34;yarn&#34;
+    ):  # YaRN: f&#39;(i) = f(i)((1-γ) &#43; γ/s), where γ∈[0,1] is linear ramp
+        orig_max, factor, beta_fast, beta_slow, attn_factor = (
+            rope_scaling.get(&#34;original_max_position_embeddings&#34;, 2048),
+            rope_scaling.get(&#34;factor&#34;, 16),
+            rope_scaling.get(&#34;beta_fast&#34;, 32.0),
+            rope_scaling.get(&#34;beta_slow&#34;, 1.0),
+            rope_scaling.get(&#34;attention_factor&#34;, 1.0),
+        )
+        if end / orig_max &gt; 1.0:
+            inv_dim = lambda b: (dim * math.log(orig_max / (b * 2 * math.pi))) / (
+                2 * math.log(rope_base)
+            )
+            low, high = max(math.floor(inv_dim(beta_fast)), 0), min(
+                math.ceil(inv_dim(beta_slow)), dim // 2 - 1
+            )
+            ramp = torch.clamp(
+                (torch.arange(dim // 2, device=freqs.device).float() - low)
+                / max(high - low, 0.001),
+                0,
+                1,
+            )
+            freqs = freqs * (1 - ramp &#43; ramp / factor)
+    t = torch.arange(end, device=freqs.device)
+    freqs = torch.outer(t, freqs).float()
+    freqs_cos = torch.cat([torch.cos(freqs), torch.cos(freqs)], dim=-1) * attn_factor
+    freqs_sin = torch.cat([torch.sin(freqs), torch.sin(freqs)], dim=-1) * attn_factor
+    return freqs_cos, freqs_sin
+
+
+# 这里的Position Embedding的混入流程和经典 Transformer 的位置编码有所差异。
+# 这里采用的是 RoPE 的方法，详见 “RoPE: Rotary Position Embedding，旋转位置编码” 章节。
+def apply_rotary_pos_emb(q, k, cos, sin, unsqueeze_dim=1):
+    def rotate_half(x):
+        return torch.cat(
+            (-x[..., x.shape[-1] // 2 :], x[..., : x.shape[-1] // 2]), dim=-1
+        )
+
+    q_embed = (
+        (q * cos.unsqueeze(unsqueeze_dim))
+        &#43; (rotate_half(q) * sin.unsqueeze(unsqueeze_dim))
+    ).to(q.dtype)
+    k_embed = (
+        (k * cos.unsqueeze(unsqueeze_dim))
+        &#43; (rotate_half(k) * sin.unsqueeze(unsqueeze_dim))
+    ).to(k.dtype)
+    return q_embed, k_embed
+
+
+def repeat_kv(x: torch.Tensor, n_rep: int) -&gt; torch.Tensor:
+    bs, slen, num_key_value_heads, head_dim = x.shape
+    if n_rep == 1:
+        return x
+    return (
+        x[:, :, :, None, :]
+        .expand(bs, slen, num_key_value_heads, n_rep, head_dim)
+        .reshape(bs, slen, num_key_value_heads * n_rep, head_dim)
+    )
+
+
+class Attention(torch.nn.Module):
+    def __init__(self, config: LLMTrainRuntimeConfig, layer_idx: int = None):
+        super().__init__()
+        self.layer_idx = layer_idx
+
+        # 默认使用 GQA，由一组 Q 头共享一对 Key/Value 头。
+        self.num_key_value_heads = (
+            config.num_attention_heads
+            if config.num_key_value_heads is None
+            else config.num_key_value_heads
+        )
+
+        self.n_local_heads = config.num_attention_heads
+        self.n_local_kv_heads = self.num_key_value_heads
+
+        # 几个Q共享一个K/V头。
+        self.n_rep = self.n_local_heads // self.n_local_kv_heads
+
+        # 每个头的注意力
+        self.head_dim = config.head_dim
+
+        # 标记本层是否是因果注意力
+        self.is_causal = True
+
+        # Q矩阵
+        self.q_proj = torch.nn.Linear(
+            config.hidden_size, config.num_attention_heads * self.head_dim, bias=False
+        )
+
+        # K矩阵
+        self.k_proj = torch.nn.Linear(
+            config.hidden_size, self.num_key_value_heads * self.head_dim, bias=False
+        )
+
+        # V矩阵
+        self.v_proj = torch.nn.Linear(
+            config.hidden_size, self.num_key_value_heads * self.head_dim, bias=False
+        )
+
+        # O矩阵/输出矩阵
+        self.o_proj = torch.nn.Linear(
+            config.num_attention_heads * self.head_dim, config.hidden_size, bias=False
+        )
+
+        # 分别沿 Q 和 Key 的头维度做 RMSNorm。
+        self.q_norm = RMSNorm(self.head_dim, eps=config.rms_norm_eps)
+        self.k_norm = RMSNorm(self.head_dim, eps=config.rms_norm_eps)
+        self.attn_dropout = torch.nn.Dropout(config.dropout)
+        self.resid_dropout = torch.nn.Dropout(config.dropout)
+        self.dropout = config.dropout
+        self.flash = (
+            hasattr(torch.nn.functional, &#34;scaled_dot_product_attention&#34;)
+            and config.flash_attn
+        )
+
+    def forward(
+        self,
+        x,
+        position_embeddings,
+        past_key_value=None,
+        use_cache=False,
+        attention_mask=None,
+    ):
+        # x的形状 (batch_size, seq_len, hidden_size)
+        bsz, seq_len, _ = x.shape
+        xq, xk, xv = self.q_proj(x), self.k_proj(x), self.v_proj(x)
+
+        # view 将投影的最后一维拆成 (头数, 每头维度)，得到 (B, T, 头数, 每头维度)。
+        xq = xq.view(bsz, seq_len, self.n_local_heads, self.head_dim)
+        xk = xk.view(bsz, seq_len, self.n_local_kv_heads, self.head_dim)
+        xv = xv.view(bsz, seq_len, self.n_local_kv_heads, self.head_dim)
+        xq, xk = self.q_norm(xq), self.k_norm(xk)
+        cos, sin = position_embeddings
+
+        # 附加Position Embedding
+        xq, xk = apply_rotary_pos_emb(xq, xk, cos, sin)
+        # 旧缓存是本层的 (K, V) 对，形状为 (B, T_cached, H_kv, D)。新 K/V 沿序列维接到历史之后。
+        if isinstance(past_key_value, Cache):
+            # transformers 5.x Cache（如 DynamicCache）期望 (B, heads, seq, head_dim) 布局，
+            # update 沿 seq 维追加并返回完整 K/V；缓存本体就地更新，无需逐层返回
+            keys, values = past_key_value.update(
+                # transpose(1, 2)： 交换第1和第2维
+                # (B, T, H, D) → (B, H, T, D)
+                xk.transpose(1, 2),
+                xv.transpose(1, 2),
+                self.layer_idx,
+            )
+            # 更新完缓存后转回来
+            xk, xv = keys.transpose(1, 2), values.transpose(1, 2)
+            past_kv = None
+        else:
+            if past_key_value is not None:
+                xk = torch.cat([past_key_value[0], xk], dim=1)
+                xv = torch.cat([past_key_value[1], xv], dim=1)
+            past_kv = (xk, xv) if use_cache else None
+
+        # (B, T, H, D) → (B, H, T, D)
+        xq, xk, xv = (
+            xq.transpose(1, 2),
+            repeat_kv(xk, self.n_rep).transpose(1, 2),  # K矩阵共享,对齐维度
+            repeat_kv(xv, self.n_rep).transpose(1, 2),  # V矩阵共享,对齐维度
+        )
+        if (
+            self.flash
+            and (seq_len &gt; 1)
+            and (not self.is_causal or past_key_value is None)
+        ):
+            sdpa_mask = None
+            # attention_mask 是 (B, T_kv) 的二维张量——每个元素标记对应 key 位置是否真实（1 真实 / 0 padding）。
+            if attention_mask is not None and not torch.all(attention_mask == 1):
+                # 这里 sdpa_mask的操作和下面的 attention_mask.unsqueeze(1).unsqueeze(2) 的操作是一样的
+                sdpa_mask = attention_mask[:, None, None, :].bool()
+                if self.is_causal:
+                    # torch.tril(input, diagonal=0)   # 保留下三角：col − row ≤ diagonal 的元素，其余清零
+                    # tril(): 只保留下三角（含对角线），即第 i 个 token 只能看到 &lt;= i 的 token
+                    causal_mask = torch.ones(
+                        seq_len, seq_len, dtype=torch.bool, device=x.device
+                    ).tril()
+                    sdpa_mask = sdpa_mask &amp; causal_mask
+            # SDPA = Scaled Dot Product Attention，缩放点积注意力:
+            # - scaled_dot_product_attention 是PyTorch标准注意力的封装。
+            # - SDPA 是多后端调度器,满足特定条件（比如CUDA &#43; bf16 &#43; 常规形状)可能会用 FlashAttention(https://owent.net/2026/2611.html#flashattention)
+            output = torch.nn.functional.scaled_dot_product_attention(
+                xq,
+                xk,
+                xv,
+                attn_mask=sdpa_mask,
+                dropout_p=self.dropout if self.training else 0.0,
+                is_causal=self.is_causal and sdpa_mask is None,
+            )
+        else:
+            # @是矩阵乘法: $Q K^{\top}$
+            scores = (xq @ xk.transpose(-2, -1)).float() / math.sqrt(self.head_dim)
+            # scores 的形状是 (B, H, T_q, T_kv)
+            if self.is_causal:
+                # 缓存场景下 T_kv 可能长于 T_q，只对最后 seq_len 个 key 做因果上三角掩码。
+                # torch.triu(input, diagonal=0)   # 保留上三角：col − row ≥ diagonal 的元素，其余清零
+                # IEEE 754 规则: 有限值 &#43; (-inf) = -inf
+                scores[:, :, :, -seq_len:] &#43;= torch.full(
+                    (seq_len, seq_len), float(&#34;-inf&#34;), device=scores.device
+                ).triu(1)
+            # attention_mask 是 (B, T_kv) 的二维张量——每个元素标记对应 key 位置是否真实（1 真实 / 0 padding）。
+            #   attention_mask.unsqueeze(1).unsqueeze(2) -&gt; 插入2次维度。 -&gt; (B, 1, 1, T_kv)
+            # 加法会触发右对齐（复制/广播）：(B, 1, 1, T_kv) 与 (B, H, T_q, T_kv) 相加时，
+            #   维度为 1 的轴会被广播展开（size 1 → 目标 size），尾部维度 T_kv 对齐不变。
+            # (1.0 - attention_mask) * -1e9：真实位置得 0，padding 位置得 -1e9，
+            #   softmax 对每一行的分数减去该行最大值后取指数。存在可见的真实位置时，
+            #   padding 位置的分数相对低约 1e9，指数项在浮点运算中下溢为 0。
+            if attention_mask is not None:
+                scores &#43;= (
+                    1.0 - attention_mask.unsqueeze(1).unsqueeze(2).to(scores.dtype)
+                ) * -1e9
+            # 注意力算法，softmax后再乘V矩阵，结果形状为 (B, H, T_q, D)
+            output = (
+                self.attn_dropout(
+                    torch.nn.functional.softmax(scores, dim=-1).type_as(xq)
+                )
+                @ xv
+            )
+        # 先转回 (B, T, H, D) 结构，再reshape相当于把多头再cat到一起。
+        output = output.transpose(1, 2).reshape(bsz, seq_len, -1)
+
+        # 最后的输出投影矩阵的作用是维度衔接（num_attention_heads*head_dim并不总是等于hidden_size）和跨头信息混合。
+        output = self.resid_dropout(self.o_proj(output))
+        return output, past_kv
+
+
+class FeedForward(torch.nn.Module):
+    def __init__(self, config: LLMTrainRuntimeConfig, intermediate_size: int = None):
+        super().__init__()
+        intermediate_size = intermediate_size or config.intermediate_size
+        self.gate_proj = torch.nn.Linear(
+            config.hidden_size, intermediate_size, bias=False
+        )
+        self.down_proj = torch.nn.Linear(
+            intermediate_size, config.hidden_size, bias=False
+        )
+        self.up_proj = torch.nn.Linear(
+            config.hidden_size, intermediate_size, bias=False
+        )
+        # 使用配置的激活函数
+        self.act_fn = ACT2FN[config.hidden_act]
+
+    def forward(self, x):
+        # 输入 x 的形状为 (B, T, hidden_size)。
+        # 1. gate_proj 和 up_proj 分别对每个 token 做线性投影，得到两个 (B, T, intermediate_size) 张量。
+        # 2. act_fn 逐元素作用于 gate_proj 的输出。默认 SiLU 的输出可以为负，也可以大于 1。
+        # 3. 这里的 * 是逐元素乘（⊙），用门控分支的各分量缩放 up_proj 的对应分量，形状不变。
+        # 4. down_proj 将乘积投影回 (B, T, hidden_size)，供残差连接使用。
+        return self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
+
+
+class MOEFeedForward(torch.nn.Module):
+    def __init__(self, config: LLMTrainRuntimeConfig):
+        super().__init__()
+        self.config = config
+
+        # 路由器用无偏置线性层计算各专家的 logits，即 $xW^{\top}$。
+        self.gate = torch.nn.Linear(config.hidden_size, config.num_experts, bias=False)
+
+        # 创建 num_experts 个独立的 FFN，每个专家的中间维度为 moe_intermediate_size。
+        self.experts = torch.nn.ModuleList(
+            [
+                FeedForward(config, intermediate_size=config.moe_intermediate_size)
+                for _ in range(config.num_experts)
+            ]
+        )
+
+        # 使用配置的激活函数
+        self.act_fn = ACT2FN[config.hidden_act]
+
+    def forward(self, x, token_mask=None):
+        batch_size, seq_len, hidden_dim = x.shape
+        # 搞扁平 (batch_size*seq_len, hidden_dim)
+        x_flat = x.view(-1, hidden_dim)
+
+        # 对全部专家的 logits 做 softmax，得到路由概率，用于 Top-k 选择和负载统计。
+        scores = torch.nn.functional.softmax(self.gate(x_flat), dim=-1)
+
+        # topk_weight, topk_idx的形状是  (batch_size*seq_len, num_experts_per_tok)
+        topk_weight, topk_idx = torch.topk(
+            scores, k=self.config.num_experts_per_tok, dim=-1, sorted=False
+        )
+        if self.config.norm_topk_prob:
+            # 归一化
+            if self.config.num_experts_per_tok &gt; 1:
+                topk_weight = topk_weight / (
+                    topk_weight.sum(dim=-1, keepdim=True) &#43; 1e-20
+                )
+            else:
+                # t.detach() 的含义是返回一个与 t 共享同一块数据的新张量，requires_grad=False、无 grad_fn——从计算图上&#34;摘下来&#34;
+                #            不拷贝数据。相当于冻结某个值当常数用。
+                # 如果没有这一层，只激活一个专家时，求导过程会变成:
+                #   topk_weight = topk(scores, k=1)[0] / topk(scores, k=1)[0].sum(-1, keepdim=True)
+                #               = p / p = 1.0，主损失通过这个权重传给路由器的梯度为零,学不到路由对错。
+                top1 = torch.topk(
+                    # x_flat.detach(): 这里阻断对x_flat的反向传播
+                    # 这里是 STE（Straight-Through Estimator，直通估计器） 的产物。
+                    #   STE 解决的问题是： 反向传播要求每个操作可微。反传时用的梯度不是前向函数的真实导数。
+                    torch.nn.functional.softmax(self.gate(x_flat.detach()), dim=-1),
+                    k=1,
+                    dim=-1,
+                    sorted=False,
+                )[0]
+                topk_weight = (
+                    # 设置为 1.0, 但保持一份梯度（直接 top1 - top1 就消除了）
+                    top1
+                    - top1.detach()
+                    &#43; 1.0
+                )  # k=1: 1.0 forward on purpose, gradient via straight-through
+        y = torch.zeros_like(x_flat)
+        for i, expert in enumerate(self.experts):
+            # 逐元素比较，mask形状 (batch_size*seq_len, num_experts_per_tok)
+            # 表示这个专家被用到的位置
+            mask = topk_idx == i
+            if mask.any():
+                # 专家选中。当前专家在某个token的任意一个专家候选里则当前专家被选中。
+                # nonzero返回的是下标。数据示例如下:
+                #   topk_idx (N=6, 2)        mask = topk_idx == 1   (N, 2) bool
+                #   token0: [1, 4]           [[T, F],                token0 选了专家 1
+                #   token1: [0, 2]            [F, F],
+                #   token2: [1, 3]            [T, F],
+                #   token3: [5, 6]            [F, F],
+                #   token4: [1, 2]            [T, F],
+                #   token5: [0, 1]]           [F, T]]
+                #
+                #   ① mask.any(dim=-1)  →  [T, F, T, F, T, T]        (N,)
+                #      &#34;沿候选维(any)看：该 token 的两个候选里有没有专家 1&#34;
+                #
+                #   ② .nonzero()        →  [[0], [2], [4], [5]]      (4, 1)
+                #      &#34;True 元素所在的位置下标&#34;——一维张量里，位置下标 == 行号
+                #
+                #   ③ .flatten()        →  [0, 2, 4, 5]              (4,)
+                #      拍平成行号列表 = 选了专家 1 的 token 编号
+                token_idx = mask.any(dim=-1).nonzero().flatten()
+                # A[B] 是布尔索引。A、B 形状相同时，返回 A 中 B 为 True 的位置组成的一维张量。
+                # 每行至多有一个 True，所以 topk_weight[mask] 的顺序与上面的 token_idx 一致。
+                # view(-1, 1) 将权重变成 (选中的 token 数, 1)，乘法时沿专家输出的特征维广播。
+                #   如果两个张量A: (N, M) float，B: (N, M) bool 。A[B] 的操作是超出所有位置B为True的A的值。
+                #   因为候选专家一定是不重复的，所以mask的最后一维必定只有一个值为True。
+                weight = topk_weight[mask].view(-1, 1)
+                y.index_add_(
+                    # x_flat[token_idx] 取出本批次分给该专家的所有 token。index_add_ 沿第 0 维原地累加，
+                    # 把加权输出的第 j 行加到 y[token_idx[j]]，同一个 token 可累加多个专家的输出。
+                    0,
+                    token_idx,
+                    (expert(x_flat[token_idx]) * weight).to(y.dtype),
+                )
+            elif self.training:
+                # 用零贡献把未被选中的专家接入计算图，使默认 DDP 仍能归约其零梯度。
+                y[0, 0] &#43;= 0 * sum(p.sum() for p in expert.parameters())
+
+        # 详见 “梯度累积与参数更新” 中 “MoE 的负载均衡辅助损失 $A_i$ 计算” 子章节
+        if self.training and self.config.router_aux_loss_coef &gt; 0:
+            valid = (
+                # reshape(-1) 是把 (batch_size, seq_len) 拉平，降低一维。
+                token_mask.reshape(-1).bool()
+                if token_mask is not None
+                else torch.ones(batch_size * seq_len, dtype=torch.bool, device=x.device)
+            )
+            if valid.any():
+                # load 的形状: (num_experts_per_tok, num_experts)
+                load = (
+                    # 把最后一维的下标向量转成one-hot向量（即对应位置填1，其他填0）。
+                    # 数据类型是int64，会增加一维。
+                    torch.nn.functional.one_hot(
+                        topk_idx[valid], self.config.num_experts
+                    )
+                    .float()  # 然后转float方便求平均
+                    .sum(0)
+                    / topk_idx[valid].numel()  # 是元素总数。相当于公式里的 M * k。
+                    # 沿 Top-k 槽位求和后得到公式中的每专家选择比例 $f_e$。
+                )
+                # 这里的aux_loss就是 文章公式里的 $a_{layer}$ 。
+                self.aux_loss = (
+                    # scores[valid].mean(0) 就是公式里的 p̄ ,形状为 (8)。
+                    # load * scores[valid].mean(0)时会先把 scores[valid].mean(0) 广播右对齐。
+                    # 比如:
+                    #   load[0]: [l00, l01, l02, ..., l07]      p̄: [p0, p1, ..., p7]
+                    #   load[1]: [l10, l11, ..., l17]
+                    #
+                    #   乘积 = [[l00·p0, l01·p1, ..., l07·p7],     ← 槽 1 每个专家 × 同一个 p̄
+                    #           [l10·p0, l11·p1, ..., l17·p7]]     ← 槽 2 每个专家 × 同一个 p̄
+                    (load * scores[valid].mean(0)).sum()
+                    * self.config.num_experts
+                    * self.config.router_aux_loss_coef
+                )
+            else:
+                # 这个 microbatch 没有非 padding token。但是要让反向传播的图覆盖到，保证有梯度信息，所以手动设置零。
+                self.aux_loss = scores.sum() * 0.0
+        else:
+            # 推理时不消费这个，只用专家权重topk_weight。所以这里设置为0即可。
+            self.aux_loss = scores.new_zeros(1).squeeze()
+
+        # 转换回和输入一样的形状
+        return y.view(batch_size, seq_len, hidden_dim)
+
+
+# 单层 Transformer 解码块
+class OWenTLLMBlock(torch.nn.Module):
+    def __init__(self, layer_id: int, config: LLMTrainRuntimeConfig):
+        super().__init__()
+        self.self_attn = Attention(config, layer_idx=layer_id)
+        self.input_layernorm = RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
+        self.post_attention_layernorm = RMSNorm(
+            config.hidden_size, eps=config.rms_norm_eps
+        )
+        self.mlp = FeedForward(config) if not config.use_moe else MOEFeedForward(config)
+
+    def forward(
+        self,
+        hidden_states,
+        position_embeddings,
+        past_key_value=None,
+        use_cache=False,
+        attention_mask=None,
+    ):
+        # hidden_states形状 (B, T, hidden_size)
+        residual = hidden_states
+        # 注意力计算
+        hidden_states, present_key_value = self.self_attn(
+            self.input_layernorm(hidden_states),
+            position_embeddings,
+            past_key_value,
+            use_cache,
+            attention_mask,
+        )
+
+        # 残差连接
+        hidden_states &#43;= residual
+
+        # 再归一化
+        mlp_input = self.post_attention_layernorm(hidden_states)
+
+        # FFN前馈网络
+        if isinstance(self.mlp, MOEFeedForward):
+            # attention_mask 包含全部历史，MoE 辅助损失只需要统计本次前向的部分
+            token_mask = (
+                attention_mask[:, -hidden_states.shape[1] :]
+                if attention_mask is not None
+                else None
+            )
+            mlp_output = self.mlp(mlp_input, token_mask=token_mask)
+        else:
+            mlp_output = self.mlp(mlp_input)
+
+        # 继续残差连接FFN的结果
+        hidden_states = hidden_states &#43; mlp_output
+        return hidden_states, present_key_value
+
+
+# 主干网络
+class OWenTLLMModel(torch.nn.Module):
+    def __init__(self, config: LLMTrainRuntimeConfig):
+        super().__init__()
+        self.config = config
+        self.vocab_size, self.num_hidden_layers = (
+            config.vocab_size,
+            config.num_hidden_layers,
+        )
+        # 随机初始化后训练Word Embedding
+        self.embed_tokens = torch.nn.Embedding(config.vocab_size, config.hidden_size)
+        self.dropout = torch.nn.Dropout(config.dropout)
+
+        # 创建 num_hidden_layers 个参数独立的 Decoder Block。
+        self.layers = torch.nn.ModuleList(
+            [OWenTLLMBlock(l, config) for l in range(self.num_hidden_layers)]
+        )
+
+        # 所有 Decoder Block 之后的 RMSNorm。
+        self.norm = RMSNorm(config.hidden_size, eps=config.rms_norm_eps)
+
+        # 位置嵌入
+        freqs_cos, freqs_sin = precompute_freqs_cis(
+            dim=config.head_dim,
+            end=config.max_position_embeddings,
+            rope_base=config.rope_parameters[&#34;rope_theta&#34;],
+            rope_scaling=config.rope_parameters,
+        )
+
+        # 数据注册到缓存，不需要更新但要跟着设备迁移
+        self.register_buffer(&#34;freqs_cos&#34;, freqs_cos, persistent=False)
+        self.register_buffer(&#34;freqs_sin&#34;, freqs_sin, persistent=False)
+
+    def forward(
+        self,
+        input_ids,
+        attention_mask=None,
+        past_key_values=None,
+        use_cache=False,
+        **kwargs,
+    ):
+        batch_size, seq_length = input_ids.shape
+        # 并行支持两种缓存格式：transformers 5.x 的 Cache 类对象（如 DynamicCache）
+        # 与旧版 list[(K, V)] 元组（每层一个 (K, V)，K/V 形状 (B, T_cached, 4, 96)）
+        is_hf_cache = isinstance(past_key_values, Cache)
+        if is_hf_cache:
+            # Cache 对象由各层 Attention 调 update 就地更新，已处理长度从缓存读取；
+            # 每层拿到同一个 Cache 对象，靠 layer_idx 区分各层的 K/V
+            start_pos = past_key_values.get_seq_length()
+            layer_caches = [past_key_values] * len(self.layers)
+        else:
+            past_key_values = past_key_values or [None] * len(self.layers)
+            start_pos = (
+                past_key_values[0][0].shape[1] if past_key_values[0] is not None else 0
+            )
+            layer_caches = past_key_values
+        hidden_states = self.dropout(self.embed_tokens(input_ids))
+        # Recompute RoPE buffers lost during meta-device init (transformers&gt;=5.x)
+        # register_buffer设置了persistent=False非持久化，如果丢失了就重建
+        if self.freqs_cos[0, 0] == 0:
+            freqs_cos, freqs_sin = precompute_freqs_cis(
+                dim=self.config.head_dim,
+                end=self.config.max_position_embeddings,
+                rope_base=self.config.rope_parameters[&#34;rope_theta&#34;],
+                rope_scaling=self.config.rope_parameters,
+            )
+            self.freqs_cos, self.freqs_sin = freqs_cos.to(
+                hidden_states.device
+            ), freqs_sin.to(hidden_states.device)
+
+        # 位置权重
+        position_embeddings = (
+            self.freqs_cos[start_pos : start_pos &#43; seq_length],
+            self.freqs_sin[start_pos : start_pos &#43; seq_length],
+        )
+        presents = []
+        for layer, past_key_value in zip(self.layers, layer_caches):
+            # 按隐藏层依次计算,present是本层的K/V Cache
+            hidden_states, present = layer(
+                hidden_states,
+                position_embeddings,
+                past_key_value=past_key_value,
+                use_cache=use_cache,
+                attention_mask=attention_mask,
+            )
+            presents.append(present)
+        # 归一化
+        hidden_states = self.norm(hidden_states)
+        # 参数更新公式中的 $A_i$ ，所有层的 aux_loss 和。详见 “梯度累积与参数更新” 中 “MoE 的负载均衡辅助损失 $A_i$ 计算” 子章节
+        aux_loss = sum(
+            [l.mlp.aux_loss for l in self.layers if isinstance(l.mlp, MOEFeedForward)],
+            hidden_states.new_zeros(1).squeeze(),
+        )
+        return hidden_states, (past_key_values if is_hf_cache else presents), aux_loss
+
+
+# 完整模型
+# HuggingFace Transformers 生态的标准双层模式
+# - 外层 OWenTLLMForCausalLM：负责任务头 &#43; 训练/生成接口
+# - 里层OWenTLLMModel(纯 Transformer 主干): 负责“token ID → 隐藏状态”的表征计算
+class OWenTLLMForCausalLM(PreTrainedModel, GenerationMixin):
+    config_class = LLMTrainRuntimeConfig
+    _tied_weights_keys = {&#34;lm_head.weight&#34;: &#34;model.embed_tokens.weight&#34;}
+
+    def __init__(self, config: LLMTrainRuntimeConfig = None):
+        self.config = config or LLMTrainRuntimeConfig(LLM_TRAIN_SETTINGS)
+        super().__init__(self.config)
+        self.model = OWenTLLMModel(self.config)
+
+        # 输出嵌入(Output Embedding)
+        #   nn.Linear(in_features, out_features) 线性变换的两个参数不是权重矩阵的形状。
+        #     构造参数是 (输入维, 输出维)
+        #   $y = x \dot W^{\top}$
+        self.lm_head = torch.nn.Linear(
+            self.config.hidden_size, self.config.vocab_size, bias=False
+        )
+
+        # 输入嵌入(Word Embedding)和输出嵌入(Output Embedding)使用相同的
+        if self.config.tie_word_embeddings:
+            self.model.embed_tokens.weight = self.lm_head.weight
+        self.post_init()
+
+    def forward(
+        self,
+        input_ids,
+        attention_mask=None,
+        past_key_values=None,
+        use_cache=False,
+        logits_to_keep=0,
+        labels=None,
+        loss_reduction=&#34;mean&#34;,
+        **kwargs,
+    ):
+        # 返回 (隐藏层矩阵, K/V缓存, MoE 的负载均衡辅助损失 $A_i$)
+        # hidden_states 形状 (batch, seq_len, hidden_size) = (B, T, 768) 的三维浮点张量。
+        #                     第 0 维 batch、第 1 维序列位置、第 2 维每个位置的特征向量。
+        #                     seq_len 对应输入 input_ids 的位置。
+        hidden_states, past_key_values, aux_loss = self.model(
+            input_ids, attention_mask, past_key_values, use_cache, **kwargs
+        )
+
+        # 最后 logits_to_keep 个序列位置才做 lm_head 投影，其余位置的 logits 干脆不算。
+        # 训练入口用默认值 0，计算全部 logits。逐 token 生成时只消费最后一个位置的 logits。
+        slice_indices = (
+            slice(-logits_to_keep, None)
+            if isinstance(logits_to_keep, int)
+            else logits_to_keep
+        )
+
+        # (B, T&#39;, hidden_size) -&gt; (B, T&#39;, vocab_size))
+        logits = self.lm_head(hidden_states[:, slice_indices, :])
+        loss = None
+        # labels的形状是 (B, T)
+        if labels is not None:
+            # labels 与 logits 同窗错位：logits 的槽位 t 预测原序列 t&#43;1 处的 token。
+            # logits_to_keep=0 时窗口为全量，等价于原先的 labels[..., 1:]；
+            # logits_to_keep&gt;0 时若不同步切片，x 的行数 B*(k-1) 与 y 的行数 B*(T-1)
+            # 不相等，cross_entropy 会直接报 batch_size 不匹配。
+            if isinstance(logits_to_keep, int):
+                y = labels[..., slice_indices][..., 1:]
+            else:
+                # 张量索引形式：槽位是前 k-1 个被保留位置，目标取各自 &#43;1 处
+                y = labels[..., logits_to_keep[:-1] &#43; 1]
+            # 连续布局 (contiguous) 的含义：如果张量的内存布局与逻辑形状一致，原样返回；
+            #   否则新分配一块内存，把数据按逻辑顺序重新排布一份副本。
+            #   它不改变形状和数值，改变的只是“数值在内存里摆放的顺序”。
+            #   逻辑形状:            [[a, b, c],
+            #                        [d, e, f]]
+            #   连续布局 (contiguous): 内存 abcdef，strides=(3, 1)
+            #                         → 元素(i,j) 在偏移 i*3 &#43; j 处
+            x, y = logits[..., :-1, :].contiguous(), y.contiguous()
+
+            # cross_entropy 行为，对每一行
+            # ① softmax 归一化：  p_j = exp(x_{n,j}) / Σ_j exp(x_{n,j})
+            # ② 取正确答案的概率：p = p_{y_n}     （y_n = 该位置真实 token 的 ID）
+            # ③ 取负对数：        ℓ_n = -log(p)
+            # 跳过 ignore_index 标签，再按 reduction 聚合。当前训练上层传入的参数是求和。
+            loss = torch.nn.functional.cross_entropy(
+                x.view(
+                    -1, x.size(-1)
+                ),  # x 拉平到二维，最后一维使用 x.size(-1)，第一维自动计算（B*(T&#39;-1)）
+                y.view(-1),  # y 强制拉平到一维（B*(T&#39;-1)）
+                ignore_index=PYTORCH_IGNORE_INDEX,
+                reduction=loss_reduction,
+            )
+
+        # 打包结果返回
+        return MoeCausalLMOutputWithPast(
+            loss=loss,
+            aux_loss=aux_loss,
+            logits=logits,
+            past_key_values=past_key_values,
+            hidden_states=hidden_states,
+        )
+
+    # 自回归解码循环：把训练学到的“单步预测下一个 token”能力，迭代成一段完整的回复。
+    # 此接口给推理使用，训练时不使用
+    # https://github.com/jingyaogong/minimind/discussions/611
+    @torch.inference_mode()
+    def generate(
+        self,
+        inputs=None,
+        attention_mask=None,
+        max_new_tokens=8192,
+        temperature=0.85,
+        top_p=0.85,
+        top_k=50,
+        eos_token_id=2,
+        streamer=None,
+        use_cache=True,
+        num_return_sequences=1,
+        do_sample=True,
+        repetition_penalty=1.0,
+        **kwargs,
+    ):
+        # 调用方可能用两种风格传 prompt：
+        # - model.generate(inputs=prompt_ids)
+        # - model.generate(input_ids=prompt_ids)
+        # 这里复制 num_return_sequences 次以生成多条候选
+        input_ids = kwargs.pop(&#34;input_ids&#34;, inputs).repeat(num_return_sequences, 1)
+        attention_mask = (
+            attention_mask.repeat(num_return_sequences, 1)
+            if attention_mask is not None
+            else None
+        )
+
+        # 每层算出来的K/V历史，也是KV Cache 的载体。结构如下
+        # past_key_values               : list，长度 = 层数（8 层，每层一份）
+        # ├─ [0]  → (K₀, V₀)            第 1 层的缓存
+        # │    ├─ [0] → K₀ : (B, T_cached, 4, 96)   ← past_key_values[0][0]
+        # │    └─ [1] → V₀ : (B, T_cached, 4, 96)
+        # ├─ [1]  → (K₁, V₁)            第 2 层
+        # │    ...
+        # └─ [7]  → (K₇, V₇)            第 8 层
+        # T_cached = 已经处理过的 token 总数（prompt &#43; 已生成部分）
+        # 4 = num_key_value_heads（GQA），96 = head_dim
+        # 也支持传入 transformers 5.x 的 Cache 对象（如 DynamicCache）：
+        # K/V 改存为 (B, heads, seq, head_dim)，由各层 Attention 调 update 就地维护
+        past_key_values = kwargs.pop(&#34;past_key_values&#34;, None)
+
+        # input_ids                     : (B, T_total)
+        #                         B = 输入 batch 大小 × num_return_sequences
+        #                         T_total = prompt 长度 &#43; 已生成的 token 数
+        finished = torch.zeros(
+            input_ids.shape[0], dtype=torch.bool, device=input_ids.device
+        )
+
+        # 先把 prompt 输入推给消费流（UI上先显示出问题）
+        # .cpu() 是 PyTorch 张量的设备迁移方法：把张量从它当前所在的设备（GPU 显存）复制到主机内存（CPU RAM），返回一个位于 CPU 的新张量。
+        if streamer:
+            streamer.put(input_ids.cpu())
+        for _ in range(max_new_tokens):
+            past_len = (
+                past_key_values.get_seq_length()
+                if isinstance(past_key_values, Cache)
+                else (past_key_values[0][0].shape[1] if past_key_values else 0)
+            )
+            outputs = self.forward(
+                input_ids[:, past_len:],
+                attention_mask,
+                past_key_values,
+                use_cache=use_cache,
+                **kwargs,
+            )
+            # 每生成一个token， input_ids会增加一个，mask也要增加一个
+            # 使用 attention_mask.new_ones 是为了保持和原掩码同 dtype、同设备
+            attention_mask = (
+                torch.cat(
+                    [
+                        attention_mask,
+                        attention_mask.new_ones(attention_mask.shape[0], 1),
+                    ],
+                    -1,
+                )
+                if attention_mask is not None
+                else None
+            )
+            # 采样温度缩放词表 logits，控制下一 token 的采样分布。
+            # outputs.logits : (batch, seq_len, vocab_size) = (B, S, 6400)
+            #                     │      │        └ 第 2 维：词表 6400 个 token 各自的打分（logit）
+            #                     │      └ 第 1 维：每个序列位置对应一组下一 token 的 logits
+            #                     └ 第 0 维：复制后的 batch
+            # 用最后一个输入位置的 logits 选择下一 token。
+            logits = outputs.logits[:, -1, :] / temperature
+
+            # repetition_penalty &gt; 1 时，降低上下文中已出现过的 token 的分数。
+            # 小模型在采样时特别容易陷入循环：反复输出同一个短语，或几句话来回打转。
+            if repetition_penalty != 1.0:
+                for i in range(input_ids.shape[0]):  # 逐行（每条候选独立处理）
+                    seen = torch.unique(
+                        input_ids[i]
+                    )  # 该行上下文里出现过的所有 token ID
+                    # 取子集，“花式索引”（advanced indexing，也叫按值索引/gather 式收集）。
+                    score = logits[i, seen]  # 取出这些 token 当前的 logit
+                    # torch.where 按元素选择。惩罚系数大于 1 时，正分和负分都会下降，零分保持不变。
+                    logits[i, seen] = torch.where(
+                        score &gt; 0,
+                        score / repetition_penalty,  # 正分 → 除以惩罚系数，向 0 收缩
+                        score * repetition_penalty,  # 负分 → 乘惩罚系数，推向更负
+                    )
+            # 取top k
+            if top_k &gt; 0:
+                # torch.topk(logits, top_k)          : 每行取前 top_k 大：返回 (values, indices)
+                # [0]                                : 只要 values，形状 (B, top_k)，已降序
+                # [..., -1, None]                    : -1 = top_k 个里的最后一个 = 第 k 名的分数（门槛值）
+                #                                    : 前面的-1操作会导致降一维，所以这里要用 None 补回来
+                # logits &lt; 该阈值                   : 得到 (B, V) 布尔掩码，True 表示得分低于第 k 名
+                #                                    : 与第 k 名并列的 token 也会保留
+                # logits[掩码] = -inf                : 布尔掩码写入：一次性置 -inf
+                logits[logits &lt; torch.topk(logits, top_k)[0][..., -1, None]] = -float(
+                    &#34;inf&#34;
+                )
+            if top_p &lt; 1.0:
+                sorted_logits, sorted_indices = torch.sort(logits, descending=True)
+                # mask记录了截止到哪里的累加和超过top_p
+                mask = (
+                    torch.cumsum(torch.softmax(sorted_logits, dim=-1), dim=-1) &gt; top_p
+                )
+                # 掩码右移一位，保留首个使累计概率超过 top_p 的 token。
+                # 若概率最高的 token 自身已超过 top_p，右移后仍会把它保留为候选。
+                mask[..., 1:], mask[..., 0] = mask[..., :-1].clone(), 0
+                # scatter(1, sorted_indices, mask) 按 sorted_indices[i, r]（第 r 名的原位置）把决策写回原词表坐标系
+                # 结果[i, 原位置] = mask[i, r]
+                logits[mask.scatter(1, sorted_indices, mask)] = -float(&#34;inf&#34;)
+            next_token = (
+                # softmax 将过滤后的 logits 转为概率，被置为 -inf 的候选概率为 0。
+                # torch.multinomial 以每行概率为权重随机抽样。num_samples=1 时，每行返回一个 token ID。
+                torch.multinomial(torch.softmax(logits, dim=-1), num_samples=1)
+                if do_sample
+                else torch.argmax(logits, dim=-1, keepdim=True)
+            )
+            if eos_token_id is not None:
+                next_token = torch.where(
+                    # 后面增加一维
+                    finished.unsqueeze(-1),  # 此行是否已结束
+                    # 用 eos_token_id 填充张量
+                    next_token.new_full((next_token.shape[0], 1), eos_token_id),
+                    next_token,
+                )
+            # 下一次生成 token 的输入加上这一次的预测结果
+            input_ids = torch.cat([input_ids, next_token], dim=-1)
+            past_key_values = outputs.past_key_values if use_cache else None
+            # 每生成下一个token后，推给输出端流
+            if streamer:
+                streamer.put(next_token.cpu())
+            if eos_token_id is not None:
+                # 记录是否结束，因为next_token的维度是（B, 1）, 比finished 多一个维度，所以这里要降维
+                finished |= next_token.squeeze(-1).eq(eos_token_id)
+                if finished.all():
+                    break
+        if streamer:
+            streamer.end()
+        if kwargs.get(&#34;return_kv&#34;):
+            return {&#34;generated_ids&#34;: input_ids, &#34;past_kv&#34;: past_key_values}
+        return input_ids
+
+
+# ============================================ 模型数据结构相关的初始化接口 ============================================
+def print_model_params(model, config):
+    total = sum(p.numel() for p in model.parameters()) / 1e6
+    n_routed = getattr(config, &#34;n_routed_experts&#34;, getattr(config, &#34;num_experts&#34;, 0))
+    n_active = getattr(config, &#34;num_experts_per_tok&#34;, 0)
+    n_shared = getattr(config, &#34;n_shared_experts&#34;, 0)
+    expert = (
+        sum(p.numel() for n, p in model.named_parameters() if &#34;mlp.experts.0.&#34; in n)
+        / 1e6
+    )
+    shared_expert = (
+        sum(
+            p.numel()
+            for n, p in model.named_parameters()
+            if &#34;mlp.shared_experts.0.&#34; in n
+        )
+        / 1e6
+    )
+    base = total - (expert * n_routed) - (shared_expert * n_shared)
+    active = base &#43; (expert * n_active) &#43; (shared_expert * n_shared)
+    if active &lt; total:
+        Logger(f&#34;Model Params: {total:.2f}M-A{active:.2f}M&#34;)
+    else:
+        Logger(f&#34;Model Params: {total:.2f}M&#34;)
+
+
+def init_model(
+    lm_config: LLMTrainRuntimeConfig,
+    settings: LLMTrainConfigureAll,
+    load_initial_weights: bool = True,
+):
+    # 加载词表
+    tokenizer = AutoTokenizer.from_pretrained(settings.loader.tokenizer_path)
+    if len(tokenizer) != lm_config.vocab_size:
+        raise ValueError(
+            f&#34;tokenizer 词表大小 {len(tokenizer)} 与模型词表大小 {lm_config.vocab_size} 不一致&#34;
+        )
+    for name in (&#34;bos_token_id&#34;, &#34;eos_token_id&#34;, &#34;pad_token_id&#34;):
+        token_id = getattr(tokenizer, name)
+        if token_id is None or not 0 &lt;= token_id &lt; lm_config.vocab_size:
+            raise ValueError(f&#34;tokenizer 的 {name} 未定义或超出模型词表范围&#34;)
+        if name != &#34;pad_token_id&#34; and token_id != getattr(lm_config, name):
+            raise ValueError(f&#34;tokenizer 的 {name} 与模型配置不一致&#34;)
+    model = OWenTLLMForCausalLM(lm_config)
+
+    # 仅仅复用 tokenizer；from_weight 为 kNone 时，全部权重从头训练。
+    if load_initial_weights and settings.train.from_weight != LLMTrainWeightType.kNone:
+        weight_path = find_weight_file(
+            f&#34;{settings.save.dir}/output&#34;, settings, settings.train.from_weight
+        )
+        weights = torch.load(weight_path, map_location=&#34;cpu&#34;, weights_only=True)
+        model.load_state_dict(weights)
+
+    print_model_params(model, lm_config)
+    Logger(
+        f&#34;Trainable Params: {sum(p.numel() for p in model.parameters() if p.requires_grad) / 1e6:.3f}M&#34;
+    )
+
+    # 将模型参数和 buffer 迁移到训练设备。
+    return model.to(settings.train.device), tokenizer
+
+
+class SkipBatchSampler(Sampler):
+    def __init__(self, sampler, batch_size, skip_batches=0):
+        self.sampler = sampler
+        self.batch_size = batch_size
+        self.skip_batches = skip_batches
+
+    def __iter__(self):
+        batch = []
+        skipped = 0
+        for idx in self.sampler:
+            batch.append(idx)
+            if len(batch) == self.batch_size:
+                if skipped &lt; self.skip_batches:
+                    skipped &#43;= 1
+                    batch = []
+                    continue
+                yield batch
+                batch = []
+        if len(batch) &gt; 0 and skipped &gt;= self.skip_batches:
+            yield batch
+
+    def __len__(self):
+        total_batches = (len(self.sampler) &#43; self.batch_size - 1) // self.batch_size
+        return max(0, total_batches - self.skip_batches)
+
+
+def load_training_json(data_path, *, kind, features=None, cache_dir=None):
+    data_files = [
+        str(Path(path).resolve())
+        for path in sorted(glob.glob(os.fspath(data_path), recursive=True))
+        if Path(path).is_file()
+    ]
+    if not data_files:
+        raise FileNotFoundError(f&#34;未找到本地 JSON/JSONL 数据文件：{data_path}&#34;)
+    fingerprints = [sha256_file(path) for path in data_files]
+    content_id = hashlib.sha256(&#34;&#34;.join(fingerprints).encode(&#34;ascii&#34;)).hexdigest()
+    samples = load_dataset(
+        &#34;json&#34;,
+        name=f&#34;{kind}-{content_id}&#34;,
+        data_files=data_files,
+        split=&#34;train&#34;,
+        features=features,
+        cache_dir=cache_dir,
+    )
+    return samples, fingerprints
+
+
+# 预训练数据提取
+class PretrainDataset(torch.utils.data.Dataset):
+    def __init__(self, data_path, tokenizer, max_length=512, *, cache_dir=None):
+        super().__init__()
+        if max_length &lt; 3:
+            raise ValueError(&#34;max_length 至少为 3，以容纳 BOS、正文和 EOS&#34;)
+        self.tokenizer = tokenizer
+        self.max_length = max_length
+        # 同大小、同时间戳的文件替换也必须重新构建 Arrow 缓存。
+        self.samples, self.source_fingerprint = load_training_json(
+            data_path, kind=&#34;pretrain&#34;, cache_dir=cache_dir
+        )
+        self.processing_config = {&#34;kind&#34;: &#34;pretrain&#34;, &#34;version&#34;: 1}
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, index):
+        sample = self.samples[index]
+        tokens = self.tokenizer(
+            str(sample[&#34;text&#34;]),
+            add_special_tokens=False,
+            # 裁剪数据不能超过 max_length，并且预留BOS和EOS。
+            max_length=self.max_length - 2,
+            truncation=True,
+        ).input_ids
+        tokens = [self.tokenizer.bos_token_id] &#43; tokens &#43; [self.tokenizer.eos_token_id]
+        input_ids = tokens &#43; [self.tokenizer.pad_token_id] * (
+            self.max_length - len(tokens)
+        )
+        input_ids = torch.tensor(input_ids, dtype=torch.long)
+        labels = input_ids.clone()
+        # 按实际长度屏蔽 padding，即使 PAD 与 EOS 使用同一 token ID，也保留真实 EOS 标签。
+        # 非 padding 的标签沿用输入 token ID，计算损失时取下一位置的标签作为目标。
+        labels[len(tokens) :] = PYTORCH_IGNORE_INDEX
+        attention_mask = torch.arange(self.max_length) &lt; len(tokens)
+        # 返回的数据（这个结构由train_epoch里的消费实现决定）
+        #   - 实际输入模型的 token ID；短序列用 PAD 补齐到 max_length。
+        #   - 移位前的标签，忽略位置为 PYTORCH_IGNORE_INDEX。
+        #   - 注意力掩码，真实 token 为 True，padding 为 False，也用于 MoE 负载统计。
+        return input_ids, labels, attention_mask
+
+
+# 后训练数据提取
+class SFTDataset(torch.utils.data.Dataset):
+    def __init__(
+        self,
+        jsonl_path,
+        tokenizer,
+        max_length=1024,
+        *,
+        seed=42,
+        add_system_ratio=0.2,
+        empty_think_ratio=0.2,
+        cache_dir=None,
+    ):
+        super().__init__()
+        if max_length &lt; 3 or not tokenizer.is_fast:
+            raise ValueError(
+                &#34;SFT 要求 max_length 至少为 3，并使用支持 offset_mapping 的 fast tokenizer&#34;
+            )
+        if not 0 &lt;= add_system_ratio &lt;= 1 or not 0 &lt;= empty_think_ratio &lt;= 1:
+            raise ValueError(&#34;SFT 增强概率必须在 [0, 1] 内&#34;)
+        self.tokenizer = tokenizer
+        self.max_length = max_length
+        self.seed, self.epoch = seed, 0
+        self.add_system_ratio, self.empty_think_ratio = (
+            add_system_ratio,
+            empty_think_ratio,
+        )
+        features = Features(
+            {
+                &#34;conversations&#34;: [
+                    {
+                        &#34;role&#34;: Value(&#34;string&#34;),
+                        &#34;content&#34;: Value(&#34;string&#34;),
+                        &#34;reasoning_content&#34;: Value(&#34;string&#34;),
+                        &#34;tools&#34;: Value(&#34;string&#34;),
+                        &#34;tool_calls&#34;: Value(&#34;string&#34;),
+                    }
+                ]
+            }
+        )
+        self.samples, self.source_fingerprint = load_training_json(
+            jsonl_path, kind=&#34;sft&#34;, features=features, cache_dir=cache_dir
+        )
+        # assistant 分支记录独立字符区间；不在正文中搜索角色标记。
+        assistant_branch = &#39;{%- elif message.role == &#34;assistant&#34; %}&#39;
+        tool_branch = &#39;{%- elif message.role == &#34;tool&#34; %}&#39;
+        template = tokenizer.get_chat_template()
+        if (
+            template.count(assistant_branch) != 1
+            or template.count(tool_branch) != 1
+            or &#34;{% generation&#34; in template
+        ):
+            raise ValueError(&#34;此 SFT 示例要求使用包含 assistant/tool 的模板&#34;)
+        # transformers.utils.chat_template_utils.render_jinja_template 接口约定
+        # - {% generation %}...{% endgeneration %} 是 transformers 注册的 Jinja 自定义标签。
+        self.training_template = template.replace(
+            assistant_branch, assistant_branch &#43; &#34;{% generation -%}&#34;
+        ).replace(tool_branch, &#34;{%- endgeneration %}&#34; &#43; tool_branch)
+        self.assistant_header = f&#34;{tokenizer.bos_token}assistant\n&#34;
+        self.processing_config = {
+            &#34;kind&#34;: &#34;sft&#34;,
+            &#34;version&#34;: 1,
+            &#34;seed&#34;: seed,
+            &#34;add_system_ratio&#34;: add_system_ratio,
+            &#34;empty_think_ratio&#34;: empty_think_ratio,
+            &#34;template_sha256&#34;: hashlib.sha256(
+                self.training_template.encode(&#34;utf-8&#34;)
+            ).hexdigest(),
+        }
+
+    def __len__(self):
+        return len(self.samples)
+
+    def set_epoch(self, epoch):
+        self.epoch = epoch
+
+    def create_chat_prompt(self, conversations, *, return_spans=False):
+        messages = []
+        tools = None
+        for message in conversations:
+            message = dict(message)
+            if message.get(&#34;role&#34;) == &#34;system&#34; and message.get(&#34;tools&#34;):
+                tools = (
+                    json.loads(message[&#34;tools&#34;])
+                    if isinstance(message[&#34;tools&#34;], str)
+                    else message[&#34;tools&#34;]
+                )
+            if message.get(&#34;tool_calls&#34;) and isinstance(message[&#34;tool_calls&#34;], str):
+                message[&#34;tool_calls&#34;] = json.loads(message[&#34;tool_calls&#34;])
+            messages.append(message)
+        rendered, spans = render_jinja_template(
+            conversations=[messages],
+            chat_template=self.training_template,
+            return_assistant_tokens_mask=True,
+            add_generation_prompt=False,
+            tools=tools,
+            **self.tokenizer.special_tokens_map,
+        )
+        return (rendered[0], spans[0]) if return_spans else rendered[0]
+
+    def generate_labels(self, input_ids, offsets, spans):
+        labels = [PYTORCH_IGNORE_INDEX] * len(input_ids)
+        span_index = 0
+        for index, (left, right) in enumerate(offsets):
+            if right &lt;= left:  # 空 offset，防御性跳过
+                continue
+            while span_index &lt; len(spans) and left &gt;= spans[span_index][1]:
+                span_index &#43;= 1  # token 已越过当前 span → 移到下一个
+            if (
+                span_index &lt; len(spans)
+                and spans[span_index][0] &lt;= left
+                and right &lt;= spans[span_index][1]
+            ):
+                labels[index] = input_ids[index]  # 完全落在 span 内 → 监督
+        return labels
+
+    def pre_processing_chat(self, conversations, rng):
+        if not conversations:
+            raise ValueError(&#34;SFT conversations 不能为空&#34;)
+        # 含工具定义的对话跳过此处的 system 消息增强。
+        if any(conv.get(&#34;tools&#34;) for conv in conversations):
+            return conversations
+
+        SYSTEM_PROMPTS = [
+            &#34;你是一个知识丰富的AI，尽力为用户提供准确的信息。&#34;,
+            &#34;你是OWenTExprLLM，一个小巧但有用的语言模型。&#34;,
+            &#34;你是一个专业的AI助手，请提供有价值的回答。&#34;,
+            &#34;你是OWenTExprLLM，请尽力帮助用户解决问题。&#34;,
+            &#34;你是一个可靠的AI，请给出准确的回答。&#34;,
+            &#34;You are a helpful AI assistant.&#34;,
+            &#34;You are OWenTExprLLM, a lightweight intelligent assistant.&#34;,
+            &#34;You are a friendly chatbot. Please answer the user&#39;s questions carefully.&#34;,
+            &#34;You are a knowledgeable AI. Try your best to provide accurate information.&#34;,
+            &#34;You are OWenTExprLLM, a small but useful language model.&#34;,
+        ]
+        # 概率性添加system
+        if conversations[0].get(&#34;role&#34;) != &#34;system&#34;:
+            if rng.random() &lt; self.add_system_ratio:
+                return [
+                    {&#34;role&#34;: &#34;system&#34;, &#34;content&#34;: rng.choice(SYSTEM_PROMPTS)}
+                ] &#43; conversations
+        return conversations
+
+    def post_processing_chat(self, prompt_content, rng):
+        # 只处理模板在 assistant 开头生成的空标签，保留正文中引用的相同文本。
+        empty_prefix = self.assistant_header &#43; &#34;&lt;think&gt;\n\n&lt;/think&gt;\n\n&#34;
+        if (
+            prompt_content.startswith(empty_prefix)
+            # 概率性保留空思考标签，让模型既见过“带空思考块”也见过“直接回答”两种格式
+            and rng.random() &gt; self.empty_think_ratio
+        ):
+            prompt_content = self.assistant_header &#43; prompt_content[len(empty_prefix) :]
+        return prompt_content
+
+    def __getitem__(self, index):
+        sample = self.samples[index]
+        rng = random.Random(f&#34;{self.seed}:{self.epoch}:{index}&#34;)
+        # 按配置概率为缺少 system 消息的对话添加系统提示词。
+        conversations = self.pre_processing_chat(sample[&#34;conversations&#34;], rng)
+        # 按模板渲染完整prompt文本
+        prompt, spans = self.create_chat_prompt(conversations, return_spans=True)
+        pieces, assistant_spans, cursor, length = [], [], 0, 0
+        for start, end in spans:
+            prefix = prompt[cursor:start]
+            segment = self.post_processing_chat(prompt[start:end], rng)
+            # assistant 区间必须以角色前缀开头，便于在构造监督区间时排除前缀。
+            #   模板里注入{% generation %}的后面有 &#39;&lt;|im_start|&gt;&#39; &#43; message.role &#43; &#39;\n&lt;think&gt;\n&#39;
+            #   所以下面的校验总是满足条件
+            if not segment.startswith(self.assistant_header):
+                raise ValueError(&#34;assistant 模板前缀不匹配&#34;)
+            pieces.extend((prefix, segment))
+            length &#43;= len(prefix)
+            assistant_spans.append(
+                (length &#43; len(self.assistant_header), length &#43; len(segment))
+            )
+            length &#43;= len(segment)
+            cursor = end
+        pieces.append(prompt[cursor:])
+        prompt = &#34;&#34;.join(pieces)
+        # 完整prompt转换成token
+        encoded = self.tokenizer(
+            prompt,
+            add_special_tokens=False,
+            return_offsets_mapping=True,
+            truncation=True,
+            max_length=self.max_length,
+        )
+        input_ids = encoded.input_ids
+        # 只监督完整落在 assistant 输出区间的 token，区间可以包含思考文本和工具调用。
+        labels = self.generate_labels(
+            input_ids, encoded.offset_mapping, assistant_spans
+        )
+        valid_length = len(input_ids)
+
+        # 对齐到 max_length, 补PAD token
+        padding = self.max_length - valid_length
+        input_ids &#43;= [self.tokenizer.pad_token_id] * padding
+        labels &#43;= [PYTORCH_IGNORE_INDEX] * padding
+        attention_mask = torch.arange(self.max_length) &lt; valid_length
+        # 返回的数据（这个结构由train_epoch里的消费实现决定）
+        #   - 实际输入模型的 token ID；短序列用 PAD 补齐。
+        #   - 移位前的标签，忽略位置为 PYTORCH_IGNORE_INDEX。
+        #   - 注意力掩码，真实 token 为 True，padding 为 False，也用于 MoE 负载统计。
+        return (
+            torch.tensor(input_ids, dtype=torch.long),
+            torch.tensor(labels, dtype=torch.long),
+            attention_mask,
+        )
+
+
+# ============================================ 流程入口 ============================================
+def configure_training_stage(settings, stage, from_weight=None, *, resume=False):
+    settings.train.stage = stage
+    settings.save.save_weight = (
+        LLMTrainWeightType.kFullSFT if stage == &#34;sft&#34; else LLMTrainWeightType.kPretrain
+    )
+    if from_weight is not None:
+        settings.train.from_weight = {
+            &#34;none&#34;: LLMTrainWeightType.kNone,
+            &#34;pretrain&#34;: LLMTrainWeightType.kPretrain,
+            &#34;fullsft&#34;: LLMTrainWeightType.kFullSFT,
+        }[from_weight]
+    elif (
+        stage == &#34;sft&#34;
+        and settings.train.from_weight == LLMTrainWeightType.kNone
+        and not resume
+    ):
+        settings.train.from_weight = LLMTrainWeightType.kPretrain
+
+
+def create_train_dataset(settings, data_path, tokenizer, *, cache_dir=None):
+    if settings.train.stage == &#34;pretrain&#34;:
+        return PretrainDataset(
+            data_path,
+            tokenizer,
+            settings.loader.data_item_max_length,
+            cache_dir=cache_dir,
+        )
+    return SFTDataset(
+        data_path,
+        tokenizer,
+        settings.loader.data_item_max_length,
+        seed=settings.train.seed,
+        add_system_ratio=settings.loader.sft_add_system_ratio,
+        empty_think_ratio=settings.loader.sft_empty_think_ratio,
+        cache_dir=cache_dir,
+    )
+
+
+def create_train_loader(settings, dataset, epoch, start_step=0):
+    if hasattr(dataset, &#34;set_epoch&#34;):
+        dataset.set_epoch(epoch)
+    sampler = (
+        DistributedSampler(dataset, seed=settings.train.seed)
+        if dist.is_initialized()
+        else None
+    )
+    if sampler is not None:
+        sampler.set_epoch(epoch)
+    else:
+        generator = torch.Generator().manual_seed(settings.train.seed &#43; epoch)
+        sampler = torch.randperm(len(dataset), generator=generator).tolist()
+    iters = (len(sampler) &#43; settings.train.batch_size - 1) // settings.train.batch_size
+    if not 0 &lt;= start_step &lt;= iters:
+        raise ValueError(&#34;检查点 step 超出了当前数据范围&#34;)
+    rank = dist.get_rank() if dist.is_initialized() else 0
+    loader = DataLoader(
+        dataset,
+        batch_sampler=SkipBatchSampler(sampler, settings.train.batch_size, start_step),
+        num_workers=settings.loader.num_workers,
+        pin_memory=torch.device(settings.train.device).type == &#34;cuda&#34;,
+        generator=torch.Generator().manual_seed(settings.train.seed &#43; epoch &#43; rank),
+    )
+    return loader, iters
+
+
+def save_training_checkpoint(settings, epoch, step, iters, wandb, resume_metadata):
+    if is_main_process():
+        ckp = f&#34;{settings.save.dir}/output/{lm_get_ckp_file_name(settings, settings.save.save_weight)}&#34;
+        raw_model = (
+            model.module if isinstance(model, DistributedDataParallel) else model
+        )
+        raw_model = getattr(raw_model, &#34;_orig_mod&#34;, raw_model)
+        os.makedirs(os.path.dirname(ckp), exist_ok=True)
+        torch.save(
+            {
+                k: v.half().cpu() if v.is_floating_point() else v.cpu()
+                for k, v in raw_model.state_dict().items()
+            },
+            ckp,
+        )
+    lm_checkpoint(
+        settings,
+        model=model,
+        optimizer=optimizer,
+        scaler=scaler,
+        epoch=epoch,
+        step=step,
+        wandb=wandb,
+        iters=iters,
+        resume_metadata=resume_metadata,
+    )
+
+
+# 开始一轮训练
+def train_epoch(
+    settings: LLMTrainConfigureAll,
+    scaler: torch.amp.GradScaler,
+    epoch: int,
+    loader: DataLoader,
+    iters: int,
+    start_step: int = 0,
+    wandb: Any = None,
+    *,
+    resume_metadata,
+) -&gt; None:
+    if settings.train.accumulation_steps &lt; 1 or settings.save.step_interval &lt; 1:
+        raise ValueError(&#34;accumulation_steps 和保存间隔必须为正数&#34;)
+    if start_step % settings.train.accumulation_steps and start_step != iters:
+        raise ValueError(&#34;检查点必须位于梯度累积窗口结束处&#34;)
+    start_time = time.time()
+    # 标记训练模式
+    model.train()
+    # 初始清空梯度
+    optimizer.zero_grad(set_to_none=True)
+    batches = iter(loader)
+    step = start_step
+
+    # 每个窗口最多取 accumulation_steps 个 microbatch，最后不足一个窗口的也处理。
+    while window := list(islice(batches, settings.train.accumulation_steps)):
+        # 只预取一个累积窗口的 CPU batch，按所有 rank 的有效预测 token 数归一化。
+        token_counts = [
+            # labels 第 0 维（batch）全部保留。第 1 维（列/位置）：从下标 1 取到末尾 → 丢掉第 0 列
+            #   forward 里 logits[..., :-1] 为什么对 labels[..., 1:] ？因为因果预测是预测下一个token，所以要丢掉第 0 列
+            #   这样处理以后logits某个位置的数据刚好对应labels里一样位置的预测目标。
+            int((labels[:, 1:] != PYTORCH_IGNORE_INDEX).sum())
+            for _, labels, _ in window
+        ]
+        total_tokens = torch.tensor(
+            sum(token_counts), device=settings.train.device, dtype=torch.long
+        )
+        world_size = dist.get_world_size() if dist.is_initialized() else 1
+        if dist.is_initialized():
+            dist.all_reduce(total_tokens)
+        window_end = step &#43; len(window)
+        if total_tokens.item() == 0:
+            save_pending = (
+                # 最后一个窗口总是保存
+                window_end == iters
+                # 跨保存窗口间隔总是保存
+                or step // settings.save.step_interval
+                &lt; window_end // settings.save.step_interval
+            )
+            step = window_end
+            Logger(
+                f&#34;Epoch {epoch &#43; 1}, step {step}: 累积窗口没有监督 token，跳过参数更新&#34;
+            )
+            if save_pending:
+                save_training_checkpoint(
+                    settings, epoch, step, iters, wandb, resume_metadata
+                )
+            continue
+        # 对应文章中的 $W/N$。除以全局监督 token 数 N，乘 W 抵消 DDP 的梯度平均系数。
+        loss_scale = world_size / total_tokens.item()
+
+        # 按窗口结束时的累计 microbatch 序号计算学习率。
+        lr = get_learning_rate(
+            epoch * iters &#43; window_end,
+            settings.train.epochs * iters,
+            settings.train.learning_rate,
+        )
+        for param_group in optimizer.param_groups:
+            param_group[&#34;lr&#34;] = lr
+        save_pending = False
+
+        for (input_ids, labels, attention_mask), token_count in zip(
+            window, token_counts
+        ):
+            step &#43;= 1
+            input_ids = input_ids.to(settings.train.device)
+            labels = labels.to(settings.train.device)
+            attention_mask = attention_mask.to(settings.train.device)
+            with autocast_ctx:
+                # 这个会传到模型的forward接口里
+                res = model(
+                    input_ids,
+                    attention_mask=attention_mask,
+                    labels=labels,
+                    loss_reduction=&#34;sum&#34;,
+                )
+                # CE 是 token 损失之和；辅助损失按各 microbatch 的有效预测 token 数加权。
+                # 对应文章中的 $\ell_{r,i} = \frac{W}{N}\left(C_{r,i} &#43; n_{r,i} A_{r,i}\right)$。
+                loss = (res.loss &#43; res.aux_loss * token_count) * loss_scale
+            # backward() 将本次梯度加到参数的 .grad。启用 GradScaler 时，scale(loss) 将损失
+            # 乘以缩放因子 S，反向传播得到的梯度也乘以 S。同一窗口内使用相同的 S。
+            scaler.scale(loss).backward()
+
+            # checkpoint 保存点，同样最后一个窗口总是保存
+            save_pending |= step % settings.save.step_interval == 0 or step == iters
+
+            # 日志打印周期
+            if step % settings.log.step_interval == 0 or step == iters:
+                spend_time = time.time() - start_time
+                current_logits_loss = res.loss.item() / max(token_count, 1)
+                current_aux_loss = res.aux_loss.item()
+                current_loss = current_logits_loss &#43; current_aux_loss
+                current_lr = optimizer.param_groups[-1][&#34;lr&#34;]
+                eta_min = spend_time / max(step - start_step, 1) * (iters - step) // 60
+                Logger(
+                    f&#34;Epoch:[{epoch &#43; 1}/{settings.train.epochs}]({step}/{iters}), loss: {current_loss:.4f}, logits_loss: {current_logits_loss:.4f}, aux_loss: {current_aux_loss:.4f}, lr: {current_lr:.8f}, epoch_time: {eta_min:.1f}min&#34;
+                )
+                if wandb:
+                    wandb.log(
+                        {
+                            &#34;loss&#34;: current_loss,
+                            &#34;logits_loss&#34;: current_logits_loss,
+                            &#34;aux_loss&#34;: current_aux_loss,
+                            &#34;learning_rate&#34;: current_lr,
+                            &#34;epoch_time&#34;: eta_min,
+                        }
+                    )
+            del input_ids, labels, attention_mask, res, loss
+
+        # 对应前面的 scaler.scale(loss)。启用 GradScaler 时，unscale_ 将累积的 .grad
+        # 原地除以缩放因子 S，接下来的梯度裁剪作用于解除缩放后的梯度。
+        scaler.unscale_(optimizer)
+
+        # clip_grad_norm_ 把所有梯度视为拼接后的一个向量来计算 L2 范数。
+        # 超过阈值时，原地按同一个比例缩小各参数的梯度。
+        torch.nn.utils.clip_grad_norm_(model.parameters(), settings.train.grad_clip)
+        # 尝试更新参数。启用 GradScaler 且检测到非有限梯度时跳过。
+        scaler.step(optimizer)
+
+        # 按非有限梯度检测结果及连续有效更新次数维护缩放因子。
+        scaler.update()
+
+        # 然后清空梯度
+        optimizer.zero_grad(set_to_none=True)
+
+        # 保存间隔仍按 microbatch 计数，触发后在累积窗口处理完毕时保存。
+        if save_pending:
+            save_training_checkpoint(
+                settings, epoch, step, iters, wandb, resume_metadata
+            )
+
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(
+        description=f&#34;{LLM_TRAIN_SETTINGS.model_name} {LLM_TRAIN_SETTINGS.save.save_weight.name}&#34;
+    )
+    parser.add_argument(
+        &#34;--input-data-path&#34;,
+        type=str,
+        default=None,
+        help=&#34;(预)训练数据路径&#34;,
+        dest=&#34;input_data_path&#34;,
+    )
+    parser.add_argument(
+        &#34;--resume&#34;,
+        default=False,
+        action=&#34;store_true&#34;,
+        help=&#34;恢复检查点；不存在或与当前配置不兼容时报错&#34;,
+    )
+    parser.add_argument(
+        &#34;--tokenizer&#34;,
+        default=LLM_TRAIN_SETTINGS.loader.tokenizer_path,
+        type=str,
+        help=&#34;tokenizer文件路径&#34;,
+    )
+    parser.add_argument(
+        &#34;--stage&#34;,
+        choices=(&#34;pretrain&#34;, &#34;sft&#34;),
+        default=LLM_TRAIN_SETTINGS.train.stage,
+        help=&#34;训练目标，与初始权重来源独立&#34;,
+    )
+    parser.add_argument(
+        &#34;--from-weight&#34;,
+        choices=(&#34;none&#34;, &#34;pretrain&#34;, &#34;fullsft&#34;),
+        default=None,
+        help=&#34;新训练的初始权重；SFT 默认使用 pretrain，续训直接恢复检查点&#34;,
+    )
+    return parser.parse_args(argv)
+
+
+if __name__ == &#34;__main__&#34;:
+    args = parse_args()
+    configure_training_stage(
+        LLM_TRAIN_SETTINGS, args.stage, args.from_weight, resume=args.resume
+    )
+
+    # ========== 1. 初始化环境和随机种子 ==========
+    local_rank = init_distributed_mode(LLM_TRAIN_SETTINGS)
+    setup_seed(
+        LLM_TRAIN_SETTINGS.train.seed
+        &#43; (dist.get_rank() if dist.is_initialized() else 0)
+    )
+
+    if args.tokenizer:
+        LLM_TRAIN_SETTINGS.loader.tokenizer_path = args.tokenizer
+
+    # ========== 2. 创建输出目录并构造模型配置 ==========
+    os.makedirs(f&#34;{LLM_TRAIN_SETTINGS.save.dir}/output&#34;, exist_ok=True)
+    lm_config = LLMTrainRuntimeConfig(LLM_TRAIN_SETTINGS)
+
+    # ========== 3. 设置混合精度 ==========
+    device_type = &#34;cuda&#34; if &#34;cuda&#34; in LLM_TRAIN_SETTINGS.train.device else &#34;cpu&#34;
+    dtype = getattr(torch, LLM_TRAIN_SETTINGS.param.dtype)
+    autocast_ctx = (
+        nullcontext()
+        if device_type == &#34;cpu&#34; or dtype == torch.float32
+        else torch.amp.autocast(device_type, dtype=dtype)
+    )
+
+    # ========== 4. 加载模型、数据，核对续训配置与输入内容 ==========
+    model, tokenizer = init_model(
+        lm_config, LLM_TRAIN_SETTINGS, load_initial_weights=not args.resume
+    )
+    # 读取训练数据集的加载器
+    train_ds = create_train_dataset(LLM_TRAIN_SETTINGS, args.input_data_path, tokenizer)
+    # 续训时，用这个resume_metadata来校验关键设置要匹配
+    resume_metadata = build_resume_metadata(LLM_TRAIN_SETTINGS, train_ds, tokenizer)
+    ckp_data = (
+        lm_checkpoint(LLM_TRAIN_SETTINGS, resume_metadata=resume_metadata)
+        if args.resume
+        else None
+    )
+    # CPU 执行 FP32；仅 CUDA FP16 启用 GradScaler。
+    # FP16 无法表示的一些小梯度会舍入为零。缩放损失可减轻这种下溢。
+    # 缩放后的梯度仍可能溢出。检测到 inf 或 NaN 梯度时，跳过本次参数更新。
+    scaler = torch.amp.GradScaler(
+        device_type, enabled=(device_type == &#34;cuda&#34; and dtype == torch.float16)
+    )
+
+    # 创建优化器，即根据梯度计算并执行参数更新的算法。在 PyTorch 中，优化器对象还保存学习率、动量等运行状态。
+    optimizer = create_optimizer(model, LLM_TRAIN_SETTINGS)
+
+    # ========== 5. 初始化 SwanLab 日志（配置字段名为 wandb） ==========
+    wandb = None
+    if (
+        is_main_process()
+        and LLM_TRAIN_SETTINGS.visualization
+        and LLM_TRAIN_SETTINGS.visualization.wandb
+        and LLM_TRAIN_SETTINGS.visualization.wandb.project
+    ):
+        import swanlab as wandb
+
+        wandb_id = ckp_data.get(&#34;wandb_id&#34;) if ckp_data else None
+        resume = &#34;must&#34; if wandb_id else None
+        wandb_project = f&#34;{LLM_TRAIN_SETTINGS.model_name}-{str(LLM_TRAIN_SETTINGS.save.save_weight)[1:]}&#34;
+        wandb_run_name = f&#34;{wandb_project}-Epoch-{LLM_TRAIN_SETTINGS.train.epochs}-BatchSize-{LLM_TRAIN_SETTINGS.train.batch_size}-LearningRate-{LLM_TRAIN_SETTINGS.train.learning_rate}&#34;
+        wandb.init(
+            project=wandb_project, name=wandb_run_name, id=wandb_id, resume=resume
+        )
+
+    # ========== 6. 从ckp恢复状态 ==========
+    start_epoch, start_step = 0, 0
+    if ckp_data:
+        model.load_state_dict(ckp_data[&#34;model&#34;])
+        optimizer.load_state_dict(ckp_data[&#34;optimizer&#34;])
+        scaler.load_state_dict(ckp_data[&#34;scaler&#34;])
+        start_epoch = ckp_data[&#34;epoch&#34;]
+        start_step = ckp_data.get(&#34;step&#34;, 0)
+
+    # ========== 7. 编译和分布式包装 ==========
+    if LLM_TRAIN_SETTINGS.train.use_compile:
+        model = torch.compile(model)
+        Logger(&#34;torch.compile enabled&#34;)
+    if dist.is_initialized():
+        model = DistributedDataParallel(
+            model, device_ids=[local_rank] if device_type == &#34;cuda&#34; else None
+        )
+
+    # ========== 8. 开始训练 ==========
+    for epoch in range(start_epoch, LLM_TRAIN_SETTINGS.train.epochs):
+        rank = dist.get_rank() if dist.is_initialized() else 0
+        setup_seed(LLM_TRAIN_SETTINGS.train.seed &#43; epoch &#43; rank)
+        # 数据打乱和 DataLoader 的种子使用独立 Generator，不消耗模型 dropout 的 RNG。
+        skip = start_step if (epoch == start_epoch and start_step &gt; 0) else 0
+        loader, iters = create_train_loader(LLM_TRAIN_SETTINGS, train_ds, epoch, skip)
+
+        # 续训的首个 epoch 从检查点恢复当前 rank 的随机数状态。
+        if ckp_data and epoch == start_epoch:
+            if ckp_data.get(&#34;iters&#34;, iters) != iters:
+                raise ValueError(&#34;数据批次数与检查点不一致，无法按保存位置续训&#34;)
+            restore_rng_state(
+                ckp_data[&#34;rng_states&#34;][rank], LLM_TRAIN_SETTINGS.train.device
+            )
+        if skip &gt; 0:
+            Logger(
+                f&#34;Epoch [{epoch &#43; 1}/{LLM_TRAIN_SETTINGS.train.epochs}]: 跳过前{start_step}个step，从step {start_step &#43; 1}开始&#34;
+            )
+
+        # 执行一个epoch训练
+        train_epoch(
+            LLM_TRAIN_SETTINGS,
+            scaler,
+            epoch,
+            loader,
+            iters,
+            skip,
+            wandb,
+            resume_metadata=resume_metadata,
+        )
+
+    # ========== 9. 清理分布进程 ==========
+    if dist.is_initialized():
+        dist.barrier()
+        dist.destroy_process_group()</code></pre><h3 id=梯度累积与参数更新>梯度累积与参数更新</h3><p>这个脚本的参数更新用的不是 <a href=https://owent.net/2026/2609.html>《大预言模型的基石：Transformer 入坑笔记（二） - 基本原理和 Word Embeddings》</a> 里的 SGD（Stochastic gradient descent）的 $x_{t+1}=x_t-\eta g_t$ 这种普通形式，而是使用的 <a href=https://arxiv.org/pdf/1711.05101>AdamW</a> 更新参数，每次更新前先累积多个 microbatch 的梯度。下文也用<a href=https://owent.net/2026/2609.html>第二篇笔记</a>示例里的 SGD 来对照参数更新过程。</p><p><code>train_epoch</code> 将最多 <code>accumulation_steps</code> 个 microbatch 组成一个累积窗口。
+每个 microbatch 分别前向和反向，窗口结束后才尝试更新参数；epoch 最后不足一个完整窗口的 batch 也会参与训练。</p><p><div class=d2-container data-diagram-key=bedd7143069952ea6518e30142901bedb84b7e54ab84a7397a23f160399e3815 data-d2-key=bedd7143069952ea6518e30142901bedb84b7e54ab84a7397a23f160399e3815 style="width:100%;height:auto;margin:1rem auto;overflow:auto" role=group aria-label=梯度累积窗口内的损失计算、参数更新和检查点保存流程><svg style="display:block;width:100%;height:auto;min-width:1453px" xmlns:xlink="http://www.w3.org/1999/xlink" data-d2-version="v0.9.0" preserveAspectRatio="xMinYMin meet" viewBox="0 0 1453 177"><svg class="d2-2128966741 d2-svg" width="1453" height="177" viewBox="-9 -9 1453 177"><rect x="-9" y="-9" width="1453" height="177" rx="0" fill="transparent" stroke-width="0"/><style>.d2-2128966741 .text-bold{font-family:d2-2128966741-font-bold}@font-face{font-family:d2-2128966741-font-bold;src:url(data:application/font-woff;base64,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)}.d2-2128966741 .text-italic{font-family:d2-2128966741-font-italic}@font-face{font-family:d2-2128966741-font-italic;src:url(data:application/font-woff;base64,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)}</style><style>.shape{shape-rendering:geometricPrecision;stroke-linejoin:round}.connection{stroke-linecap:round;stroke-linejoin:round}.blend{mix-blend-mode:multiply;opacity:.5}.d2-2128966741 .fill-N1{fill:#0a0f25}.d2-2128966741 .fill-N2{fill:#676c7e}.d2-2128966741 .fill-B1{fill:#000536}.d2-2128966741 .fill-B2{fill:#0f66b7}.d2-2128966741 .stroke-B1{stroke:#000536}.d2-2128966741 .stroke-B2{stroke:#0f66b7}.appendix text.text{fill:#0a0f25}.md{--color-fg-default:#0A0F25;--color-fg-muted:#676C7E;--color-fg-subtle:#9499AB;--color-canvas-default:#FFFFFF;--color-canvas-subtle:#EEF1F8;--color-border-default:#000536;--color-border-muted:#0F66B7;--color-neutral-muted:#EEF1F8;--color-accent-fg:#0F66B7;--color-accent-emphasis:#0F66B7;--color-attention-subtle:#676C7E;--color-danger-fg:red}.light-code{display:block}.dark-code{display:none}</style><g class="d2luZG93 step"><g class="shape"><rect x="12" y="53" width="228" height="86" rx="8" stroke="#81a4b7" fill="#edf5fa" style="stroke-width:2"/></g><text x="126" y="93.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:18px"><tspan x="126" dy="0">取累积窗口</tspan><tspan x="126" dy="20.5">统计有效 token 数 N</tspan></text></g><g class="bWljcm8= step"><g class="shape"><rect x="422" y="12" width="250" height="86" rx="8" stroke="#81a4b7" fill="#edf5fa" style="stroke-width:2"/></g><text x="547" y="52.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:18px"><tspan x="547" dy="0">逐个 microbatch</tspan><tspan x="547" dy="20.5">计算损失、累积梯度</tspan></text></g><g class="dXBkYXRl update"><g class="shape"><rect x="889" y="12" width="250" height="86" rx="8" stroke="#74a894" fill="#eaf6f1" style="stroke-width:2"/></g><text x="1014" y="52.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:18px"><tspan x="1014" dy="0">解除缩放、裁剪梯度</tspan><tspan x="1014" dy="20.5">参数更新、清空梯度</tspan></text></g><g class="bmV4dA== step"><g class="shape"><rect x="1219" y="53" width="204" height="86" rx="8" stroke="#81a4b7" fill="#edf5fa" style="stroke-width:2"/></g><text x="1321" y="93.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:18px"><tspan x="1321" dy="0">按时机保存进度</tspan><tspan x="1321" dy="20.5">进入下一窗口</tspan></text></g><g class="KHdpbmRvdyAtJmd0OyBtaWNybylbMF0="><marker id="mk-d2-2128966741-3488378134" markerWidth="10" markerHeight="12" refX="7" refY="6" viewBox="0 0 10 12" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0,0 10,6 0,12" fill="#000536" class="connection fill-B1" stroke-width="2"/></marker><path d="M242 82.166H418" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2" marker-end="url(#mk-d2-2128966741-3488378134)" mask="url(#d2-2128966741)"/><text x="331" y="88" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">N &gt; 0</text></g><g class="KG1pY3JvIC0mZ3Q7IHVwZGF0ZSlbMF0="><path d="M674 55H885" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2" marker-end="url(#mk-d2-2128966741-3488378134)" mask="url(#d2-2128966741)"/><text x="780.5" y="61" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">窗口结束</text></g><g class="KHVwZGF0ZSAtJmd0OyBuZXh0KVswXQ=="><path d="M1141 82.166h74" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2" marker-end="url(#mk-d2-2128966741-3488378134)" mask="url(#d2-2128966741)"/></g><g class="KHdpbmRvdyAtJmd0OyBuZXh0KVswXQ=="><marker id="mk-d2-2128966741-2177206569" markerWidth="10" markerHeight="12" refX="7" refY="6" viewBox="0 0 10 12" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0,0 10,6 0,12" fill="#0F66B7" class="connection fill-B2" stroke-width="2"/></marker><path d="M242 110.833h28s10 0 10 10V128s0 10 10 10h879s10 0 10-10v-7.167s0-10 10-10h26" stroke="#0F66B7" fill="none" class="connection stroke-B2" style="stroke-width:2;stroke-dasharray:8,7.892511" marker-end="url(#mk-d2-2128966741-2177206569)" mask="url(#d2-2128966741)"/><text x="730" y="144" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:15px">N = 0：跳过更新</text></g><mask id="d2-2128966741" maskUnits="userSpaceOnUse" x="-9" y="-9" width="1453" height="177"><rect x="-9" y="-9" width="1453" height="177" fill="#fff"/><rect x="313" y="72" width="36" height="21" fill="#000"/><rect x="740" y="45" width="81" height="21" fill="#000"/><rect x="669" y="129" width="122" height="19" fill="#000"/></mask></svg></svg></div></p><p><em>图 2：梯度累积窗口。整个窗口的有效监督 token 数为零时，跳过前向、反向和参数更新，到保存时机仍会记录训练进度。</em></p><h4 id=交叉熵交叉熵之和与梯度>交叉熵、交叉熵之和与梯度</h4><p>设 $\theta$ 表示模型的全部参数。对第 $i$ 个 microbatch 的第 $j$ 个监督位置，记真实目标 token 在 softmax 分布中的概率为 $p_{i,j}$，则交叉熵为 $L_{i,j}=-\log p_{i,j}$。
+$n_i$ 是这个 microbatch 的有效监督 token 数，$C_i=\sum_{j=1}^{n_i}L_{i,j}$ 是这些位置的交叉熵之和，$\nabla_\theta C_i$ 是它对模型参数的梯度。</p><blockquote><ul><li>以一个预训练序列为例：<ul><li>输入位置： <strong>BOS</strong> <strong>我</strong> <strong>爱</strong> <strong>你</strong> <strong>EOS</strong> <strong>PAD</strong></li><li>预测目标： <strong>我</strong> <strong>爱</strong> <strong>你</strong> <strong>EOS</strong> <strong>PAD</strong></li></ul></li><li><strong>我</strong>、<strong>爱</strong>、<strong>你</strong>、<strong>EOS</strong> 是有效监督 token。</li><li><strong>BOS</strong> 只提供开头上下文，不作为预测目标。</li><li><strong>PAD</strong> 的标签为 -100，不参与损失。</li><li>每个目标都由它前面的 token 来预测，例如用 <strong>BOS</strong>、<strong>我</strong>、<strong>爱</strong> 预测 <strong>你</strong> 。</li></ul></blockquote><p>SFT 的交叉熵只监督模板中 assistant 的输出区间，角色前缀和其他角色的内容仍可作为上下文。</p><h4 id=accumulation_steps8-个-microbatch-的梯度怎样合起来><code>accumulation_steps=8</code> 个 microbatch 的梯度怎样合起来</h4><p>先忽略 MoE 辅助损失和分布式训练，只看单 GPU 的交叉熵。</p><p>假设一个累积窗口有两个 microbatch：</p><table><thead><tr><th>microbatch</th><th>各 token 的交叉熵</th><th>交叉熵之和</th><th>有效 token 数</th></tr></thead><tbody><tr><td>第 1 个</td><td>2, 4</td><td>$C_1=6$</td><td>$n_1=2$</td></tr><tr><td>第 2 个</td><td>1, 3, 5</td><td>$C_2=9$</td><td>$n_2=3$</td></tr></tbody></table><p>整个窗口有 $N=n_1+n_2=5$ 个有效 token，平均交叉熵为 $\bar L=\frac{C_1+C_2}{N}=\frac{6+9}{5}=3$。</p><p>两次反向传播都用整个窗口的 $N=5$ 作分母。清空梯度后，PyTorch 会把每次反向传播的梯度累加到 <code>param.grad</code>。</p><pre><code class=language-python>loss1 = C1 / 5
+loss1.backward()
+# param.grad = ∇(C1 / 5)
+
+loss2 = C2 / 5
+loss2.backward()
+# param.grad = ∇(C1 / 5) &#43; ∇(C2 / 5)</code></pre><p>由于窗口内参数保持不变，累积梯度 $g=\nabla_\theta\frac{C_1}{5}+\nabla_\theta\frac{C_2}{5}=\nabla_\theta\bar L$。</p><p>推广到含有 $K$ 个 microbatch 的窗口，默认完整窗口的 $K=8$，每次反向传播使用 $C_i/N$。</p>$$
+N=\sum_{i=1}^{K}n_i,\qquad \bar L=\frac{\sum_{i=1}^{K}C_i}{N}
+$$$$
+g=\sum_{i=1}^{K}\nabla_\theta\frac{C_i}{N}=\nabla_\theta\bar L
+$$<p>脚本按 rank 计算各 microbatch 的损失。对 rank $r$ 的第 $i$ 个 microbatch，记 $n_{r,i}$ 为 <code>labels[:, 1:]</code> 不等于 <code>-100</code> 的位置数，$C_{r,i}$ 为这些位置的交叉熵之和，$A_{r,i}$ 为本次前向的 MoE 负载均衡辅助损失。
+$N=\sum_{r,i}n_{r,i}$ 是整个窗口的有效监督 token 数，$W$ 是进程数，单进程时 $W=1$。脚本对每个 microbatch 反向传播的损失为</p>$$
+\ell_{r,i}=\frac{W}{N}\left(C_{r,i}+n_{r,i}A_{r,i}\right),\qquad N>0.
+$$<p>脚本在每次反向传播时由 DDP 对各 rank 的梯度求平均，因此乘 $W$ 抵消这个平均系数。累积后的梯度为</p>$$
+g=\sum_{i=1}^{K}\frac{1}{W}\sum_{r=1}^{W}\nabla_\theta\ell_{r,i}
+$$<p>更直白一点就是:</p><ul><li>交叉熵负责让模型学会预测目标 token。</li><li>$A_{r,i}$ 负责约束各层的专家负载。</li><li>$n_{r,i}$ 决定这个 microbatch 的辅助损失在整个累积窗口中占多大权重。</li><li>$W$ 用于补偿 DDP 对多 rank 梯度求平均的影响。</li></ul><h4 id=moe-的负载均衡辅助损失--计算>MoE 的负载均衡辅助损失 $A_i$ 计算</h4><p>默认每层有 $E=8$ 个专家，每个 token 选择 $k=2$ 个，辅助损失系数为 $\lambda=\texttt{router\_aux\_loss\_coef}=5\times10^{-4}$。
+以下先看一个 rank 上的单个 MoE 层和单个 microbatch。这里用 $A_i$ 简记该 rank 的 $A_{r,i}$。</p><p>对每个非 padding token，路由器先计算它属于各专家的概率：</p>$$
+p_{t,e}=\operatorname{softmax}(\operatorname{router}(h_t))_e
+$$<p>路由器选出概率最高的两个专家。设这个 microbatch 有 $M>0$ 个非 padding token，专家 $e$ 被选中的比例为</p>$$
+f_e=\frac{\text{专家 }e\text{ 被 Top-2 选中的次数}}{M\times k}
+$$<p>分母是总选择次数，因此 $\sum_{e=1}^{E}f_e=1$。专家 $e$ 的平均路由概率为 $\bar p_e=\frac{1}{M}\sum_{t=1}^{M}p_{t,e}$。</p><p>单层的辅助损失就是</p>$$
+a_{\text{layer}} = \lambda E\sum_{e=1}^{E}f_e\bar p_e
+$$<p>默认配置下可以对比两种情况。</p><ul><li>各专家的选择比例和平均路由概率均为 $1/E$ 时，$\sum_e f_e\bar p_e=1/E$，单层辅助损失为 $\lambda=0.0005$。</li><li>如果所有 token 都选中同一对专家，并且路由概率几乎全部落在这两个专家上，则两个专家的 $f_e$ 均为 $1/2$，单层辅助损失接近 $E\lambda/2=0.002$。</li></ul><p>当路由概率也集中在负载较高的专家上时，这一项会增大。$f_e$ 来自离散的 Top-k 选择，梯度通过 $\bar p_e$ 传给路由器。</p><p>把默认 8 个 Decoder Block 的 MoE 辅助损失相加，得到这个 microbatch 的 $A_i$。</p>$$
+A_i=\sum_{\text{layer}=1}^{8}a_{i,\text{layer}}
+$$<p><strong>为什么给辅助损失乘以 $n_{r,i}$？</strong></p><p>$A_{r,i}$ 是整个 microbatch 的标量。乘以 $n_{r,i}$ 后，它在窗口中的权重与该 microbatch 的监督 token 数成正比。DDP 梯度对应的目标可写成</p>$$
+\sum_{r,i}\frac{C_{r,i}+n_{r,i}A_{r,i}}{N}=
+\underbrace{\frac{\sum_{r,i}C_{r,i}}{N}}{\text{所有监督 token 的平均交叉熵}}+
+\underbrace{\frac{\sum_{r,i}n_{r,i}A_{r,i}}{N}}{\text{按监督 token 数加权的 MoE 辅助损失}}
+$$<p>路由统计使用所有非 padding token，辅助损失在窗口中的权重由有效监督 token 数决定。关闭 MoE 时 $A_{r,i}=0$。</p><h4 id=得到累计梯度后怎么更新参数>得到累计梯度后怎么更新参数？</h4><p>以不带动量和权重衰减的 SGD（Stochastic Gradient Descent）为例，忽略梯度裁剪时，窗口内各 microbatch 都在同一组参数上计算梯度，最后执行一次更新 $\theta_{t+1}=\theta_t-\eta_t g$。</p><pre><code class=language-text>θ0：窗口开始时的参数
+  │
+  ├─ microbatch 1：基于 θ0 算梯度，累加
+  ├─ microbatch 2：仍基于 θ0 算梯度，累加
+  ├─ ...
+  └─ microbatch 8：仍基于 θ0 算梯度，累加
+       │
+       └─ 得到总梯度 g，执行一次更新：θ1 = θ0 - ηg</code></pre><p><a href=https://arxiv.org/pdf/1711.05101>AdamW</a> 用裁剪后的梯度 $g_t$ 更新梯度的一阶矩和二阶原始矩的指数移动平均。</p>$$
+m_t=\beta_1m_{t-1}+(1-\beta_1)g_t\\
+v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2
+$$<p>参数更新使用偏差校正后的 $\hat m_t$ 和 $\hat v_t$。</p>$$
+\theta_{t+1}=(1-\eta_t\lambda)\theta_t-\eta_t\frac{\hat m_t}{\sqrt{\hat v_t}+\epsilon}
+$$<p>这里的 $\lambda$ 是权重衰减系数。Adam 项用历史梯度的平方均值调整各参数分量的更新幅度，权重衰减单独乘在参数上。<code>scaler.step(optimizer)</code> 在允许更新时调用 AdamW。</p><h4 id=梯度裁剪和梯度缩放>梯度裁剪和梯度缩放</h4><p><code>grad_clip</code> 是所有参数梯度合在一起的 L2 范数上限，默认为 1.0。超过阈值时，按同一比例缩小所有参数的梯度，近似为 $g \leftarrow g \cdot \min\left(1,\frac{1.0}{\lVert g\rVert_2}\right)$。</p><p>只有 GPU FP16 混合精度启用 GradScaler。它在反向传播前缩放损失，以减少小梯度下溢，在裁剪前解除梯度缩放。检测到非有限梯度时，<code>scaler.step()</code> 会跳过本次参数更新。
+保存间隔按 microbatch 计数，若落在窗口中间，会延后到窗口处理完毕。
+续训文件保留原精度权重、优化器、scaler、epoch/step、配置与内容指纹，以及各 rank 的 RNG 状态；导出权重另存为 FP16。</p><h3 id=学习率>学习率</h3><p>脚本使用 <a href=https://arxiv.org/abs/1608.03983>SGDR 论文</a> 中的余弦衰减公式，整个训练过程走一段曲线。$t$ 是当前累积窗口末尾的 microbatch 序号（跨 epoch 累计），$T$ 是总 microbatch 数，$lr_{\max}$ 为配置的学习率，$lr_{\min}=0.1\,lr_{\max}$。</p>$$
+lr_t=lr_{\min}+\frac{lr_{\max}-lr_{\min}}{2}\left(1+\cos\left(\frac{\pi t}{T}\right)\right)
+$$<h3 id=rope-rotary-position-embedding旋转位置编码>RoPE: Rotary Position Embedding，旋转位置编码</h3><p>RoPE 给注意力中的 Q 和 Key 加入位置信息。<code>max_position_embeddings</code> 决定预计算位置表的长度，<code>rope_theta</code> 决定旋转频率的基数。原理见前文的 <a href=https://owent.net/2026/2610.html#positional-encoding>Positional Encoding</a> 一节。
+<code>inference_rope_scaling</code> 默认关闭。启用时，模型会用 <a href=https://arxiv.org/pdf/2309.00071>YaRN</a> 配置生成位置表，训练和推理共用这张表。</p><h2 id=模型结构>模型结构</h2><p><code>OWenTLLMForCausalLM</code> 包含主干 <code>OWenTLLMModel</code> 和输出层 <code>lm_head</code>。
+主干将 token ID 映射为向量，依次经过 $L$ 个 Decoder Block 和最终的 RMSNorm。<code>lm_head</code> 将隐藏状态投影为词表上的 logits。
+图中的 $B$、$T$、$H$、$V$ 分别表示 batch 大小、序列长度、隐藏维度和词表大小。</p><p><div class=d2-container data-diagram-key=91767d4526c120ab42549246a7250e297dca85a10aba760613601b539d6f0219 data-d2-key=91767d4526c120ab42549246a7250e297dca85a10aba760613601b539d6f0219 style="width:100%;height:auto;margin:1rem auto;overflow:auto" role=group aria-label="语言模型主干与 Decoder Block 内部的注意力、前馈网络和残差结构"><svg style="display:block;width:100%;height:auto;min-width:1333px" xmlns:xlink="http://www.w3.org/1999/xlink" data-d2-version="v0.9.0" preserveAspectRatio="xMinYMin meet" viewBox="0 0 1333 535"><svg class="d2-1832401221 d2-svg" width="1333" height="535" viewBox="-21 -21 1333 535"><rect x="-21" y="-21" width="1333" height="535" rx="0" fill="transparent" stroke-width="0"/><style>.d2-1832401221 .text{font-family:d2-1832401221-font-regular}@font-face{font-family:d2-1832401221-font-regular;src:url(data:application/font-woff;base64,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)}.d2-1832401221 .text-bold{font-family:d2-1832401221-font-bold}@font-face{font-family:d2-1832401221-font-bold;src:url(data:application/font-woff;base64,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)}.d2-1832401221 .text-italic{font-family:d2-1832401221-font-italic}@font-face{font-family:d2-1832401221-font-italic;src:url(data:application/font-woff;base64,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)}</style><style>.shape{shape-rendering:geometricPrecision;stroke-linejoin:round}.connection{stroke-linecap:round;stroke-linejoin:round}.blend{mix-blend-mode:multiply;opacity:.5}.d2-1832401221 .fill-N1{fill:#0a0f25}.d2-1832401221 .fill-N2{fill:#676c7e}.d2-1832401221 .fill-B1{fill:#000536}.d2-1832401221 .fill-B2{fill:#0f66b7}.d2-1832401221 .stroke-B1{stroke:#000536}.d2-1832401221 .stroke-B2{stroke:#0f66b7}.appendix text.text{fill:#0a0f25}.md{--color-fg-default:#0A0F25;--color-fg-muted:#676C7E;--color-fg-subtle:#9499AB;--color-canvas-default:#FFFFFF;--color-canvas-subtle:#EEF1F8;--color-border-default:#000536;--color-border-muted:#0F66B7;--color-neutral-muted:#EEF1F8;--color-accent-fg:#0F66B7;--color-accent-emphasis:#0F66B7;--color-attention-subtle:#676C7E;--color-danger-fg:red}.light-code{display:block}.dark-code{display:none}</style><g class="bW9kZWw="><g class="shape"><rect x="0" y="0" width="1291" height="228" rx="12" stroke="#b9cbd5" fill="#f6f9fb" style="stroke-width:2"/></g><text x="645.5" y="25" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:20px">模型主干</text></g><g class="YmxvY2s="><g class="shape"><rect x="0" y="260" width="1291" height="233" rx="12" stroke="#b9cbd5" fill="#f6f9fb" style="stroke-width:2"/></g><text x="645.5" y="285" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:20px">单个 Decoder Block</text></g><g class="bW9kZWwuZW1iZWQ= layer"><g class="shape"><rect x="50" y="54" width="219" height="86" rx="8" stroke="#81a4b7" fill="#edf5fa" style="stroke-width:2"/></g><text x="159.5" y="94.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:18px"><tspan x="159.5" dy="0">Embedding + Dropout</tspan><tspan x="159.5" dy="20.5">input_ids → B × T × H</tspan></text></g><g class="bW9kZWwuYmxvY2tz layer"><g class="shape"><rect x="349" y="92" width="184" height="86" rx="8" stroke="#81a4b7" fill="#edf5fa" style="stroke-width:2"/></g><text x="441" y="132.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:18px"><tspan x="441" dy="0">Decoder Block × L</tspan><tspan x="441" dy="20.5">各层参数独立</tspan></text></g><g class="bW9kZWwubm9ybQ== layer"><g class="shape"><rect x="603" y="101" width="123" height="68" rx="8" stroke="#81a4b7" fill="#edf5fa" style="stroke-width:2"/></g><text x="664.5" y="141.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:18px">RMSNorm</text></g><g class="bW9kZWwuaGVhZA== layer"><g class="shape"><rect x="806" y="54" width="163" height="86" rx="8" stroke="#81a4b7" fill="#edf5fa" style="stroke-width:2"/></g><text x="887.5" y="94.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:18px"><tspan x="887.5" dy="0">lm_head</tspan><tspan x="887.5" dy="20.5">logits: B × T × V</tspan></text></g><g class="YmxvY2sueA== add"><g class="shape"><ellipse rx="18" ry="18" cx="68" cy="358" stroke="#81a4b7" fill="#fff" class="shape" style="stroke-width:2"/></g><text x="68" y="364.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:18px">x</text></g><g class="YmxvY2suYXR0bg== layer"><g class="shape"><rect x="166" y="352" width="227" height="86" rx="8" stroke="#81a4b7" fill="#edf5fa" style="stroke-width:2"/></g><text x="279.5" y="392.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:18px"><tspan x="279.5" dy="0">RMSNorm + 因果 GQA</tspan><tspan x="279.5" dy="20.5">Q / Key 归一化 · RoPE</tspan></text></g><g class="YmxvY2suYWRkMQ== add"><g class="shape"><ellipse rx="18" ry="18" cx="491" cy="358" stroke="#81a4b7" fill="#fff" class="shape" style="stroke-width:2"/></g><text x="491" y="364.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:18px">+</text></g><g class="YmxvY2suZmZu ffn"><g class="shape"><rect x="589" y="352" width="231" height="86" rx="8" stroke="#74a894" fill="#eaf6f1" style="stroke-width:2"/></g><text x="704.5" y="392.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:18px"><tspan x="704.5" dy="0">RMSNorm + 前馈网络</tspan><tspan x="704.5" dy="20.5">稠密 FFN 或 MoE</tspan></text></g><g class="YmxvY2suYWRkMg== add"><g class="shape"><ellipse rx="18" ry="18" cx="918" cy="328" stroke="#81a4b7" fill="#fff" class="shape" style="stroke-width:2"/></g><text x="918" y="334.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:18px">+</text></g><g class="YmxvY2suYXV4"><g class="shape"><rect x="1041" y="376" width="200" height="66" rx="8" stroke="#c6a46d" fill="#fff4e3" style="stroke-width:2"/></g><text x="1141" y="414.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">aux_loss（仅 MoE）</text></g><g class="bW9kZWwuKGVtYmVkIC0mZ3Q7IGJsb2NrcylbMF0="><marker id="mk-d2-1832401221-3488378134" markerWidth="10" markerHeight="12" refX="7" refY="6" viewBox="0 0 10 12" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0,0 10,6 0,12" fill="#000536" class="connection fill-B1" stroke-width="2"/></marker><path d="M271 111.833h74" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2" marker-end="url(#mk-d2-1832401221-3488378134)" mask="url(#d2-1832401221)"/></g><g class="bW9kZWwuKGJsb2NrcyAtJmd0OyBub3JtKVswXQ=="><path d="M535 135h64" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2" marker-end="url(#mk-d2-1832401221-3488378134)" mask="url(#d2-1832401221)"/></g><g class="bW9kZWwuKG5vcm0gLSZndDsgaGVhZClbMF0="><path d="M728 111.833h74" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2" marker-end="url(#mk-d2-1832401221-3488378134)" mask="url(#d2-1832401221)"/></g><g class="bW9kZWwuKGVtYmVkIC0mZ3Q7IGhlYWQpWzBd"><marker id="mk-d2-1832401221-3091222845" markerWidth="10" markerHeight="12" refX="7" refY="6" viewBox="0 0 10 12" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0,0 10,6 0,12" fill="#a98b5b" class="connection" stroke-width="2"/></marker><path d="M271 83.166h28s10 0 10-10V70s0-10 10-10H756s10 0 10 10v3.166s0 10 10 10h26" stroke="#a98b5b" fill="none" class="connection" style="stroke-width:2;stroke-dasharray:8,7.892511" marker-end="url(#mk-d2-1832401221-3091222845)" mask="url(#d2-1832401221)"/><text x="538" y="66" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:15px">可选参数共享</text></g><g class="YmxvY2suKHggLSZndDsgYXR0bilbMF0="><path d="M86.999962 364.987655l75.000114-.462964" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2" marker-end="url(#mk-d2-1832401221-3488378134)" mask="url(#d2-1832401221)"/></g><g class="YmxvY2suKGF0dG4gLSZndDsgYWRkMSlbMF0="><path d="M394.999962 364.512345l75.000114.462964" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2" marker-end="url(#mk-d2-1832401221-3488378134)" mask="url(#d2-1832401221)"/></g><g class="YmxvY2suKGFkZDEgLSZndDsgZmZuKVswXQ=="><path d="M509.999962 364.987655 585.000076 364.524691" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2" marker-end="url(#mk-d2-1832401221-3488378134)" mask="url(#d2-1832401221)"/></g><g class="YmxvY2suKGZmbiAtJmd0OyBhZGQyKVswXQ=="><path d="M822 380.665985h28s10 0 10-10V344s0-10 10-10h27" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2" marker-end="url(#mk-d2-1832401221-3488378134)" mask="url(#d2-1832401221)"/></g><g class="YmxvY2suKHggLSZndDsgYWRkMSlbMF0="><path d="M86.999851 352.975612 116.000744 352.621942S126 352.5 126 342.5V332s0-10 10-10H423s10 0 10 10v10.5s0 10 9.999256 10.121942L470.000297 352.951223" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2" marker-end="url(#mk-d2-1832401221-3488378134)" mask="url(#d2-1832401221)"/><text x="280" y="328" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:15px">残差</text></g><g class="YmxvY2suKGFkZDEgLSZndDsgYWRkMilbMF0="><path d="M509.999851 352.975612 539.000744 352.621942S549 352.5 549 342.5V332s0-10 10-10H897" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2" marker-end="url(#mk-d2-1832401221-3488378134)" mask="url(#d2-1832401221)"/><text x="689" y="328" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:15px">残差</text></g><g class="YmxvY2suKGZmbiAtJmd0OyBhdXgpWzBd"><marker id="mk-d2-1832401221-2177206569" markerWidth="10" markerHeight="12" refX="7" refY="6" viewBox="0 0 10 12" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0,0 10,6 0,12" fill="#0F66B7" class="connection fill-B2" stroke-width="2"/></marker><path d="M822 409.333008h215" stroke="#0F66B7" fill="none" class="connection stroke-B2" style="stroke-width:2;stroke-dasharray:8,7.892511" marker-end="url(#mk-d2-1832401221-2177206569)" mask="url(#d2-1832401221)"/><text x="930.5" y="415" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:15px">辅助损失</text></g><mask id="d2-1832401221" maskUnits="userSpaceOnUse" x="-21" y="-21" width="1333" height="535"><rect x="-21" y="-21" width="1333" height="535" fill="#fff"/><rect x="483" y="51" width="110" height="19" fill="#000"/><rect x="260" y="313" width="40" height="19" fill="#000"/><rect x="669" y="313" width="40" height="19" fill="#000"/><rect x="893" y="400" width="75" height="19" fill="#000"/></mask></svg></svg></div></p><p><em>图 3：上方为模型主干，下方展开单个 Decoder Block，两部分均从左向右读取。实线表示张量流向，虚线表示可选的权重共享或 MoE 辅助损失；训练时不使用 KV cache。</em></p><p>每个 Block 在注意力和前馈网络前分别做 RMSNorm，并分别添加残差。
+当前注意力实现是带因果掩码的 GQA：Q 和 Key 各自归一化并应用 RoPE，多个 Q 头共享较少的 Key/Value 头，
+通过 PyTorch SDPA 或手写 softmax 路径计算注意力。这里尚未替换成前文讨论的线性注意力。</p><p>前馈部分由 <code>use_moe</code> 切换：普通 <code>FeedForward</code> 在默认 SiLU 激活下使用 SwiGLU；
+<code>MOEFeedForward</code> 为每个 token 选择 Top-k 专家，将专家输出加权求和，并在训练时计算排除 padding 的负载均衡辅助损失。
+当前默认配置为 8 层、隐藏维度 768、词表大小 6400、8 个 Q 头和 4 个 Key/Value 头；MoE 有 8 个专家，每个 token 选择 2 个。
+<code>tie_word_embeddings=true</code> 时，输入 Embedding 与 <code>lm_head</code> 共享参数，其余各层仍有独立参数。</p><p>归一化对应的公式为：</p><ul><li>均方根归一化(RMSNorm)<ul><li>$\mathrm{RMS}(x) = \sqrt{\frac{1}{n}\sum_{i=1}^{n} x_i^2 + \epsilon}, \qquad \mathrm{RMSNorm}(x) = g \odot \frac{x}{\mathrm{RMS}(x)}$</li></ul></li></ul><h2 id=附录>附录</h2><h3 id=chat_template>chat_template</h3><p>本次编写的脚本用的 chat_template 也来自于 <a href=https://github.com/jingyaogong/minimind>MiniMind</a> 。和脚本里 <code>SFTDataset</code> 类中的提取数据方式相关，内容如下：</p><pre><code class=language-text>{%- if tools %}
+    {{- &#39;&lt;|im_start|&gt;system\n&#39; }}
+    {%- if messages[0].role == &#39;system&#39; %}
+        {{- messages[0].content &#43; &#39;\n\n&#39; }}
+    {%- endif %}
+    {{- &#34;# Tools\n\nYou may call one or more functions to assist with the user query.\n\nYou are provided with function signatures within &lt;tools&gt;&lt;/tools&gt; XML tags:\n&lt;tools&gt;&#34; }}
+    {%- for tool in tools %}
+        {{- &#34;\n&#34; }}
+        {{- tool | tojson }}
+    {%- endfor %}
+    {{- &#34;\n&lt;/tools&gt;\n\nFor each function call, return a json object with function name and arguments within &lt;tool_call&gt;&lt;/tool_call&gt; XML tags:\n&lt;tool_call&gt;\n{\&#34;name\&#34;: &lt;function-name&gt;, \&#34;arguments\&#34;: &lt;args-json-object&gt;}\n&lt;/tool_call&gt;&lt;|im_end|&gt;\n&#34; }}
+{%- else %}
+    {%- if messages[0].role == &#39;system&#39; %}
+        {{- &#39;&lt;|im_start|&gt;system\n&#39; &#43; messages[0].content &#43; &#39;&lt;|im_end|&gt;\n&#39; }}
+    {%- endif %}
+{%- endif %}
+{%- set ns = namespace(multi_step_tool=true, last_query_index=messages|length - 1) %}
+{%- for message in messages[::-1] %}
+    {%- set index = (messages|length - 1) - loop.index0 %}
+    {%- if ns.multi_step_tool and message.role == &#34;user&#34; and message.content is string and not(message.content.startswith(&#39;&lt;tool_response&gt;&#39;) and message.content.endswith(&#39;&lt;/tool_response&gt;&#39;)) %}
+        {%- set ns.multi_step_tool = false %}
+        {%- set ns.last_query_index = index %}
+    {%- endif %}
+{%- endfor %}
+{%- for message in messages %}
+    {%- if message.content is string %}
+        {%- set content = message.content %}
+    {%- else %}
+        {%- set content = &#39;&#39; %}
+    {%- endif %}
+    {%- if (message.role == &#34;user&#34;) or (message.role == &#34;system&#34; and not loop.first) %}
+        {{- &#39;&lt;|im_start|&gt;&#39; &#43; message.role &#43; &#39;\n&#39; &#43; content &#43; &#39;&lt;|im_end|&gt;&#39; &#43; &#39;\n&#39; }}
+    {%- elif message.role == &#34;assistant&#34; %}
+        {%- set reasoning_content = &#39;&#39; %}
+        {%- if message.reasoning_content is string %}
+            {%- set reasoning_content = message.reasoning_content %}
+        {%- else %}
+            {%- if &#39;&lt;/think&gt;&#39; in content %}
+                {%- set reasoning_content = content.split(&#39;&lt;/think&gt;&#39;)[0].rstrip(&#39;\n&#39;).split(&#39;&lt;think&gt;&#39;)[-1].lstrip(&#39;\n&#39;) %}
+                {%- set content = content.split(&#39;&lt;/think&gt;&#39;)[-1].lstrip(&#39;\n&#39;) %}
+            {%- endif %}
+        {%- endif %}
+        {%- if true %}
+            {{- &#39;&lt;|im_start|&gt;&#39; &#43; message.role &#43; &#39;\n&lt;think&gt;\n&#39; &#43; reasoning_content.strip(&#39;\n&#39;) &#43; &#39;\n&lt;/think&gt;\n\n&#39; &#43; content.lstrip(&#39;\n&#39;) }}
+        {%- endif %}
+        {%- if message.tool_calls %}
+            {%- for tool_call in message.tool_calls %}
+                {%- if (loop.first and content) or (not loop.first) %}
+                    {{- &#39;\n&#39; }}
+                {%- endif %}
+                {%- if tool_call.function %}
+                    {%- set tool_call = tool_call.function %}
+                {%- endif %}
+                {{- &#39;&lt;tool_call&gt;\n{&#34;name&#34;: &#34;&#39; }}
+                {{- tool_call.name }}
+                {{- &#39;&#34;, &#34;arguments&#34;: &#39; }}
+                {%- if tool_call.arguments is string %}
+                    {{- tool_call.arguments }}
+                {%- else %}
+                    {{- tool_call.arguments | tojson }}
+                {%- endif %}
+                {{- &#39;}\n&lt;/tool_call&gt;&#39; }}
+            {%- endfor %}
+        {%- endif %}
+        {{- &#39;&lt;|im_end|&gt;\n&#39; }}
+    {%- elif message.role == &#34;tool&#34; %}
+        {%- if loop.first or (messages[loop.index0 - 1].role != &#34;tool&#34;) %}
+            {{- &#39;&lt;|im_start|&gt;user&#39; }}
+        {%- endif %}
+        {{- &#39;\n&lt;tool_response&gt;\n&#39; }}
+        {{- content }}
+        {{- &#39;\n&lt;/tool_response&gt;&#39; }}
+        {%- if loop.last or (messages[loop.index0 &#43; 1].role != &#34;tool&#34;) %}
+            {{- &#39;&lt;|im_end|&gt;\n&#39; }}
+        {%- endif %}
+    {%- endif %}
+{%- endfor %}
+{%- if add_generation_prompt %}
+    {{- &#39;&lt;|im_start|&gt;assistant\n&#39; }}
+    {%- if open_thinking is defined and open_thinking is true %}
+        {{- &#39;&lt;think&gt;\n&#39; }}
+    {%- else %}
+        {{- &#39;&lt;think&gt;\n\n&lt;/think&gt;\n\n&#39; }}
+    {%- endif %}
+{%- endif %}</code></pre><h2 id=总结>总结</h2><p>这份代码主要是为了弄清楚前面论文里的公式怎么落到训练流程里。注意力、前馈层和训练循环在脚本里实现，tokenizer 加载、模型配置和基类使用 Hugging Face Transformers。很多设置和实现细节还比较粗糙。</p><p>后面再抽空看看改成使用 Transformers 库并且更工程化的实现方式，并试着把这里的 GQA 换成线性注意力。</p><p>可能有理解不到位的地方，欢迎指正。</p></div></div><footer class=article-footer><div class=article-meta><span><ol><li><a href=//owent.net/categories/article.html>Article</a></li><li><a href=//owent.net/categories/blablabla.html>Blablabla</a></li></ol></span><span><time datetime=2026-11-21T13:59:45.000+00:00 itemprop=datePublished>2026-11-21</time></span></div><div class=article-tags><ul class=article-tag-list><li class=article-tag-list-item><a href=//owent.net/tags/llm.html>LLM</a></li><li class=article-tag-list-item><a href=//owent.net/tags/gpt.html>GPT</a></li><li class=article-tag-list-item><a href=//owent.net/tags/claude.html>Claude</a></li><li class=article-tag-list-item><a href=//owent.net/tags/deepseek.html>DeepSeek</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html>大语言模型</a></li><li class=article-tag-list-item><a href=//owent.net/tags/transformer.html>Transformer</a></li><li class=article-tag-list-item><a href=//owent.net/tags/attention.html>Attention</a></li><li class=article-tag-list-item><a href=//owent.net/tags/moe.html>MoE</a></li><li class=article-tag-list-item><a href=//owent.net/tags/embedding.html>Embedding</a></li><li class=article-tag-list-item><a href=//owent.net/tags/self-attention.html>self-attention</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E8%87%AA%E6%B3%A8%E6%84%8F%E5%8A%9B.html>自注意力</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E8%AE%AD%E7%BB%83.html>训练</a></li><li class=article-tag-list-item><a href=//owent.net/tags/%E6%8E%A8%E7%90%86%E6%A1%86%E6%9E%B6.html>推理框架</a></li></ul></div></footer><hr><nav id=article-nav><ul class=pagination><li class=page-item><a class=page-link id=article-nav-older class=article-nav-link-wrap href=//owent.net/2026/2612.html>下一篇<strong>大语言模型的基石：Transformer 入坑笔记（五） - 线性注意力(Linear Attention) 的优化</strong></a></li></ul></nav><hr><script src=https://utteranc.es/client.js repo=owent/blog-website issue-term=pathname theme=github-light crossorigin=anonymous async></script></div></article></div></section></div><footer id=footer><div class=outer><div id=footer-info class=inner><div id=footer-left><span class=footer-license><a rel=license href=https://github.com/owent/blog-hugo/blob/master/LICENSE.md><img alt=知识共享许可协议 style=border-width:0 src=https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png></a>
+</span><span class=footer-credit>2026&nbsp;owent</span></div><div id=footer-right><span id=site-registration hidden data-domains=[] data-domain-suffixes='["localhost","x-ha.com","r-ci.com"]'><a href=https://beian.miit.gov.cn/ target=_blank rel=noopener>沪ICP备2022003252号</a>
+</span><a href=https://github.com/owent/blog-hugo target=_blank rel=noopener>本站源码</a>
+<span>发布者 <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a></span>
+<span>主题 <a href=https://github.com/owent/hugo-theme-distinctionpp target=_blank rel=noopener>distinctionpp</a></span></div></div></div></footer><script defer src=/js/site-registration.js></script></div><script type=importmap>
+{"imports":{"@popperjs/core":"https://esm.run/popper.js","bootstrap":"https://esm.run/bootstrap","react":"https://esm.run/react","react-bootstrap":"https://esm.run/react-bootstrap"}}
+</script><script type=module>
+
+
+
+import("bootstrap").catch((e) => {
+    if (window.console) { console.error("Failed to load bootstrap:", e); }
+});
+// import React from "react";
+
+        
+</script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/accesslog.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/armasm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/awk.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/basic.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/bnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/capnproto.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/cmake.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/d.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dockerfile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/dos.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/erlang.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/ebnf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/latex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/llvm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/lua.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/powershell.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/protobuf.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/profile.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/vim.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/x86asm.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/languages/yaml.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/vs2015.min.css",document.querySelector("head").appendChild(t),window.JSON?hljs.configure(JSON.parse('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}')):hljs.configure(evel('{"ignoreunescapedhtml":true,"languages":{},"tabreplace":"    ","throwunescapedhtml":false,"usebr":false}'));const n={};for(const e of hljs.listLanguages())n[e.toLowerCase()]=!0;for(const e of document.querySelectorAll("pre>code"))try{if(e.className.match(/\bmermaid\b/i)){e.classList.add("mermaid");continue}if(e.className.match(/\bexcalidraw\b/i)){e.classList.add("excalidraw-root");continue}if(e.className.match(/\bdrawio\b/i)){e.classList.add("drawio-root"),e.classList.add("mxgraph");continue}if(e.className.match(/\bchart(js)?\b/i)){e.classList.add("chartjs-container");continue}if(e.className.match(/\b(echarts|plotly)\b/i))continue;if(e.className.match(/\bnohighlight\b/i))continue;const t=e.className.match(/language-([^\s]+)/i);if(t&&t.length>=2&&hljs.getLanguage(t[1]))hljs.highlightElement(e);else{const t=hljs.highlightAuto(e.innerText,hljs.listLanguages());t&&t.value&&(e.innerHTML=t.value,e.classList.add("hljs"))}}catch(e){window.console&&console.log(e.toString()+`\r
+Maybe can not detect the language`)}})</script><script async src="https://www.googletagmanager.com/gtag/js?id=G-PQEY77BYG1"></script><script>var doNotTrack=!1,dnt=navigator.doNotTrack||window.doNotTrack||navigator.msDoNotTrack,doNotTrack=dnt=="1"||dnt=="yes";if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-PQEY77BYG1")}</script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex/dist/contrib/auto-render.min.js></script><script type=text/javascript>document.addEventListener("DOMContentLoaded",e=>{const t=document.createElement("link");t.rel="stylesheet",t.href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css",document.querySelector("head").appendChild(t),renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"\\[",right:"\\]",display:!0},{left:"\\(",right:"\\)",display:!1},{left:"$",right:"$",display:!1}],throwOnError:!1,ignoredTags:["script","noscript","style","textarea","pre","code"]})})</script><script type=text/javascript>var _hmt=_hmt||[];(function(){var t,n,e=document.createElement("script");e.src="https://hm.baidu.com/hm.js?6a0daf8d58889f1cf55a353867bfdbb0",t=document.getElementsByTagName("script"),n=document.getElementsByTagName("script")[t.length-1],n.parentNode.appendChild(e)})()</script></div></body></html>

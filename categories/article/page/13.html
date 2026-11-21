@@ -3,7 +3,28 @@
 </button>
 <a id=main-nav-brand class="navbar-brand collapse" href=#>#</a><div class="collapse navbar-collapse position-relative" id=main-nav-links><ul class="navbar-nav mr-auto"><li class=nav-item><a class=nav-link href=/index.html title=Home>Home</a></li><li class=nav-item><a class=nav-link href=/archives/index.html title=Archives>Archives</a></li><li class=nav-item><a class=nav-link href=/about/index.html title=About>About</a></li><li class=nav-item><a id=nav-rss-link class=nav-link href=//owent.net/categories/article/index.xml title=RSS订阅>RSS订阅</a></li></ul><div class="col-12 col-xl-2 col-lg-3 col-md-4" id=main-nav-search><form class=input-group method=get accept-charset=UTF-8 action=//www.bing.com/search><input type=hidden name=q1 value=site:owent.net>
 <input class=form-control type=text placeholder=搜索 name=q>
-<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-76"><div class="article-panel-inner archive-article-inner"><div class=archive-card-heading><div class=archive-card-meta><time datetime=2009-09-15T16:39:11.000+00:00 itemprop=datePublished>2009-09-15</time>
+<button class="btn btn-outline-secondary my-0" type=submit>搜索</button></form></div></div></nav></div></div></header><div id=main><section id=main-content><div id=archive-content><article class="article-panel archive-article archive-type-75"><div class="article-panel-inner archive-article-inner"><div class=archive-card-heading><div class=archive-card-meta><time datetime=2009-09-15T16:43:29.000+00:00 itemprop=datePublished>2009-09-15</time>
+<a class=archive-card-category href=/categories/article.html title=Article>Article</a></div><header class="article-header archive-article-title"><h2 itemprop=name><a class=article-title href=//owent.net/2009/75.html target=_blank rel=noopener itemprop=url title=Prime最小生成树(个人模板)>Prime最小生成树(个人模板)</a></h2></header></div><div class="article-summary archive-summary"><div class=archive-summary-content><pre><code class=language-cpp>//Prime连通路模块
+#define N 1000         //最大数据规模
+#define MAXNUM 3000000   //最大路径长度
+typedef double PrimeType;//路径类型
+
+PrimeType PrimeRecord[N];
+PrimeType dis[N][N];
+int isLined[N] = {1,0};
+
+PrimeType GetPrimeLength(const long n)
+{
+    PrimeType tmpLen = MAXNUM;
+    long tmpPos = 0,left = n - 1;
+    PrimeType sumLen = 0;
+
+    for(long i = 1 ; i &lt; n ; i &#43;&#43;)
+        PrimeRecord[i] = dis[0][i];
+    while(left --)
+    {
+        tmpLen = MAXNUM;…</code></pre></div></div><footer class=archive-article-footer><div class=archive-card-tags><a class=archive-card-tag href=/tags/acm.html title=Acm>Acm</a>
+<a class=archive-card-tag href=/tags/template.html title=Template>Template</a></div><div class=article-more><a href=//owent.net/2009/75.html target=_blank rel=noopener itemprop=url aria-label="更多: Prime最小生成树(个人模板)">更多<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div></footer></div></article><article class="article-panel archive-article archive-type-76"><div class="article-panel-inner archive-article-inner"><div class=archive-card-heading><div class=archive-card-meta><time datetime=2009-09-15T16:39:11.000+00:00 itemprop=datePublished>2009-09-15</time>
 <a class=archive-card-category href=/categories/article.html title=Article>Article</a></div><header class="article-header archive-article-title"><h2 itemprop=name><a class=article-title href=//owent.net/2009/76.html target=_blank rel=noopener itemprop=url title="矩阵相关 (增强中)">矩阵相关 (增强中)</a></h2></header></div><div class="article-summary archive-summary"><div class=archive-summary-content><pre><code class=language-cpp>//MULDATATYPE为矩阵元素类型,MAXMAT为最大矩阵大小
 
 typedef long MULDATATYPE;
