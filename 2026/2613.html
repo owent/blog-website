@@ -2226,8 +2226,8 @@ $$<p>默认配置下可以对比两种情况。</p><ul><li>各专家的选择比
 A_i=\sum_{\text{layer}=1}^{8}a_{i,\text{layer}}
 $$<p><strong>为什么给辅助损失乘以 $n_{r,i}$？</strong></p><p>$A_{r,i}$ 是整个 microbatch 的标量。乘以 $n_{r,i}$ 后，它在窗口中的权重与该 microbatch 的监督 token 数成正比。DDP 梯度对应的目标可写成</p>$$
 \sum_{r,i}\frac{C_{r,i}+n_{r,i}A_{r,i}}{N}=
-\underbrace{\frac{\sum_{r,i}C_{r,i}}{N}}{\text{所有监督 token 的平均交叉熵}}+
-\underbrace{\frac{\sum_{r,i}n_{r,i}A_{r,i}}{N}}{\text{按监督 token 数加权的 MoE 辅助损失}}
+\underbrace{\frac{\sum_{r,i}C_{r,i}}{N}}_{\text{所有监督 token 的平均交叉熵}}+
+\underbrace{\frac{\sum_{r,i}n_{r,i}A_{r,i}}{N}}_{\text{按监督 token 数加权的 MoE 辅助损失}}
 $$<p>路由统计使用所有非 padding token，辅助损失在窗口中的权重由有效监督 token 数决定。关闭 MoE 时 $A_{r,i}=0$。</p><h4 id=得到累计梯度后怎么更新参数>得到累计梯度后怎么更新参数？</h4><p>以不带动量和权重衰减的 SGD（Stochastic Gradient Descent）为例，忽略梯度裁剪时，窗口内各 microbatch 都在同一组参数上计算梯度，最后执行一次更新 $\theta_{t+1}=\theta_t-\eta_t g$。</p><pre><code class=language-text>θ0：窗口开始时的参数
   │
   ├─ microbatch 1：基于 θ0 算梯度，累加
